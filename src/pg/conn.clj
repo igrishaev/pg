@@ -57,6 +57,9 @@
   (def -query
     (msg/make-query "select 1 as foo, 2 as bar"))
 
+  (def -query
+    (msg/make-query "begin"))
+
   (.rewind -query)
 
   (.write -ch -query)
