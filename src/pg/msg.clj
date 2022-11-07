@@ -40,14 +40,6 @@
      :value value}))
 
 
-#_
-(defn parse-auth-ok [len bb]
-  (let [status (bb/read-int32 bb)]
-    {:type :AuthenticationOk
-     :len len
-     :status status}))
-
-
 (defn parse-auth-response [len bb]
 
   (let [status (int (bb/read-int32 bb))]
@@ -140,7 +132,7 @@
 
 
 (defn parse-ready-for-query [len bb]
-  (let [tx-status (bb/read-byte)]
+  (let [tx-status (int (bb/read-byte))]
     {:type :ReadyForQuery
      :len len
      :tx-status tx-status}))
@@ -157,6 +149,19 @@
     {:type :ErrorResponse
      :len len
      :errors errors}))
+
+
+(defn parse-notice-response [len bb]
+  (let [messages
+        (loop [acc []]
+          (let [field-type (bb/read-byte bb)]
+            (if (zero? field-type)
+              acc
+              (let [field-text (bb/read-cstring bb)]
+                (recur (conj acc {:type field-type :text field-text}))))))]
+    {:type :NoticeResponse
+     :len len
+     :messages messages}))
 
 
 (defn read-message [^SocketChannel chan]
@@ -190,6 +195,9 @@
 
           \E
           (parse-error-response len bb)
+
+          \N
+          (parse-notice-response len bb)
 
           ;; else
           (throw (ex-info "Unhandled server message"
