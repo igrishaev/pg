@@ -1,7 +1,6 @@
 (ns pg.msg
   (:import
-   java.nio.channels.SocketChannel
-   java.io.InputStream)
+   java.nio.channels.SocketChannel)
   (:require
    [pg.bb :as bb]))
 
@@ -12,7 +11,7 @@
         (bb/read-int16 bb)
 
         fields
-        (doall
+        (vec
          (for [i (range field-count)]
            {:index       i
             :name        (bb/read-cstring bb)
@@ -132,7 +131,7 @@
 
 
 (defn parse-ready-for-query [len bb]
-  (let [tx-status (int (bb/read-byte))]
+  (let [tx-status (char (bb/read-byte bb))]
     {:type :ReadyForQuery
      :len len
      :tx-status tx-status}))
@@ -164,47 +163,226 @@
      :messages messages}))
 
 
+(defn parse-bind-complete [len bb]
+  {:type :BindComplete
+   :len len})
+
+
+(defn parse-close-complete [len bb]
+  {:type :CloseComplete
+   :len len})
+
+
+(defn parse-command-complete [len bb]
+  (let [tag (bb/read-cstring bb)]
+    {:type :CommandComplete
+     :len len
+     :tag tag}))
+
+
+(defn parse-data-row [len bb]
+  (let [amount
+        (bb/read-int16 bb)
+
+        columns
+        (vec
+         (for [i (range amount)]
+           (let [col-len (bb/read-int32 bb)]
+             (when-not (= col-len -1)
+               (bb/read-bytes bb col-len)))))]
+
+    {:type :DataRow
+     :len len
+     :columns columns}))
+
+
+(defn parse-empty-query-response [len bb]
+  {:type :EmptyQueryResponse
+   :len len})
+
+
+(defn parse-function-call-response [len bb]
+  (let [res-len (bb/read-int32 bb)
+        res-val (bb/read-bytes bb res-len)]
+    {:type :FunctionCallResponse
+     :len len
+     :result res-val}))
+
+
+(defn parse-negotiate-protocol-version [len bb]
+  (let [minor-version
+        (bb/read-int32 bb)
+
+        failed-params-count
+        (bb/read-int32 bb)
+
+        failed-params
+        (vec
+         (for [i (range failed-params-count)]
+           (bb/read-cstring bb)))]
+
+    {:type :NegotiateProtocolVersion
+     :len len
+     :minor-version minor-version
+     :failed-params-count failed-params-count
+     :failed-params failed-params}))
+
+
+(defn parse-no-data [len bb]
+  {:type :NoData
+   :len len})
+
+
+(defn parse-notice-response [len bb]
+  (let [pid (bb/read-int32 bb)
+        channel (bb/read-cstring bb)
+        message (bb/read-cstring bb)]
+    {:type :NotificationResponse
+     :len len
+     :pid pid
+     :channel channel
+     :message message}))
+
+
+(defn parse-param-description [len bb]
+  (let [param-count
+        (bb/read-int16 bb)
+
+        param-types
+        (vec
+         (for [i (range param-count)]
+           (bb/read-int32 bb)))]
+    {:type :ParameterDescription
+     :len len
+     :param-count param-count
+     :param-types param-types}))
+
+
+(defn parse-parse-complete [len bb]
+  {:type :ParseComplete
+   :len len})
+
+
+(defn parse-portal-suspended [len bb]
+  {:type :PortalSuspended
+   :len len})
+
+
+(defn parse-message-payload [lead len bb]
+
+  (case (char lead)
+
+    \T
+    (parse-row-description len bb)
+
+    \S
+    (parse-param-status len bb)
+
+    \R
+    (parse-auth-response len bb)
+
+    \K
+    (parse-backend-data len bb)
+
+    \Z
+    (parse-ready-for-query len bb)
+
+    \E
+    (parse-error-response len bb)
+
+    \N
+    (parse-notice-response len bb)
+
+    \I
+    (parse-empty-query-response len bb)
+
+    \V
+    (parse-function-call-response len bb)
+
+    \D
+    (parse-data-row len bb)
+
+    \A
+    (parse-notice-response len bb)
+
+    \s
+    (parse-portal-suspended len bb)
+
+    \1
+    (parse-parse-complete len bb)
+
+    \2
+    (parse-bind-complete len bb)
+
+    \3
+    (parse-close-complete len bb)
+
+    \C
+    (parse-command-complete len bb)
+
+    \v
+    (parse-negotiate-protocol-version len bb)
+
+    \t
+    (parse-param-description len bb)
+
+    \n
+    (parse-no-data len bb)
+
+    ;; else
+    (throw (ex-info "Unhandled server message"
+                    {:lead lead
+                     :len len
+                     :bb bb}))))
+
+
+(defn read-message-payload [^SocketChannel chan bb-header]
+
+  (bb/rewind bb-header)
+
+  (let [lead (bb/read-byte bb-header)
+        len (- (bb/read-int32 bb-header) 4)
+        bb (bb/allocate len)
+        read (.read chan bb)]
+
+    (bb/rewind bb)
+
+    (cond
+
+      (= read len)
+      (parse-message-payload lead len bb)
+
+      :else
+      (throw (ex-info "Inconsistent read"
+                      {:read read
+                       :lead lead
+                       :len len
+                       :bb-header bb-header
+                       :bb :bb})))))
+
+
 (defn read-message [^SocketChannel chan]
   (let [bb-header (bb/allocate 5)
         read (.read chan bb-header)]
 
-    (when-not (zero? read)
+    (cond
 
-      (let [lead (bb/read-byte bb-header)
-            len (- (bb/read-int32 bb-header) 4)
-            bb (bb/allocate len)]
+      (= read 5)
+      (read-message-payload chan bb-header)
 
-        (bb/rewind bb)
+      (= read -1)
+      nil
 
-        (case (char lead)
+      :else
+      (throw (ex-info "Inconsistent read"
+                      {:read read
+                       :bb-header bb-header})))))
 
-          \T
-          (parse-row-description len bb)
 
-          \S
-          (parse-param-status len bb)
-
-          \R
-          (parse-auth-response len bb)
-
-          \K
-          (parse-backend-data len bb)
-
-          \Z
-          (parse-ready-for-query len bb)
-
-          \E
-          (parse-error-response len bb)
-
-          \N
-          (parse-notice-response len bb)
-
-          ;; else
-          (throw (ex-info "Unhandled server message"
-                          {:lead lead
-                           :len len
-                           :bb-header bb-header
-                           :bb bb})))))))
+(defn read-messages [^SocketChannel chan]
+  (lazy-seq
+   (when-let [message (read-message chan)]
+     (cons message (read-messages chan)))))
 
 
 (defn make-startup [database user]
@@ -221,3 +399,38 @@
       (bb/write-cstring "database")
       (bb/write-cstring database)
       (bb/write-byte 0))))
+
+
+(defn byte-count
+  ([string]
+   (byte-count string "UTF-8"))
+
+  ([^String string ^String encoding]
+   (-> string (.getBytes encoding) (count))))
+
+
+(defn make-query [query]
+  (let [len (+ 4 (byte-count query) 1)
+        bb (bb/allocate (inc len))]
+
+    (doto bb
+      (bb/write-byte \Q)
+      (bb/write-int32 len)
+      (bb/write-cstring query))))
+
+
+(defn make-md5-password [user password]
+
+  (let [hashed-pass
+        ""
+
+        len
+        (+ 4 (byte-count hashed-pass))
+
+        bb
+        (bb/allocate len)]
+
+    (doto bb
+      (bb/write-byte \p)
+      (bb/write-int32 len)
+      (bb/write-cstring hashed-pass))))
