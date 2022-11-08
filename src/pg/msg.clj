@@ -30,6 +30,14 @@
      :fields fields}))
 
 
+(defn coerce-param-value [value]
+  (case value
+    "off" false
+    "on"  true
+    ""    nil
+    value))
+
+
 (defn parse-param-status [len bb]
 
   (let [param (bb/read-cstring bb)
@@ -38,7 +46,7 @@
     {:type :ParameterStatus
      :len len
      :param param
-     :value value}))
+     :value (coerce-param-value value)}))
 
 
 (defn parse-auth-response [len bb]
@@ -146,7 +154,8 @@
             (if (zero? field-type)
               acc
               (let [field-text (bb/read-cstring bb)]
-                (recur (conj acc {:type field-type :text field-text}))))))]
+                (recur (conj acc {:type (char field-type)
+                                  :text field-text}))))))]
     {:type :ErrorResponse
      :len len
      :errors errors}))
@@ -436,7 +445,7 @@
   ;; concat('md5', md5(concat(md5(concat(password, username)), random-salt)))
 
   (let [creds
-        (md5/md5 (.getBytes (str user password) "utf-8"))
+        (md5/md5 (.getBytes (str password user) "utf-8"))
 
         bb-len
         (+ (alength creds) (alength salt))
@@ -447,10 +456,10 @@
           (bb/write-bytes salt))
 
         hashed-pass
-        (new String (md5/md5 (bb/get-array bb)))
+        (str "md5" (new String (md5/md5 (bb/get-array bb))))
 
         len
-        (+ 4 (byte-count hashed-pass) 1)]
+        (+ 4 (count hashed-pass) 1)]
 
     (doto (bb/allocate (inc len))
       (bb/write-byte \p)

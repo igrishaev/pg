@@ -122,7 +122,7 @@
               :port 15432
               :user "ivan"
               :database "ivan"
-              :password "ivan"}))
+              :password "secret"}))
 
   (def -query
     (msg/make-query "select 1 as foo, 2 as bar"))
