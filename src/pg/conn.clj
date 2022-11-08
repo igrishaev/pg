@@ -1,22 +1,53 @@
 (ns pg.conn
   (:require
+   [pg.bb :as bb]
    [pg.msg :as msg])
   (:import
    java.net.InetSocketAddress
    java.nio.channels.SocketChannel))
 
 
-(defn initial [^SocketChannel ch]
+(defn send-bb [^SocketChannel ch bb]
+  (.write ch (bb/rewind bb)))
 
-  (loop [state nil]
+
+(defn auth-pipeline
+  [{:as state :keys [user
+                     password
+                     database
+                     ^SocketChannel ch]}]
+
+  (let [bb (msg/make-startup database user)]
+
+    (send-bb ch bb)
+
+    (loop [state state]
+
+      (let [{:as msg :keys [type]}
+            (msg/read-message ch)]
+
+        (case type
+
+          ;; AuthenticationCleartextPassword
+          ;; AuthenticationMD5Password
+
+          :AuthenticationOk
+          state
+
+          ;; else
+          (throw (ex-info "Unhandled message"
+                          {:msg msg})))))))
+
+
+(defn init-pipeline
+  [{:as state :keys [^SocketChannel ch]}]
+
+  (loop [state state]
 
     (let [{:as msg :keys [type]}
           (msg/read-message ch)]
 
       (case type
-
-        :AuthenticationOk
-        (recur state)
 
         :ParameterStatus
         (let [{:keys [param value]} msg]
@@ -30,29 +61,53 @@
 
         :ReadyForQuery
         (let [{:keys [tx-status]} msg]
-          (assoc state :tx-status tx-status))))))
+          (case tx-status
+            \E
+            (throw (ex-info "Transaction is in the error state"
+                            {:msg msg}))
+            ;; else
+            (assoc state :tx-status tx-status)))
+
+        ;; else
+        (throw (ex-info "Unhandled message"
+                        {:msg msg}))))))
+
+
+(defn connect [{:as state :keys [^String host
+                                 ^Integer port]}]
+
+  (let [addr
+        (new java.net.InetSocketAddress host port)
+
+        ch
+        (SocketChannel/open addr)]
+
+    (-> state
+        (assoc :ch ch
+               :addr addr)
+        (auth-pipeline)
+        (init-pipeline))))
+
+
+(defn query
+  [{:as state :keys [ch]} sql]
+  (let [bb (msg/make-query sql)]
+    (send-bb ch bb)
+    )
+
+
+
+  )
 
 
 (comment
 
-  (def -addr
-    (new java.net.InetSocketAddress "localhost" 15432))
-
-  (def -ch
-    (SocketChannel/open -addr))
-
-  (def -startup
-    (msg/make-startup "ivan" "ivan"))
-
-  (.rewind -startup)
-
-  (.write -ch -startup)
-
-  (initial -ch)
-
-  (msg/read-message -ch)
-
-  (msg/read-messages -ch)
+  (def -state
+    (connect {:host "localhost"
+              :port 15432
+              :user "ivan"
+              :database "ivan"
+              :password "secret"}))
 
   (def -query
     (msg/make-query "select 1 as foo, 2 as bar"))
