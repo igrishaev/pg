@@ -1,19 +1,20 @@
 (ns pg.md5
   (:import
-   java.security.MessageDigest
-   ;; javax.xml.bind.DatatypeConverter
-
-   )
-  )
+   java.security.MessageDigest))
 
 
-(defn md5 [^bytes input]
+(defn bytes->hex ^String [^bytes input]
+  (let [sb (new StringBuilder)]
+    (doseq [b input]
+      (.append sb (format "%02x" b)))
+    (str sb)))
+
+
+(defn md5 ^bytes [^bytes input]
   (let [d (MessageDigest/getInstance "MD5")]
     (.update d input)
     (-> d
-        .digest
-        ;; DatatypeConverter/printHexBinary
-        ;; .toLowerCase
-        ;; .getBytes
-
-        )))
+        (.digest)
+        (bytes->hex)
+        (.toLowerCase)
+        (.getBytes))))

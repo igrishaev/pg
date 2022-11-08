@@ -2,6 +2,8 @@
   (:import
    java.nio.channels.SocketChannel)
   (:require
+   [pg.md5 :as md5]
+   [pg.const :as const]
    [pg.bb :as bb]))
 
 
@@ -388,12 +390,11 @@
 (defn make-startup [database user]
 
   (let [len (+ 4 4 4 (count user) 1
-               1 8 1 (count database) 1 1)
-        bb (bb/allocate len)]
+               1 8 1 (count database) 1 1)]
 
-    (doto bb
+    (doto (bb/allocate len)
       (bb/write-int32 len)
-      (bb/write-int32 196608)
+      (bb/write-int32 const/PROT_VER_14)
       (bb/write-cstring "user")
       (bb/write-cstring user)
       (bb/write-cstring "database")
@@ -410,27 +411,48 @@
 
 
 (defn make-query [query]
-  (let [len (+ 4 (byte-count query) 1)
-        bb (bb/allocate (inc len))]
+  (let [len (+ 4 (byte-count query) 1)]
 
-    (doto bb
+    (doto (bb/allocate (inc len))
       (bb/write-byte \Q)
       (bb/write-int32 len)
       (bb/write-cstring query))))
 
 
-(defn make-md5-password [user password]
+(defn make-clear-text-password [password]
 
-  (let [hashed-pass
-        ""
+  (let [len
+        (+ 4 (byte-count password) 1)]
 
-        len
-        (+ 4 (byte-count hashed-pass))
+    (doto (bb/allocate (inc len))
+      (bb/write-byte \p)
+      (bb/write-int32 len)
+      (bb/write-cstring password))))
+
+
+(defn make-md5-password
+  [^String user ^String password ^bytes salt]
+
+  ;; concat('md5', md5(concat(md5(concat(password, username)), random-salt)))
+
+  (let [creds
+        (md5/md5 (.getBytes (str user password) "utf-8"))
+
+        bb-len
+        (+ (alength creds) (alength salt))
 
         bb
-        (bb/allocate len)]
+        (doto (bb/allocate bb-len)
+          (bb/write-bytes creds)
+          (bb/write-bytes salt))
 
-    (doto bb
+        hashed-pass
+        (new String (md5/md5 (bb/get-array bb)))
+
+        len
+        (+ 4 (byte-count hashed-pass) 1)]
+
+    (doto (bb/allocate (inc len))
       (bb/write-byte \p)
       (bb/write-int32 len)
       (bb/write-cstring hashed-pass))))

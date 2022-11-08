@@ -21,21 +21,36 @@
 
     (send-bb ch bb)
 
-    (loop [state state]
+    (loop []
 
       (let [{:as msg :keys [type]}
             (msg/read-message ch)]
 
         (case type
 
-          ;; AuthenticationCleartextPassword
-          ;; AuthenticationMD5Password
-
           :AuthenticationOk
           state
 
+          ; :AuthenticationSASL
+
+          :AuthenticationCleartextPassword
+          (let [bb (msg/make-clear-text-password password)]
+            (send-bb ch bb)
+            (recur))
+
+          :AuthenticationMD5Password
+          (let [{:keys [salt]} msg
+                bb (msg/make-md5-password user password salt)]
+            (send-bb ch bb)
+            (recur))
+
+          :ErrorResponse
+          (let [{:keys [errors]} msg]
+            (throw (ex-info "Authentication failed"
+                            {:errors errors})))
+
           ;; else
-          (throw (ex-info "Unhandled message"
+          (throw (ex-info "Unhandled message in the auth pipeline"
                           {:msg msg})))))))
 
 
@@ -69,7 +84,7 @@
             (assoc state :tx-status tx-status)))
 
         ;; else
-        (throw (ex-info "Unhandled message"
+        (throw (ex-info "Unhandled message in the init pipeline"
                         {:msg msg}))))))
 
 
@@ -103,11 +118,11 @@
 (comment
 
   (def -state
-    (connect {:host "localhost"
+    (connect {:host "127.0.0.1"
               :port 15432
               :user "ivan"
               :database "ivan"
-              :password "secret"}))
+              :password "ivan"}))
 
   (def -query
     (msg/make-query "select 1 as foo, 2 as bar"))
