@@ -26,12 +26,17 @@
       (let [{:as msg :keys [type]}
             (msg/read-message ch)]
 
+        (println msg)
+
         (case type
 
           :AuthenticationOk
           state
 
-          ; :AuthenticationSASL
+          :AuthenticationSASL
+          (let [bb (msg/make-sasl-init-response user "SCRAM-SHA-256")]
+            (send-bb ch bb)
+            (recur))
 
           :AuthenticationCleartextPassword
           (let [bb (msg/make-clear-text-password password)]

@@ -3,6 +3,7 @@
    java.nio.channels.SocketChannel)
   (:require
    [pg.md5 :as md5]
+   [pg.scram :as scram]
    [pg.const :as const]
    [pg.bb :as bb]))
 
@@ -465,3 +466,22 @@
       (bb/write-byte \p)
       (bb/write-int32 len)
       (bb/write-cstring hashed-pass))))
+
+
+(defn make-sasl-init-response [user method]
+
+  (let [cfm-bytes
+        (.getBytes (scram/client-first-message user))
+
+        cfm-len
+        (alength cfm-bytes)
+
+        len
+        (+ 4 (count method) 1 4 cfm-len)]
+
+    (doto (bb/allocate (inc len))
+      (bb/write-byte \p)
+      (bb/write-int32 len)
+      (bb/write-cstring method)
+      (bb/write-int32 cfm-len)
+      (bb/write-bytes cfm-bytes))))
