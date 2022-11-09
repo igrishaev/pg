@@ -2,7 +2,7 @@
   (:import
    java.nio.channels.SocketChannel)
   (:require
-   [pg.md5 :as md5]
+   [pg.codec :as codec]
    [pg.scram :as scram]
    [pg.const :as const]
    [pg.bb :as bb]))
@@ -446,18 +446,17 @@
   ;; concat('md5', md5(concat(md5(concat(password, username)), random-salt)))
 
   (let [creds
-        (md5/md5 (.getBytes (str password user) "utf-8"))
-
-        bb-len
-        (+ (alength creds) (alength salt))
-
-        bb
-        (doto (bb/allocate bb-len)
-          (bb/write-bytes creds)
-          (bb/write-bytes salt))
+        (-> (str password user)
+            codec/str->bytes
+            codec/md5
+            codec/bytes->hex
+            codec/str->bytes)
 
         hashed-pass
-        (str "md5" (new String (md5/md5 (bb/get-array bb))))
+        (->> (codec/concat-bytes creds salt)
+             codec/md5
+             codec/bytes->hex
+             (str "md5"))
 
         len
         (+ 4 (count hashed-pass) 1)]

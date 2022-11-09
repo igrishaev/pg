@@ -42,11 +42,13 @@
 (defn md5 ^bytes [^bytes input]
   (let [d (MessageDigest/getInstance "MD5")]
     (.update d input)
-    (-> d
-        (.digest)
-        (bytes->hex)
-        (.toLowerCase)
-        (.getBytes))))
+    (.digest d)))
+
+
+(defn sha-256 ^bytes [^bytes input]
+  (let [d (MessageDigest/getInstance "SHA-256")]
+    (.update d input)
+    (.digest d)))
 
 
 (defn normalize-nfc [^String string]
@@ -74,3 +76,30 @@
 
     (.init mac sks)
     (.doFinal mac message)))
+
+
+(defn xor-bytes ^bytes [^bytes bytes1 ^bytes bytes2]
+
+  (when-not (= (alength bytes1) (alength bytes2))
+    (throw (ex-info "XOR error: the lengths do not match")))
+
+  (let [len
+        (alength bytes1)
+
+        result
+        (byte-array len)]
+
+    (doseq [i (range len)]
+      (let [b1 (aget bytes1 i)
+            b2 (aget bytes2 i)]
+        (aset result i ^Byte (bit-xor b1 b2))))
+
+    result))
+
+
+(defn concat-bytes ^bytes [^bytes bytes1 ^bytes bytes2]
+
+  (let [result (byte-array (+ (alength bytes1) (alength bytes2)))]
+    (System/arraycopy bytes1 0 result 0                (alength bytes1))
+    (System/arraycopy bytes2 0 result (alength bytes1) (alength bytes2))
+    result))

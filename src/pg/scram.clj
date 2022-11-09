@@ -1,11 +1,32 @@
 (ns pg.scram
+  "
+  https://postgrespro.ru/docs/postgresql/14/sasl-authentication
+  https://www.rfc-editor.org/rfc/rfc7677
+  https://www.rfc-editor.org/rfc/rfc5802
+  https://gist.github.com/jkatz/e0a1f52f66fa03b732945f6eb94d9c21
+  "
   (:require
    [pg.codec :as codec]
    [clojure.string :as str]))
 
 
-(defn Hi [^String password ^bytes salt ^Integer iterations]
-  )
+(defn Hi ^bytes
+  [^String password ^bytes salt ^Integer iterations]
+
+  (let [message
+        (codec/str->bytes password)
+
+        s1
+        (codec/concat-bytes salt (byte-array [0 0 0 1]))
+
+        u1
+        (codec/hmac-sha-256 message s1)]
+
+    (reduce
+     (fn [^bytes u i]
+       (codec/xor-bytes u (codec/hmac-sha-256 message u)))
+     u1
+     (range (dec iterations)))))
 
 
 (defn step1-client-first-message [user password]
@@ -62,9 +83,6 @@
 
 (defn step3-client-final-message [state]
 
-  ;; channel-binding
-
-
   (let [{:keys [salt
                 nonce
                 password
@@ -89,24 +107,19 @@
                        client-final-message-without-proof])
 
         SaltedPassword
-        ;; (Hi (Normalize password) salt iteration-count)
-        1
+        (Hi (codec/normalize-nfc password) salt iteration-count)
 
         ClientKey
-        ;; HMAC(SaltedPassword, "Client Key")
-        1
+        (codec/hmac-sha-256 SaltedPassword (codec/str->bytes "Client Key"))
 
         StoredKey
-        ;; H(ClientKey)
-        1
+        (codec/sha-256 ClientKey)
 
         ClientSignature
-        ;; HMAC(StoredKey, AuthMessage)
-        1
+        (codec/hmac-sha-256 StoredKey (codec/str->bytes AuthMessage))
 
         ClientProof
-        #_(XOR ClientKey ClientSignature)
-        1
+        (codec/xor-bytes ClientKey ClientSignature)
 
         proof
         (-> ClientProof
