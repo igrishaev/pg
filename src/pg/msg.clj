@@ -101,7 +101,7 @@
        :status status}
 
       10
-      (let [auth-list
+      (let [auth-types
             (loop [acc []]
               (let [item (bb/read-cstring bb)]
                 (if (= item "")
@@ -110,7 +110,7 @@
         {:type :AuthenticationSASL
          :len len
          :status status
-         :auth-list auth-list})
+         :auth-types auth-types})
 
       11
       (let [auth (bb/read-rest bb)]
@@ -484,3 +484,14 @@
       (bb/write-cstring method)
       (bb/write-int32 cfm-len)
       (bb/write-bytes cfm-bytes))))
+
+
+(defn make-sasl-response [^String client-message]
+
+  (let [len
+        (+ 4 (byte-count client-message))]
+
+    (doto (bb/allocate (inc len))
+      (bb/write-byte \p)
+      (bb/write-int32 len)
+      (bb/write-bytes (codec/str->bytes client-message)))))

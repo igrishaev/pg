@@ -33,10 +33,13 @@
 
 
 (defn bytes->hex ^String [^bytes input]
-  (let [sb (new StringBuilder)]
-    (doseq [b input]
-      (.append sb (format "%02x" b)))
-    (str sb)))
+  (let [len (alength input)]
+    (loop [sb (new StringBuilder)
+           i 0]
+      (if (= i len)
+        (str sb)
+        (let [b (aget input i)]
+          (recur (.append sb (format "%02x" b)) (inc i)))))))
 
 
 (defn md5 ^bytes [^bytes input]
@@ -84,22 +87,23 @@
     (throw (ex-info "XOR error: the lengths do not match")))
 
   (let [len
-        (alength bytes1)
+        (alength bytes1)]
 
+    (loop [result (byte-array len)
+           i 0]
+
+      (if (= i len)
         result
-        (byte-array len)]
 
-    (doseq [i (range len)]
-      (let [b1 (aget bytes1 i)
-            b2 (aget bytes2 i)]
-        (aset result i ^Byte (bit-xor b1 b2))))
-
-    result))
+        (let [b1 (aget bytes1 i)
+              b2 (aget bytes2 i)]
+          (aset result i ^Byte (bit-xor b1 b2))
+          (recur result (inc i)))))))
 
 
 (defn concat-bytes ^bytes [^bytes bytes1 ^bytes bytes2]
-
-  (let [result (byte-array (+ (alength bytes1) (alength bytes2)))]
+  (let [result
+        (byte-array (+ (alength bytes1) (alength bytes2)))]
     (System/arraycopy bytes1 0 result 0                (alength bytes1))
     (System/arraycopy bytes2 0 result (alength bytes1) (alength bytes2))
     result))

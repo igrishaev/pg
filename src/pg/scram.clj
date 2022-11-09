@@ -29,7 +29,13 @@
      (range (dec iterations)))))
 
 
-(defn step1-client-first-message [user password]
+(defn H ^bytes [^bytes input]
+  (codec/sha-256 input))
+
+
+(defn step1-client-first-message
+  [^String user ^String password]
+
   (let [gs2-header
         "n,,"
 
@@ -49,6 +55,10 @@
      :client-first-message-bare client-first-message-bare}))
 
 
+(defn parse-int [x]
+  (Integer/parseInt x))
+
+
 (defn step2-server-first-message
   [state ^String server-first-message]
 
@@ -60,9 +70,7 @@
                    (str/split pair #"=" 2)))
 
         keyvals
-        (update keyvals
-                "i"
-                (fn [x] (Integer/parseInt x)))
+        (update keyvals "i" parse-int)
 
         {salt-encoded "s"
          nonce "r"
@@ -99,7 +107,7 @@
             codec/bytes->str)
 
         client-final-message-without-proof
-        (str channel-binding nonce)
+        (str "c=" channel-binding ",r=" nonce)
 
         AuthMessage
         (str/join "," [client-first-message-bare
@@ -113,7 +121,7 @@
         (codec/hmac-sha-256 SaltedPassword (codec/str->bytes "Client Key"))
 
         StoredKey
-        (codec/sha-256 ClientKey)
+        (H ClientKey)
 
         ClientSignature
         (codec/hmac-sha-256 StoredKey (codec/str->bytes AuthMessage))
@@ -127,7 +135,7 @@
             codec/bytes->str)
 
         client-final-message
-        (str client-final-message-without-proof "," proof)]
+        (str client-final-message-without-proof ",p=" proof)]
 
     (assoc state
            :proof proof
@@ -151,44 +159,3 @@
 ]
 
     (assoc state)))
-
-
-
-
-(defn client-first-message ^String [user]
-
-  (let [header
-        "n,,"
-
-        nonce
-        (str (java.util.UUID/randomUUID))
-
-        ]
-
-    (str header "n=" user ",r=" nonce)))
-
-
-(defn process-server-first-message [^bytes payload]
-  (let [pairs
-        (str/split (new String payload) #",")
-
-        keyvals
-        (into {} (for [pair pairs]
-                   (str/split pair #"=" 2)))
-
-        keyvals
-        (update keyvals
-                "i"
-                (fn [x] (Integer/parseInt x)))
-
-        ;; {salt "s"
-        ;;  nonce "r"
-        ;;  iters "i"}
-        ;; keyvals
-
-        ]
-
-    keyvals
-    )
-
-  )

@@ -1,5 +1,7 @@
 (ns pg.conn
   (:require
+   [pg.codec :as codec]
+   [pg.scram :as scram]
    [pg.bb :as bb]
    [pg.msg :as msg])
   (:import
@@ -21,7 +23,9 @@
 
     (send-bb ch bb)
 
-    (loop []
+    (loop [;; state-scram
+           ;; (scram/step1-client-first-message user password)
+           ]
 
       (let [{:as msg :keys [type]}
             (msg/read-message ch)]
@@ -33,8 +37,32 @@
           :AuthenticationOk
           state
 
+          :AuthenticationSASLContinue
+          (let [{:keys [auth]}
+                msg
+
+                server-first-message
+                (codec/bytes->str auth)
+
+                state-sasl
+                (-> (scram/step1-client-first-message user password)
+                    (scram/step2-server-first-message server-first-message)
+                    (scram/step3-client-final-message))
+
+                {:keys [client-final-message]}
+                state-sasl
+
+                _ (println client-final-message)
+
+                bb
+                (msg/make-sasl-response client-final-message)]
+
+            (send-bb ch bb)
+            (recur))
+
           :AuthenticationSASL
-          (let [bb (msg/make-sasl-init-response user "SCRAM-SHA-256")]
+          (let [{:keys [auth-types]} msg
+                bb (msg/make-sasl-init-response user "SCRAM-SHA-256")]
             (send-bb ch bb)
             (recur))
 
