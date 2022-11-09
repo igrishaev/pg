@@ -20,12 +20,16 @@
         (codec/concat-bytes salt (byte-array [0 0 0 1]))]
 
     (loop [i 0
-           u (codec/hmac-sha-256 message salt-init)]
+           s salt-init
+           u (byte-array 32)]
+
       (if (= i iterations)
         u
-        (recur
-         (inc i)
-         (codec/xor-bytes u (codec/hmac-sha-256 message u)))))))
+        (let [u-next
+              (codec/hmac-sha-256 message s)]
+          (recur (inc i)
+                 u-next
+                 (codec/xor-bytes u u-next)))))))
 
 #_
 (codec/bytes->hex (Hi "secret" (-> "MXf1hERKrJWAQSlcYSRe6A==" codec/str->bytes codec/b64-decode) 4096))
