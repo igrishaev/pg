@@ -19,7 +19,7 @@
         salt-init
         (codec/concat-bytes salt (byte-array [0 0 0 1]))]
 
-    (loop [i 1
+    (loop [i 0
            u (codec/hmac-sha-256 message salt-init)]
       (if (= i iterations)
         u
