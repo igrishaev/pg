@@ -23,9 +23,7 @@
 
     (send-bb ch bb)
 
-    (loop [;; state-scram
-           ;; (scram/step1-client-first-message user password)
-           ]
+    (loop [state-sasl nil]
 
       (let [{:as msg :keys [type]}
             (msg/read-message ch)]
@@ -38,44 +36,58 @@
           state
 
           :AuthenticationSASLContinue
-          (let [{:keys [auth]}
+          (let [{:keys [message]}
                 msg
 
                 server-first-message
-                (codec/bytes->str auth)
+                (codec/bytes->str message)
 
                 state-sasl
-                (-> (scram/step1-client-first-message user password)
+                (-> state-sasl
                     (scram/step2-server-first-message server-first-message)
                     (scram/step3-client-final-message))
 
                 {:keys [client-final-message]}
                 state-sasl
 
+                _ (println server-first-message)
                 _ (println client-final-message)
 
                 bb
                 (msg/make-sasl-response client-final-message)]
 
             (send-bb ch bb)
-            (recur))
+            (recur state-sasl))
 
           :AuthenticationSASL
-          (let [{:keys [auth-types]} msg
-                bb (msg/make-sasl-init-response user "SCRAM-SHA-256")]
+          (let [{:keys [auth-types]}
+                msg
+
+                state-sasl
+                (scram/step1-client-first-message user password)
+
+                {:keys [client-first-message]}
+                state-sasl
+
+                bb
+                (msg/make-sasl-init-response "SCRAM-SHA-256"
+                                             client-first-message)]
+
+            (println client-first-message)
+
             (send-bb ch bb)
-            (recur))
+            (recur state-sasl))
 
           :AuthenticationCleartextPassword
           (let [bb (msg/make-clear-text-password password)]
             (send-bb ch bb)
-            (recur))
+            (recur nil))
 
           :AuthenticationMD5Password
           (let [{:keys [salt]} msg
                 bb (msg/make-md5-password user password salt)]
             (send-bb ch bb)
-            (recur))
+            (recur nil))
 
           :ErrorResponse
           (let [{:keys [errors]} msg]

@@ -113,11 +113,11 @@
          :auth-types auth-types})
 
       11
-      (let [auth (bb/read-rest bb)]
+      (let [message (bb/read-rest bb)]
         {:type :AuthenticationSASLContinue
          :len len
          :status status
-         :auth auth})
+         :message message})
 
       12
       (let [auth (bb/read-rest bb)]
@@ -467,23 +467,24 @@
       (bb/write-cstring hashed-pass))))
 
 
-(defn make-sasl-init-response [user method]
+(defn make-sasl-init-response
+  [^String method ^String message]
 
-  (let [cfm-bytes
-        (.getBytes (scram/client-first-message user))
+  (let [buf
+        (codec/str->bytes message )
 
-        cfm-len
-        (alength cfm-bytes)
+        buf-len
+        (alength buf)
 
         len
-        (+ 4 (count method) 1 4 cfm-len)]
+        (+ 4 (count method) 1 4 buf-len)]
 
     (doto (bb/allocate (inc len))
       (bb/write-byte \p)
       (bb/write-int32 len)
       (bb/write-cstring method)
-      (bb/write-int32 cfm-len)
-      (bb/write-bytes cfm-bytes))))
+      (bb/write-int32 buf-len)
+      (bb/write-bytes buf))))
 
 
 (defn make-sasl-response [^String client-message]

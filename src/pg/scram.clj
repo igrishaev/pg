@@ -16,17 +16,16 @@
   (let [message
         (codec/str->bytes password)
 
-        s1
-        (codec/concat-bytes salt (byte-array [0 0 0 1]))
+        salt-init
+        (codec/concat-bytes salt (byte-array [0 0 0 1]))]
 
-        u1
-        (codec/hmac-sha-256 message s1)]
-
-    (reduce
-     (fn [^bytes u i]
-       (codec/xor-bytes u (codec/hmac-sha-256 message u)))
-     u1
-     (range (dec iterations)))))
+    (loop [i 1
+           u (codec/hmac-sha-256 message salt-init)]
+      (if (= i iterations)
+        u
+        (recur
+         (inc i)
+         (codec/xor-bytes u (codec/hmac-sha-256 message u)))))))
 
 
 (defn H ^bytes [^bytes input]
