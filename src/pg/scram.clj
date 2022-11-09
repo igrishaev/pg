@@ -27,6 +27,9 @@
          (inc i)
          (codec/xor-bytes u (codec/hmac-sha-256 message u)))))))
 
+#_
+(codec/bytes->hex (Hi "secret" (-> "MXf1hERKrJWAQSlcYSRe6A==" codec/str->bytes codec/b64-decode) 4096))
+
 
 (defn H ^bytes [^bytes input]
   (codec/sha-256 input))
