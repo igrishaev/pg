@@ -6,7 +6,7 @@
    [pg.bb :as bb]))
 
 
-(defn parse-row-description [len bb]
+(defn parse-row-description [bb]
 
   (let [field-count
         (bb/read-int16 bb)
@@ -24,7 +24,6 @@
             :format      (bb/read-int16 bb)}))]
 
     {:type :RowDescription
-     :len len
      :field-count field-count
      :fields fields}))
 
@@ -37,18 +36,17 @@
     value))
 
 
-(defn parse-param-status [len bb]
+(defn parse-param-status [bb]
 
   (let [param (bb/read-cstring bb)
         value (bb/read-cstring bb)]
 
     {:type :ParameterStatus
-     :len len
      :param param
      :value (coerce-param-value value)}))
 
 
-(defn parse-auth-response [len bb]
+(defn parse-auth-response [bb]
 
   (let [status (int (bb/read-int32 bb))]
 
@@ -56,49 +54,40 @@
 
       0
       {:type :AuthenticationOk
-       :len len
        :status status}
 
       2
       {:type :AuthenticationKerberosV5
-       :len len
        :status status}
 
       3
       {:type :AuthenticationCleartextPassword
-       :len len
        :status status}
 
       5
       {:type :AuthenticationMD5Password
-       :len len
        :status status
        :salt (bb/read-bytes bb 4)}
 
       6
       {:type :AuthenticationSCMCredential
-       :len len
        :status status}
 
       7
       {:type :AuthenticationGSS
-       :len len
        :status status}
 
       8
       {:type :AuthenticationGSSContinue
-       :len len
        :status status
        :auth (bb/read-rest bb)}
 
       9
       {:type :AuthenticationSSPI
-       :len len
        :status status}
 
       10
       {:type :AuthenticationSASL
-       :len len
        :status status
        :sasl-types
        (loop [acc #{}]
@@ -109,7 +98,6 @@
 
       11
       {:type :AuthenticationSASLContinue
-       :len len
        :status status
        :server-first-message
        (-> bb
@@ -118,7 +106,6 @@
 
       12
       {:type :AuthenticationSASLFinal
-       :len len
        :status status
        :server-final-message
        (-> bb
@@ -131,23 +118,21 @@
                        :bb bb})))))
 
 
-(defn parse-backend-data [len bb]
+(defn parse-backend-data [bb]
   (let [pid (bb/read-int32 bb)
         secret-key (bb/read-int32 bb)]
     {:type :BackendKeyData
-     :len len
      :pid pid
      :secret-key secret-key}))
 
 
-(defn parse-ready-for-query [len bb]
+(defn parse-ready-for-query [bb]
   (let [tx-status (char (bb/read-byte bb))]
     {:type :ReadyForQuery
-     :len len
      :tx-status tx-status}))
 
 
-(defn parse-error-response [len bb]
+(defn parse-error-response [bb]
   (let [errors
         (loop [acc []]
           (let [field-type (bb/read-byte bb)]
@@ -157,11 +142,10 @@
                 (recur (conj acc {:type (char field-type)
                                   :text field-text}))))))]
     {:type :ErrorResponse
-     :len len
      :errors errors}))
 
 
-(defn parse-notice-response [len bb]
+(defn parse-notice-response [bb]
   (let [messages
         (loop [acc []]
           (let [field-type (bb/read-byte bb)]
@@ -170,28 +154,24 @@
               (let [field-text (bb/read-cstring bb)]
                 (recur (conj acc {:type field-type :text field-text}))))))]
     {:type :NoticeResponse
-     :len len
      :messages messages}))
 
 
-(defn parse-bind-complete [len bb]
-  {:type :BindComplete
-   :len len})
+(defn parse-bind-complete [bb]
+  {:type :BindComplete})
 
 
-(defn parse-close-complete [len bb]
-  {:type :CloseComplete
-   :len len})
+(defn parse-close-complete [bb]
+  {:type :CloseComplete})
 
 
-(defn parse-command-complete [len bb]
+(defn parse-command-complete [bb]
   (let [tag (bb/read-cstring bb)]
     {:type :CommandComplete
-     :len len
      :tag tag}))
 
 
-(defn parse-data-row [len bb]
+(defn parse-data-row [bb]
   (let [amount
         (bb/read-int16 bb)
 
@@ -203,24 +183,21 @@
                (bb/read-bytes bb col-len)))))]
 
     {:type :DataRow
-     :len len
      :columns columns}))
 
 
-(defn parse-empty-query-response [len bb]
-  {:type :EmptyQueryResponse
-   :len len})
+(defn parse-empty-query-response [bb]
+  {:type :EmptyQueryResponse})
 
 
-(defn parse-function-call-response [len bb]
+(defn parse-function-call-response [bb]
   (let [res-len (bb/read-int32 bb)
         res-val (bb/read-bytes bb res-len)]
     {:type :FunctionCallResponse
-     :len len
      :result res-val}))
 
 
-(defn parse-negotiate-protocol-version [len bb]
+(defn parse-negotiate-protocol-version [bb]
   (let [minor-version
         (bb/read-int32 bb)
 
@@ -233,29 +210,26 @@
            (bb/read-cstring bb)))]
 
     {:type :NegotiateProtocolVersion
-     :len len
      :minor-version minor-version
      :failed-params-count failed-params-count
      :failed-params failed-params}))
 
 
-(defn parse-no-data [len bb]
-  {:type :NoData
-   :len len})
+(defn parse-no-data [bb]
+  {:type :NoData})
 
 
-(defn parse-notice-response [len bb]
+(defn parse-notice-response [bb]
   (let [pid (bb/read-int32 bb)
         channel (bb/read-cstring bb)
         message (bb/read-cstring bb)]
     {:type :NotificationResponse
-     :len len
      :pid pid
      :channel channel
      :message message}))
 
 
-(defn parse-param-description [len bb]
+(defn parse-param-description [bb]
   (let [param-count
         (bb/read-int16 bb)
 
@@ -264,86 +238,82 @@
          (for [i (range param-count)]
            (bb/read-int32 bb)))]
     {:type :ParameterDescription
-     :len len
      :param-count param-count
      :param-types param-types}))
 
 
-(defn parse-parse-complete [len bb]
-  {:type :ParseComplete
-   :len len})
+(defn parse-parse-complete [bb]
+  {:type :ParseComplete})
 
 
-(defn parse-portal-suspended [len bb]
-  {:type :PortalSuspended
-   :len len})
+(defn parse-portal-suspended [bb]
+  {:type :PortalSuspended})
 
 
-(defn parse-message-payload [lead len bb]
+(defn parse-message-payload [lead bb]
 
   (case (char lead)
 
     \T
-    (parse-row-description len bb)
+    (parse-row-description bb)
 
     \S
-    (parse-param-status len bb)
+    (parse-param-status bb)
 
     \R
-    (parse-auth-response len bb)
+    (parse-auth-response bb)
 
     \K
-    (parse-backend-data len bb)
+    (parse-backend-data bb)
 
     \Z
-    (parse-ready-for-query len bb)
+    (parse-ready-for-query bb)
 
     \E
-    (parse-error-response len bb)
+    (parse-error-response bb)
 
     \N
-    (parse-notice-response len bb)
+    (parse-notice-response bb)
 
     \I
-    (parse-empty-query-response len bb)
+    (parse-empty-query-response bb)
 
     \V
-    (parse-function-call-response len bb)
+    (parse-function-call-response bb)
 
     \D
-    (parse-data-row len bb)
+    (parse-data-row bb)
 
     \A
-    (parse-notice-response len bb)
+    (parse-notice-response bb)
 
     \s
-    (parse-portal-suspended len bb)
+    (parse-portal-suspended bb)
 
     \1
-    (parse-parse-complete len bb)
+    (parse-parse-complete bb)
 
     \2
-    (parse-bind-complete len bb)
+    (parse-bind-complete bb)
 
     \3
-    (parse-close-complete len bb)
+    (parse-close-complete bb)
 
     \C
-    (parse-command-complete len bb)
+    (parse-command-complete bb)
 
     \v
-    (parse-negotiate-protocol-version len bb)
+    (parse-negotiate-protocol-version bb)
 
     \t
-    (parse-param-description len bb)
+    (parse-param-description bb)
 
     \n
-    (parse-no-data len bb)
+    (parse-no-data bb)
 
     ;; else
     (throw (ex-info "Unhandled server message"
                     {:lead lead
-                     :len len
                      :bb bb}))))
 
 
@@ -361,7 +331,7 @@
     (cond
 
       (= read len)
-      (parse-message-payload lead len bb)
+      (parse-message-payload lead bb)
 
       :else
       (throw (ex-info "Inconsistent read"
