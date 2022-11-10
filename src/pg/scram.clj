@@ -76,6 +76,23 @@
   (Integer/parseInt x))
 
 
+#_
+(defmacro into-map [[bind coll] form]
+  `(loop [result {}
+          coll coll]
+     (if (some? coll)
+       (let [bind (first coll)]
+         (recur (into result ~form))) (next (coll))
+       result)))
+
+
+(defn parse-message [^String message]
+  (let [pairs
+        (str/split message #",")]
+    (into {} (for [pair pairs]
+               (str/split pair #"=" 2)))))
+
+
 (defn step2-server-first-message
   [state ^String server-first-message]
 
@@ -166,10 +183,34 @@
            :client-final-message client-final-message)))
 
 
-(defn step4-server-final-message [state server-final-message]
+(defn step4-server-final-message
+  [state ^String server-final-message]
 
-  (let [
-]
+  ;;
+
+  ;; ServerKey       := HMAC(SaltedPassword, "Server Key")
+  ;; ServerSignature := HMAC(ServerKey, AuthMessage)
+  ;; ServerSignature
+
+  (let [{:keys [AuthMessage
+                SaltedPassword]}
+        state
+
+        server-final-message
+        1
+
+
+        ServerKey
+        (codec/hmac-sha-256 SaltedPassword (codec/str->bytes "Server Key"))
+
+        ServerSignature
+        (codec/hmac-sha-256 ServerKey (codec/str->bytes AuthMessage))]
+
+    (assoc state
+           :ServerKey ServerKey
+           :ServerSignature ServerSignature
+
+           )
 
     (assoc state)))
 

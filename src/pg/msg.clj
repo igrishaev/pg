@@ -120,11 +120,11 @@
          :message message})
 
       12
-      (let [auth (bb/read-rest bb)]
+      (let [message (bb/read-rest bb)]
         {:type :AuthenticationSASLFinal
          :len len
          :status status
-         :auth auth})
+         :message message})
 
       ;; else
       (throw (ex-info "Unknown auth message"

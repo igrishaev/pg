@@ -78,6 +78,18 @@
             (send-bb ch bb)
             (recur state-sasl))
 
+          ;; server-final-message
+
+          ;; verifier        = "v=" base64
+          ;; base-64 encoded ServerSignature.
+          ;; "v=dinCviSchyXpv0W3JPXaT3QYUotxzTWPL8Mw103bRbM="
+
+          :AuthenticationSASLFinal
+          (let [{:keys [message]} msg]
+            )
+
+
+
           :AuthenticationCleartextPassword
           (let [bb (msg/make-clear-text-password password)]
             (send-bb ch bb)
