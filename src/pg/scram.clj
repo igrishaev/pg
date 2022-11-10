@@ -11,32 +11,31 @@
 
 
 (defn Hi ^bytes
-  [^String password ^bytes salt ^Integer iterations]
+  [^bytes secret ^bytes message ^Integer iterations]
 
-  (let [message
-        (codec/str->bytes password)
+  (loop [i 0
+         msg (codec/concat-bytes message (byte-array [0 0 0 1]))
+         u (byte-array 32)]
 
-        salt-init
-        (codec/concat-bytes salt (byte-array [0 0 0 1]))]
-
-    (codec/hmac-sha-256 message salt-init)
-
-    #_
-
-    (loop [i 0
-           s salt-init
-           u (byte-array 32)]
-
-      (if (= i iterations)
-        u
-        (let [u-next
-              (codec/hmac-sha-256 message s)]
-          (recur (inc i)
-                 u-next
-                 (codec/xor-bytes u u-next)))))))
+    (if (= i iterations)
+      u
+      (let [u-next
+            (codec/hmac-sha-256 secret msg)]
+        (recur (inc i)
+               u-next
+               (codec/xor-bytes u u-next))))))
 
 #_
-(codec/bytes->hex (Hi "secret" (-> "MXf1hERKrJWAQSlcYSRe6A==" codec/str->bytes codec/b64-decode) 4096))
+(codec/bytes->hex (Hi "secret"  4096))
+
+#_
+(-> (Hi (codec/str->bytes "secret")
+        (-> "MXf1hERKrJWAQSlcYSRe6A=="
+            codec/str->bytes
+            codec/b64-decode)
+        4096)
+    (codec/bytes->hex))
+
 
 #_
 (-> "MXf1hERKrJWAQSlcYSRe6A=="
@@ -133,7 +132,11 @@
                        client-final-message-without-proof])
 
         SaltedPassword
-        (Hi (codec/normalize-nfc password) salt iteration-count)
+        (Hi (-> password
+                codec/normalize-nfc
+                codec/str->bytes)
+            salt
+            iteration-count)
 
         ClientKey
         (codec/hmac-sha-256 SaltedPassword (codec/str->bytes "Client Key"))

@@ -70,7 +70,7 @@
   (Normalizer/normalize string Normalizer$Form/NFKC))
 
 
-(defn hmac-sha-256 [^bytes message ^bytes secret]
+(defn hmac-sha-256 [^bytes secret ^bytes message]
   (let [mac
         (Mac/getInstance "HmacSHA256")
 
