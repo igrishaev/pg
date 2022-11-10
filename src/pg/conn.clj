@@ -156,7 +156,7 @@
         :RowDescription
         (let [{:keys [fields]}
               msg]
-          (recur query-fields
+          (recur fields
                  query-result))
 
         :DataRow
@@ -172,6 +172,8 @@
 
                   (let [query-field
                         (get query-fields i)
+
+                        _ (println query-fields)
 
                         {field-name :name}
                         query-field]
@@ -221,9 +223,9 @@
 
 (defn query
   [{:as state :keys [ch]} sql]
-  (let [bb (msg/make-query sql)]
-    (send-bb ch bb)
-    ))
+  (with-lock state
+    (send-bb ch (msg/make-query sql))
+    (data-pipeline state)))
 
 
 (defn make-state [state]
@@ -240,11 +242,13 @@
 (comment
 
   (def -state
-    (connect {:host "127.0.0.1"
-              :port 15432
-              :user "ivan"
-              :database "ivan"
-              :password "secret"}))
+    (-> {:host "127.0.0.1"
+         :port 15432
+         :user "ivan"
+         :database "ivan"
+         :password "secret"}
+        make-state
+        connect))
 
   (def -query
     (msg/make-query "select 1 as foo, 2 as bar"))
