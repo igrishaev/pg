@@ -19,6 +19,10 @@
         salt-init
         (codec/concat-bytes salt (byte-array [0 0 0 1]))]
 
+    (codec/hmac-sha-256 message salt-init)
+
+    #_
+
     (loop [i 0
            s salt-init
            u (byte-array 32)]
@@ -33,6 +37,14 @@
 
 #_
 (codec/bytes->hex (Hi "secret" (-> "MXf1hERKrJWAQSlcYSRe6A==" codec/str->bytes codec/b64-decode) 4096))
+
+#_
+(-> "MXf1hERKrJWAQSlcYSRe6A=="
+    codec/str->bytes
+    codec/b64-decode
+    (codec/concat-bytes (byte-array [0 0 0 1]))
+    codec/bytes->hex
+    )
 
 
 (defn H ^bytes [^bytes input]

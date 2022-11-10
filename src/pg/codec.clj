@@ -81,6 +81,24 @@
     (.doFinal mac message)))
 
 
+#_
+(-> "MXf1hERKrJWAQSlcYSRe6A=="
+                                           str->bytes
+                                           b64-decode
+                                           (concat-bytes (byte-array [0 0 0 1])))
+
+
+#_
+(-> (hmac-sha-256 (.getBytes "aaa") (.getBytes "bbb"))
+    (bytes->hex)
+    )
+
+#_ db404a4b73d69c3dd753825b49266f5651a2d965a70daf12bfdb8727ec2c10b0
+
+#_
+(codec/bytes->hex (Hi "secret" (-> "MXf1hERKrJWAQSlcYSRe6A==" codec/str->bytes codec/b64-decode) 4096))
+
+
 (defn xor-bytes ^bytes [^bytes bytes1 ^bytes bytes2]
 
   (when-not (= (alength bytes1) (alength bytes2))

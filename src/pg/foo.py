@@ -27,9 +27,13 @@ def scram_sha_256_generate_salted_password(password, salt, iterations, digest):
     # the initial signature is the salt with a terminator of a 32-bit string ending in 1
     ui = hmac.new(p, salt + b'\x00\x00\x00\x01', digest)
 
+    print((salt + b'\x00\x00\x00\x01').hex())
     # grab the initial digest
 
+    return hmac.new(b"aaa", b"bbb", digest).digest()
+
     u = ui.digest()
+    return u
 
     # for X number of iterations, recompute the HMAC signature against the password
     # and the latest iteration of the hash, and XOR it with the previous version
@@ -43,4 +47,5 @@ def scram_sha_256_generate_salted_password(password, salt, iterations, digest):
     return u
 
 
+# print(bytes(base64.b64decode("MXf1hERKrJWAQSlcYSRe6A==")).hex())
 print(scram_sha_256_generate_salted_password("secret", bytes(base64.b64decode("MXf1hERKrJWAQSlcYSRe6A==")), 4096, hashlib.sha256).hex())
