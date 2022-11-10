@@ -1,4 +1,4 @@
-(ns pg.scram
+(ns pg.auth.scram-sha-256
   "
   https://postgrespro.ru/docs/postgresql/14/sasl-authentication
   https://www.rfc-editor.org/rfc/rfc7677

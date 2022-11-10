@@ -2,7 +2,7 @@
   (:require
    [pg.const :as const]
    [pg.codec :as codec]
-   [pg.scram :as scram]
+   [pg.auth.scram-sha-256 :as sha-256]
    [pg.bb :as bb]
    [pg.msg :as msg])
   (:import
@@ -41,8 +41,8 @@
 
                 state-auth
                 (-> state-auth
-                    (scram/step2-server-first-message server-first-message)
-                    (scram/step3-client-final-message))
+                    (sha-256/step2-server-first-message server-first-message)
+                    (sha-256/step3-client-final-message))
 
                 {:keys [client-final-message]}
                 state-auth
@@ -61,7 +61,7 @@
 
               (contains? sasl-types const/SCRAM-SHA-256)
               (let [state-auth
-                    (scram/step1-client-first-message user password)
+                    (sha-256/step1-client-first-message user password)
 
                     {:keys [client-first-message]}
                     state-auth
@@ -83,8 +83,8 @@
 
                 state-auth
                 (-> state-auth
-                    (scram/step4-server-final-message server-final-message)
-                    (scram/step5-verify-server-signatures))]
+                    (sha-256/step4-server-final-message server-final-message)
+                    (sha-256/step5-verify-server-signatures))]
             (recur state-auth))
 
           :AuthenticationCleartextPassword
@@ -142,6 +142,67 @@
                         {:msg msg}))))))
 
 
+(defn data-pipeline
+  [{:as state :keys [^SocketChannel ch]}]
+
+  (loop [query-fields nil
+         query-result (transient [])]
+
+    (let [{:as msg :keys [type]}
+          (msg/read-message ch)]
+
+      (case type
+
+        :RowDescription
+        (let [{:keys [fields]}
+              msg]
+          (recur query-fields
+                 query-result))
+
+        :DataRow
+        (let [{:keys [columns]}
+              msg
+
+              row
+              (loop [i 0
+                     columns columns
+                     row (transient {})]
+
+                (if-let [column (first columns)]
+
+                  (let [query-field
+                        (get query-fields i)
+
+                        {field-name :name}
+                        query-field]
+
+                    (recur (inc i)
+                           (next columns)
+                           (assoc! row field-name column)))
+
+                  (persistent! row)))]
+
+          (recur query-fields
+                 (conj! query-result row)))
+
+        :CommandComplete
+        (recur query-fields
+               query-result)
+
+        :ReadyForQuery
+        (let [{:keys [tx-status]} msg]
+          (case tx-status
+            \E
+            (throw (ex-info "Transaction is in the error state"
+                            {:msg msg}))
+            ;; else
+            (persistent! query-result)))
+
+        ;; else
+        (throw (ex-info "Unhandled message in the data pipeline"
+                        {:msg msg}))))))
+
+
 (defn connect [{:as state :keys [^String host
                                  ^Integer port]}]
 
@@ -162,11 +223,18 @@
   [{:as state :keys [ch]} sql]
   (let [bb (msg/make-query sql)]
     (send-bb ch bb)
-    )
+    ))
 
 
+(defn make-state [state]
+  (-> state
+      (assoc :o (new Object))))
 
-  )
+
+(defmacro with-lock
+  [state & body]
+  `(locking (:o ~state)
+     ~@body))
 
 
 (comment
