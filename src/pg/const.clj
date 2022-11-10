@@ -1,9 +1,12 @@
 (ns pg.const)
 
 
-(def TX_INACTIVE \I)
-(def TX_TRANSACTION \T)
-(def TX_ERROR \E)
+(def TX-INACTIVE \I)
+(def TX-TRANSACTION \T)
+(def TX-ERROR \E)
 
-(def PROT_VER_14
+(def PROT-VER-14
   196608)
+
+(def SCRAM-SHA-256
+  "SCRAM-SHA-256")

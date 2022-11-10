@@ -1,5 +1,6 @@
 (ns pg.codec
   (:import
+   java.util.Arrays
    java.text.Normalizer
    java.text.Normalizer$Form
    javax.crypto.Mac
@@ -125,3 +126,7 @@
     (System/arraycopy bytes1 0 result 0                (alength bytes1))
     (System/arraycopy bytes2 0 result (alength bytes1) (alength bytes2))
     result))
+
+
+(defn bytes= ^Boolean [^bytes bytes1 ^bytes bytes2]
+  (Arrays/equals bytes1 bytes2))

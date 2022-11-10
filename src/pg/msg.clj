@@ -3,8 +3,6 @@
    java.nio.channels.SocketChannel)
   (:require
    [pg.codec :as codec]
-   [pg.scram :as scram]
-   [pg.const :as const]
    [pg.bb :as bb]))
 
 
@@ -72,11 +70,10 @@
        :status status}
 
       5
-      (let [salt (bb/read-bytes bb 4)]
-        {:type :AuthenticationMD5Password
-         :len len
-         :status status
-         :salt salt})
+      {:type :AuthenticationMD5Password
+       :len len
+       :status status
+       :salt (bb/read-bytes bb 4)}
 
       6
       {:type :AuthenticationSCMCredential
@@ -89,11 +86,10 @@
        :status status}
 
       8
-      (let [auth (bb/read-rest bb)]
-        {:type :AuthenticationGSSContinue
-         :len len
-         :status status
-         :auth auth})
+      {:type :AuthenticationGSSContinue
+       :len len
+       :status status
+       :auth (bb/read-rest bb)}
 
       9
       {:type :AuthenticationSSPI
@@ -101,30 +97,33 @@
        :status status}
 
       10
-      (let [auth-types
-            (loop [acc []]
-              (let [item (bb/read-cstring bb)]
-                (if (= item "")
-                  acc
-                  (recur (conj acc item)))))]
-        {:type :AuthenticationSASL
-         :len len
-         :status status
-         :auth-types auth-types})
+      {:type :AuthenticationSASL
+       :len len
+       :status status
+       :sasl-types
+       (loop [acc #{}]
+         (let [item (bb/read-cstring bb)]
+           (if (= item "")
+             acc
+             (recur (conj acc item)))))}
 
       11
-      (let [message (bb/read-rest bb)]
-        {:type :AuthenticationSASLContinue
-         :len len
-         :status status
-         :message message})
+      {:type :AuthenticationSASLContinue
+       :len len
+       :status status
+       :server-first-message
+       (-> bb
+           bb/read-rest
+           codec/bytes->str)}
 
       12
-      (let [message (bb/read-rest bb)]
-        {:type :AuthenticationSASLFinal
-         :len len
-         :status status
-         :message message})
+      {:type :AuthenticationSASLFinal
+       :len len
+       :status status
+       :server-final-message
+       (-> bb
+           bb/read-rest
+           codec/bytes->str)}
 
       ;; else
       (throw (ex-info "Unknown auth message"
@@ -397,14 +396,14 @@
      (cons message (read-messages chan)))))
 
 
-(defn make-startup [database user]
+(defn make-startup [database user protocol-version]
 
   (let [len (+ 4 4 4 (count user) 1
                1 8 1 (count database) 1 1)]
 
     (doto (bb/allocate len)
       (bb/write-int32 len)
-      (bb/write-int32 const/PROT_VER_14)
+      (bb/write-int32 protocol-version)
       (bb/write-cstring "user")
       (bb/write-cstring user)
       (bb/write-cstring "database")

@@ -5,6 +5,7 @@
   https://www.rfc-editor.org/rfc/rfc5802
   https://gist.github.com/jkatz/e0a1f52f66fa03b732945f6eb94d9c21
   "
+  (:import java.util.UUID)
   (:require
    [pg.codec :as codec]
    [clojure.string :as str]))
@@ -25,26 +26,6 @@
                u-next
                (codec/xor-bytes u u-next))))))
 
-#_
-(codec/bytes->hex (Hi "secret"  4096))
-
-#_
-(-> (Hi (codec/str->bytes "secret")
-        (-> "MXf1hERKrJWAQSlcYSRe6A=="
-            codec/str->bytes
-            codec/b64-decode)
-        4096)
-    (codec/bytes->hex))
-
-
-#_
-(-> "MXf1hERKrJWAQSlcYSRe6A=="
-    codec/str->bytes
-    codec/b64-decode
-    (codec/concat-bytes (byte-array [0 0 0 1]))
-    codec/bytes->hex
-    )
-
 
 (defn H ^bytes [^bytes input]
   (codec/sha-256 input))
@@ -57,7 +38,7 @@
         "n,,"
 
         nonce
-        (str (java.util.UUID/randomUUID))
+        (str (UUID/randomUUID))
 
         client-first-message-bare
         (str "n=" user ",r=" nonce)
@@ -76,16 +57,6 @@
   (Integer/parseInt x))
 
 
-#_
-(defmacro into-map [[bind coll] form]
-  `(loop [result {}
-          coll coll]
-     (if (some? coll)
-       (let [bind (first coll)]
-         (recur (into result ~form))) (next (coll))
-       result)))
-
-
 (defn parse-message [^String message]
   (let [pairs
         (str/split message #",")]
@@ -94,6 +65,9 @@
 
 
 (defn step2-server-first-message
+
+  ;; r=68591664-4b88-44d8-86ff-e25d20cff4bb48uf9I3XRSTkMOpLWY3LeZOL,s=MXf1hERKrJWAQSlcYSRe6A==,i=4096
+
   [state ^String server-first-message]
 
   (let [pairs
@@ -167,6 +141,12 @@
         ClientProof
         (codec/xor-bytes ClientKey ClientSignature)
 
+        ServerKey
+        (codec/hmac-sha-256 SaltedPassword (codec/str->bytes "Server Key"))
+
+        ServerSignature
+        (codec/hmac-sha-256 ServerKey (codec/str->bytes AuthMessage))
+
         proof
         (-> ClientProof
             codec/b64-encode
@@ -178,46 +158,38 @@
     (assoc state
            :proof proof
            :ClientProof ClientProof
+           :ServerKey ServerKey
+           :ServerSignature ServerSignature
            :channel-binding channel-binding
            :client-final-message-without-proof client-final-message-without-proof
            :client-final-message client-final-message)))
 
 
 (defn step4-server-final-message
+
+  ;; "v=dinCviSchyXpv0W3JPXaT3QYUotxzTWPL8Mw103bRbM="
+
   [state ^String server-final-message]
 
-  ;;
-
-  ;; ServerKey       := HMAC(SaltedPassword, "Server Key")
-  ;; ServerSignature := HMAC(ServerKey, AuthMessage)
-  ;; ServerSignature
-
-  (let [{:keys [AuthMessage
-                SaltedPassword]}
+  (let [{:keys [ServerSignature]}
         state
 
-        server-final-message
-        1
+        {verifier "v"}
+        (parse-message server-final-message)
 
-
-        ServerKey
-        (codec/hmac-sha-256 SaltedPassword (codec/str->bytes "Server Key"))
-
-        ServerSignature
-        (codec/hmac-sha-256 ServerKey (codec/str->bytes AuthMessage))]
+        ServerSignature2
+        (-> verifier
+            codec/str->bytes
+            codec/b64-decode)]
 
     (assoc state
-           :ServerKey ServerKey
-           :ServerSignature ServerSignature
-
-           )
-
-    (assoc state)))
+           :server-final-message server-final-message
+           :ServerSignature2 ServerSignature2)))
 
 
-(defn step5-verify [state]
-
-  (let [
-]
-
-    (assoc state)))
+(defn step5-verify-server-signatures
+  [{:as state :keys [ServerSignature ServerSignature2]}]
+  (if (codec/bytes= ServerSignature ServerSignature2)
+    state
+    (throw (ex-info "Server signatures do not match"
+                    {:state state}))))

@@ -1,5 +1,6 @@
 (ns pg.conn
   (:require
+   [pg.const :as const]
    [pg.codec :as codec]
    [pg.scram :as scram]
    [pg.bb :as bb]
@@ -19,76 +20,72 @@
                      database
                      ^SocketChannel ch]}]
 
-  (let [bb (msg/make-startup database user)]
+  (let [bb
+        (msg/make-startup database user const/PROT-VER-14)]
 
     (send-bb ch bb)
 
-    (loop [state-sasl nil]
+    (loop [state-auth nil]
 
       (let [{:as msg :keys [type]}
             (msg/read-message ch)]
 
-        (println msg)
-
         (case type
 
           :AuthenticationOk
-          state
+          (assoc state :state-auth state-auth)
 
           :AuthenticationSASLContinue
-          (let [{:keys [message]}
+          (let [{:keys [server-first-message]}
                 msg
 
-                server-first-message
-                (codec/bytes->str message)
-
-                state-sasl
-                (-> state-sasl
+                state-auth
+                (-> state-auth
                     (scram/step2-server-first-message server-first-message)
                     (scram/step3-client-final-message))
 
                 {:keys [client-final-message]}
-                state-sasl
-
-                _ (println server-first-message)
-                _ (println client-final-message)
+                state-auth
 
                 bb
                 (msg/make-sasl-response client-final-message)]
 
             (send-bb ch bb)
-            (recur state-sasl))
+            (recur state-auth))
 
           :AuthenticationSASL
-          (let [{:keys [auth-types]}
-                msg
+          (let [{:keys [sasl-types]}
+                msg]
 
-                state-sasl
-                (scram/step1-client-first-message user password)
+            (cond
 
-                {:keys [client-first-message]}
-                state-sasl
+              (contains? sasl-types const/SCRAM-SHA-256)
+              (let [state-auth
+                    (scram/step1-client-first-message user password)
 
-                bb
-                (msg/make-sasl-init-response "SCRAM-SHA-256"
-                                             client-first-message)]
+                    {:keys [client-first-message]}
+                    state-auth
 
-            (println client-first-message)
+                    bb
+                    (msg/make-sasl-init-response const/SCRAM-SHA-256
+                                                 client-first-message)]
 
-            (send-bb ch bb)
-            (recur state-sasl))
+                (send-bb ch bb)
+                (recur state-auth))
 
-          ;; server-final-message
-
-          ;; verifier        = "v=" base64
-          ;; base-64 encoded ServerSignature.
-          ;; "v=dinCviSchyXpv0W3JPXaT3QYUotxzTWPL8Mw103bRbM="
+              :else
+              (throw (ex-info "Other SCRAM algorithms are not implemented yet"
+                              {:sasl-types sasl-types}))))
 
           :AuthenticationSASLFinal
-          (let [{:keys [message]} msg]
-            )
+          (let [{:keys [server-final-message]}
+                msg
 
-
+                state-auth
+                (-> state-auth
+                    (scram/step4-server-final-message server-final-message)
+                    (scram/step5-verify-server-signatures))]
+            (recur state-auth))
 
           :AuthenticationCleartextPassword
           (let [bb (msg/make-clear-text-password password)]
