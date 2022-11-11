@@ -386,6 +386,12 @@
       (bb/write-byte 0))))
 
 
+(defn make-sync []
+  (doto (bb/allocate 5)
+    (bb/write-byte \S)
+    (bb/write-int32 4)))
+
+
 (defn byte-count
   ([string]
    (byte-count string "UTF-8"))

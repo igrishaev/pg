@@ -147,7 +147,8 @@
   [{:as state :keys [^SocketChannel ch]}]
 
   (loop [query-fields nil
-         query-result (transient [])]
+         query-result (transient [])
+         errors nil]
 
     (let [{:as msg :keys [type]}
           (msg/read-message ch)]
@@ -156,14 +157,19 @@
 
       (case type
 
+        :ErrorResponse
+        (let [{:keys [errors]} msg]
+          (recur query-fields
+                 query-result
+                 errors))
+
         :RowDescription
         (let [{:keys [fields]}
               msg]
 
-          ;; (println fields)
-
           (recur fields
-                 query-result))
+                 query-result
+                 nil))
 
         :DataRow
         (let [{:keys [columns]}
@@ -171,8 +177,6 @@
 
               field-count
               (count columns)
-
-              _ (println columns)
 
               row
               (loop [i 0
@@ -187,8 +191,6 @@
                         column-meta
                         (get query-fields i)
 
-                        _ (println i column column-meta)
-
                         {field-name :name}
                         column-meta
 
@@ -199,20 +201,33 @@
                            (assoc! row field-name value)))))]
 
           (recur query-fields
-                 (conj! query-result row)))
+                 (conj! query-result row)
+                 nil))
 
         :CommandComplete
         (recur query-fields
-               query-result)
+               query-result
+               nil)
 
         :ReadyForQuery
         (let [{:keys [tx-status]} msg]
-          (case tx-status
-            \E
-            (throw (ex-info "Transaction is in the error state"
+
+          (cond
+
+            (= tx-status \E)
+            (throw (ex-info "Transaction failed"
                             {:msg msg}))
-            ;; else
-            (persistent! query-result)))
+
+            errors
+            (throw (ex-info "Error response"
+                            {:errors errors}))
+
+            :else
+            (persistent! query-result)
+            #_
+            (recur query-fields
+                   query-result
+                   errors)))
 
         ;; else
         (throw (ex-info "Unhandled message in the data pipeline"
@@ -235,6 +250,12 @@
         (init-pipeline))))
 
 
+(defmacro with-lock
+  [state & body]
+  `(locking (:o ~state)
+     ~@body))
+
+
 (defn query
   [{:as state :keys [ch]} sql]
   (with-lock state
@@ -242,15 +263,14 @@
     (data-pipeline state)))
 
 
+(defn sync [{:as state :keys [ch]}]
+  (with-lock state
+    (send-bb ch (msg/make-sync))))
+
+
 (defn make-state [state]
   (-> state
       (assoc :o (new Object))))
-
-
-(defmacro with-lock
-  [state & body]
-  `(locking (:o ~state)
-     ~@body))
 
 
 (comment
@@ -264,9 +284,11 @@
         make-state
         connect))
 
+  (query "")
+
   (query
    -state
-     "
+   "
 select
 1 as foo,
 'hello' as bar,
@@ -281,7 +303,7 @@ now() as date,
 
 -- '{1, 2, 3}'::int2[] as arr1
 "
-  )
+   )
 
 
 
