@@ -1,4 +1,7 @@
 (ns pg.types
+  "
+  https://docs.oracle.com/javase/9/docs/api/java/time/format/DateTimeFormatter.html
+  "
   (:import
    java.util.UUID
    java.time.ZoneId
