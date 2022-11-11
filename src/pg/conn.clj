@@ -152,6 +152,8 @@
     (let [{:as msg :keys [type]}
           (msg/read-message ch)]
 
+      (println msg)
+
       (case type
 
         :RowDescription
