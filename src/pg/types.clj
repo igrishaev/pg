@@ -14,24 +14,17 @@
    [pg.codec :as codec]))
 
 
-#_
-(def -f
+(def ^DateTimeFormatter
+  dtf-ts-isoz
   (-> "yyyy-MM-dd HH:mm:ss.nx"
       (DateTimeFormatter/ofPattern)
       (.withZone (ZoneId/of "UTC"))))
 
-#_
-(def -ta
-  (.parse -f "2022-11-11 14:45:50.897545+03"))
 
-#_
-(Instant/from -ta)
-
-(defn parse-timestampz [x]
-  (-> "yyyy-MM-dd HH:mm:ss"
-      (DateTimeFormatter/ofPattern)
-      (.withZone (ZoneId/of "UTC"))))
-
+(defn parse-ts-isoz [string]
+  (->> string
+       (.parse dtf-ts-isoz)
+       (Instant/from)))
 
 
 (defn parseInt [x]
@@ -123,7 +116,13 @@
       (-> value codec/bytes->str bigdec)
 
       1184 ;; timestamptz
-      1
+      (-> value codec/bytes->str parse-ts-isoz)
+
+      ;; 1082 | date
+      ;; 1083 | time
+      ;; 1114 | timestamp
+      ;; 1186 | interval
+      ;; 1266 | timetz
 
       ;; else
       (parse-column-mm value column-meta)
@@ -142,23 +141,17 @@
       ;; 705 | unknown
       ;; 718 | circle
 
-      ;; 774 | macaddr8
       ;; 790 | money
 
+      ;; 774 | macaddr8
       ;; 829 | macaddr
       ;; 869 | inet
 
       ;; 1042 | bpchar
-      ;; 1082 | date
-      ;; 1083 | time
-      ;; 1114 | timestamp
 
-      ;; 1186 | interval
 
-      ;; 1266 | timetz
       ;; 1560 | bit
       ;; 1562 | varbit
-
 
       ;; 2249 | record
       ;; 2275 | cstring

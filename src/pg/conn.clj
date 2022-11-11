@@ -269,7 +269,10 @@ select
 1 as foo,
 'hello' as bar,
 true as aaa,
-1.2 as fl,
+1.1::float as fl,
+1.1::float4 as fl1,
+1.1::float8 as fl2,
+1.2 as fl3,
 NULL as nil,
 now() as date,
 '{1, 2, 3}'::int2vector[] as intvec
