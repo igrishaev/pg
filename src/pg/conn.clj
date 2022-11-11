@@ -1,5 +1,6 @@
 (ns pg.conn
   (:require
+   [pg.types :as types]
    [pg.const :as const]
    [pg.codec :as codec]
    [pg.auth.scram-sha-256 :as sha-256]
@@ -156,6 +157,9 @@
         :RowDescription
         (let [{:keys [fields]}
               msg]
+
+          ;; (println fields)
+
           (recur fields
                  query-result))
 
@@ -163,26 +167,34 @@
         (let [{:keys [columns]}
               msg
 
+              field-count
+              (count columns)
+
+              _ (println columns)
+
               row
               (loop [i 0
-                     columns columns
                      row (transient {})]
 
-                (if-let [column (first columns)]
+                (if (= i field-count)
+                  (persistent! row)
 
-                  (let [query-field
+                  (let [column
+                        (get columns i)
+
+                        column-meta
                         (get query-fields i)
 
-                        _ (println query-fields)
+                        _ (println i column column-meta)
 
                         {field-name :name}
-                        query-field]
+                        column-meta
+
+                        value
+                        (types/parse-column column column-meta)]
 
                     (recur (inc i)
-                           (next columns)
-                           (assoc! row field-name column)))
-
-                  (persistent! row)))]
+                           (assoc! row field-name value)))))]
 
           (recur query-fields
                  (conj! query-result row)))
@@ -250,18 +262,32 @@
         make-state
         connect))
 
-  (def -query
-    (msg/make-query "select 1 as foo, 2 as bar"))
+  (query
+   -state
+     "
+select
+1 as foo,
+'hello' as bar,
+true as aaa,
+1.2 as fl,
+NULL as nil,
+now() as date,
+'{1, 2, 3}'::int2vector[] as intvec
 
-  (def -query
-    (msg/make-query "begin"))
-
-  (.rewind -query)
-
-  (.write -ch -query)
+-- '{1, 2, 3}'::int2[] as arr1
+"
+  )
 
 
 
+
+#_
+[{:index 0, :name foo, :table-id 0, :column-id 0, :type-id 23, :type-size 4, :type-mod-id -1, :format 0}
+ {:index 1, :name bar, :table-id 0, :column-id 0, :type-id 25, :type-size -1, :type-mod-id -1, :format 0}
+ {:index 2, :name aaa, :table-id 0, :column-id 0, :type-id 16, :type-size 1, :type-mod-id -1, :format 0}
+ {:index 3, :name fl, :table-id 0, :column-id 0, :type-id 1700, :type-size -1, :type-mod-id -1, :format 0}
+ {:index 4, :name nil, :table-id 0, :column-id 0, :type-id 25, :type-size -1, :type-mod-id -1, :format 0}
+ {:index 5, :name date, :table-id 0, :column-id 0, :type-id 1184, :type-size 8, :type-mod-id -1, :format 0}]
 
 
 

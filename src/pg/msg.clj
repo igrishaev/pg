@@ -5,6 +5,8 @@
    [pg.codec :as codec]
    [pg.bb :as bb]))
 
+;; TODO: vec to loop
+
 
 (defn parse-row-description [bb]
 
@@ -176,11 +178,14 @@
         (bb/read-int16 bb)
 
         columns
-        (vec
-         (for [i (range amount)]
-           (let [col-len (bb/read-int32 bb)]
-             (when-not (= col-len -1)
-               (bb/read-bytes bb col-len)))))]
+        (loop [i 0
+               result (transient [])]
+          (if (= i amount)
+            (persistent! result)
+            (let [len (bb/read-int32 bb)
+                  col (when-not (= len -1)
+                        (bb/read-bytes bb len))]
+              (recur (inc i) (conj! result col)))))]
 
     {:type :DataRow
      :columns columns}))

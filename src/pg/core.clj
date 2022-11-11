@@ -213,6 +213,15 @@
        (bit-shift-left b2 8)
        b1)))
 
+#_
+(defn bytes->int [^bytes buf]
+  (let [len (alength buf)
+        res 0]
+    (loop [i 0]
+      (if (= i len)
+        res
+        (+ res (bit-shift-left (aget buf i) (- len i 1)))))))
+
 
 (defn int32->bytes ^bytes [int32]
   (let [buf (byte-array 4)
