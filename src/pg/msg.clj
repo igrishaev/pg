@@ -550,7 +550,7 @@
       (bb/write-cstring portal))))
 
 
-(defn make-bind [portal statement params]
+(defn make-bind [portal statement params result-formats]
 
   (let [len
         (+ 4
@@ -571,7 +571,7 @@
 
            2
 
-           (* (count params) 2))
+           (* (count result-formats) 2))
 
         bb
         (bb/allocate (inc len))]
@@ -595,10 +595,10 @@
       (bb/write-bytes bb bytes))
 
     (doto bb
-      (bb/write-int16 (count params)))
+      (bb/write-int16 (count result-formats)))
 
-    (doseq [_ params]
-      (bb/write-int16 bb 1))
+    (doseq [result-format result-formats]
+      (bb/write-int16 bb result-format))
 
     bb))
 

@@ -297,7 +297,27 @@
   (send-bb
    (:ch -state)
    (msg/make-parse "st3"
+
+                      "
+select
+1 as foo,
+'hello' as bar,
+true as aaa,
+1.1::float as fl,
+1.1::float4 as fl1,
+1.1::float8 as fl2,
+1.2 as fl3,
+NULL as nil,
+now() as date,
+'{1, 2, 3}'::int2vector[] as intvec
+
+-- '{1, 2, 3}'::int2[] as arr1
+"
+
+                   #_
                    "select * from foo where id = $1"
+
+                   #_
                    [20]))
 
   (send-bb
@@ -308,7 +328,10 @@
    (:ch -state)
    (msg/make-bind
     "pt3"
-    "st3" [[0 (.getBytes "1")]]))
+    "st3"
+    [#_[0 (.getBytes "1")]]
+    [1 1 1 1 1 1 1 1 1 1]
+    ))
 
   (send-bb
    (:ch -state)
