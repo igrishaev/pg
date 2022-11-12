@@ -1,5 +1,6 @@
 (ns pg.types
   "
+  https://github.com/pgjdbc/pgjdbc/blob/0b097fd4a8e9990a9b86173d58633cd88d263b0b/pgjdbc/src/main/java/org/postgresql/core/Oid.java
   https://docs.oracle.com/javase/9/docs/api/java/time/format/DateTimeFormatter.html
   "
   (:import

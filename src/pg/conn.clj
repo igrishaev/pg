@@ -157,6 +157,11 @@
 
       (case type
 
+        :ParseComplete
+        (recur query-fields
+               query-result
+               errors)
+
         :ErrorResponse
         (let [{:keys [errors]} msg]
           (recur query-fields
@@ -268,6 +273,11 @@
     (send-bb ch (msg/make-sync))))
 
 
+(defn flush [{:as state :keys [ch]}]
+  (with-lock state
+    (send-bb ch (msg/make-flush))))
+
+
 (defn make-state [state]
   (-> state
       (assoc :o (new Object))))
@@ -283,6 +293,39 @@
          :password "secret"}
         make-state
         connect))
+
+  (send-bb
+   (:ch -state)
+   (msg/make-parse "st3"
+                   "select * from foo where id = $1"
+                   [20]))
+
+  (send-bb
+   (:ch -state)
+   (msg/make-describe-statement "st3"))
+
+  (send-bb
+   (:ch -state)
+   (msg/make-bind
+    "pt3"
+    "st3" [[0 (.getBytes "1")]]))
+
+  (send-bb
+   (:ch -state)
+   (msg/make-describe-portal "pt3"))
+
+  (send-bb
+   (:ch -state)
+   (msg/make-execute
+    "pt3" 999))
+
+  (sync -state)
+  (flush -state)
+
+  (msg/read-message (:ch -state))
+
+
+
 
   (query "")
 

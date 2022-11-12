@@ -392,6 +392,12 @@
     (bb/write-int32 4)))
 
 
+(defn make-flush []
+  (doto (bb/allocate 5)
+    (bb/write-byte \H)
+    (bb/write-int32 4)))
+
+
 (defn byte-count
   ([string]
    (byte-count string "UTF-8"))
@@ -476,3 +482,155 @@
       (bb/write-byte \p)
       (bb/write-int32 len)
       (bb/write-bytes (codec/str->bytes client-message)))))
+
+
+(defn make-parse [name query & [type-oids]]
+
+  (let [type-count
+        (count type-oids)
+
+        len
+        (+ 4
+           (byte-count name) 1
+           (byte-count query) 1
+           2
+           (* type-count 4))
+
+        bb
+        (bb/allocate (inc len))]
+
+    (doto bb
+      (bb/write-byte \P)
+      (bb/write-int32 len)
+      (bb/write-cstring name)
+      (bb/write-cstring query)
+      (bb/write-int16 type-count))
+
+    (doseq [type-oid type-oids]
+      (bb/write-int32 bb type-oid))
+
+    bb))
+
+
+(defn make-execute
+  ([portal]
+   (make-execute portal 0))
+
+  ([portal amount]
+   (let [len
+         (+ 4 (count portal) 1 4)]
+     (doto (bb/allocate (inc len))
+       (bb/write-byte \E)
+       (bb/write-int32 len)
+       (bb/write-cstring portal)
+       (bb/write-int32 amount)))))
+
+
+(defn make-describe-statement [statement]
+
+  (let [len
+        (+ 4 1 (byte-count statement) 1)]
+
+    (doto (bb/allocate (inc len))
+      (bb/write-byte \D)
+      (bb/write-int32 len)
+      (bb/write-byte \S)
+      (bb/write-cstring statement))))
+
+
+(defn make-describe-portal [portal]
+
+  (let [len
+        (+ 4 1 (byte-count portal) 1)]
+
+    (doto (bb/allocate (inc len))
+      (bb/write-byte \D)
+      (bb/write-int32 len)
+      (bb/write-byte \P)
+      (bb/write-cstring portal))))
+
+
+(defn make-bind [portal statement params]
+
+  (let [len
+        (+ 4
+
+           (count portal) 1
+           (count statement) 1
+           2
+
+           (* (count params) 2)
+
+           2
+
+           (reduce
+            (fn -reduce [result [_ ^bytes bytes]]
+              (+ result 4 (alength bytes)))
+            0
+            params)
+
+           2
+
+           (* (count params) 2))
+
+        bb
+        (bb/allocate (inc len))]
+
+    (doto bb
+      (bb/write-byte \B)
+      (bb/write-int32 len)
+
+      (bb/write-cstring portal)
+      (bb/write-cstring statement)
+      (bb/write-int16 (count params)))
+
+    (doseq [[format _] params]
+      (bb/write-int16 bb format))
+
+    (doto bb
+      (bb/write-int16 (count params)))
+
+    (doseq [[_ ^bytes bytes] params]
+      (bb/write-int32 bb (alength bytes))
+      (bb/write-bytes bb bytes))
+
+    (doto bb
+      (bb/write-int16 (count params)))
+
+    (doseq [_ params]
+      (bb/write-int16 bb 1))
+
+    bb))
+
+
+
+#_
+(defn make-function-call [oid ]
+
+  (let [len
+        123
+        ]
+
+    (doto (bb/allocate (inc len))
+      (bb/write-byte \F)
+      (bb/write-int32 len)
+      (bb/write-int32 oid)
+
+      (bb/write-int16 )
+      (bb/write-int16 )
+      (bb/write-int16 )
+
+      (bb/write-int32 )
+      (bb/write-bytes )
+      (bb/write-int16 )
+
+
+
+
+
+
+
+
+      (bb/write-bytes (codec/str->bytes client-message))))
+
+  )
