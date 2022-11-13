@@ -93,6 +93,7 @@
       {:type :AuthenticationSASL
        :status status
        :sasl-types
+       ;; TODO: read until
        (loop [acc #{}]
          (let [item (bb/read-cstring bb)]
            (if (= item "")
@@ -178,6 +179,7 @@
   (let [amount
         (bb/read-int16 bb)
 
+        ;; TODO: a separate function?
         columns
         (loop [i 0
                result (transient [])]
@@ -186,7 +188,8 @@
             (let [len (bb/read-int32 bb)
                   col (when-not (= len -1)
                         (bb/read-bytes bb len))]
-              (recur (inc i) (conj! result col)))))]
+              (recur (inc i)
+                     (conj! result col)))))]
 
     {:type :DataRow
      :columns columns}))
@@ -212,13 +215,14 @@
         failed-params-count
         (bb/read-int32 bb)
 
+        ;; TODO: read-cstrings (n)
         failed-params
         (loop [i 0
-               acc []]
+               acc (transient [])]
           (if (= i failed-params-count)
-            acc
+            (persistent! acc)
             (recur (inc i)
-                   (conj acc (bb/read-cstring bb)))))]
+                   (conj! acc (bb/read-cstring bb)))))]
 
     {:type :NegotiateProtocolVersion
      :minor-version minor-version
@@ -244,13 +248,14 @@
   (let [param-count
         (bb/read-int16 bb)
 
+        ;; TODO: read-cstrings
         param-types
         (loop [i 0
-               acc []]
+               acc (transient [])]
           (if (= i param-count)
-            acc
+            (persistent! acc)
             (recur (inc i)
-                   (conj acc (bb/read-int32 bb)))))]
+                   (conj! acc (bb/read-int32 bb)))))]
     {:type :ParameterDescription
      :param-count param-count
      :param-types param-types}))
