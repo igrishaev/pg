@@ -1,6 +1,5 @@
 (ns pg.types
   "
-  https://github.com/pgjdbc/pgjdbc/blob/0b097fd4a8e9990a9b86173d58633cd88d263b0b/pgjdbc/src/main/java/org/postgresql/core/Oid.java
   https://docs.oracle.com/javase/9/docs/api/java/time/format/DateTimeFormatter.html
   "
   (:import
@@ -78,47 +77,48 @@
       oid.BYTEA
       value
 
-      16 ;; bool
+      oid.BOOL
       (case (codec/bytes->str value)
         "t" true
         "f" false)
 
-      ;; (114 3802) json, jsonb
-
-      25 ;; text
+      oid.TEXT
       (-> value codec/bytes->str)
 
-      18 ;; char
+      oid.CHAR
       (char (aget value 0))
 
-      1043 ;; varchar
+      oid.VARCHAR
       (-> value codec/bytes->str)
 
-      (2 23) ;; int2 int4
+      oid.INT2
       (-> value codec/bytes->str parseInt)
 
-      20 ;; int8
+      oid.INT4
+      (-> value codec/bytes->str parseInt)
+
+      oid.INT8
       (-> value codec/bytes->str parseLong)
 
-      (22 1006) ;; int2vector _int2vector
-      (-> value codec/bytes->str parse-int-vec)
+      ;; (22 1006) ;; int2vector _int2vector
+      ;; (-> value codec/bytes->str parse-int-vec)
 
-      700 ;; float4
+      oid.FLOAT4
       (-> value codec/bytes->str parseFloat)
 
-      701 ;; float8
+      oid.FLOAT8
       (-> value codec/bytes->str parseDouble)
 
-      2950 ;; uuid
+      oid.UUID
       (-> value codec/bytes->str parseUUID)
 
-      142 ;; xml
+      oid.XML
       (xml/parse (io/input-stream value))
 
-      1700 ;; numeric
+      oid.NUMERIC
       (-> value codec/bytes->str bigdec)
 
-      1184 ;; timestamptz
+      oid.TIMESTAMPTZ
       (-> value codec/bytes->str parse-ts-isoz)
 
       ;; 1082 | date

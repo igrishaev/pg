@@ -1,5 +1,7 @@
-(ns pg.oid)
-
+(ns pg.oid
+  "
+  https://github.com/pgjdbc/pgjdbc/blob/0b097fd4a8e9990a9b86173d58633cd88d263b0b/pgjdbc/src/main/java/org/postgresql/core/Oid.java
+  ")
 
 (def ^int UNSPECIFIED           0)
 (def ^int INT2                 21)
@@ -73,3 +75,6 @@
 (def ^int MACADDR8            774)
 (def ^int TSVECTOR           3614)
 (def ^int TSQUERY            3615)
+
+(def ^int INT2_VECTOR          22)
+(def ^int INT2_VECTOR_ARRAY  1006)
