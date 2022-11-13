@@ -213,9 +213,12 @@
         (bb/read-int32 bb)
 
         failed-params
-        (vec
-         (for [i (range failed-params-count)]
-           (bb/read-cstring bb)))]
+        (loop [i 0
+               acc []]
+          (if (= i failed-params-count)
+            acc
+            (recur (inc i)
+                   (conj acc (bb/read-cstring bb)))))]
 
     {:type :NegotiateProtocolVersion
      :minor-version minor-version
@@ -242,9 +245,12 @@
         (bb/read-int16 bb)
 
         param-types
-        (vec
-         (for [i (range param-count)]
-           (bb/read-int32 bb)))]
+        (loop [i 0
+               acc []]
+          (if (= i param-count)
+            acc
+            (recur (inc i)
+                   (conj acc (bb/read-int32 bb)))))]
     {:type :ParameterDescription
      :param-count param-count
      :param-types param-types}))
@@ -583,6 +589,9 @@
       (bb/write-int16 (count params))
       (bb/write-int16s formats)
       (bb/write-int16 (count params)))
+
+    ;; todo: formats
+    ;; TODO: null/-1
 
     (doseq [[_ ^bytes bytes] params]
       (bb/write-int32 bb (alength bytes))

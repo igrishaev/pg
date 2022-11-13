@@ -33,6 +33,12 @@
 
         (case type
 
+          ;; :AuthenticationKerberosV5
+          ;; :AuthenticationSCMCredential
+          ;; :AuthenticationGSS
+          ;; :AuthenticationGSSContinue
+          ;; :AuthenticationSSPI
+
           :AuthenticationOk
           (assoc state :state-auth state-auth)
 
