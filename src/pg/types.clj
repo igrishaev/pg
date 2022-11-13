@@ -12,6 +12,8 @@
    [clojure.java.io :as io]
    [clojure.xml :as xml]
    [clojure.string :as str]
+
+   [pg.oid :as oid]
    [pg.codec :as codec]))
 
 
@@ -73,7 +75,7 @@
 
     (case (int type-id)
 
-      17 ;; bytea
+      oid.BYTEA
       value
 
       16 ;; bool

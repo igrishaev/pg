@@ -429,8 +429,6 @@
 (defn make-md5-password
   [^String user ^String password ^bytes salt]
 
-  ;; concat('md5', md5(concat(md5(concat(password, username)), random-salt)))
-
   (let [creds
         (-> (str password user)
             codec/str->bytes
@@ -554,24 +552,21 @@
 
   (let [len
         (+ 4
-
            (count portal) 1
            (count statement) 1
            2
-
            (* (count params) 2)
-
            2
-
            (reduce
             (fn -reduce [result [_ ^bytes bytes]]
               (+ result 4 (alength bytes)))
             0
             params)
-
            2
-
            (* (count result-formats) 2))
+
+        formats
+        (map first params)
 
         bb
         (bb/allocate (inc len))]
@@ -582,12 +577,8 @@
 
       (bb/write-cstring portal)
       (bb/write-cstring statement)
-      (bb/write-int16 (count params)))
-
-    (doseq [[format _] params]
-      (bb/write-int16 bb format))
-
-    (doto bb
+      (bb/write-int16 (count params))
+      (bb/write-int16s formats)
       (bb/write-int16 (count params)))
 
     (doseq [[_ ^bytes bytes] params]
@@ -595,14 +586,8 @@
       (bb/write-bytes bb bytes))
 
     (doto bb
-      (bb/write-int16 (count result-formats)))
-
-    (doseq [result-format result-formats]
-      (bb/write-int16 bb result-format))
-
-    bb))
-
-
+      (bb/write-int16 (count result-formats))
+      (bb/write-int16s result-formats))))
 
 #_
 (defn make-function-call [oid ]

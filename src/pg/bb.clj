@@ -71,8 +71,20 @@
   (.putInt bb value))
 
 
+(defn write-int32s [^ByteBuffer bb int32s]
+  (doseq [int32 int32s]
+    (write-int32 bb int32))
+  bb)
+
+
 (defn write-int16 [^ByteBuffer bb value]
   (.putShort bb value))
+
+
+(defn write-int16s [^ByteBuffer bb int16s]
+  (doseq [int16 int16s]
+    (write-int16 bb int16))
+  bb)
 
 
 (defn write-byte [^ByteBuffer bb value]
