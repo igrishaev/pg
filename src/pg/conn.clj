@@ -322,6 +322,10 @@ now() as date,
 
   (send-bb
    (:ch -state)
+   (msg/make-function-call 1299 0 [] 0))
+
+  (send-bb
+   (:ch -state)
    (msg/make-describe-statement "st3"))
 
   (send-bb

@@ -2,6 +2,7 @@
   (:import
    java.nio.channels.SocketChannel)
   (:require
+   [pg.const :as const]
    [pg.codec :as codec]
    [pg.bb :as bb]))
 
@@ -198,7 +199,9 @@
 (defn parse-function-call-response [bb]
   (let [res-len (bb/read-int32 bb)
         res-val (bb/read-bytes bb res-len)]
+    ;; TODO: check -1/null
     {:type :FunctionCallResponse
+     :len res-len
      :result res-val}))
 
 
@@ -589,33 +592,85 @@
       (bb/write-int16 (count result-formats))
       (bb/write-int16s result-formats))))
 
-#_
-(defn make-function-call [oid ]
+
+(defn make-cancell-request [pid secret-key]
+  (doto (bb/allocate 16)
+    (bb/write-int32 16)
+    (bb/write-int32 const/CANCELL_CODE)
+    (bb/write-int32 pid)
+    (bb/write-int32 secret-key)))
+
+
+(defn make-close-statement [statement]
+  (let [len
+        (+ 4 1 (byte-count statement) 1)]
+    (doto (bb/allocate (inc len))
+      (bb/write-byte \C)
+      (bb/write-int32 len)
+      (bb/write-byte \S)
+      (bb/write-cstring statement))))
+
+
+(defn make-close-portal [portal]
+  (let [len
+        (+ 4 1 (byte-count portal) 1)]
+    (doto (bb/allocate (inc len))
+      (bb/write-byte \C)
+      (bb/write-int32 len)
+      (bb/write-byte \P)
+      (bb/write-cstring portal))))
+
+
+(defn make-ssl-request []
+  (doto (bb/allocate 8)
+    (bb/write-int32 8)
+    (bb/write-int32 const/SSL_REQUEST)))
+
+
+(defn make-terminate []
+  (doto (bb/allocate 5)
+    (bb/write-byte \X)
+    (bb/write-int32 4)))
+
+
+(defn make-function-call
+  [proc-oid args-format args-bytes result-format]
 
   (let [len
-        123
-        ]
+        (+ 4
+           4
+           2
+           (* 2 (count args-bytes))
+           2
+           (reduce
+            (fn [res ^bytes bytes]
+              (+ res 4 (if (some? bytes)
+                         (alength bytes)
+                         0)))
+            0
+            args-bytes)
+           2)
 
-    (doto (bb/allocate (inc len))
+        bb
+        (bb/allocate (inc len))]
+
+    (doto bb
       (bb/write-byte \F)
       (bb/write-int32 len)
-      (bb/write-int32 oid)
+      (bb/write-int32 proc-oid)
+      (bb/write-int16 (count args-bytes)))
 
-      (bb/write-int16 )
-      (bb/write-int16 )
-      (bb/write-int16 )
+    (dotimes [_ (count args-bytes)]
+      (bb/write-int16 bb args-format))
 
-      (bb/write-int32 )
-      (bb/write-bytes )
-      (bb/write-int16 )
+    (bb/write-int16 bb (count args-bytes))
 
+    (doseq [^bytes bytes args-bytes]
+      (if (nil? bytes)
+        (bb/write-int32 bb -1)
+        (do
+          (bb/write-int32 bb (alength bytes))
+          (bb/write-bytes bb bytes))))
 
-
-
-
-
-
-
-      (bb/write-bytes (codec/str->bytes client-message))))
-
-  )
+    (doto bb
+      (bb/write-int16 result-format))))

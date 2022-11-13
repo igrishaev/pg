@@ -11,8 +11,6 @@
    [clojure.java.io :as io]
    [clojure.xml :as xml]
    [clojure.string :as str]
-
-   [pg.oid :as oid]
    [pg.codec :as codec]))
 
 

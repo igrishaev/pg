@@ -13,3 +13,7 @@
 
 (def ^int FORMAT_TEXT 0)
 (def ^int FORMAT_BINARY 1)
+
+(def ^int CANCELL_CODE 80877102)
+
+(def ^int SSL_REQUEST 80877103)
