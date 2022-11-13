@@ -78,3 +78,10 @@
 
 (def ^int INT2_VECTOR          22)
 (def ^int INT2_VECTOR_ARRAY  1006)
+
+;; 1042 | bpchar
+;; 2249 | record
+;; 2275 | cstring
+;; 2276 | any
+;; 2277 | anyarray
+;; 4072 | jsonpath

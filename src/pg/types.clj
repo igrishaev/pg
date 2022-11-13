@@ -56,19 +56,87 @@
             (str/split #","))))
 
 
-(defmulti parse-column-mm
+(defmulti mm-parse-column-text
   (fn [_value col-meta]
     (:type-id col-meta)))
 
 
-(defmethod parse-column-mm :default
+(defmethod mm-parse-column-text :default
   [value _col-meta]
   (codec/bytes->str value))
 
 
-(defn parse-column
+(defmulti mm-parse-column-binary
+  (fn [_value col-meta]
+    (:type-id col-meta)))
+
+
+(defmethod mm-parse-column-binary :default
+  [value _col-meta]
+  value)
+
+
+(defn parse-column-text
   [^bytes value {:as column-meta
                  :keys [type-id]}]
+
+  (case (int type-id)
+
+    16 ;; oid/BOOL
+    (case (codec/bytes->str value)
+      "t" true
+      "f" false)
+
+    21 ;; oid/INT2
+    (-> value codec/bytes->str parseInt)
+
+    23 ;; oid/INT4
+    (-> value codec/bytes->str parseInt)
+
+    20 ;; oid/INT8
+    (-> value codec/bytes->str parseLong)
+
+    700 ;; oid/FLOAT4
+    (-> value codec/bytes->str parseFloat)
+
+    701 ;; oid/FLOAT8
+    (-> value codec/bytes->str parseDouble)
+
+    2950 ;; oid/UUID
+    (-> value codec/bytes->str parseUUID)
+
+    142 ;; oid/XML
+    (xml/parse (io/input-stream value))
+
+    1700 ;; oid/NUMERIC
+    (-> value codec/bytes->str bigdec)
+
+    1184 ;; oid/TIMESTAMPTZ
+    (-> value codec/bytes->str parse-ts-isoz)
+
+    ;; 1082 | date
+    ;; 1083 | time
+    ;; 1114 | timestamp
+    ;; 1186 | interval
+    ;; 1266 | timetz
+
+    ;; else
+    (mm-parse-column-text value column-meta)))
+
+
+(defn parse-column-binary
+  [^bytes value {:as column-meta
+                 :keys [type-id]}]
+
+  (case type-id
+
+    ;; else
+    (mm-parse-column-binary value column-meta)))
+
+
+(defn parse-column
+  [^bytes value {:as column-meta
+                 :keys [format type-id]}]
 
   (when (some? value)
 
@@ -77,97 +145,24 @@
       oid.BYTEA
       value
 
-      oid.BOOL
-      (case (codec/bytes->str value)
-        "t" true
-        "f" false)
-
       oid.TEXT
+      (-> value codec/bytes->str)
+
+      oid.VARCHAR
       (-> value codec/bytes->str)
 
       oid.CHAR
       (char (aget value 0))
 
-      oid.VARCHAR
-      (-> value codec/bytes->str)
-
-      oid.INT2
-      (-> value codec/bytes->str parseInt)
-
-      oid.INT4
-      (-> value codec/bytes->str parseInt)
-
-      oid.INT8
-      (-> value codec/bytes->str parseLong)
-
-      ;; (22 1006) ;; int2vector _int2vector
-      ;; (-> value codec/bytes->str parse-int-vec)
-
-      oid.FLOAT4
-      (-> value codec/bytes->str parseFloat)
-
-      oid.FLOAT8
-      (-> value codec/bytes->str parseDouble)
-
-      oid.UUID
-      (-> value codec/bytes->str parseUUID)
-
-      oid.XML
-      (xml/parse (io/input-stream value))
-
-      oid.NUMERIC
-      (-> value codec/bytes->str bigdec)
-
-      oid.TIMESTAMPTZ
-      (-> value codec/bytes->str parse-ts-isoz)
-
-      ;; 1082 | date
-      ;; 1083 | time
-      ;; 1114 | timestamp
-      ;; 1186 | interval
-      ;; 1266 | timetz
-
       ;; else
-      (parse-column-mm value column-meta)
+      (case format
 
-      ;; TODO
+        const/FORMAT_TEXT
+        (parse-column-text value column-meta)
 
-      ;; 600 | point
-      ;; 601 | lseg
-      ;; 602 | path
-      ;; 603 | box
-      ;; 604 | polygon
-      ;; 628 | line
+        const/FORMAT_BINARY
+        (parse-column-binary value column-meta)
 
-      ;; 650 | cidr
-
-      ;; 705 | unknown
-      ;; 718 | circle
-
-      ;; 790 | money
-
-      ;; 774 | macaddr8
-      ;; 829 | macaddr
-      ;; 869 | inet
-
-      ;; 1042 | bpchar
-
-
-      ;; 1560 | bit
-      ;; 1562 | varbit
-
-      ;; 2249 | record
-      ;; 2275 | cstring
-      ;; 2276 | any
-      ;; 2277 | anyarray
-      ;; 2278 | void
-
-      ;; 3614 | tsvector
-      ;; 3615 | tsquery
-
-      ;; 4072 | jsonpath
-
-
-      )
-
-    ))
+        ;; else
+        (throw (ex-info "Wrong field format"
+                        {:column-meta column-meta}))))))

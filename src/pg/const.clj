@@ -10,3 +10,6 @@
 
 (def SCRAM-SHA-256
   "SCRAM-SHA-256")
+
+(def ^int FORMAT_TEXT 0)
+(def ^int FORMAT_BINARY 1)
