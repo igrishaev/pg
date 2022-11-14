@@ -144,7 +144,7 @@
 
 
 (defn decode-row
-  [DataRow RowDescription s-enc]
+  [DataRow RowDescription enc]
 
   (let [{:keys [fields
                 field-count]}
@@ -168,11 +168,11 @@
               cname
               (-> field
                   :name
-                  (codec/bytes->str s-enc)
+                  (codec/bytes->str enc)
                   keyword)
 
               cvalue
-              (types/parse-column column field s-enc)]
+              (types/parse-column column field enc)]
 
           (recur (inc i)
                  (assoc! acc! cname cvalue)))))))
@@ -191,6 +191,12 @@
         (println msg)
 
         (case type
+
+          :CloseComplete
+          (recur state)
+
+          :ParseComplete
+          (recur state)
 
           :ErrorResponse
           (recur (assoc state :ErrorResponse msg))

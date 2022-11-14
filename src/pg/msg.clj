@@ -506,7 +506,7 @@
            (alength stmt-name) 1
            (alength query) 1
            2
-           (* oid-types 4))
+           (* (count oid-types) 4))
 
         bb
         (bb/allocate (inc len))]
@@ -514,7 +514,7 @@
     (doto bb
       (bb/write-byte \P)
       (bb/write-int32 len)
-      (bb/write-cstring name)
+      (bb/write-cstring stmt-name)
       (bb/write-cstring query)
       (bb/write-int16 type-count)
       (bb/write-int32s oid-types))))
