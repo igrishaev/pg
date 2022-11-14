@@ -8,16 +8,14 @@
    [pg.codec :as codec]
    [pg.conn :as conn]
    [pg.msg :as msg]
-   [pg.pipeline :as pipeline]
-
-   ))
+   [pg.pipeline.auth :as auth]
+   [pg.pipeline.data :as data]))
 
 
 (defn connect [config]
   (-> config
       conn/connect
-      pipeline/auth
-      pipeline/init))
+      auth/pipeline))
 
 
 (defn terminate [conn]
@@ -66,7 +64,7 @@
      (conn/with-lock conn
        (-> conn
            (conn/write-bb bb)
-           (pipeline/data)))))
+           (data/pipeline)))))
 
   ([conn sql & params]
    (query-with-params conn sql params)))
@@ -112,7 +110,7 @@
        (-> conn
            (conn/write-bb bb)
            (sync)
-           (pipeline/data))
+           (data/pipeline))
        stmt-name))))
 
 
@@ -126,7 +124,7 @@
       (-> conn
           (conn/write-bb bb)
           (sync)
-          (pipeline/data)))))
+          (data/pipeline)))))
 
 
 (defmacro with-statement
@@ -246,7 +244,8 @@
   (terminate -conn)
 
   (with-connection [-conn -cfg]
-    (println -conn))
+    (dotimes [_ 99]
+      (println (query -conn "select 1 as one"))))
 
   (with-statement [-conn "st2"])
 

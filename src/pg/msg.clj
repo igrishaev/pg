@@ -442,24 +442,9 @@
 
 
 (defn make-md5-password
-  [^String user ^String password ^bytes salt]
-
-  (let [creds
-        (-> (str password user)
-            codec/str->bytes
-            codec/md5
-            codec/bytes->hex
-            codec/str->bytes)
-
-        hashed-pass
-        (->> (b/concat creds salt)
-             codec/md5
-             codec/bytes->hex
-             (str "md5"))
-
-        len
-        (+ 4 (count hashed-pass) 1)]
-
+  [^bytes hashed-pass]
+  (let [len
+        (+ 4 (alength hashed-pass) 1)]
     (doto (bb/allocate (inc len))
       (bb/write-byte \p)
       (bb/write-int32 len)
