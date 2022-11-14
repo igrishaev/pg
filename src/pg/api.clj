@@ -25,7 +25,13 @@
   )
 
 
-(defn prepare-statement []
+(defn prepare
+  ([conn stmt-name query]
+   (prepare conn stmt-name query nil))
+
+  ([conn stmt-name query oid-types]
+
+   )
   )
 
 
@@ -66,4 +72,40 @@
 
 
 (defn terminate []
+  )
+
+
+(defn get-isolation-level []
+  )
+
+
+(defn set-isolation-level []
+  )
+
+
+(defn sync []
+  )
+
+
+(defn flush []
+  )
+
+
+(defn reducible-query []
+  )
+
+
+(defn get-by-id []
+  )
+
+
+(defn find-by-keys []
+  )
+
+
+(defn find-one-by-keys []
+  )
+
+
+(defn component []
   )

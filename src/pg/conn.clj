@@ -11,20 +11,25 @@
    java.nio.channels.SocketChannel))
 
 
-(defn send-bb [^SocketChannel ch bb]
+(defn write-bb
+  [{:keys [^SocketChannel ch]} bb]
   (.write ch (bb/rewind bb)))
 
 
+(defn read-bb [{:keys [^SocketChannel ch]}]
+  (msg/read-message ch))
+
+
 (defn auth-pipeline
-  [{:as state :keys [user
-                     password
-                     database
-                     ^SocketChannel ch]}]
+  [{:as conn :keys [ch
+                    user
+                    password
+                    database]}]
 
   (let [bb
         (msg/make-startup database user const/PROT-VER-14)]
 
-    (send-bb ch bb)
+    (write-bb conn bb)
 
     (loop [state-auth nil]
 
@@ -40,7 +45,7 @@
           ;; :AuthenticationSSPI
 
           :AuthenticationOk
-          (assoc state :state-auth state-auth)
+          (assoc conn :auth state-auth)
 
           :AuthenticationSASLContinue
           (let [{:keys [server-first-message]}
@@ -57,7 +62,7 @@
                 bb
                 (msg/make-sasl-response client-final-message)]
 
-            (send-bb ch bb)
+            (write-bb conn bb)
             (recur state-auth))
 
           :AuthenticationSASL
@@ -77,7 +82,7 @@
                     (msg/make-sasl-init-response const/SCRAM-SHA-256
                                                  client-first-message)]
 
-                (send-bb ch bb)
+                (write-bb conn bb)
                 (recur state-auth))
 
               :else
@@ -96,13 +101,13 @@
 
           :AuthenticationCleartextPassword
           (let [bb (msg/make-clear-text-password password)]
-            (send-bb ch bb)
+            (write-bb conn bb)
             (recur nil))
 
           :AuthenticationMD5Password
           (let [{:keys [salt]} msg
                 bb (msg/make-md5-password user password salt)]
-            (send-bb ch bb)
+            (write-bb conn bb)
             (recur nil))
 
           :ErrorResponse
@@ -268,40 +273,40 @@
 
 
 (defn query
-  [{:as state :keys [ch]} sql]
-  (with-lock state
-    (send-bb ch (msg/make-query sql))
-    (data-pipeline state)))
+  [conn sql]
+  (with-lock conn
+    (write-bb conn (msg/make-query sql))
+    (data-pipeline conn)))
 
 
-(defn sync [{:as state :keys [ch]}]
+(defn sync [state]
   (with-lock state
-    (send-bb ch (msg/make-sync))))
+    (write-bb state (msg/make-sync))))
 
 
 (defn flush [{:as state :keys [ch]}]
   (with-lock state
-    (send-bb ch (msg/make-flush))))
+    (write-bb ch (msg/make-flush))))
 
 
-(defn make-state [state]
-  (-> state
+(defn make-conn [conn]
+  (-> conn
       (assoc :o (new Object))))
 
 
 (comment
 
-  (def -state
+  (def -conn
     (-> {:host "127.0.0.1"
          :port 15432
          :user "ivan"
          :database "ivan"
          :password "secret"}
-        make-state
+        make-conn
         connect))
 
-  (send-bb
-   (:ch -state)
+  (write-bb
+   -conn
    (msg/make-parse "st3"
 
                       "
@@ -326,16 +331,16 @@ now() as date,
                    #_
                    [20]))
 
-  (send-bb
-   (:ch -state)
+  (write-bb
+   -conn
    (msg/make-function-call 1299 0 [] 0))
 
-  (send-bb
-   (:ch -state)
-   (msg/make-describe-statement "st3"))
+  (write-bb
+   -conn
+   (msg/make-describe-connment "st3"))
 
-  (send-bb
-   (:ch -state)
+  (write-bb
+   -conn
    (msg/make-bind
     "pt3"
     "st3"
@@ -343,27 +348,24 @@ now() as date,
     [1 1 1 1 1 1 1 1 1 1]
     ))
 
-  (send-bb
-   (:ch -state)
+  (write-bb
+   -conn
    (msg/make-describe-portal "pt3"))
 
-  (send-bb
-   (:ch -state)
+  (write-bb
+   -conn
    (msg/make-execute
     "pt3" 999))
 
-  (sync -state)
-  (flush -state)
+  (sync -conn)
+  (flush -conn)
 
-  (msg/read-message (:ch -state))
-
-
-
+  (msg/read-message (:ch -conn))
 
   (query "")
 
   (query
-   -state
+   -conn
    "
 select
 1 as foo,
