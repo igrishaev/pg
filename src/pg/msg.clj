@@ -2,6 +2,7 @@
   (:import
    java.nio.channels.SocketChannel)
   (:require
+   [pg.error :as e]
    [pg.bytes :as b]
    [pg.const :as const]
    [pg.codec :as codec]
@@ -127,9 +128,10 @@
            codec/bytes->str)}
 
       ;; else
-      (throw (ex-info "Unknown auth message"
-                      {:status status
-                       :bb bb})))))
+      (e/error! "Unknown authentication message"
+                {:status status
+                 :bb bb
+                 :in ::here}))))
 
 
 (defn parse-backend-data [bb]
@@ -339,9 +341,10 @@
     (parse-no-data bb)
 
     ;; else
-    (throw (ex-info "Unhandled server message"
-                    {:lead lead
-                     :bb bb}))))
+    (e/error! "Unhandled server message"
+              {:lead lead
+               :bb bb
+               :in ::here})))
 
 
 (defn read-message-payload [^SocketChannel chan bb-header]
@@ -361,12 +364,13 @@
       (parse-message-payload lead bb)
 
       :else
-      (throw (ex-info "Inconsistent read"
-                      {:read read
-                       :lead lead
-                       :len len
-                       :bb-header bb-header
-                       :bb :bb})))))
+      (e/error! "Inconsistent payload read"
+                {:in ::here
+                 :read read
+                 :lead lead
+                 :len len
+                 :bb-header bb-header
+                 :bb :bb}))))
 
 
 (defn read-message [^SocketChannel chan]
@@ -382,9 +386,10 @@
       nil
 
       :else
-      (throw (ex-info "Inconsistent read"
-                      {:read read
-                       :bb-header bb-header})))))
+      (e/error! "Inconsistent header read"
+                {:in ::here
+                 :read read
+                 :bb-header bb-header}))))
 
 
 (defn read-messages [^SocketChannel chan]
@@ -393,7 +398,8 @@
      (cons message (read-messages chan)))))
 
 
-(defn make-startup [database user protocol-version]
+(defn make-startup
+  [^String database ^String user ^Integer protocol-version]
 
   (let [len (+ 4 4 4 (count user) 1
                1 8 1 (count database) 1 1)]
@@ -401,10 +407,10 @@
     (doto (bb/allocate len)
       (bb/write-int32 len)
       (bb/write-int32 protocol-version)
-      (bb/write-cstring "user")
-      (bb/write-cstring user)
-      (bb/write-cstring "database")
-      (bb/write-cstring database)
+      (bb/write-cstring (codec/str->bytes "user"))
+      (bb/write-cstring (codec/str->bytes user))
+      (bb/write-cstring (codec/str->bytes "database"))
+      (bb/write-cstring (codec/str->bytes database))
       (bb/write-byte 0))))
 
 
@@ -420,28 +426,17 @@
     (bb/write-int32 4)))
 
 
-(defn byte-count
-  ([string]
-   (byte-count string "UTF-8"))
-
-  ([^String string ^String encoding]
-   (-> string (.getBytes encoding) (count))))
-
-
-(defn make-query [query]
-  (let [len (+ 4 (byte-count query) 1)]
-
+(defn make-query [^bytes query]
+  (let [len (+ 4 (alength query) 1)]
     (doto (bb/allocate (inc len))
       (bb/write-byte \Q)
       (bb/write-int32 len)
       (bb/write-cstring query))))
 
 
-(defn make-clear-text-password [password]
-
+(defn make-clear-text-password [^bytes password]
   (let [len
-        (+ 4 (byte-count password) 1)]
-
+        (+ 4 (alength password) 1)]
     (doto (bb/allocate (inc len))
       (bb/write-byte \p)
       (bb/write-int32 len)
@@ -488,33 +483,32 @@
     (doto (bb/allocate (inc len))
       (bb/write-byte \p)
       (bb/write-int32 len)
-      (bb/write-cstring method)
+      (bb/write-cstring (codec/str->bytes method))
       (bb/write-int32 buf-len)
       (bb/write-bytes buf))))
 
 
 (defn make-sasl-response [^String client-message]
-
   (let [len
-        (+ 4 (byte-count client-message))]
-
+        (+ 4 (count client-message))]
     (doto (bb/allocate (inc len))
       (bb/write-byte \p)
       (bb/write-int32 len)
       (bb/write-bytes (codec/str->bytes client-message)))))
 
 
-(defn make-parse [name query & [type-oids]]
+(defn make-parse
+  [^bytes stmt-name ^bytes query oid-types]
 
   (let [type-count
-        (count type-oids)
+        (count oid-types)
 
         len
         (+ 4
-           (byte-count name) 1
-           (byte-count query) 1
+           (alength stmt-name) 1
+           (alength query) 1
            2
-           (* type-count 4))
+           (* oid-types 4))
 
         bb
         (bb/allocate (inc len))]
@@ -524,12 +518,8 @@
       (bb/write-int32 len)
       (bb/write-cstring name)
       (bb/write-cstring query)
-      (bb/write-int16 type-count))
-
-    (doseq [type-oid type-oids]
-      (bb/write-int32 bb type-oid))
-
-    bb))
+      (bb/write-int16 type-count)
+      (bb/write-int32s oid-types))))
 
 
 (defn make-execute
@@ -546,11 +536,10 @@
        (bb/write-int32 amount)))))
 
 
-(defn make-describe-statement [statement]
-
+(defn make-describe-statement
+  [^bytes statement]
   (let [len
-        (+ 4 1 (byte-count statement) 1)]
-
+        (+ 4 1 (alength statement) 1)]
     (doto (bb/allocate (inc len))
       (bb/write-byte \D)
       (bb/write-int32 len)
@@ -558,11 +547,9 @@
       (bb/write-cstring statement))))
 
 
-(defn make-describe-portal [portal]
-
+(defn make-describe-portal [^bytes portal]
   (let [len
-        (+ 4 1 (byte-count portal) 1)]
-
+        (+ 4 1 (alength portal) 1)]
     (doto (bb/allocate (inc len))
       (bb/write-byte \D)
       (bb/write-int32 len)
@@ -629,9 +616,9 @@
     (bb/write-int32 secret-key)))
 
 
-(defn make-close-statement [statement]
+(defn make-close-statement [^bytes statement]
   (let [len
-        (+ 4 1 (byte-count statement) 1)]
+        (+ 4 1 (alength statement) 1)]
     (doto (bb/allocate (inc len))
       (bb/write-byte \C)
       (bb/write-int32 len)
@@ -639,9 +626,9 @@
       (bb/write-cstring statement))))
 
 
-(defn make-close-portal [portal]
+(defn make-close-portal [^bytes portal]
   (let [len
-        (+ 4 1 (byte-count portal) 1)]
+        (+ 4 1 (alength portal) 1)]
     (doto (bb/allocate (inc len))
       (bb/write-byte \C)
       (bb/write-int32 len)

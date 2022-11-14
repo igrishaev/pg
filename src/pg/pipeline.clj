@@ -2,6 +2,7 @@
   (:require
    [pg.error :as e]
    [pg.conn :as conn]
+   [pg.codec :as codec]
    [pg.const :as const]
    [pg.auth.scram-sha-256 :as sha-256]
    [pg.msg :as msg]))

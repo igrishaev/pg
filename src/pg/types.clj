@@ -8,10 +8,12 @@
    java.time.format.DateTimeFormatter
    java.time.Instant)
   (:require
+   [pg.error :as e]
+   [pg.codec :as codec]
+
    [clojure.java.io :as io]
    [clojure.xml :as xml]
-   [clojure.string :as str]
-   [pg.codec :as codec]))
+   [clojure.string :as str]))
 
 
 (def ^DateTimeFormatter
@@ -162,5 +164,5 @@
         (parse-column-binary value column-meta)
 
         ;; else
-        (throw (ex-info "Wrong field format"
-                        {:column-meta column-meta}))))))
+        (e/error! "Wrong field format"
+                  {:column-meta column-meta})))))

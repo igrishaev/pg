@@ -1,5 +1,7 @@
 (ns pg.bytes
   (:refer-clojure :exclude [concat empty?])
+  (:require
+   [pg.error :as e])
   (:import
    java.util.Arrays))
 
@@ -24,7 +26,8 @@
   ^bytes [^bytes bytes1 ^bytes bytes2]
 
   (when-not (= (alength bytes1) (alength bytes2))
-    (throw (ex-info "XOR error: the lengths do not match")))
+    (e/error! "XOR error: the lengths do not match"
+              {:in ::here}))
 
   (let [len
         (alength bytes1)]

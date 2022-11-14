@@ -7,6 +7,7 @@
   "
   (:import java.util.UUID)
   (:require
+   [pg.error :as e]
    [pg.bytes :as b]
    [pg.codec :as codec]
    [clojure.string :as str]))
@@ -192,5 +193,6 @@
   [{:as state :keys [ServerSignature ServerSignature2]}]
   (if (b/== ServerSignature ServerSignature2)
     state
-    (throw (ex-info "Server signatures do not match"
-                    {:state state}))))
+    (e/error! "Server signatures do not match"
+              {:in ::here
+               :state state})))
