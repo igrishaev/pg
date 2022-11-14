@@ -243,9 +243,26 @@
 
   (terminate -conn)
 
-  (with-connection [-conn -cfg]
-    (dotimes [_ 99]
-      (println (query -conn "select 1 as one"))))
+  (time
+   (with-connection [-conn -cfg]
+     (dotimes [_ 99999]
+       (query -conn "select 1 as one"))))
+
+  (require
+   '[clojure.java.jdbc :as jdbc])
+
+  (def -spec
+    {:dbtype "postgresql"
+     :port 15432
+     :dbname "ivan"
+     :host "127.0.0.1"
+     :user "ivan"
+     :password "secret"})
+
+  (time
+   (jdbc/with-db-connection [-db -spec]
+     (dotimes [_ 99999]
+       (jdbc/query -db "select 1 as one"))))
 
   (with-statement [-conn "st2"])
 

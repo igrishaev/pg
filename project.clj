@@ -6,5 +6,9 @@
   :dependencies [[org.clojure/clojure "1.10.1"]]
   :main ^:skip-aot pg.api
   :target-path "target/%s"
-  :profiles {:uberjar {:aot :all
-                       :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}})
+
+  :profiles
+  {:dev
+   {:dependencies
+    [[org.clojure/java.jdbc "0.7.8"]
+     [org.postgresql/postgresql "42.1.3"]]}})
