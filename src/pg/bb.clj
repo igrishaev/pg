@@ -7,7 +7,7 @@
   (ByteBuffer/allocate size))
 
 
-(defn from-bytes ^ByteBuffer [^bytes buf]
+(defn wrap ^ByteBuffer [^bytes buf]
   (ByteBuffer/wrap buf))
 
 
@@ -21,6 +21,15 @@
 
 (defmacro read-int32 [^ByteBuffer bb]
   `(.. ~(with-meta bb {:tag `ByteBuffer}) (getInt)))
+
+
+(defn read-int32s [^ByteBuffer bb amount]
+  (loop [i 0
+         acc (transient [])]
+    (if (= i amount)
+      (persistent! acc)
+      (recur (inc i)
+             (conj! acc (read-int32 bb))))))
 
 
 (defn read-rest ^bytes [^ByteBuffer bb]
@@ -43,28 +52,33 @@
     buf))
 
 
-(defn read-cstring
+(defn read-cstring ^bytes [^ByteBuffer bb]
 
-  ([^ByteBuffer bb]
-   (read-cstring bb "UTF-8"))
+  (let [pos
+        (.position bb)
 
-  ([^ByteBuffer bb ^String encoding]
+        offset
+        (loop [offset 0]
+           (if (zero? (.get bb (+ pos offset)))
+             offset
+             (recur (inc offset))))
 
-   (let [pos
-         (.position bb)
+        buf
+        (byte-array offset)]
 
-         zero-pos
-         (loop [i pos]
-           (if (zero? (.get bb i))
-             i
-             (recur (inc i))))
+    (.get bb pos buf)
+    (.position bb ^int (inc (+ pos offset)))
 
-         string
-         (new String (.array bb) pos ^int (- zero-pos pos) encoding)]
+    buf))
 
-     (.position bb ^int (inc zero-pos))
 
-     string)))
+(defn read-cstrings [^ByteBuffer bb amount]
+  (loop [i 0
+         acc (transient [])]
+    (if (= i amount)
+      (persistent! acc)
+      (recur (inc i)
+             (conj! acc (read-cstring bb))))))
 
 
 (defn write-int32 [^ByteBuffer bb value]
@@ -72,9 +86,12 @@
 
 
 (defn write-int32s [^ByteBuffer bb int32s]
-  (doseq [int32 int32s]
-    (write-int32 bb int32))
-  bb)
+  (loop [[int32 & int32s] int32s]
+    (if int32
+      (do
+        (write-int32 bb int32)
+        (recur int32s))
+      bb)))
 
 
 (defn write-int16 [^ByteBuffer bb value]
@@ -82,9 +99,12 @@
 
 
 (defn write-int16s [^ByteBuffer bb int16s]
-  (doseq [int16 int16s]
-    (write-int16 bb int16))
-  bb)
+  (loop [[int16 & int16s] int16s]
+    (if int16
+      (do
+        (write-int16 bb int16)
+        (recur int16s))
+      bb)))
 
 
 (defn write-byte [^ByteBuffer bb value]
@@ -96,11 +116,7 @@
 
 
 (defn write-cstring
-
-  ([^ByteBuffer bb ^String string]
-   (write-cstring bb string "UTF-8"))
-
-  ([^ByteBuffer bb ^String string ^String encoding]
-   (let [buf (.getBytes string encoding)]
-     (.put bb buf)
-     (.put bb (byte 0)))))
+  [^ByteBuffer bb ^bytes string]
+  (doto bb
+    (write-bytes string)
+    (write-byte 0)))

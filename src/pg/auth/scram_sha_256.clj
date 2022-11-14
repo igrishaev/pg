@@ -7,6 +7,7 @@
   "
   (:import java.util.UUID)
   (:require
+   [pg.bytes :as b]
    [pg.codec :as codec]
    [clojure.string :as str]))
 
@@ -15,7 +16,7 @@
   [^bytes secret ^bytes message ^Integer iterations]
 
   (loop [i 0
-         msg (codec/concat-bytes message (byte-array [0 0 0 1]))
+         msg (b/concat message (byte-array [0 0 0 1]))
          u (byte-array 32)]
 
     (if (= i iterations)
@@ -24,7 +25,7 @@
             (codec/hmac-sha-256 secret msg)]
         (recur (inc i)
                u-next
-               (codec/xor-bytes u u-next))))))
+               (b/xor u u-next))))))
 
 
 (defn H ^bytes [^bytes input]
@@ -139,7 +140,7 @@
         (codec/hmac-sha-256 StoredKey (codec/str->bytes AuthMessage))
 
         ClientProof
-        (codec/xor-bytes ClientKey ClientSignature)
+        (b/xor ClientKey ClientSignature)
 
         ServerKey
         (codec/hmac-sha-256 SaltedPassword (codec/str->bytes "Server Key"))
@@ -189,7 +190,7 @@
 
 (defn step5-verify-server-signatures
   [{:as state :keys [ServerSignature ServerSignature2]}]
-  (if (codec/bytes= ServerSignature ServerSignature2)
+  (if (b/== ServerSignature ServerSignature2)
     state
     (throw (ex-info "Server signatures do not match"
                     {:state state}))))

@@ -2,11 +2,10 @@
   (:import
    java.nio.channels.SocketChannel)
   (:require
+   [pg.bytes :as b]
    [pg.const :as const]
    [pg.codec :as codec]
    [pg.bb :as bb]))
-
-;; TODO: vec to loop
 
 
 (defn parse-row-description [bb]
@@ -15,16 +14,21 @@
         (bb/read-int16 bb)
 
         fields
-        (vec
-         (for [i (range field-count)]
-           {:index       i
-            :name        (bb/read-cstring bb)
-            :table-id    (bb/read-int32 bb)
-            :column-id   (bb/read-int16 bb)
-            :type-id     (bb/read-int32 bb)
-            :type-size   (bb/read-int16 bb)
-            :type-mod-id (bb/read-int32 bb)
-            :format      (bb/read-int16 bb)}))]
+        (loop [i 0
+               acc (transient [])]
+          (if (= i field-count)
+            (persistent! acc)
+            (recur
+             (inc 0)
+             (conj! acc
+                    {:index       i
+                     :name        (bb/read-cstring bb)
+                     :table-id    (bb/read-int32 bb)
+                     :column-id   (bb/read-int16 bb)
+                     :type-id     (bb/read-int32 bb)
+                     :type-size   (bb/read-int16 bb)
+                     :type-mod-id (bb/read-int32 bb)
+                     :format      (bb/read-int16 bb)}))))]
 
     {:type :RowDescription
      :field-count field-count
@@ -41,8 +45,12 @@
 
 (defn parse-param-status [bb]
 
-  (let [param (bb/read-cstring bb)
-        value (bb/read-cstring bb)]
+  (let [param (-> bb
+                  bb/read-cstring
+                  codec/bytes->str)
+        value (-> bb
+                  bb/read-cstring
+                  codec/bytes->str)]
 
     {:type :ParameterStatus
      :param param
@@ -93,9 +101,11 @@
       {:type :AuthenticationSASL
        :status status
        :sasl-types
-       ;; TODO: read until
        (loop [acc #{}]
-         (let [item (bb/read-cstring bb)]
+         (let [item
+               (-> bb
+                   bb/read-cstring
+                   codec/bytes->str)]
            (if (= item "")
              acc
              (recur (conj acc item)))))}
@@ -142,7 +152,8 @@
           (let [field-type (bb/read-byte bb)]
             (if (zero? field-type)
               acc
-              (let [field-text (bb/read-cstring bb)]
+              (let [field-text
+                    (bb/read-cstring bb)]
                 (recur (conj acc {:type (char field-type)
                                   :text field-text}))))))]
     {:type :ErrorResponse
@@ -155,8 +166,12 @@
           (let [field-type (bb/read-byte bb)]
             (if (zero? field-type)
               acc
-              (let [field-text (bb/read-cstring bb)]
-                (recur (conj acc {:type field-type :text field-text}))))))]
+              (let [field-bytes
+                    (bb/read-cstring bb)]
+                (recur (conj acc
+                             {:type field-type
+                              :text field-bytes}))))))]
+
     {:type :NoticeResponse
      :messages messages}))
 
@@ -170,16 +185,14 @@
 
 
 (defn parse-command-complete [bb]
-  (let [tag (bb/read-cstring bb)]
-    {:type :CommandComplete
-     :tag tag}))
+  {:type :CommandComplete
+   :tag (bb/read-cstring bb)})
 
 
 (defn parse-data-row [bb]
   (let [amount
         (bb/read-int16 bb)
 
-        ;; TODO: a separate function?
         columns
         (loop [i 0
                result (transient [])]
@@ -200,9 +213,13 @@
 
 
 (defn parse-function-call-response [bb]
-  (let [res-len (bb/read-int32 bb)
-        res-val (bb/read-bytes bb res-len)]
-    ;; TODO: check -1/null
+  (let [res-len
+        (bb/read-int32 bb)
+
+        res-val
+        (when-not (= res-len -1)
+          (bb/read-bytes bb res-len))]
+
     {:type :FunctionCallResponse
      :len res-len
      :result res-val}))
@@ -215,14 +232,8 @@
         failed-params-count
         (bb/read-int32 bb)
 
-        ;; TODO: read-cstrings (n)
         failed-params
-        (loop [i 0
-               acc (transient [])]
-          (if (= i failed-params-count)
-            (persistent! acc)
-            (recur (inc i)
-                   (conj! acc (bb/read-cstring bb)))))]
+        (bb/read-cstrings bb failed-params-count)]
 
     {:type :NegotiateProtocolVersion
      :minor-version minor-version
@@ -248,14 +259,9 @@
   (let [param-count
         (bb/read-int16 bb)
 
-        ;; TODO: read-cstrings
         param-types
-        (loop [i 0
-               acc (transient [])]
-          (if (= i param-count)
-            (persistent! acc)
-            (recur (inc i)
-                   (conj! acc (bb/read-int32 bb)))))]
+        (bb/read-int32s bb param-count)]
+
     {:type :ParameterDescription
      :param-count param-count
      :param-types param-types}))
@@ -562,25 +568,31 @@
       (bb/write-cstring portal))))
 
 
-(defn make-bind [portal statement params result-formats]
+(defn make-bind [^bytes portal-name
+                 ^bytes prstmt-name
+                 param-formats
+                 param-values
+                 column-formats]
 
   (let [len
         (+ 4
-           (count portal) 1
-           (count statement) 1
+           (alength portal-name) 1
+           (alength prstmt-name) 1
+
            2
-           (* (count params) 2)
+           (* 2 (count param-formats))
+
            2
            (reduce
-            (fn -reduce [result [_ ^bytes bytes]]
-              (+ result 4 (alength bytes)))
+            (fn -reduce [result ^bytes bytes]
+              (+ result 4 (if (some? bytes)
+                            (alength bytes)
+                            0)))
             0
-            params)
-           2
-           (* (count result-formats) 2))
+            param-values)
 
-        formats
-        (map first params)
+           2
+           (* 2 (count column-formats)))
 
         bb
         (bb/allocate (inc len))]
@@ -589,22 +601,22 @@
       (bb/write-byte \B)
       (bb/write-int32 len)
 
-      (bb/write-cstring portal)
-      (bb/write-cstring statement)
-      (bb/write-int16 (count params))
-      (bb/write-int16s formats)
-      (bb/write-int16 (count params)))
+      (bb/write-cstring portal-name)
+      (bb/write-cstring prstmt-name)
+      (bb/write-int16 (count param-formats))
+      (bb/write-int16s param-formats)
+      (bb/write-int16 (count param-values)))
 
-    ;; todo: formats
-    ;; TODO: null/-1
-
-    (doseq [[_ ^bytes bytes] params]
-      (bb/write-int32 bb (alength bytes))
-      (bb/write-bytes bb bytes))
+    (doseq [^bytes bytes param-values]
+      (if (nil? bytes)
+        (bb/write-int32 bb -1)
+        (do
+          (bb/write-int32 bb (alength bytes))
+          (bb/write-bytes bb bytes))))
 
     (doto bb
-      (bb/write-int16 (count result-formats))
-      (bb/write-int16s result-formats))))
+      (bb/write-int16 (count column-formats))
+      (bb/write-int16s column-formats))))
 
 
 (defn make-cancell-request [pid secret-key]

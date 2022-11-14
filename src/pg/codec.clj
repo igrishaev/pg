@@ -1,6 +1,5 @@
 (ns pg.codec
   (:import
-   java.util.Arrays
    java.text.Normalizer
    java.text.Normalizer$Form
    javax.crypto.Mac
@@ -80,53 +79,3 @@
 
     (.init mac sks)
     (.doFinal mac message)))
-
-
-#_
-(-> "MXf1hERKrJWAQSlcYSRe6A=="
-                                           str->bytes
-                                           b64-decode
-                                           (concat-bytes (byte-array [0 0 0 1])))
-
-
-#_
-(-> (hmac-sha-256 (.getBytes "aaa") (.getBytes "bbb"))
-    (bytes->hex)
-    )
-
-#_ db404a4b73d69c3dd753825b49266f5651a2d965a70daf12bfdb8727ec2c10b0
-
-#_
-(codec/bytes->hex (Hi "secret" (-> "MXf1hERKrJWAQSlcYSRe6A==" codec/str->bytes codec/b64-decode) 4096))
-
-
-(defn xor-bytes ^bytes [^bytes bytes1 ^bytes bytes2]
-
-  (when-not (= (alength bytes1) (alength bytes2))
-    (throw (ex-info "XOR error: the lengths do not match")))
-
-  (let [len
-        (alength bytes1)]
-
-    (loop [result (byte-array len)
-           i 0]
-
-      (if (= i len)
-        result
-
-        (let [b1 (aget bytes1 i)
-              b2 (aget bytes2 i)]
-          (aset result i ^Byte (bit-xor b1 b2))
-          (recur result (inc i)))))))
-
-
-(defn concat-bytes ^bytes [^bytes bytes1 ^bytes bytes2]
-  (let [result
-        (byte-array (+ (alength bytes1) (alength bytes2)))]
-    (System/arraycopy bytes1 0 result 0                (alength bytes1))
-    (System/arraycopy bytes2 0 result (alength bytes1) (alength bytes2))
-    result))
-
-
-(defn bytes= ^Boolean [^bytes bytes1 ^bytes bytes2]
-  (Arrays/equals bytes1 bytes2))
