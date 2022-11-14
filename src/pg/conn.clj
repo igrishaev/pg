@@ -57,15 +57,12 @@
    (get-in conn [:server-params pname])))
 
 
-(defn server-encoding [conn]
-  (param conn "server_encoding" "UTF-8"))
+(defn server-encoding ^String [conn]
+  (or (param conn "server_encoding") "UTF-8"))
 
 
-(defn client-encoding [conn]
-  (param conn "client_encoding" "UTF-8"))
-
-
-
+(defn client-encoding ^String [conn]
+  (or (param conn "client_encoding") "UTF-8"))
 
 #_
 (defn init-pipeline

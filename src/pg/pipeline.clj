@@ -178,6 +178,85 @@
                  (assoc! acc! cname cvalue)))))))
 
 
+(defn ex? [e]
+  (instance? Throwable e))
+
+
+(defn process-ready-message [conn state msg]
+
+  (let [enc
+        (conn/server-encoding conn)
+
+        {:keys [tx-status]}
+        msg
+
+        {:keys [e
+                Rows!
+                ErrorResponse]}
+        state]
+
+    (cond
+
+      e
+      (e/error! "Unhandled exception"
+                {:state state}
+                e)
+
+      (= tx-status const/TX-ERROR)
+      (e/error! "Transaction is in the error state"
+                {:msg msg})
+
+      ErrorResponse
+      (let [{:keys [errors]}
+            ErrorResponse
+
+            message
+            (with-out-str
+              (println "ErrorResponse during the data pipeline")
+              (doseq [{:keys [label bytes]} errors]
+                (println " -" label (codec/bytes->str bytes enc))))]
+
+        (e/error! message))
+
+      Rows!
+      (persistent! Rows!))))
+
+
+(defn process-another-message
+  [conn state {:as msg :keys [type]}]
+
+  (let [enc
+        (conn/server-encoding conn)]
+
+    (case type
+
+      :CloseComplete
+      state
+
+      :ParseComplete
+      state
+
+      :ErrorResponse
+      (assoc state :ErrorResponse msg)
+
+      :RowDescription
+      (assoc state
+             :Rows! (transient [])
+             :RowDescription msg)
+
+      :DataRow
+      (let [{:keys [RowDescription]}
+            state
+
+            Row
+            (decode-row msg RowDescription enc)]
+
+        (update state :Rows! conj! Row))
+
+      :CommandComplete
+      (assoc state :CommandComplete msg))))
+
+
 (defn data [conn]
 
   (let [enc
@@ -188,62 +267,18 @@
       (let [{:as msg :keys [type]}
             (conn/read-bb conn)]
 
-        (println msg)
-
         (case type
 
-          :CloseComplete
-          (recur state)
-
-          :ParseComplete
-          (recur state)
-
-          :ErrorResponse
-          (recur (assoc state :ErrorResponse msg))
-
-          :RowDescription
-          (recur
-           (assoc state
-                  :Rows! (transient [])
-                  :RowDescription msg))
-
-          :DataRow
-          (let [{:keys [RowDescription]}
-                state
-
-                Row
-                (decode-row msg RowDescription enc)]
-
-            (recur
-             (update state :Rows! conj! Row)))
-
-          :CommandComplete
-          (recur (assoc state :CommandComplete msg))
-
           :ReadyForQuery
-          (let [{:keys [tx-status]}
-                msg
+          (process-ready-message conn state msg)
 
-                {:keys [Rows!
-                        ErrorResponse]}
-                state]
+          ;; else
+          (let [[state-next e]
+                (try
+                  [(process-another-message conn state msg) nil]
+                  (catch Throwable e
+                    [nil e]))]
 
-            (cond
-
-              (= tx-status const/TX-ERROR)
-              (e/error! "Transaction is in the error state"
-                        {:msg msg})
-
-              ErrorResponse
-              (let [{:keys [errors]}
-                    ErrorResponse
-
-                    message
-                    (with-out-str
-                      (println "ErrorResponse during the data pipeline")
-                      (doseq [{:keys [label bytes]} errors]
-                        (println " -"label (codec/bytes->str bytes enc))))]
-                (e/error! message))
-
-              Rows!
-              (persistent! Rows!))))))))
+            (if e
+              (recur (assoc state :e e))
+              (recur state-next))))))))

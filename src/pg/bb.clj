@@ -71,6 +71,7 @@
         (byte-array offset)]
 
     (.get bb buf)
+    (.get bb)
     buf))
 
 

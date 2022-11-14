@@ -55,12 +55,12 @@
 (defn query
 
   ([conn sql]
-   (let [c-enc
+   (let [enc
          (conn/client-encoding conn)
 
          bb
          (-> sql
-             (codec/str->bytes c-enc)
+             (codec/str->bytes enc)
              (msg/make-query))]
 
      (conn/with-lock conn
@@ -240,6 +240,8 @@
 
   (def -conn
     (connect -cfg))
+
+  (query -conn "select 1 as one")
 
   (terminate -conn)
 
