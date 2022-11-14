@@ -70,9 +70,7 @@
         buf
         (byte-array offset)]
 
-    (.get bb pos buf)
-    (.position bb ^int (inc (+ pos offset)))
-
+    (.get bb buf)
     buf))
 
 

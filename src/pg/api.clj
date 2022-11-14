@@ -99,7 +99,7 @@
   ([conn sql oid-types]
 
    (let [stmt-name
-         (name (gensym "st"))
+         (name (gensym "stmt"))
 
          enc
          (conn/client-encoding conn)
