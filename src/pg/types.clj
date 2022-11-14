@@ -165,3 +165,43 @@
                   {:in ::here
                    :format format
                    :field field})))))
+
+
+(defprotocol IEncode
+  :extend-via-metadata true
+  (enc-text [this enc])
+  (enc-binary [this enc]))
+
+
+(extend-protocol IEncode
+
+  Object
+
+  (enc-text [this enc]
+    (codec/str->bytes (pr-str this) enc))
+
+  (enc-binary [this enc]
+    (e/error! "Don't know how to binary encode this value"
+              {:this this
+               :enc enc
+               :in ::here}))
+
+  String
+
+  (enc-text [this enc]
+    (codec/str->bytes this enc))
+
+  (enc-binary [this enc]
+    (codec/str->bytes this enc))
+
+  Number
+
+  (enc-text [this enc]
+    (codec/str->bytes (str this) enc))
+
+  (enc-binary [this enc]
+    nil)
+
+
+
+  )

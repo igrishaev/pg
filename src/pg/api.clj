@@ -4,6 +4,7 @@
   "
   (:refer-clojure :exclude [sync flush update])
   (:require
+   [pg.const :as const]
    [pg.codec :as codec]
    [pg.conn :as conn]
    [pg.msg :as msg]
@@ -140,8 +141,6 @@
 
 (defn call-statement [conn stmt params]
   (let [
-        bb
-        (msg/make-bind )
 
         ])
   )
@@ -163,7 +162,23 @@
   )
 
 
-(defn func-call []
+(defn call-function [conn oid-func & params]
+
+  (let [binary?
+        false
+
+        in-formats
+        (repeat (count params) const/FORMAT_TEXT)
+
+        bb
+        (msg/make-function-call oid-func
+                                in-formats
+
+                                )
+        ])
+
+
+
   )
 
 

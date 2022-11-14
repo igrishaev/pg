@@ -671,12 +671,9 @@
       (bb/write-byte \F)
       (bb/write-int32 len)
       (bb/write-int32 proc-oid)
+      (bb/write-int16 (count args-format))
+      (bb/write-int16s args-format)
       (bb/write-int16 (count args-bytes)))
-
-    (dotimes [_ (count args-bytes)]
-      (bb/write-int16 bb args-format))
-
-    (bb/write-int16 bb (count args-bytes))
 
     (doseq [^bytes bytes args-bytes]
       (if (nil? bytes)
