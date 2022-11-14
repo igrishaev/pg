@@ -4,17 +4,24 @@
    ;; [pg.const :as const]
    ;; [pg.codec :as codec]
    ;; [pg.auth.scram-sha-256 :as sha-256]
+   [pg.error :as e]
    [pg.bb :as bb]
-   [pg.msg :as msg]
-   )
+   [pg.msg :as msg])
   (:import
    java.net.InetSocketAddress
    java.nio.channels.SocketChannel))
 
 
 (defn write-bb
-  [{:keys [^SocketChannel ch]} bb]
-  (.write ch (bb/rewind bb)))
+  [{:as conn :keys [^SocketChannel ch]} bb]
+  (let [written
+        (.write ch (bb/rewind bb))]
+    (if (zero? (bb/remaining bb))
+      conn
+      (e/error! "Uncomplete write to the channel"
+                {:in ::here
+                 :bb bb
+                 :written written}))))
 
 
 (defn read-bb [{:keys [^SocketChannel ch]}]
@@ -40,6 +47,10 @@
            :o (new Object)
            :ch ch
            :addr addr)))
+
+
+(defn param [conn pname]
+  (get-in conn [:server-params pname]))
 
 
 #_

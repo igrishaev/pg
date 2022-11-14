@@ -5,6 +5,7 @@
   (:refer-clojure :exclude [sync flush update])
   (:require
    [pg.conn :as conn]
+   [pg.msg :as msg]
    [pg.pipeline :as pipeline]
 
    ))
@@ -13,15 +14,23 @@
 (defn connect [config]
   (-> config
       conn/connect
-      pipeline/auth))
+      pipeline/auth
+      pipeline/init))
 
 
-(defn terminate []
-  )
+(defn terminate [conn]
+  (-> conn
+      (conn/write-bb (msg/make-terminate))
+      (dissoc :ch :pid :secret-key)))
 
 
-(defmacro with-connection []
-  )
+(defmacro with-connection
+  [[bind config] & body]
+  `(let [~bind (connect ~config)]
+     (try
+       ~@body
+       (finally
+         (terminate ~bind)))))
 
 
 (defn query []
@@ -129,13 +138,20 @@
 #_
 (comment
 
+  (def -cfg
+    {:host "127.0.0.1"
+     :port 15432
+     :user "ivan"
+     :database "ivan"
+     :password "secret"})
+
   (def -conn
-    (connect
-     {:host "127.0.0.1"
-      :port 15432
-      :user "ivan"
-      :database "ivan"
-      :password "secret"}))
+    (connect -cfg))
+
+  (terminate -conn)
+
+  (with-connection [-conn -cfg]
+    (println -conn))
 
 
   )

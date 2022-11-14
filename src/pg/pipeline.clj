@@ -105,3 +105,46 @@
           ;; else
           (e/error! "Unhandled message during the Authentication pipeline"
                     {:msg msg}))))))
+
+
+
+(defn init [conn]
+
+  (loop [conn conn]
+
+    (let [{:as msg :keys [type]}
+          (conn/read-bb conn)]
+
+      (case type
+
+        :ParameterStatus
+        (let [{:keys [param value]} msg]
+          (recur (assoc-in conn [:server-params param] value)))
+
+        :BackendKeyData
+        (let [{:keys [pid secret-key]} msg]
+          (recur (assoc conn
+                        :pid pid
+                        :secret-key secret-key)))
+
+        :ReadyForQuery
+        (let [{:keys [tx-status]} msg]
+          (case tx-status
+            \E
+            (e/error! "Transaction is in the error state"
+                      {:msg msg})
+
+            ;; else
+            (assoc conn :tx-status tx-status)))
+
+        ;; else
+        (e/error! "Unhandled message in the initialization pipeline"
+                  {:msg msg})))))
+
+
+(defn data [conn]
+  (loop []
+    (let [msg
+          (conn/read-bb conn)]
+      (println msg)
+      (recur))))

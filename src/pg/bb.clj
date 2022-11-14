@@ -11,6 +11,10 @@
   (ByteBuffer/wrap buf))
 
 
+(defn remaining [^ByteBuffer bb]
+  (.remaining bb))
+
+
 (defn read-int16 [^ByteBuffer bb]
   (.getShort bb))
 
