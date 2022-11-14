@@ -86,7 +86,11 @@
     16 ;; oid/BOOL
     (case (codec/bytes->str value enc)
       "t" true
-      "f" false)
+      "f" false
+      (e/error! "Wrong bool"
+                {:value value
+                 :field field
+                 :in ::here}))
 
     (21 23) ;; oid/INT2 oid/INT4
     (-> value (codec/bytes->str enc) parseInt)
@@ -165,43 +169,3 @@
                   {:in ::here
                    :format format
                    :field field})))))
-
-
-(defprotocol IEncode
-  :extend-via-metadata true
-  (enc-text [this enc])
-  (enc-binary [this enc]))
-
-
-(extend-protocol IEncode
-
-  Object
-
-  (enc-text [this enc]
-    (codec/str->bytes (pr-str this) enc))
-
-  (enc-binary [this enc]
-    (e/error! "Don't know how to binary encode this value"
-              {:this this
-               :enc enc
-               :in ::here}))
-
-  String
-
-  (enc-text [this enc]
-    (codec/str->bytes this enc))
-
-  (enc-binary [this enc]
-    (codec/str->bytes this enc))
-
-  Number
-
-  (enc-text [this enc]
-    (codec/str->bytes (str this) enc))
-
-  (enc-binary [this enc]
-    nil)
-
-
-
-  )
