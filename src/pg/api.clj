@@ -2,6 +2,25 @@
   "
   Public client API.
   "
+  (:refer-clojure :exclude [sync flush update])
+  (:require
+   [pg.conn :as conn]
+   [pg.pipeline :as pipeline]
+
+   ))
+
+
+(defn connect [config]
+  (-> config
+      conn/connect
+      pipeline/auth))
+
+
+(defn terminate []
+  )
+
+
+(defmacro with-connection []
   )
 
 
@@ -43,9 +62,6 @@
   )
 
 
-(defmacro with-connection []
-  )
-
 
 (defn copy-in []
   )
@@ -71,8 +87,7 @@
   )
 
 
-(defn terminate []
-  )
+
 
 
 (defn get-isolation-level []
@@ -108,4 +123,19 @@
 
 
 (defn component []
+  )
+
+
+#_
+(comment
+
+  (def -conn
+    (connect
+     {:host "127.0.0.1"
+      :port 15432
+      :user "ivan"
+      :database "ivan"
+      :password "secret"}))
+
+
   )

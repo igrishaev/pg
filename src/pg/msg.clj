@@ -153,7 +153,9 @@
             (if (zero? field-type)
               acc
               (let [field-text
-                    (bb/read-cstring bb)]
+                    (-> bb
+                        bb/read-cstring
+                        codec/bytes->str)]
                 (recur (conj acc {:type (char field-type)
                                   :text field-text}))))))]
     {:type :ErrorResponse

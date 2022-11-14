@@ -1,11 +1,12 @@
 (ns pg.conn
   (:require
-   [pg.types :as types]
-   [pg.const :as const]
-   [pg.codec :as codec]
-   [pg.auth.scram-sha-256 :as sha-256]
+   ;; [pg.types :as types]
+   ;; [pg.const :as const]
+   ;; [pg.codec :as codec]
+   ;; [pg.auth.scram-sha-256 :as sha-256]
    [pg.bb :as bb]
-   [pg.msg :as msg])
+   [pg.msg :as msg]
+   )
   (:import
    java.net.InetSocketAddress
    java.nio.channels.SocketChannel))
@@ -20,106 +21,28 @@
   (msg/read-message ch))
 
 
-(defn auth-pipeline
-  [{:as conn :keys [ch
-                    user
-                    password
-                    database]}]
-
-  (let [bb
-        (msg/make-startup database user const/PROT-VER-14)]
-
-    (write-bb conn bb)
-
-    (loop [state-auth nil]
-
-      (let [{:as msg :keys [type]}
-            (msg/read-message ch)]
-
-        (case type
-
-          ;; :AuthenticationKerberosV5
-          ;; :AuthenticationSCMCredential
-          ;; :AuthenticationGSS
-          ;; :AuthenticationGSSContinue
-          ;; :AuthenticationSSPI
-
-          :AuthenticationOk
-          (assoc conn :auth state-auth)
-
-          :AuthenticationSASLContinue
-          (let [{:keys [server-first-message]}
-                msg
-
-                state-auth
-                (-> state-auth
-                    (sha-256/step2-server-first-message server-first-message)
-                    (sha-256/step3-client-final-message))
-
-                {:keys [client-final-message]}
-                state-auth
-
-                bb
-                (msg/make-sasl-response client-final-message)]
-
-            (write-bb conn bb)
-            (recur state-auth))
-
-          :AuthenticationSASL
-          (let [{:keys [sasl-types]}
-                msg]
-
-            (cond
-
-              (contains? sasl-types const/SCRAM-SHA-256)
-              (let [state-auth
-                    (sha-256/step1-client-first-message user password)
-
-                    {:keys [client-first-message]}
-                    state-auth
-
-                    bb
-                    (msg/make-sasl-init-response const/SCRAM-SHA-256
-                                                 client-first-message)]
-
-                (write-bb conn bb)
-                (recur state-auth))
-
-              :else
-              (throw (ex-info "Other SCRAM algorithms are not implemented yet"
-                              {:sasl-types sasl-types}))))
-
-          :AuthenticationSASLFinal
-          (let [{:keys [server-final-message]}
-                msg
-
-                state-auth
-                (-> state-auth
-                    (sha-256/step4-server-final-message server-final-message)
-                    (sha-256/step5-verify-server-signatures))]
-            (recur state-auth))
-
-          :AuthenticationCleartextPassword
-          (let [bb (msg/make-clear-text-password password)]
-            (write-bb conn bb)
-            (recur nil))
-
-          :AuthenticationMD5Password
-          (let [{:keys [salt]} msg
-                bb (msg/make-md5-password user password salt)]
-            (write-bb conn bb)
-            (recur nil))
-
-          :ErrorResponse
-          (let [{:keys [errors]} msg]
-            (throw (ex-info "Authentication failed"
-                            {:errors errors})))
-
-          ;; else
-          (throw (ex-info "Unhandled message in the auth pipeline"
-                          {:msg msg})))))))
+(defmacro with-lock
+  [state & body]
+  `(locking (:o ~state)
+     ~@body))
 
 
+(defn connect [{:as conn :keys [^String host
+                                ^Integer port]}]
+
+  (let [addr
+        (new java.net.InetSocketAddress host port)
+
+        ch
+        (SocketChannel/open addr)]
+
+    (assoc conn
+           :o (new Object)
+           :ch ch
+           :addr addr)))
+
+
+#_
 (defn init-pipeline
   [{:as state :keys [^SocketChannel ch]}]
 
@@ -154,6 +77,7 @@
                         {:msg msg}))))))
 
 
+#_
 (defn data-pipeline
   [{:as state :keys [^SocketChannel ch]}]
 
@@ -250,28 +174,9 @@
                         {:msg msg}))))))
 
 
-(defn connect [{:as state :keys [^String host
-                                 ^Integer port]}]
-
-  (let [addr
-        (new java.net.InetSocketAddress host port)
-
-        ch
-        (SocketChannel/open addr)]
-
-    (-> state
-        (assoc :ch ch
-               :addr addr)
-        (auth-pipeline)
-        (init-pipeline))))
 
 
-(defmacro with-lock
-  [state & body]
-  `(locking (:o ~state)
-     ~@body))
-
-
+#_
 (defn query
   [conn sql]
   (with-lock conn
@@ -279,31 +184,29 @@
     (data-pipeline conn)))
 
 
+#_
 (defn sync [state]
   (with-lock state
     (write-bb state (msg/make-sync))))
 
 
+#_
 (defn flush [{:as state :keys [ch]}]
   (with-lock state
     (write-bb ch (msg/make-flush))))
 
 
-(defn make-conn [conn]
-  (-> conn
-      (assoc :o (new Object))))
-
 
 (comment
 
+  #_
   (def -conn
-    (-> {:host "127.0.0.1"
-         :port 15432
-         :user "ivan"
-         :database "ivan"
-         :password "secret"}
-        make-conn
-        connect))
+    (connect
+     {:host "127.0.0.1"
+      :port 15432
+      :user "ivan"
+      :database "ivan"
+      :password "secret"}))
 
   (write-bb
    -conn
