@@ -42,7 +42,7 @@
     buf))
 
 
-(defmacro get-array [bb]
+(defmacro array [bb]
   `(.. ~(with-meta bb {:tag `ByteBuffer}) (array)))
 
 

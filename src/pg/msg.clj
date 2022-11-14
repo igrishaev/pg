@@ -16,19 +16,19 @@
 
         fields
         (loop [i 0
-               acc (transient [])]
+               acc! (transient [])]
           (if (= i field-count)
-            (persistent! acc)
+            (persistent! acc!)
             (recur
-             (inc 0)
-             (conj! acc
+             (inc i)
+             (conj! acc!
                     {:index       i
                      :name        (bb/read-cstring bb)
                      :table-id    (bb/read-int32 bb)
                      :column-id   (bb/read-int16 bb)
                      :type-id     (bb/read-int32 bb)
-                     :type-size   (bb/read-int16 bb)
-                     :type-mod-id (bb/read-int32 bb)
+                     :type-len    (bb/read-int16 bb)
+                     :type-mod    (bb/read-int32 bb)
                      :format      (bb/read-int16 bb)}))))]
 
     {:type :RowDescription
@@ -155,11 +155,9 @@
             (if (zero? field-type)
               acc
               (let [field-text
-                    (-> bb
-                        bb/read-cstring
-                        codec/bytes->str)]
-                (recur (conj acc {:type (char field-type)
-                                  :text field-text}))))))]
+                    (bb/read-cstring bb)]
+                (recur (conj acc {:label (char field-type)
+                                  :bytes field-text}))))))]
     {:type :ErrorResponse
      :errors errors}))
 
@@ -199,14 +197,14 @@
 
         columns
         (loop [i 0
-               result (transient [])]
+               acc! (transient [])]
           (if (= i amount)
-            (persistent! result)
+            (persistent! acc!)
             (let [len (bb/read-int32 bb)
                   col (when-not (= len -1)
                         (bb/read-bytes bb len))]
               (recur (inc i)
-                     (conj! result col)))))]
+                     (conj! acc! col)))))]
 
     {:type :DataRow
      :columns columns}))
@@ -454,7 +452,7 @@
             codec/str->bytes)
 
         hashed-pass
-        (->> (codec/concat-bytes creds salt)
+        (->> (b/concat creds salt)
              codec/md5
              codec/bytes->hex
              (str "md5"))

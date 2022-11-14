@@ -49,8 +49,22 @@
            :addr addr)))
 
 
-(defn param [conn pname]
-  (get-in conn [:server-params pname]))
+(defn param
+  ([conn pname]
+   (param conn pname nil))
+
+  ([conn pname default]
+   (get-in conn [:server-params pname])))
+
+
+(defn server-encoding [conn]
+  (param conn "server_encoding" "UTF-8"))
+
+
+(defn client-encoding [conn]
+  (param conn "client_encoding" "UTF-8"))
+
+
 
 
 #_

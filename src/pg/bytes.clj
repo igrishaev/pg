@@ -1,5 +1,5 @@
 (ns pg.bytes
-  (:refer-clojure :exclude [concat empty?])
+  (:refer-clojure :exclude [concat empty? ==])
   (:require
    [pg.error :as e])
   (:import

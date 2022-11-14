@@ -4,6 +4,7 @@
   "
   (:refer-clojure :exclude [sync flush update])
   (:require
+   [pg.codec :as codec]
    [pg.conn :as conn]
    [pg.msg :as msg]
    [pg.pipeline :as pipeline]
@@ -33,8 +34,19 @@
          (terminate ~bind)))))
 
 
-(defn query []
-  )
+(defn query [conn sql]
+  (let [c-enc
+        (conn/client-encoding conn)
+
+        bb
+        (-> sql
+            (codec/str->bytes c-enc)
+            (msg/make-query))]
+
+    (conn/with-lock conn
+      (-> conn
+          (conn/write-bb bb)
+          (pipeline/data)))))
 
 
 (defn insert []

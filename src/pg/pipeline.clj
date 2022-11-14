@@ -1,6 +1,7 @@
 (ns pg.pipeline
   (:require
    [pg.error :as e]
+   [pg.types :as types]
    [pg.conn :as conn]
    [pg.codec :as codec]
    [pg.const :as const]
@@ -142,9 +143,101 @@
                   {:msg msg})))))
 
 
+(defn decode-row
+  [DataRow RowDescription s-enc]
+
+  (let [{:keys [fields
+                field-count]}
+        RowDescription
+
+        {:keys [columns]}
+        DataRow]
+
+    (loop [i 0
+           acc! (transient {})]
+
+      (if (= i field-count)
+        (persistent! acc!)
+
+        (let [column
+              (get columns i)
+
+              field
+              (get fields i)
+
+              cname
+              (-> field
+                  :name
+                  (codec/bytes->str s-enc)
+                  keyword)
+
+              cvalue
+              (types/parse-column column field s-enc)]
+
+          (recur (inc i)
+                 (assoc! acc! cname cvalue)))))))
+
+
 (defn data [conn]
-  (loop []
-    (let [msg
-          (conn/read-bb conn)]
-      (println msg)
-      (recur))))
+
+  (let [enc
+        (conn/server-encoding conn)]
+
+    (loop [state nil]
+
+      (let [{:as msg :keys [type]}
+            (conn/read-bb conn)]
+
+        (println msg)
+
+        (case type
+
+          :ErrorResponse
+          (recur (assoc state :ErrorResponse msg))
+
+          :RowDescription
+          (recur
+           (assoc state
+                  :Rows! (transient [])
+                  :RowDescription msg))
+
+          :DataRow
+          (let [{:keys [RowDescription]}
+                state
+
+                Row
+                (decode-row msg RowDescription enc)]
+
+            (recur
+             (update state :Rows! conj! Row)))
+
+          :CommandComplete
+          (recur (assoc state :CommandComplete msg))
+
+          :ReadyForQuery
+          (let [{:keys [tx-status]}
+                msg
+
+                {:keys [Rows!
+                        ErrorResponse]}
+                state]
+
+            (cond
+
+              (= tx-status const/TX-ERROR)
+              (e/error! "Transaction is in the error state"
+                        {:msg msg})
+
+              ErrorResponse
+              (let [{:keys [errors]}
+                    ErrorResponse
+
+                    message
+                    (with-out-str
+                      (println "ErrorResponse during the data pipeline")
+                      (doseq [{:keys [label bytes]} errors]
+                        (println " -"label (codec/bytes->str bytes enc))))]
+                (e/error! message))
+
+              Rows!
+              (persistent! Rows!))))))))
