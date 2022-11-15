@@ -19,9 +19,7 @@
 
 
 (defn terminate [conn]
-  (-> conn
-      (conn/write-bb (msg/make-terminate))
-      (dissoc :ch :pid :secret-key)))
+  (conn/write-bb conn (msg/make-terminate)))
 
 
 (defmacro with-connection
@@ -184,15 +182,8 @@
   )
 
 
-(defn cancell []
+(defn cancell-query []
   )
-
-
-
-
-
-
-
 
 (defn get-isolation-level []
   )

@@ -108,15 +108,14 @@
 
           :ParameterStatus
           (let [{:keys [param value]} msg]
-            (recur (assoc-in conn [:server-params param] value)
-                   auth))
+            (conn/param conn param value)
+            (recur conn auth))
 
           :BackendKeyData
           (let [{:keys [pid secret-key]} msg]
-            (recur (assoc conn
-                          :pid pid
-                          :secret-key secret-key)
-                   auth))
+            (conn/param conn :pid pid)
+            (conn/param conn :secret-key secret-key)
+            (recur conn auth))
 
           :ReadyForQuery
           (let [{:keys [tx-status]} msg]

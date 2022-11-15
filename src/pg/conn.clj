@@ -46,15 +46,16 @@
     (assoc conn
            :o (new Object)
            :ch ch
-           :addr addr)))
+           :addr addr
+           :server-params (atom {}))))
 
 
 (defn param
   ([conn pname]
-   (param conn pname nil))
-
-  ([conn pname default]
-   (get-in conn [:server-params pname])))
+   (-> conn :server-params deref (get pname)))
+  ([conn pname value]
+   (update conn :server-params swap! assoc pname value)
+   conn))
 
 
 (defn server-encoding ^String [conn]
