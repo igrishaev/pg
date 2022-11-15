@@ -172,7 +172,7 @@
                     (bb/read-cstring bb)]
                 (recur (conj acc
                              {:type field-type
-                              :text field-bytes}))))))]
+                              :message field-bytes}))))))]
 
     {:type :NoticeResponse
      :messages messages}))
@@ -247,7 +247,7 @@
   {:type :NoData})
 
 
-(defn parse-notice-response [bb]
+(defn parse-notification-response [bb]
   (let [pid (bb/read-int32 bb)
         channel (bb/read-cstring bb)
         message (bb/read-cstring bb)]
@@ -312,7 +312,7 @@
     (parse-data-row bb)
 
     \A
-    (parse-notice-response bb)
+    (parse-notification-response bb)
 
     \s
     (parse-portal-suspended bb)

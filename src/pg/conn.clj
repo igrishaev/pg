@@ -53,8 +53,9 @@
 (defn param
   ([conn pname]
    (-> conn :server-params deref (get pname)))
-  ([conn pname value]
-   (update conn :server-params swap! assoc pname value)
+
+  ([{:as conn :keys [server-params]} pname value]
+   (swap! server-params assoc pname value)
    conn))
 
 
