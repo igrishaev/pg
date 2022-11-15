@@ -8,14 +8,23 @@
    [pg.codec :as codec]
    [pg.conn :as conn]
    [pg.msg :as msg]
-   [pg.pipeline.auth :as auth]
-   [pg.pipeline.data :as data]))
+   [pg.pipeline :as pipeline]))
 
 
 (defn connect [config]
-  (-> config
-      conn/connect
-      auth/pipeline))
+  (let [{:keys [user
+                database]}
+        config
+
+        conn
+        (conn/connect config)
+
+        bb
+        (msg/make-startup database user const/PROT-VER-14)]
+
+    (conn/write-bb conn bb)
+    (pipeline/pipeline conn {:phase :auth})
+    conn))
 
 
 (defn terminate [conn]
