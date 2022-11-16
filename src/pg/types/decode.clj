@@ -1,6 +1,7 @@
 (ns pg.types.decode
   "
   https://docs.oracle.com/javase/9/docs/api/java/time/format/DateTimeFormatter.html
+  https://github.com/pgjdbc/pgjdbc/blob/master/pgjdbc/src/main/java/org/postgresql/jdbc/TimestampUtils.java
   "
   (:import
    java.util.UUID
