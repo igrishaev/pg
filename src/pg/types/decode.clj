@@ -1,4 +1,4 @@
-(ns pg.types
+(ns pg.types.decode
   "
   https://docs.oracle.com/javase/9/docs/api/java/time/format/DateTimeFormatter.html
   "
@@ -8,12 +8,32 @@
    java.time.format.DateTimeFormatter
    java.time.Instant)
   (:require
+   [pg.oid :as oid]
    [pg.error :as e]
    [pg.codec :as codec]
 
    [clojure.java.io :as io]
    [clojure.xml :as xml]
    [clojure.string :as str]))
+
+
+(defn parseUUID [x]
+  (UUID/fromString x))
+
+
+(defmulti decode-text
+  (fn [bytes field enc]
+    (:type-id field)))
+
+
+(defmethod decode-text oid/UUID
+  [bytes field enc]
+  (-> bytes (codec/bytes->str enc) parseUUID)
+
+
+  )
+
+
 
 
 (def ^DateTimeFormatter
