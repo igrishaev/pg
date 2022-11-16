@@ -71,7 +71,7 @@
      (conn/with-lock conn
        (-> conn
            (conn/write-bb bb)
-           (data/pipeline)))))
+           (pipeline/pipeline nil)))))
 
   ([conn sql & params]
    (query-with-params conn sql params)))
@@ -116,8 +116,7 @@
      (conn/with-lock conn
        (-> conn
            (conn/write-bb bb)
-           (sync)
-           (data/pipeline))
+           (pipeline/pipeline nil))
        stmt-name))))
 
 
@@ -130,8 +129,7 @@
     (conn/with-lock conn
       (-> conn
           (conn/write-bb bb)
-          (sync)
-          (data/pipeline)))))
+          (pipeline/pipeline nil)))))
 
 
 (defmacro with-statement
@@ -153,10 +151,6 @@
 
 (defmacro with-transaction []
   )
-
-
-
-
 
 
 (defn copy-in []
@@ -245,8 +239,12 @@
 
   (time
    (with-connection [-conn -cfg]
-     (dotimes [_ 99999]
-       (query -conn "select 1 as one"))))
+     (dotimes [_ 9999]
+       (query -conn "select date, kv from log1v"))))
+
+  (time
+   (dotimes [_ 9999]
+     (query -conn "select date, kv from log1v")))
 
   (require
    '[clojure.java.jdbc :as jdbc])
@@ -261,8 +259,8 @@
 
   (time
    (jdbc/with-db-connection [-db -spec]
-     (dotimes [_ 99999]
-       (jdbc/query -db "select 1 as one"))))
+     (dotimes [_ 999]
+       (jdbc/query -db "select date, kv from log1v"))))
 
   (with-statement [-conn "st2"])
 

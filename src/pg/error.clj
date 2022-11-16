@@ -1,18 +1,29 @@
 (ns pg.error)
 
+(defn error
+
+  ([message]
+   (error message {} nil))
+
+  ([message data]
+   (error message data nil))
+
+  ([message data cause]
+   (ex-info message
+            (assoc data :type ::error)
+            cause)))
+
 
 (defn error!
 
   ([message]
-   (error! message {} nil))
+   (throw (error message)))
 
   ([message data]
-   (error! message data nil))
+   (throw (error message data)))
 
   ([message data cause]
-   (throw (ex-info message
-                   (assoc data :type ::error)
-                   cause))))
+   (throw (error message data cause))))
 
 
 (defmacro with-pcall [& body]

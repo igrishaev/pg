@@ -5,6 +5,8 @@
    [pg.conn :as conn]
    [pg.codec :as codec]
    [pg.const :as const]
+   [pg.auth.scram-sha-256 :as sha-256]
+   [pg.auth.md5 :as md5]
    [pg.msg :as msg]))
 
 
@@ -64,12 +66,13 @@
       (conn/write-bb conn bb)
       (assoc state :auth auth))
 
-    ;; TODO terminate?
-
+    ;; special case
     :else
     (assoc state
            :end? true
-           :error "No other SCRAM algorithms have been implemented yet")))
+           :exception
+           (e/error "None of the server SCRAM algorithms is supported"
+                    {:sasl-types sasl-types}))))
 
 
 (defn handle-param-status [conn state {:keys [param value]}]
@@ -107,17 +110,15 @@
   [conn
    {:as state :keys [phase]}
    msg]
-
   (assoc state
          :end? (= phase :auth)
          :ErrorResponse msg))
 
 
 (defn handle-ready-for-query [conn state msg]
-  (let [{:keys [tx-status]}
-        msg]
-
-    (assoc state :end? true)))
+  (assoc state
+         :end? true
+         :ReadyForQuery msg))
 
 
 (defn handle-backend-data
@@ -215,10 +216,37 @@
     (assoc state :auth auth)))
 
 
+(defn handle-auth-cleartext-pass
+  [{:as conn :keys [password]}
+   state
+   msg]
+  (let [bb (msg/make-clear-text-password password)]
+    (conn/write-bb conn bb))
+  state)
+
+
+(defn handle-auth-md5-pass
+  [{:as conn :keys [user password]}
+   state
+   msg]
+  (let [{:keys [salt]}
+        msg
+
+        hashed-pass
+        (md5/hash-password user password salt)
+
+        bb
+        (msg/make-md5-password
+         (codec/str->bytes hashed-pass))]
+
+    (conn/write-bb conn bb))
+  state)
+
+
 (defn process-message
   [conn state {:as msg :keys [type]}]
 
-  (println msg)
+  ;; (println msg)
 
   (case type
 
@@ -247,28 +275,10 @@
     (handle-auth-sasl-final conn state msg)
 
     :AuthenticationCleartextPassword
-    1
-    #_
-    (let [bb (msg/make-clear-text-password password)]
-            (conn/write-bb conn bb)
-            (recur conn auth))
+    (handle-auth-cleartext-pass conn state msg)
 
     :AuthenticationMD5Password
-    1
-    #_
-    (let [{:keys [salt]}
-                msg
-
-                hashed-pass
-                (md5/hash-password user password salt)
-
-                bb
-                (msg/make-md5-password
-                 (codec/str->bytes hashed-pass))]
-
-            (conn/write-bb conn bb)
-            (recur conn auth))
-
+    (handle-auth-md5-pass conn state msg)
 
     :ParameterStatus
     (handle-param-status conn state msg)
@@ -309,15 +319,22 @@
 
           [state* e]
           (e/with-pcall
-            (process-message conn state msg))]
+            (process-message conn state msg))
+
+          {:keys [end? exception]}
+          state*]
 
       (cond
 
         e
-        (recur (update state :exceptions conj e))
+        (recur (assoc state :exception e))
 
-        (:end? state*)
-        state*
+        end?
+        (if exception
+          (let [bb (msg/make-terminate)]
+            (conn/write-bb conn bb)
+            (throw exception))
+          state*)
 
         :else
         (recur state*)))))

@@ -1,5 +1,6 @@
 (ns pg.msg
   (:import
+   java.nio.ByteBuffer
    java.nio.channels.SocketChannel)
   (:require
    [pg.error :as e]
@@ -281,6 +282,9 @@
 
   (case (char lead)
 
+    \Z
+    (parse-ready-for-query bb)
+
     \T
     (parse-row-description bb)
 
@@ -292,9 +296,6 @@
 
     \K
     (parse-backend-data bb)
-
-    \Z
-    (parse-ready-for-query bb)
 
     \E
     (parse-error-response bb)
@@ -345,55 +346,35 @@
                :in ::here})))
 
 
-(defn read-message-payload [^SocketChannel chan bb-header]
+(defn read-bb [^SocketChannel ch ^ByteBuffer bb]
+  (while (not (zero? (bb/remaining bb)))
+    (.read ch bb)))
+
+
+(defn read-message-payload [^SocketChannel ch bb-header]
 
   (bb/rewind bb-header)
 
   (let [lead (bb/read-byte bb-header)
         len (- (bb/read-int32 bb-header) 4)
-        bb (bb/allocate len)
-        read (.read chan bb)]
+        bb (bb/allocate len)]
 
+    (read-bb ch bb)
     (bb/rewind bb)
 
-    (cond
-
-      (= read len)
-      (parse-message-payload lead bb)
-
-      :else
-      (e/error! "Inconsistent payload read"
-                {:in ::here
-                 :read read
-                 :lead lead
-                 :len len
-                 :bb-header bb-header
-                 :bb :bb}))))
+    (parse-message-payload lead bb)))
 
 
-(defn read-message [^SocketChannel chan]
-  (let [bb-header (bb/allocate 5)
-        read (.read chan bb-header)]
-
-    (cond
-
-      (= read 5)
-      (read-message-payload chan bb-header)
-
-      (= read -1)
-      nil
-
-      :else
-      (e/error! "Inconsistent header read"
-                {:in ::here
-                 :read read
-                 :bb-header bb-header}))))
+(defn read-message [^SocketChannel ch]
+  (let [bb (bb/allocate 5)]
+    (read-bb ch bb)
+    (read-message-payload ch bb)))
 
 
-(defn read-messages [^SocketChannel chan]
+(defn read-messages [^SocketChannel ch]
   (lazy-seq
-   (when-let [message (read-message chan)]
-     (cons message (read-messages chan)))))
+   (when-let [message (read-message ch)]
+     (cons message (read-messages ch)))))
 
 
 (defn make-startup
