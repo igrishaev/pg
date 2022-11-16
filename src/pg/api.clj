@@ -170,8 +170,8 @@
           (conn/write-bb bb-bind)
           (conn/write-bb bb-desc)
           (conn/write-bb bb-exe)
-          (sync)
           (flush)
+          (sync)
           (pipeline/pipeline nil)))))
 
 

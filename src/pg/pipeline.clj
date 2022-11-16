@@ -246,7 +246,7 @@
 (defn process-message
   [conn state {:as msg :keys [type]}]
 
-  ;; (println msg)
+  (println msg)
 
   (case type
 
