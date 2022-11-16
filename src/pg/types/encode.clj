@@ -16,6 +16,22 @@
 
 
 
+(defmulti -encode
+  (fn [a b c]
+    (class b)))
+
+
+(defmethod -encode Object
+  [a b c]
+  ::not-iimplemented)
+
+
+(defmethod -encode String
+  [a b c]
+  "string")
+
+
+
 
 (defprotocol IEncode
   :extend-via-metadata true

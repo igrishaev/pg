@@ -189,7 +189,9 @@
 
 (defn parse-command-complete [bb]
   {:type :CommandComplete
-   :tag (bb/read-cstring bb)})
+   :tag (-> bb
+            bb/read-cstring
+            codec/bytes->str)})
 
 
 (defn parse-data-row [bb]

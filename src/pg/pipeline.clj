@@ -341,7 +341,10 @@
         (e/error! message))
 
       Rows!
-      (persistent! Rows!))))
+      (persistent! Rows!)
+
+      :else
+      state)))
 
 
 (defn pipeline
