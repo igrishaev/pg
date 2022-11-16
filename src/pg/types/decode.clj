@@ -17,36 +17,12 @@
    [clojure.string :as str]))
 
 
+;;
+;; Utils
+;;
+
 (defn parseUUID [x]
   (UUID/fromString x))
-
-
-(defmulti decode-text
-  (fn [bytes field enc]
-    (:type-id field)))
-
-
-(defmethod decode-text oid/UUID
-  [bytes field enc]
-  (-> bytes (codec/bytes->str enc) parseUUID)
-
-
-  )
-
-
-
-
-(def ^DateTimeFormatter
-  dtf-ts-isoz
-  (-> "yyyy-MM-dd HH:mm:ss.nx"
-      (DateTimeFormatter/ofPattern)
-      (.withZone (ZoneId/of "UTC"))))
-
-
-(defn parse-ts-isoz [string]
-  (->> string
-       (.parse dtf-ts-isoz)
-       (Instant/from)))
 
 
 (defn parseInt [x]
@@ -65,127 +41,132 @@
   (Double/parseDouble x))
 
 
-(defn parseUUID [x]
-  (UUID/fromString x))
+(def ^DateTimeFormatter dtf-timestamp-z-iso
+  (-> "yyyy-MM-dd HH:mm:ss.nx"
+      (DateTimeFormatter/ofPattern)
+      (.withZone (ZoneId/of "UTC"))))
 
 
-(defn parse-int-vec [x]
-  (mapv parseInt
-        (-> x
-            (subs 1 (dec (count x)))
-            (str/split #","))))
+(defn parseTimestamptZ [string]
+  (->> string
+       (.parse dtf-timestamp-z-iso)
+       (Instant/from)))
 
 
-(defmulti mm-parse-column-text
-  (fn [value field enc]
+;;
+;; Text
+;;
+
+(defmulti decode-text
+  (fn [bytes field enc]
     (:type-id field)))
 
 
-(defmethod mm-parse-column-text :default
-  [value field enc]
-  (codec/bytes->str value enc))
+(defmethod decode-text :default
+  [bytes field enc]
+  (codec/bytes->str bytes enc))
 
 
-(defmulti mm-parse-column-binary
-  (fn [value field enc]
-    (:type-id field)))
+(defmethod decode-text oid/BYTEA
+  [bytes field enc]
+  bytes)
 
 
-(defmethod mm-parse-column-binary :default
-  [value field enc]
-  value)
+(defmethod decode-text oid/TEXT
+  [bytes field enc]
+  (codec/bytes->str bytes enc))
 
 
-(defn parse-column-text
-  [^bytes value
-   {:as field :keys [type-id]}
-   enc]
+(defmethod decode-text oid/VARCHAR
+  [bytes field enc]
+  (codec/bytes->str bytes enc))
 
-  (case (int type-id)
 
-    16 ;; oid/BOOL
-    (case (codec/bytes->str value enc)
+(defmethod decode-text oid/CHAR
+  [^bytes bytes field enc]
+  (char (aget bytes 0)))
+
+
+(defmethod decode-text oid/BOOL
+  [bytes field enc]
+  (let [val
+        (codec/bytes->str bytes enc)]
+    (case val
       "t" true
       "f" false
-      (e/error! "Wrong bool"
-                {:value value
-                 :field field
-                 :in ::here}))
-
-    (21 23) ;; oid/INT2 oid/INT4
-    (-> value (codec/bytes->str enc) parseInt)
-
-    20 ;; oid/INT8
-    (-> value (codec/bytes->str enc) parseLong)
-
-    700 ;; oid/FLOAT4
-    (-> value (codec/bytes->str enc) parseFloat)
-
-    701 ;; oid/FLOAT8
-    (-> value (codec/bytes->str enc) parseDouble)
-
-    2950 ;; oid/UUID
-    (-> value (codec/bytes->str enc) parseUUID)
-
-    142 ;; oid/XML
-    (xml/parse (io/input-stream value :encoding enc))
-
-    1700 ;; oid/NUMERIC
-    (-> value (codec/bytes->str enc) bigdec)
-
-    1184 ;; oid/TIMESTAMPTZ
-    (-> value (codec/bytes->str enc) parse-ts-isoz)
-
-    ;; 1082 | date
-    ;; 1083 | time
-    ;; 1114 | timestamp
-    ;; 1186 | interval
-    ;; 1266 | timetz
-
-    ;; else
-    (mm-parse-column-text value field enc)))
+      val)))
 
 
-(defn parse-column-binary
-  [^bytes value
-   {:as field :keys [type-id]}
-   enc]
-
-  (case type-id
-
-    ;; else
-    (mm-parse-column-binary value field enc)))
+(defmethod decode-text oid/INT2
+  [bytes field enc]
+  (-> bytes (codec/bytes->str enc) parseInt))
 
 
-(defn parse-column
-  [^bytes value
-   {:as field :keys [format type-id]}
-   enc]
+(defmethod decode-text oid/INT4
+  [bytes field enc]
+  (-> bytes (codec/bytes->str enc) parseInt))
 
-  (when (some? value)
 
-    (case (int type-id)
+(defmethod decode-text oid/INT8
+  [bytes field enc]
+  (-> bytes (codec/bytes->str enc) parseLong))
 
-      17 ;; oid.BYTEA
-      value
 
-      (25 1043) ;; oid.TEXT oid.VARCHAR
-      (codec/bytes->str value enc)
+(defmethod decode-text oid/FLOAT4
+  [bytes field enc]
+  (-> bytes (codec/bytes->str enc) parseFloat))
 
-      18 ;; oid.CHAR
-      (char (aget value 0))
 
-      ;; else
-      (case (int format)
+(defmethod decode-text oid/FLOAT8
+  [bytes field enc]
+  (-> bytes (codec/bytes->str enc) parseDouble))
 
-        0 ;; const/FORMAT_TEXT
-        (parse-column-text value field enc)
 
-        1 ;; const/FORMAT_BINARY
-        (parse-column-binary value field enc)
+(defmethod decode-text oid/UUID
+  [bytes field enc]
+  (-> bytes (codec/bytes->str enc) parseUUID))
 
-        ;; else
-        (e/error! "Wrong field format"
-                  {:in ::here
-                   :format format
-                   :field field})))))
+
+(defmethod decode-text oid/XML
+  [bytes field enc]
+  (xml/parse (io/input-stream bytes :encoding enc)))
+
+
+(defmethod decode-text oid/NUMERIC
+  [bytes field enc]
+  (-> bytes (codec/bytes->str enc) bigdec))
+
+
+(defmethod decode-text oid/TIMESTAMPTZ
+  [bytes field enc]
+  (-> bytes (codec/bytes->str enc) parseTimestamptZ))
+
+;; 1082 | date
+;; 1083 | time
+;; 1114 | timestamp
+;; 1186 | interval
+;; 1266 | timetz
+
+
+;;
+;; Binary
+;;
+
+(defmulti decode-binary
+  (fn [bytes field enc]
+    (:type-id field)))
+
+
+(defmethod decode-binary :default
+  [bytes field enc]
+  bytes)
+
+
+(defmethod decode-binary oid/FLOAT4
+  [^bytes bytes field enc]
+  (Float/intBitsToFloat (new BigInteger bytes)))
+
+
+(defmethod decode-binary oid/FLOAT8
+  [^bytes bytes field enc]
+  (Double/longBitsToDouble (new BigInteger bytes)))

@@ -146,13 +146,13 @@
 
     (case (int type-id)
 
-      17 ;; oid.BYTEA
+      17 ;; oid/BYTEA
       value
 
-      (25 1043) ;; oid.TEXT oid.VARCHAR
+      (25 1043) ;; oid/TEXT oid/VARCHAR
       (codec/bytes->str value enc)
 
-      18 ;; oid.CHAR
+      18 ;; oid/CHAR
       (char (aget value 0))
 
       ;; else

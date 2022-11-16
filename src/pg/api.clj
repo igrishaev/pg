@@ -185,7 +185,6 @@
           (conn/write-bb bb-bind)
           (conn/write-bb bb-desc)
           (conn/write-bb bb-exe)
-          #_(flush)
           (sync)
           (pipeline/pipeline)))))
 
@@ -306,7 +305,15 @@
      (dotimes [_ 999]
        (jdbc/query -db "select date, kv from log1v"))))
 
-  (with-statement [-conn "st2"])
+  (with-statement [st -conn "select 1 as one"]
+    (println (execute -conn st nil))
+    (println (execute -conn st nil))
+    )
+
+  (with-connection [-conn -cfg]
+    (with-statement [st -conn "select 1 as one"]
+      (println (execute -conn st nil))
+      (println (execute -conn st nil))))
 
 
   )
