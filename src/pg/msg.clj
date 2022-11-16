@@ -487,12 +487,12 @@
 
 
 (defn make-execute
-  ([portal]
+  ([^bytes portal]
    (make-execute portal 0))
 
-  ([portal amount]
+  ([^bytes portal amount]
    (let [len
-         (+ 4 (count portal) 1 4)]
+         (+ 4 (alength portal) 1 4)]
      (doto (bb/allocate (inc len))
        (bb/write-byte \E)
        (bb/write-int32 len)

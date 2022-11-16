@@ -292,7 +292,7 @@
     :BackendKeyData
     (handle-backend-data conn state msg)
 
-    (:CloseComplete :ParseComplete)
+    (:CloseComplete :ParseComplete :BindComplete)
     state
 
     :RowDescription
@@ -308,6 +308,40 @@
     (e/error! "Unhandled message in the pipeline"
               {:msg msg
                :in ::here})))
+
+
+(defn state->result
+  [conn state]
+
+  (let [enc
+        (conn/server-encoding conn)
+
+        {:keys [Rows!
+                ErrorResponse
+                ReadyForQuery]}
+        state
+
+        {:keys [errors]}
+        ErrorResponse
+
+        {:keys [tx-status]}
+        ReadyForQuery]
+
+    (cond
+
+      (= tx-status const/TX-ERROR)
+      (e/error! "Transaction is in the error state")
+
+      errors
+      (let [message
+            (with-out-str
+              (doseq [{:keys [label bytes]}
+                      errors]
+                (println " -" label (codec/bytes->str bytes enc))))]
+        (e/error! message))
+
+      Rows!
+      (persistent! Rows!))))
 
 
 (defn pipeline [conn state]
@@ -334,7 +368,7 @@
           (let [bb (msg/make-terminate)]
             (conn/write-bb conn bb)
             (throw exception))
-          state*)
+          (state->result conn state*))
 
         :else
         (recur state*)))))

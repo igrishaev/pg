@@ -104,7 +104,7 @@
   ([conn sql oid-types]
 
    (let [stmt-name
-         (name (gensym "stmt"))
+         (name (gensym "stmt-"))
 
          enc
          (conn/client-encoding conn)
@@ -113,11 +113,13 @@
          (msg/make-parse (codec/str->bytes stmt-name enc)
                          (codec/str->bytes sql enc)
                          oid-types)]
+
      (conn/with-lock conn
-       (-> conn
-           (conn/write-bb bb)
-           (pipeline/pipeline nil))
-       stmt-name))))
+       (doto conn
+         (conn/write-bb bb)
+         (sync)))
+
+     stmt-name)))
 
 
 (defn close-statement [conn stmt-name]
@@ -127,9 +129,10 @@
         (msg/make-close-statement
          (codec/str->bytes stmt-name enc))]
     (conn/with-lock conn
-      (-> conn
-          (conn/write-bb bb)
-          (pipeline/pipeline nil)))))
+      (doto conn
+        (conn/write-bb bb)
+        (sync)))
+    nil))
 
 
 (defmacro with-statement
@@ -142,11 +145,34 @@
          (close-statement ~conn ~bind)))))
 
 
-(defn call-statement [conn stmt params]
-  (let [
+(defn execute [conn stmt params]
+  (let [portal
+        (name (gensym "portal-"))
 
-        ])
-  )
+        bb-bind
+        (msg/make-bind
+         (codec/str->bytes portal)
+         (codec/str->bytes stmt)
+         []
+         []
+         [const/FORMAT_TEXT])
+
+        bb-exe
+        (msg/make-execute
+         (codec/str->bytes portal) 0)
+
+        bb-desc
+        (msg/make-describe-portal
+         (codec/str->bytes portal))]
+
+    (conn/with-lock conn
+      (-> conn
+          (conn/write-bb bb-bind)
+          (conn/write-bb bb-desc)
+          (conn/write-bb bb-exe)
+          (sync)
+          (flush)
+          (pipeline/pipeline nil)))))
 
 
 (defmacro with-transaction []
@@ -196,8 +222,8 @@
   )
 
 
-(defn flush []
-  )
+(defn flush [conn]
+  (conn/write-bb conn (msg/make-flush)))
 
 
 (defn reducible-query []
