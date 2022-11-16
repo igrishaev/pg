@@ -28,10 +28,13 @@
   Object
 
   (encode-text [this enc]
-    (codec/str->bytes (pr-str this) enc))
+    (e/error! "Don't know how encode this value to text"
+              {:this this
+               :enc enc
+               :in ::here}))
 
   (encode-binary [this enc]
-    (e/error! "Don't know how to binary encode this value"
+    (e/error! "Don't know how encode this value to bytes"
               {:this this
                :enc enc
                :in ::here}))
