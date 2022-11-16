@@ -344,31 +344,36 @@
       (persistent! Rows!))))
 
 
-(defn pipeline [conn state]
+(defn pipeline
 
-  (loop [state state]
+  ([conn]
+   (pipeline conn nil))
 
-    (let [{:as msg :keys [type]}
-          (conn/read-bb conn)
+  ([conn state]
 
-          [state* e]
-          (e/with-pcall
-            (process-message conn state msg))
+   (loop [state state]
 
-          {:keys [end? exception]}
-          state*]
+     (let [{:as msg :keys [type]}
+           (conn/read-bb conn)
 
-      (cond
+           [state* e]
+           (e/with-pcall
+             (process-message conn state msg))
 
-        e
-        (recur (assoc state :exception e))
+           {:keys [end? exception]}
+           state*]
 
-        end?
-        (if exception
-          (let [bb (msg/make-terminate)]
-            (conn/write-bb conn bb)
-            (throw exception))
-          (state->result conn state*))
+       (cond
 
-        :else
-        (recur state*)))))
+         e
+         (recur (assoc state :exception e))
+
+         end?
+         (if exception
+           (let [bb (msg/make-terminate)]
+             (conn/write-bb conn bb)
+             (throw exception))
+           (state->result conn state*))
+
+         :else
+         (recur state*))))))

@@ -11,6 +11,14 @@
    [pg.pipeline :as pipeline]))
 
 
+(defn flush [conn]
+  (conn/write-bb conn (msg/make-flush)))
+
+
+(defn sync [conn]
+  (conn/write-bb conn (msg/make-sync)))
+
+
 (defn connect [config]
   (let [{:keys [user
                 database]}
@@ -71,7 +79,7 @@
      (conn/with-lock conn
        (-> conn
            (conn/write-bb bb)
-           (pipeline/pipeline nil)))))
+           (pipeline/pipeline)))))
 
   ([conn sql & params]
    (query-with-params conn sql params)))
@@ -93,15 +101,11 @@
   )
 
 
-(defn sync [conn]
-  (conn/write-bb conn (msg/make-sync)))
-
-
 (defn prepare
   ([conn sql]
    (prepare conn sql nil))
 
-  ([conn sql oid-types]
+  ([conn sql oid-params]
 
    (let [stmt-name
          (name (gensym "stmt-"))
@@ -112,12 +116,13 @@
          bb
          (msg/make-parse (codec/str->bytes stmt-name enc)
                          (codec/str->bytes sql enc)
-                         oid-types)]
+                         oid-params)]
 
      (conn/with-lock conn
-       (doto conn
-         (conn/write-bb bb)
-         (sync)))
+       (-> conn
+           (conn/write-bb bb)
+           (sync)
+           (pipeline/pipeline)))
 
      stmt-name)))
 
@@ -129,9 +134,11 @@
         (msg/make-close-statement
          (codec/str->bytes stmt-name enc))]
     (conn/with-lock conn
-      (doto conn
-        (conn/write-bb bb)
-        (sync)))
+      (conn/with-lock conn
+        (-> conn
+            (conn/write-bb bb)
+            (sync)
+            (pipeline/pipeline))))
     nil))
 
 
@@ -146,13 +153,21 @@
 
 
 (defn execute [conn stmt params]
-  (let [portal
+  (let [enc
+        (conn/client-encoding conn)
+
+        portal
         (name (gensym "portal-"))
+
+        params-encoded []
+        #_
+        (for [param params]
+          (encode param))
 
         bb-bind
         (msg/make-bind
-         (codec/str->bytes portal)
-         (codec/str->bytes stmt)
+         (codec/str->bytes portal enc)
+         (codec/str->bytes stmt enc)
          []
          []
          [const/FORMAT_TEXT])
@@ -170,9 +185,9 @@
           (conn/write-bb bb-bind)
           (conn/write-bb bb-desc)
           (conn/write-bb bb-exe)
-          (flush)
+          #_(flush)
           (sync)
-          (pipeline/pipeline nil)))))
+          (pipeline/pipeline)))))
 
 
 (defmacro with-transaction []
@@ -222,10 +237,6 @@
   )
 
 
-(defn flush [conn]
-  (conn/write-bb conn (msg/make-flush)))
-
-
 (defn reducible-query []
   )
 
@@ -260,6 +271,13 @@
     (connect -cfg))
 
   (query -conn "select 1 as one")
+
+  (def -st
+    (prepare -conn
+             "select now() as now, 'foo' as text"
+             [pg.oid/TIMESTAMP, pg.oid/TEXT]))
+
+  (execute -conn -st nil)
 
   (terminate -conn)
 
