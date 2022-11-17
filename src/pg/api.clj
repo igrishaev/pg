@@ -8,7 +8,9 @@
    [pg.codec :as codec]
    [pg.conn :as conn]
    [pg.msg :as msg]
-   [pg.pipeline :as pipeline]))
+   [pg.quote :as q]
+   [pg.pipeline :as pipeline]
+   [clojure.string :as str]))
 
 
 (defn flush [conn]
@@ -48,23 +50,6 @@
          (terminate ~bind)))))
 
 
-(defn query-with-params
-  [conn sql params]
-
-  (let []
-
-    (conn/with-lock conn
-      ()
-      )
-
-
-    )
-
-
-
-  )
-
-
 (defn query
 
   ([conn sql]
@@ -81,23 +66,12 @@
            (conn/write-bb bb)
            (pipeline/pipeline)))))
 
-  ([conn sql & params]
-   (query-with-params conn sql params)))
+  ([conn sql & [params oid-types]]
+   (with-statement [st conn sql oid-types]
+     (execute-statement conn st params))))
 
 
-(defn insert []
-  )
-
-
-(defn insert-batch []
-  )
-
-
-(defn update []
-  )
-
-
-(defn delete []
+(defn cancell-query []
   )
 
 
@@ -142,6 +116,26 @@
     nil))
 
 
+(defn call-function [conn oid-func & params]
+
+  (let [binary?
+        false
+
+        in-formats
+        (repeat (count params) const/FORMAT_TEXT)
+
+        bb
+        (msg/make-function-call oid-func
+                                in-formats
+
+                                )
+        ])
+
+
+
+  )
+
+
 (defmacro with-statement
   [[bind conn sql & [oid-types]] & body]
   `(let [~bind
@@ -157,6 +151,8 @@
         (conn/client-encoding conn)
 
         portal
+        ""
+        #_
         (name (gensym "portal-"))
 
         params-encoded []
@@ -213,10 +209,14 @@
       :transaction_isolation))
 
 
-;; TODO: parse level
+(defn- -parse-iso-level [level]
+  (-> level name (str/replace #"-|_" " ")))
+
+
 (defn set-isolation-level [conn level]
   (let [sql
-        (format "SET TRANSACTION ISOLATION LEVEL %s" level)]
+        (format "SET TRANSACTION ISOLATION LEVEL %s"
+                (-parse-iso-level level))]
     (query conn sql)))
 
 
@@ -239,6 +239,10 @@
          (throw e#)))))
 
 
+;;
+;; Copy in & out
+;;
+
 (defn copy-in []
   )
 
@@ -247,33 +251,42 @@
   )
 
 
-(defn call-function [conn oid-func & params]
+;;
+;; Listen & Notify
+;;
 
-  (let [binary?
-        false
-
-        in-formats
-        (repeat (count params) const/FORMAT_TEXT)
-
-        bb
-        (msg/make-function-call oid-func
-                                in-formats
-
-                                )
-        ])
+(defn- -quote-str [string]
+  (str \' (str/replace string #"'" "''") \'))
 
 
-
-  )
-
-
-(defn notify []
-  )
+(defn listen [conn channel]
+  (let [sql
+        (format "listen %s" (name channel))]
+    (query conn sql)))
 
 
-(defn cancell-query []
-  )
+(defn unlisten [conn channel]
+  (let [sql
+        (format "unlisten %s" (name channel))]
+    (query conn sql)))
 
+
+(defn notify
+  ([conn channel]
+   (notify conn channel nil))
+
+  ([conn channel message]
+   (let [sql
+         (with-out-str
+           (print "notify" (name channel))
+           (when message
+             (print \, (q/quote-str message))))]
+     (query conn sql))))
+
+
+;;
+;; Helpers & wrappers
+;;
 
 (defn reducible-query []
   )
@@ -291,15 +304,28 @@
   )
 
 
-(defn component []
+(defn insert []
   )
 
 
-(defn print-notice-handler
-  [conn messages]
-  (println "Server notice:")
-  (doseq [{:keys [type message]} messages]
-    (println " -" type message)))
+(defn insert-batch []
+  )
+
+
+(defn update []
+  )
+
+
+(defn delete []
+  )
+
+
+;;
+;; Component
+;;
+
+(defn component []
+  )
 
 
 #_
@@ -310,8 +336,7 @@
      :port 15432
      :user "ivan"
      :database "ivan"
-     :password "secret"
-     :fn-notice-handler print-notice-handler})
+     :password "secret"})
 
   (def -conn
     (connect -cfg))

@@ -1,9 +1,6 @@
 (ns pg.conn
   (:require
-   ;; [pg.types :as types]
-   ;; [pg.const :as const]
-   ;; [pg.codec :as codec]
-   ;; [pg.auth.scram-sha-256 :as sha-256]
+   [pg.handler :as handler]
    [pg.error :as e]
    [pg.bb :as bb]
    [pg.msg :as msg])
@@ -34,6 +31,11 @@
      ~@body))
 
 
+(def config-defaults
+  {:fn-notice-handler handler/notice-handler
+   :fn-notification-handler handler/notification-handler})
+
+
 (defn connect [{:as conn :keys [^String host
                                 ^Integer port]}]
 
@@ -43,12 +45,14 @@
         ch
         (SocketChannel/open addr)]
 
-    (assoc conn
-           :o (new Object)
-           :ch ch
-           :addr addr
-           :tx-status (atom nil)
-           :server-params (atom {}))))
+    (-> config-defaults
+        (merge conn)
+        (assoc
+         :o (new Object)
+         :ch ch
+         :addr addr
+         :tx-status (atom nil)
+         :server-params (atom {})))))
 
 
 (defn tx-status
