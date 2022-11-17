@@ -101,7 +101,7 @@
   )
 
 
-(defn prepare
+(defn prepare-statement
   ([conn sql]
    (prepare conn sql nil))
 
@@ -152,7 +152,7 @@
          (close-statement ~conn ~bind)))))
 
 
-(defn execute [conn stmt params]
+(defn execute-statement [conn stmt params]
   (let [enc
         (conn/client-encoding conn)
 
@@ -189,8 +189,54 @@
           (pipeline/pipeline)))))
 
 
-(defmacro with-transaction []
-  )
+;;
+;; Transactions
+;;
+
+
+(defn begin [conn]
+  (query conn "BEGIN"))
+
+
+(defn commit [conn]
+  (query conn "COMMIT"))
+
+
+(defn rollback [conn]
+  (query conn "ROLLBACK"))
+
+
+(defn get-isolation-level [conn]
+  (-> conn
+      (query "SHOW TRANSACTION ISOLATION LEVEL")
+      first
+      :transaction_isolation))
+
+
+;; TODO: parse level
+(defn set-isolation-level [conn level]
+  (let [sql
+        (format "SET TRANSACTION ISOLATION LEVEL %s" level)]
+    (query conn sql)))
+
+
+(defmacro with-transaction
+  [[conn & [iso-level]] & body]
+
+  `(do
+
+     ~(when iso-level
+        `(when ~iso-level
+           (set-isolation-level ~conn ~iso-level)))
+
+     (try
+       (let [result# (do ~@body)]
+         (commit ~conn)
+         result#)
+
+       (catch Throwable e#
+         (rollback ~conn)
+         (throw e#)))))
 
 
 (defn copy-in []
@@ -228,13 +274,6 @@
 (defn cancell-query []
   )
 
-(defn get-isolation-level []
-  )
-
-
-(defn set-isolation-level []
-  )
-
 
 (defn reducible-query []
   )
@@ -256,6 +295,13 @@
   )
 
 
+(defn print-notice-handler
+  [conn messages]
+  (println "Server notice:")
+  (doseq [{:keys [type message]} messages]
+    (println " -" type message)))
+
+
 #_
 (comment
 
@@ -264,7 +310,8 @@
      :port 15432
      :user "ivan"
      :database "ivan"
-     :password "secret"})
+     :password "secret"
+     :fn-notice-handler print-notice-handler})
 
   (def -conn
     (connect -cfg))
@@ -291,6 +338,10 @@
 
   (require
    '[clojure.java.jdbc :as jdbc])
+
+  (with-transaction [-conn]
+    (query -conn "select 2")
+    (query -conn "select 1"))
 
   (def -spec
     {:dbtype "postgresql"

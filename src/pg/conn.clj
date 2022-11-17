@@ -47,7 +47,17 @@
            :o (new Object)
            :ch ch
            :addr addr
+           :tx-status (atom nil)
            :server-params (atom {}))))
+
+
+(defn tx-status
+  ([conn]
+   (-> conn :tx-status deref))
+
+  ([conn value]
+   (update conn :tx-status reset! value)))
+
 
 
 (defn param

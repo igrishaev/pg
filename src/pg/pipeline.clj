@@ -115,7 +115,11 @@
          :ErrorResponse msg))
 
 
-(defn handle-ready-for-query [conn state msg]
+(defn handle-ready-for-query
+  [conn
+   state
+   {:as msg :keys [tx-status]}]
+  (conn/tx-status conn tx-status)
   (assoc state
          :end? true
          :ReadyForQuery msg))
@@ -167,13 +171,13 @@
                    acc []]
               (if head
                 (let [node
-                      {:type type
+                      {:type (char type)
                        :message (codec/bytes->str message enc)}]
-                  (recur (conj acc node) tail))
+                  (recur tail (conj acc node)))
                 acc))]
         (fn-notice-handler conn decoded)))
 
-    conn))
+    state))
 
 
 (defn handle-auth-ok [conn state msg]
@@ -256,6 +260,7 @@
     :ErrorResponse
     (handle-error-response conn state msg)
 
+    ;; :NegotiateProtocolVersion
     ;; :AuthenticationKerberosV5
     ;; :AuthenticationSCMCredential
     ;; :AuthenticationGSS
@@ -292,7 +297,7 @@
     :BackendKeyData
     (handle-backend-data conn state msg)
 
-    (:CloseComplete :ParseComplete :BindComplete)
+    (:CloseComplete :ParseComplete :BindComplete :NoData)
     state
 
     :RowDescription
@@ -344,7 +349,10 @@
       (persistent! Rows!)
 
       :else
-      state)))
+      nil
+      ;; state
+
+      )))
 
 
 (defn pipeline
