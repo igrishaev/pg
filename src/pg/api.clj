@@ -4,6 +4,7 @@
   "
   (:refer-clojure :exclude [sync flush update])
   (:require
+   [pg.error :as e]
    [pg.const :as const]
    [pg.codec :as codec]
    [pg.types.encode :as encode]
@@ -67,13 +68,15 @@
            (conn/write-bb bb)
            (pipeline/pipeline)))))
 
-  ([conn sql & [params oid-types]]
+  ([conn sql params]
+   (query conn sql params nil))
+
+  ([conn sql params oid-types]
+   (query conn sql params oid-types const/FORMAT_TEXT))
+
+  ([conn sql params oid-types out-formats]
    (with-statement [st conn sql oid-types]
-     (execute-statement conn st params))))
-
-
-(defn cancell-query []
-  )
+     (execute-statement conn st params out-formats))))
 
 
 (defn prepare-statement
@@ -147,29 +150,42 @@
          (close-statement ~conn ~bind)))))
 
 
-(defn execute-statement [conn stmt params]
+(defn execute-statement
+  [conn stmt params out-formats]
   (let [enc
         (conn/client-encoding conn)
 
         portal
-        ""
-        #_
-        (name (gensym "portal-"))
+        "" #_(name (gensym "portal-"))
 
-        params-encoded
+        pairs
         (for [param params]
           (encode/encode param enc))
 
-        ;; map first
-        ;; map second
+        in-formats
+        (mapv first pairs)
+
+        in-bytes
+        (mapv second pairs)
+
+        out-formats
+        (cond
+          (int? out-formats)
+          [out-formats]
+          (coll? out-formats)
+          out-formats
+          :else
+          (e/error!
+           "Wrong output format. Must be either an integer or a coll of integers."
+           {:out-formats out-formats}))
 
         bb-bind
         (msg/make-bind
          (codec/str->bytes portal enc)
          (codec/str->bytes stmt enc)
-         []
-         []
-         [const/FORMAT_TEXT])
+         in-formats
+         in-bytes
+         out-formats)
 
         bb-exe
         (msg/make-execute
@@ -394,5 +410,14 @@
       (println (execute -conn st nil))
       (println (execute -conn st nil))))
 
+  (query -conn
+         "select $1 as line1, $1 as line2, now() as time"
+         ["hello"]
+         [pg.oid/TEXT]
+         const/FORMAT_BINARY)
+
+  [{:line1 [104, 101, 108, 108, 111],
+    :line2 [104, 101, 108, 108, 111],
+    :time [0, 2, -112, -86, 35, 5, 83, 97]}]
 
   )

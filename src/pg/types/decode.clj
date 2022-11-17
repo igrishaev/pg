@@ -168,6 +168,11 @@
   (Float/intBitsToFloat (new BigInteger bytes)))
 
 
+(defmethod decode-binary oid/TEXT
+  [^bytes bytes field enc]
+  (codec/bytes->str bytes enc))
+
+
 (defmethod decode-binary oid/FLOAT8
   [^bytes bytes field enc]
   (Double/longBitsToDouble (new BigInteger bytes)))
