@@ -1,7 +1,7 @@
 (ns pg.pipeline
   (:require
    [pg.error :as e]
-   [pg.types :as types]
+   [pg.types.decode :as decode]
    [pg.conn :as conn]
    [pg.codec :as codec]
    [pg.const :as const]
@@ -39,7 +39,7 @@
                   keyword)
 
               cvalue
-              (types/parse-column column field enc)]
+              (decode/decode column field enc)]
 
           (recur (inc i)
                  (assoc! acc! cname cvalue)))))))

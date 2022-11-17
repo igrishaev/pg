@@ -6,6 +6,7 @@
   (:require
    [pg.const :as const]
    [pg.codec :as codec]
+   [pg.types.encode :as encode]
    [pg.conn :as conn]
    [pg.msg :as msg]
    [pg.quote :as q]
@@ -155,10 +156,12 @@
         #_
         (name (gensym "portal-"))
 
-        params-encoded []
-        #_
+        params-encoded
         (for [param params]
-          (encode param))
+          (encode/encode param enc))
+
+        ;; map first
+        ;; map second
 
         bb-bind
         (msg/make-bind

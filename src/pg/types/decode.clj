@@ -171,3 +171,16 @@
 (defmethod decode-binary oid/FLOAT8
   [^bytes bytes field enc]
   (Double/longBitsToDouble (new BigInteger bytes)))
+
+
+;;
+;; The main entry point
+;;
+
+(defn decode
+  [bytes
+   {:as field field-format :format}
+   enc]
+  (case (int field-format)
+    0 (decode-text bytes field enc)
+    1 (decode-binary bytes field enc)))

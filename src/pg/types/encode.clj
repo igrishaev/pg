@@ -1,126 +1,100 @@
 (ns pg.types.encode
-  #_
   (:import
    java.util.UUID
-   java.time.ZoneId
-   java.time.format.DateTimeFormatter
-   java.time.Instant)
+   ;; java.time.ZoneId
+   ;; java.time.format.DateTimeFormatter
+   ;; java.time.Instant
+   )
   (:require
+   [pg.const :as const]
    [pg.error :as e]
-   [pg.codec :as codec]
-
-   ;; [clojure.java.io :as io]
-   ;; [clojure.xml :as xml]
-   ;; [clojure.string :as str]
-   ))
+   [pg.codec :as codec]))
 
 
+;;
+;; Text
+;;
 
-(defmulti -encode
-  (fn [a b c]
-    (class b)))
-
-
-(defmethod -encode Object
-  [a b c]
-  ::not-iimplemented)
+(defmulti encode-text
+  (fn [value enc]
+    (class value)))
 
 
-(defmethod -encode String
-  [a b c]
-  "string")
+(defmethod encode-text :default
+  [value enc]
+  ::not-implemented)
 
 
+(defmethod encode-text String
+  [value enc]
+  (codec/str->bytes value enc))
 
 
-(defprotocol IEncode
-  :extend-via-metadata true
-  (encode-text ^String [this ^String enc])
-  (encode-binary ^bytes [this ^String enc]))
+(defmethod encode-text Boolean
+  [value enc]
+  (codec/str->bytes (if value "t" "f") enc))
 
 
-(extend-protocol IEncode
-
-  Object
-
-  (encode-text [this enc]
-    (e/error! "Don't know how encode this value to text"
-              {:this this
-               :enc enc
-               :in ::here}))
-
-  (encode-binary [this enc]
-    (e/error! "Don't know how encode this value to bytes"
-              {:this this
-               :enc enc
-               :in ::here}))
-
-  Boolean
-
-  (encode-text [this enc]
-    (if this "t" "f"))
-
-  (encode-binary [this enc]
-    (if this
-      (byte-array [1])
-      (byte-array [0])))
-
-  String
-
-  (encode-text [this enc]
-    (codec/str->bytes this enc))
-
-  (encode-binary [this enc]
-    (codec/str->bytes this enc))
-
-  Integer
-
-  (encode-text [this enc]
-    (codec/str->bytes (str this) enc))
-
-  (encode-binary [this enc]
-    #_
-    (codec/str->bytes this enc))
-
-  ;; ArrayList
-  ;; Map
-  ;; UUID
-
-  ;; Timestamp
-  ;; Time
-  ;; Date
-
-  ;; IPersistentCollection
-
-  ;; Symbol
-  ;; Keyword
-
-  ;; nil
-
-  ;; Point
-  ;; Box
-  ;; Line
-  ;; LineSegment
-  ;; Circle
-  ;; Polygon
-
-  ;; bytes
-
-  ;; Inet
-  ;; Cidr
-
-  ;; Char
-  ;; Long
-  ;; Float
-  ;; Double
-  ;; BigDecimal
-  ;; Number
-
-  ;; (encode-text [this enc]
-  ;;   (codec/str->bytes (str this) enc))
-  ;; (encode-binary [this enc]
-  ;;   nil)
+(defmethod encode-text Integer
+  [value enc]
+  (codec/str->bytes (str value) enc))
 
 
+(defmethod encode-text Long
+  [value enc]
+  (codec/str->bytes (str value) enc))
 
-  )
+
+(defmethod encode-text Float
+  [value enc]
+  (codec/str->bytes (str value) enc))
+
+
+(defmethod encode-text Double
+  [value enc]
+  (codec/str->bytes (str value) enc))
+
+
+(defmethod encode-text UUID
+  [value enc]
+  (codec/str->bytes (str value) enc))
+
+
+;;
+;; Binary
+;;
+
+(defmulti encode-binary
+  (fn [value enc]
+    (class value)))
+
+
+(defmethod encode-binary :default
+  [value enc]
+  ::not-implemented)
+
+
+(defmethod encode-binary String
+  [value enc]
+  (codec/str->bytes value enc))
+
+
+;;
+;; The main entry point
+;;
+
+(defn- ni? [x]
+  (identical? x ::not-implemented))
+
+
+(defn encode [value enc]
+  (let [result
+        (encode-binary value enc)]
+    (if (ni? result)
+      (let [result
+            (encode-text value enc)]
+        (if (ni? result)
+          (e/error! "Cannot encode value"
+                    {:value value})
+          [const/FORMAT_TEXT result]))
+      [const/FORMAT_BINARY result])))
