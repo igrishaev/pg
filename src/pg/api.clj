@@ -15,6 +15,10 @@
    [clojure.string :as str]))
 
 
+;;
+;; Connection
+;;
+
 (defn flush [conn]
   (conn/write-bb conn (msg/make-flush)))
 
@@ -52,32 +56,9 @@
          (terminate ~bind)))))
 
 
-(defn query
-
-  ([conn sql]
-   (let [enc
-         (conn/client-encoding conn)
-
-         bb
-         (-> sql
-             (codec/str->bytes enc)
-             (msg/make-query))]
-
-     (conn/with-lock conn
-       (-> conn
-           (conn/write-bb bb)
-           (pipeline/pipeline)))))
-
-  ([conn sql params]
-   (query conn sql params nil))
-
-  ([conn sql params oid-types]
-   (query conn sql params oid-types const/FORMAT_TEXT))
-
-  ([conn sql params oid-types out-formats]
-   (with-statement [st conn sql oid-types]
-     (execute-statement conn st params out-formats))))
-
+;;
+;; Statement
+;;
 
 (defn prepare-statement
   ([conn sql]
@@ -118,26 +99,6 @@
             (sync)
             (pipeline/pipeline))))
     nil))
-
-
-(defn call-function [conn oid-func & params]
-
-  (let [binary?
-        false
-
-        in-formats
-        (repeat (count params) const/FORMAT_TEXT)
-
-        bb
-        (msg/make-function-call oid-func
-                                in-formats
-
-                                )
-        ])
-
-
-
-  )
 
 
 (defmacro with-statement
@@ -205,9 +166,61 @@
 
 
 ;;
-;; Transactions
+;; Query
 ;;
 
+(defn query
+
+  ([conn sql]
+   (let [enc
+         (conn/client-encoding conn)
+
+         bb
+         (-> sql
+             (codec/str->bytes enc)
+             (msg/make-query))]
+
+     (conn/with-lock conn
+       (-> conn
+           (conn/write-bb bb)
+           (pipeline/pipeline)))))
+
+  ([conn sql params]
+   (query conn sql params nil))
+
+  ([conn sql params oid-types]
+   (query conn sql params oid-types const/FORMAT_TEXT))
+
+  ([conn sql params oid-types out-formats]
+   (with-statement [st conn sql oid-types]
+     (execute-statement conn st params out-formats))))
+
+
+
+
+(defn call-function [conn oid-func & params]
+
+  (let [binary?
+        false
+
+        in-formats
+        (repeat (count params) const/FORMAT_TEXT)
+
+        bb
+        (msg/make-function-call oid-func
+                                in-formats
+
+                                )
+        ])
+
+
+
+  )
+
+
+;;
+;; Transactions
+;;
 
 (defn begin [conn]
   (query conn "BEGIN"))
@@ -274,9 +287,6 @@
 ;; Listen & Notify
 ;;
 
-(defn- -quote-str [string]
-  (str \' (str/replace string #"'" "''") \'))
-
 
 (defn listen [conn channel]
   (let [sql
@@ -299,7 +309,7 @@
          (with-out-str
            (print "notify" (name channel))
            (when message
-             (print \, (q/quote-str message))))]
+             (print \, (q/quote-text message))))]
      (query conn sql))))
 
 
