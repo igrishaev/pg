@@ -40,3 +40,91 @@
   ;; Double
   ;; BigDecimal
   ;; Number
+
+(defn bytes->int32 [^bytes buf]
+  (let [b4 (aget buf 0)
+        b3 (aget buf 1)
+        b2 (aget buf 2)
+        b1 (aget buf 3)]
+    (+ (bit-shift-left b4 24)
+       (bit-shift-left b3 16)
+       (bit-shift-left b2 8)
+       b1)))
+
+#_
+(defn bytes->int [^bytes buf]
+  (let [len (alength buf)
+        res 0]
+    (loop [i 0]
+      (if (= i len)
+        res
+        (+ res (bit-shift-left (aget buf i) (- len i 1)))))))
+
+
+(defn int32->bytes ^bytes [int32]
+  (let [buf (byte-array 4)
+
+        b4 (-> int32 (bit-and 0xff000000) (bit-shift-right 24) unchecked-byte)
+        b3 (-> int32 (bit-and 0x00ff0000) (bit-shift-right 16) unchecked-byte)
+        b2 (-> int32 (bit-and 0x0000ff00) (bit-shift-right 8) unchecked-byte)
+        b1 (-> int32 (bit-and 0x000000ff) unchecked-byte)]
+
+    (aset buf 0 b4)
+    (aset buf 1 b3)
+    (aset buf 2 b2)
+    (aset buf 3 b1)
+
+    buf))
+
+
+(defn read-cstring [^InputStream in]
+
+  (let [o (new ByteArrayOutputStream)]
+    (loop []
+      (let [b (.read in)]
+        (cond
+          (= -1 b)
+          nil
+
+          (= 0 b)
+          (.toString o "UTF-8")
+
+          :else
+          (do
+            (.write o b)
+            (recur))))))
+
+  #_
+  (let [s (new Scanner in "UTF-8")]
+    (.useDelimiter s "\0")
+    (when (.hasNext s)
+      (.next s)))
+
+  #_
+  (with-open [r (new InputStreamReader in "UTF-8")]
+    (with-open [b (new BufferedReader r 1)]
+      (loop [sb (new StringBuilder)]
+        (let [c (.read b)]
+          (cond
+            (= -1 c)
+            :EOF
+
+            (= 0 c)
+            (str sb)
+
+            :else
+            (recur (.append sb (char c)))))))))
+
+select
+1 as foo,
+'hello' as bar,
+true as aaa,
+1.1::float as fl,
+1.1::float4 as fl1,
+1.1::float8 as fl2,
+1.2 as fl3,
+NULL as nil,
+now() as date,
+'{1, 2, 3}'::int2vector[] as intvec
+
+-- '{1, 2, 3}'::int2[] as arr1
