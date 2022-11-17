@@ -19,14 +19,6 @@
 ;; Connection
 ;;
 
-(defn flush [conn]
-  (conn/write-bb conn (msg/make-flush)))
-
-
-(defn sync [conn]
-  (conn/write-bb conn (msg/make-sync)))
-
-
 (defn connect [config]
   (let [{:keys [user
                 database]}
@@ -54,6 +46,14 @@
        ~@body
        (finally
          (terminate ~bind)))))
+
+
+(defn flush [conn]
+  (conn/write-bb conn (msg/make-flush)))
+
+
+(defn sync [conn]
+  (conn/write-bb conn (msg/make-sync)))
 
 
 ;;
@@ -196,7 +196,9 @@
      (execute-statement conn st params out-formats))))
 
 
-
+;;
+;; Calling a procedure
+;;
 
 (defn call-function [conn oid-func & params]
 
@@ -211,11 +213,7 @@
                                 in-formats
 
                                 )
-        ])
-
-
-
-  )
+        ]))
 
 
 ;;
