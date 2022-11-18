@@ -178,6 +178,34 @@
   (Double/longBitsToDouble (new BigInteger bytes)))
 
 
+(defmethod decode-binary oid/BOOL
+  [^bytes bytes field enc]
+  (case (aget bytes 0)
+    0 false
+    1 true))
+
+
+(defmethod decode-binary oid/INT2
+  [^bytes bytes field enc]
+  (.shortValue (new BigInteger bytes)))
+
+
+(defmethod decode-binary oid/INT4
+  [^bytes bytes field enc]
+  (.intValue (new BigInteger bytes)))
+
+
+(defmethod decode-binary oid/INT8
+  [^bytes bytes field enc]
+  (.longValue (new BigInteger bytes)))
+
+
+(defmethod decode-binary oid/NUMERIC
+  [^bytes bytes field enc]
+  ()
+  (.longValue (new BigInteger bytes)))
+
+
 ;;
 ;; The main entry point
 ;;

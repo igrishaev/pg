@@ -62,7 +62,7 @@
 
 (defn prepare-statement
   ([conn sql]
-   (prepare conn sql nil))
+   (prepare-statement conn sql nil))
 
   ([conn sql oid-params]
 
@@ -104,7 +104,7 @@
 (defmacro with-statement
   [[bind conn sql & [oid-types]] & body]
   `(let [~bind
-         (prepare ~conn ~sql ~oid-types)]
+         (prepare-statement ~conn ~sql ~oid-types)]
      (try
        ~@body
        (finally
