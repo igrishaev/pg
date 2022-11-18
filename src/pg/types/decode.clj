@@ -210,142 +210,115 @@
   (.longValue (new BigInteger bytes)))
 
 
+;;
+;; Binary arrays
+;;
+
+(defn get-dims [limits n]
+  (let [len (count limits)]
+    (loop [i 0
+           acc! (transient [])]
+      (if (= i len)
+        (persistent! acc!)
+        (let [subv
+              (subvec limits (inc i))
+              idx
+              (mod (quot n (reduce * subv)) (get limits i))]
+          (recur (inc i) (conj! acc! idx)))))))
+
+
+;; TODO: refactor
+(defn prepare-dims
+  [[dim & dims]]
+  (if (and dim (seq dims))
+    (vec (repeat dim (prepare-dims dims)))
+    []))
+
+
+;; TODO: refactor
 (defn decode-binary-array
   [bytes field enc]
-  (let [bb  (bb/wrap bytes)
 
-        dim-count
+  (let [bb
+        (bb/wrap bytes)
+
+        levels
+        (bb/read-int32 bb)
+
+        _
         (bb/read-int32 bb)
 
         oid
         (bb/read-int32 bb)
-        _
-        (bb/read-int32 bb)
 
-        dims
+        pairs
         (loop [i 0
                acc []]
-          (if (= i dim-count)
+          (if (= i levels)
             acc
             (let [len
                   (bb/read-int32 bb)
                   dim
                   (bb/read-int32 bb)]
               (recur (inc i)
-                     (conj acc [len dim])))))]
+                     (conj acc [len dim])))))
 
-    dims
-    #_
+        dims
+        (mapv first pairs)
 
-    (println (vec bytes))
+        _
+        (println dims)
 
-    #_
+        matrix
+        (prepare-dims dims)
+
+        total
+        (reduce * dims)]
+
     (loop [i 0
-           acc! (transient [])]
-      (if (= i arr-len)
-        (persistent! acc!)
+           acc (prepare-dims dims)]
+
+      (if (= i total)
+        acc
         (let [len
               (bb/read-int32 bb)
 
-              item-bytes
-              (bb/read-bytes bb len)
+              item
+              (when-not (= len -1)
+                (decode-binary (bb/read-bytes bb len)
+                               {:type-id oid
+                                :format const/FORMAT_BINARY}
+                               enc))
 
-              item-value
-              (decode-binary item-bytes
-                             {:type-id arr-oid
-                              :format const/FORMAT_BINARY}
-                             enc)]
+              path
+              (get-dims dims i)]
+
+          ;; TODO: refactor
           (recur (inc i)
-                 (conj! acc! item-value)))))))
-
-
-#_
-[3 2 1]
-
-;; (defn ranges [limits]
-;;   (for [limit limits]
-;;     (range limit)))
-
-
-;; (defmacro each [i foo])
-
-;; (defmacro each2 [[i j]]
-;;   (doseq [i []
-;;           j])
-;;   )
-
-
-;; ~@(dotimes [lim limits]
-;;     [(gensym "x") `(range 0 (get ~limits 0))]
-
-;;     )
-
-
-;; (defmacro each [num limits]
-;;   (let [vars
-;;         (vec
-;;          (for [_ (range num)]
-;;            (gensym "i")))]
-
-;;     `(for [~@(loop [i 0
-;;                     acc []]
-;;                (if (= i num)
-;;                  acc
-;;                  (recur (inc i)
-;;                         (conj acc
-;;                               (get vars i)
-;;                               `(range 0 (get ~limits ~i))))))]
-;;        [~@vars])))
-
-
-;; (each 3 [3 2 3])
-
-
-;; limits [3 ]
-;; len 3
-
-;; (loop [indexes (vec (repeat len 0))
-;;        res []]
-
-;;   (let [item*
-;;         (loop [i len]
-;;           (if (< (get i item) (get i items))
-
-;;             )
-;;           )
-;;         (update item len inc)
-;;         ]
-
-;;     (recur 123)
-;;     )
-
-
-
-
-
-
-
-;;   ()
-
-;;   )
-
-
-;; (defmacro aaaa [items]
-
-;;   `(for []
-
-
-;;      )
-;;   )
-
-;; (doseq [k [0 1 2]
-;;         j [0 1]
-;;         i [0 1 2]]
-  ;; )
-
+                 (update-in acc (butlast path) conj item)))))))
 
 
 (defmethod decode-binary oid/INT2_ARRAY
+  [^bytes bytes field enc]
+  (decode-binary-array bytes field enc))
+
+
+(defmethod decode-binary oid/INT4_ARRAY
+  [^bytes bytes field enc]
+  (decode-binary-array bytes field enc))
+
+
+(defmethod decode-binary oid/INT8_ARRAY
+  [^bytes bytes field enc]
+  (decode-binary-array bytes field enc))
+
+
+(defmethod decode-binary oid/FLOAT4_ARRAY
+  [^bytes bytes field enc]
+  (decode-binary-array bytes field enc))
+
+
+(defmethod decode-binary oid/FLOAT8_ARRAY
   [^bytes bytes field enc]
   (decode-binary-array bytes field enc))
 
