@@ -128,3 +128,8 @@ now() as date,
 '{1, 2, 3}'::int2vector[] as intvec
 
 -- '{1, 2, 3}'::int2[] as arr1
+
+
+(-> (query -conn "select '{\"a''aa\\\"a\",\"bb,bb\",aaaa,ываыа}'::text[] as one") first first second println)
+
+(-> (query -conn "select array[$1,$2] as val" ["a\ta" "ccc\na\r\naa"] [pg.oid/TEXT pg.oid/TEXT] const/FORMAT_BINARY) first first second println)

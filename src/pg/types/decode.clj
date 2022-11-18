@@ -239,6 +239,8 @@
 (defn decode-binary-array
   [bytes field enc]
 
+  (println (vec bytes))
+
   (let [bb
         (bb/wrap bytes)
 
@@ -266,9 +268,6 @@
         dims
         (mapv first pairs)
 
-        _
-        (println dims)
-
         matrix
         (prepare-dims dims)
 
@@ -293,8 +292,12 @@
               path
               (get-dims dims i)]
 
+          (println  '--- len item path total i acc)
+
           ;; TODO: refactor
           (recur (inc i)
+                 1
+                 #_
                  (update-in acc (butlast path) conj item)))))))
 
 
@@ -322,6 +325,10 @@
   [^bytes bytes field enc]
   (decode-binary-array bytes field enc))
 
+
+(defmethod decode-binary oid/TEXT_ARRAY
+  [^bytes bytes field enc]
+  (decode-binary-array bytes field enc))
 
 
 ;;
