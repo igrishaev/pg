@@ -77,11 +77,10 @@
                          (codec/str->bytes sql enc)
                          oid-params)]
 
-     (conn/with-lock conn
-       (-> conn
-           (conn/write-bb bb)
-           (sync)
-           (pipeline/pipeline)))
+     (-> conn
+         (conn/write-bb bb)
+         (sync)
+         (pipeline/pipeline))
 
      stmt-name)))
 
@@ -92,12 +91,12 @@
         bb
         (msg/make-close-statement
          (codec/str->bytes stmt-name enc))]
-    (conn/with-lock conn
-      (conn/with-lock conn
-        (-> conn
-            (conn/write-bb bb)
-            (sync)
-            (pipeline/pipeline))))
+
+    (-> conn
+        (conn/write-bb bb)
+        (sync)
+        (pipeline/pipeline))
+
     nil))
 
 
@@ -117,7 +116,7 @@
         (conn/client-encoding conn)
 
         portal
-        "" #_(name (gensym "portal-"))
+        (name (gensym "portal-"))
 
         pairs
         (for [param params]
@@ -156,13 +155,12 @@
         (msg/make-describe-portal
          (codec/str->bytes portal))]
 
-    (conn/with-lock conn
-      (-> conn
-          (conn/write-bb bb-bind)
-          (conn/write-bb bb-desc)
-          (conn/write-bb bb-exe)
-          (sync)
-          (pipeline/pipeline)))))
+    (-> conn
+        (conn/write-bb bb-bind)
+        (conn/write-bb bb-desc)
+        (conn/write-bb bb-exe)
+        (sync)
+        (pipeline/pipeline))))
 
 
 ;;
@@ -192,8 +190,9 @@
    (query conn sql params oid-types const/FORMAT_TEXT))
 
   ([conn sql params oid-types out-formats]
-   (with-statement [st conn sql oid-types]
-     (execute-statement conn st params out-formats))))
+   (conn/with-lock conn
+     (with-statement [st conn sql oid-types]
+       (execute-statement conn st params out-formats)))))
 
 
 ;;
@@ -253,7 +252,9 @@
 (defmacro with-transaction
   [[conn & [iso-level]] & body]
 
-  `(do
+  `(conn/with-lock conn
+
+     (begin ~conn)
 
      ~(when iso-level
         `(when ~iso-level
@@ -365,8 +366,7 @@
      :database "ivan"
      :password "secret"})
 
-  (def -conn
-    (connect -cfg))
+  (def -conn (connect -cfg))
 
   (query -conn "select 1 as one")
 
