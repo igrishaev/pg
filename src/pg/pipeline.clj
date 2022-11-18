@@ -379,9 +379,11 @@
          e
          (recur (assoc state :exception e))
 
+         ;; TODO: fix
          end?
          (if exception
            (let [bb (msg/make-terminate)]
+             #_
              (conn/write-bb conn bb)
              (throw exception))
            (state->result conn state*))

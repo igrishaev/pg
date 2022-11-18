@@ -296,8 +296,6 @@
 
           ;; TODO: refactor
           (recur (inc i)
-                 1
-                 #_
                  (update-in acc (butlast path) conj item)))))))
 
 
