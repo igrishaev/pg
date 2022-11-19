@@ -140,3 +140,6 @@ now() as date,
   (print-method (vec b) writer))
 
 (query -conn "select TIMESTAMP WITH TIME ZONE '2004-10-19 10:23:54+02'")
+
+"\\x6162635c6e616161"
+(char (Integer/parseInt (str (char 54) (char 49)) 16))
