@@ -144,3 +144,21 @@ now() as date,
 "\\x6162635c6e616161"
 (char (Integer/parseInt (str (char 54) (char 49)) 16))
 [92, 120, 54, 49, 54, 50, 54, 51, 53, 99, 54, 101, 54, 49, 54, 49, 54, 49]
+
+(query -conn "select INTERVAL '1 years 3 day 1 hour 1 sec'")
+
+
+(query -conn "select 'aaaa'::void as void")
+{:type :RowDescription, :field-count 1, :fields [{:index 0, :name [118 111 105 100], :table-id 0, :column-id 0, :type-id 2278, :type-len 4, :type-mod -1, :format 0}]}
+{:type :DataRow, :columns [[]]}
+{:type :CommandComplete, :tag SELECT 1}
+{:type :ReadyForQuery, :tx-status I}
+[{:void ""}]
+
+
+(query -conn "select array['sd\\r,sf','sd,fs''sf','sdfs\"fdsfd','sdf sdf'] as arr")
+{:type :RowDescription, :field-count 1, :fields [{:index 0, :name [97 114 114], :table-id 0, :column-id 0, :type-id 1009, :type-len -1, :type-mod -1, :format 0}]}
+{:type :DataRow, :columns [[123 34 115 100 92 92 114 44 115 102 34 44 34 115 100 44 102 115 39 115 102 34 44 34 115 100 102 115 92 34 102 100 115 102 100 34 44 34 115 100 102 32 115 100 102 34 125]]}
+{:type :CommandComplete, :tag SELECT 1}
+{:type :ReadyForQuery, :tx-status I}
+[{:arr "{\"sd\\\\r,sf\",\"sd,fs'sf\",\"sdfs\\\"fdsfd\",\"sdf sdf\"}"}]
