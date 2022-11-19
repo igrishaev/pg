@@ -4,6 +4,7 @@
   https://github.com/pgjdbc/pgjdbc/blob/master/pgjdbc/src/main/java/org/postgresql/jdbc/TimestampUtils.java
   https://github.com/pgjdbc/pgjdbc/blob/master/pgjdbc/src/main/java/org/postgresql/util/PGbytea.java
   https://www.postgresql.org/message-id/attachment/13504/arrayAccess.txt
+  https://postgrespro.ru/docs/postgresql/14/runtime-config-client
   "
   (:import
    java.util.UUID
