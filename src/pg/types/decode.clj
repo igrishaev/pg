@@ -292,8 +292,6 @@
               path
               (get-dims dims i)]
 
-          (println  '--- len item path total i acc)
-
           ;; TODO: refactor
           (recur (inc i)
                  (update-in acc (butlast path) conj item)))))))
@@ -337,6 +335,7 @@
   [bytes
    {:as field field-format :format}
    enc]
-  (case (int field-format)
-    0 (decode-text bytes field enc)
-    1 (decode-binary bytes field enc)))
+  (when (some? bytes)
+    (case (int field-format)
+      0 (decode-text bytes field enc)
+      1 (decode-binary bytes field enc))))

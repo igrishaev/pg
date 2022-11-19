@@ -4,21 +4,21 @@
   ")
 
 (def ^int UNSPECIFIED           0)
-(def ^int INT2                 21)
+(def ^int INT2                 21) ;; 0
 (def ^int INT2_ARRAY         1005)
-(def ^int INT4                 23)
-(def ^int INT4_ARRAY         1007)
-(def ^int INT8                 20)
+(def ^int INT4                 23) ;; 0
+(def ^int INT4_ARRAY         1007) ;; 0
+(def ^int INT8                 20) ;; 0
 (def ^int INT8_ARRAY         1016)
-(def ^int TEXT                 25)
+(def ^int TEXT                 25) ;; 0
 (def ^int TEXT_ARRAY         1009)
-(def ^int NUMERIC            1700)
+(def ^int NUMERIC            1700) ;; 0
 (def ^int NUMERIC_ARRAY      1231)
-(def ^int FLOAT4              700)
+(def ^int FLOAT4              700) ;; 0
 (def ^int FLOAT4_ARRAY       1021)
-(def ^int FLOAT8              701)
+(def ^int FLOAT8              701) ;; 0
 (def ^int FLOAT8_ARRAY       1022)
-(def ^int BOOL                 16)
+(def ^int BOOL                 16) ;; 0
 (def ^int BOOL_ARRAY         1000)
 (def ^int DATE               1082)
 (def ^int DATE_ARRAY         1182)

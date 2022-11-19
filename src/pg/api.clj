@@ -115,7 +115,8 @@
   (let [enc
         (conn/client-encoding conn)
 
-        portal
+        portal ""
+        #_
         (name (gensym "portal-"))
 
         pairs
@@ -423,6 +424,32 @@
          ["hello"]
          [pg.oid/TEXT]
          const/FORMAT_BINARY)
+
+  (query -conn
+         "
+select
+  1::int      as int,
+  1::int2     as int2,
+  2::int4     as int4,
+  3::int8     as int8,
+  'hello'     as text1,
+  'world'::varchar as text2,
+
+  true        as bool1,
+  false       as bool2,
+
+  1.1::float  as float,
+  1.2::float4 as float4,
+  1.3::float8 as float8,
+
+  1.3::numeric as numeric,
+
+  NULL as null,
+
+  now()              as tsz,
+  '2022-01-01'::date as date
+
+")
 
   [{:line1 [104, 101, 108, 108, 111],
     :line2 [104, 101, 108, 108, 111],
