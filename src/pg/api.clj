@@ -451,6 +451,8 @@ select
   '2022-01-01'::date   as date,
   '10:10:59'::time     as time,
 
+  '2022-01-01'::timestampz as timestampz,
+
   'a'::bytea      as bytea
 
 ")

@@ -138,3 +138,5 @@ now() as date,
 (defmethod print-method (type (byte-array []))
   [b writer]
   (print-method (vec b) writer))
+
+(query -conn "select TIMESTAMP WITH TIME ZONE '2004-10-19 10:23:54+02'")
