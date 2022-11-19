@@ -7,3 +7,4 @@
 - parse uuid text
 - parse char
 - parse xml
+- parse bit
