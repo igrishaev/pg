@@ -432,7 +432,8 @@ select
   1::int2     as int2,
   2::int4     as int4,
   3::int8     as int8,
-  'hello'     as text1,
+
+  'hello'          as text1,
   'world'::varchar as text2,
 
   true        as bool1,
@@ -446,8 +447,11 @@ select
 
   NULL as null,
 
-  now()              as tsz,
-  '2022-01-01'::date as date
+  now()                as tsz,
+  '2022-01-01'::date   as date,
+  '10:10:59'::time     as time,
+
+  'a'::bytea      as bytea
 
 ")
 

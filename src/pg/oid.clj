@@ -2,9 +2,9 @@
   "
   https://github.com/pgjdbc/pgjdbc/blob/0b097fd4a8e9990a9b86173d58633cd88d263b0b/pgjdbc/src/main/java/org/postgresql/core/Oid.java
   ")
-
+                                   ;; dec enc
 (def ^int UNSPECIFIED           0)
-(def ^int INT2                 21) ;; 0
+(def ^int INT2                 21) ;; 0 1
 (def ^int INT2_ARRAY         1005)
 (def ^int INT4                 23) ;; 0
 (def ^int INT4_ARRAY         1007) ;; 0
@@ -20,9 +20,9 @@
 (def ^int FLOAT8_ARRAY       1022)
 (def ^int BOOL                 16) ;; 0
 (def ^int BOOL_ARRAY         1000)
-(def ^int DATE               1082)
+(def ^int DATE               1082) ;; 0
 (def ^int DATE_ARRAY         1182)
-(def ^int TIME               1083)
+(def ^int TIME               1083) ;; 0
 (def ^int TIME_ARRAY         1183)
 (def ^int TIMETZ             1266)
 (def ^int TIMETZ_ARRAY       1270)
@@ -32,7 +32,7 @@
 (def ^int TIMESTAMPTZ_ARRAY  1185)
 (def ^int BYTEA                17)
 (def ^int BYTEA_ARRAY        1001)
-(def ^int VARCHAR            1043)
+(def ^int VARCHAR            1043) ;; 0
 (def ^int VARCHAR_ARRAY      1015)
 (def ^int OID                  26)
 (def ^int OID_ARRAY          1028)

@@ -8,6 +8,8 @@
   (:import
    java.util.UUID
    java.time.ZoneId
+   java.time.LocalDate
+   java.time.LocalTime
    java.time.format.DateTimeFormatter
    java.time.Instant)
   (:require
@@ -57,6 +59,16 @@
        (.parse dtf-timestamp-z-iso)
        (Instant/from)))
 
+
+(def ^DateTimeFormatter dtf-date
+  (-> "yyyy-MM-dd"
+      (DateTimeFormatter/ofPattern)))
+
+
+(defn parse-date [string]
+  (->> string
+       (.parse dtf-date)
+       (Instant/from)))
 
 ;;
 ;; Text
@@ -145,6 +157,17 @@
 (defmethod decode-text oid/TIMESTAMPTZ
   [bytes field enc]
   (-> bytes (codec/bytes->str enc) parseTimestamptZ))
+
+
+(defmethod decode-text oid/DATE
+  [bytes field enc]
+  (LocalDate/parse (codec/bytes->str bytes enc)))
+
+
+(defmethod decode-text oid/TIME
+  [bytes field enc]
+  (LocalTime/parse (codec/bytes->str bytes enc)))
+
 
 ;; 1082 | date
 ;; 1083 | time
