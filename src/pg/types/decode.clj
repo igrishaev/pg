@@ -86,7 +86,20 @@
 
 
 (defmethod decode-text oid/BYTEA
-  [bytes field enc]
+  [^bytes bytes field enc]
+
+  (let [b1
+        (get bytes 0)
+        b2
+        (get bytes 1)]
+    (when (= [b1 b2] [92 120])
+
+
+      )
+
+    )
+
+
   bytes)
 
 
