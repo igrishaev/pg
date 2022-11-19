@@ -30,7 +30,7 @@
 (def ^int TIMESTAMP_ARRAY    1115)
 (def ^int TIMESTAMPTZ        1184)
 (def ^int TIMESTAMPTZ_ARRAY  1185)
-(def ^int BYTEA                17)
+(def ^int BYTEA                17) ;; 0
 (def ^int BYTEA_ARRAY        1001)
 (def ^int VARCHAR            1043) ;; 0
 (def ^int VARCHAR_ARRAY      1015)

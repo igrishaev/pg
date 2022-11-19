@@ -1,5 +1,4 @@
 
-- parse bytea text
 - pass startup additional params
 - parse bytea escape
 - parse timez text

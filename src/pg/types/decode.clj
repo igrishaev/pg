@@ -7,6 +7,7 @@
   https://postgrespro.ru/docs/postgresql/14/runtime-config-client
   "
   (:import
+   java.io.ByteArrayOutputStream
    java.util.UUID
    java.time.ZoneId
    java.time.LocalDate
@@ -86,21 +87,35 @@
 
 
 (defmethod decode-text oid/BYTEA
-  [^bytes bytes field enc]
+  [^bytes buf field enc]
 
-  (let [b1
-        (get bytes 0)
-        b2
-        (get bytes 1)]
-    (when (= [b1 b2] [92 120])
+  (cond
 
+    ;; starts with \x
+    ;; bytea_output = 'hex'
+    (and (= (get buf 0) 92)
+         (= (get buf 1) 120))
+    (let [len (-> buf
+                  (alength)
+                  (/ 2)
+                  (dec))
+          out
+          (new ByteArrayOutputStream)]
 
-      )
+      (loop [i 1]
+        (if (> i len)
+          (.toByteArray out)
+          (let [b1 (aget buf (* i 2))
+                b2 (aget buf (inc (* i 2)))
+                hex (str (char b1) (char b2))
+                b (unchecked-byte (Integer/parseInt hex 16))]
+            (.write out b)
+            (recur (inc i))))))
 
-    )
-
-
-  bytes)
+    ;; TODO: parse escaped string
+    ;; bytea_output = 'escape'
+    :else
+    (e/error! "only hex bytea output supported at the moment")))
 
 
 (defmethod decode-text oid/TEXT
