@@ -462,3 +462,38 @@ select
     :time [0, 2, -112, -86, 35, 5, 83, 97]}]
 
   )
+
+
+(defn foo [string dims]
+  (let [len (count string)]
+    (loop [i 0
+           coord (vec (repeat dims 0))
+           acc []
+           item ""
+           level 0]
+      (if (= i len)
+        acc
+        (let [c (get string i)]
+          (case c
+
+            \{
+            (recur (inc i)
+                   coord
+                   acc
+                   item
+                   (inc level))
+
+            \}
+            (recur (inc i)
+                   coord
+                   acc
+                   item
+                   (dec level))
+            \,
+            (recur (inc i)
+                   (clojure.core/update coord level inc)
+                   (conj acc item)
+                   ""
+                   level)
+
+            (recur (inc i) coord acc (str item c) level)))))))
