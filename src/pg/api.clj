@@ -464,36 +464,84 @@ select
   )
 
 
+(defn vassoc [v i x]
+  (if (>= i (count v))
+    (conj (or v []) x)
+    (assoc (or v []) i x)))
+
+(defn vassoc-in
+  [v [i & is] x]
+  (if is
+    (vassoc v i (vassoc-in (get v i []) is x))
+    (vassoc v i x)))
+
+
+#_
 (defn foo [string dims]
   (let [len (count string)]
     (loop [i 0
-           coord (vec (repeat dims 0))
-           acc []
-           item ""
-           level 0]
+           path (vec (repeat dims 0))
+           acc nil
+           item nil
+           pos -1]
       (if (= i len)
         acc
         (let [c (get string i)]
           (case c
 
             \{
-            (recur (inc i)
-                   coord
-                   acc
-                   item
-                   (inc level))
+            (do
+              (println \{ path pos item)
+              (recur (inc i)
+                     path
+                     acc
+                     item
+                     (inc pos)))
 
             \}
-            (recur (inc i)
-                   coord
-                   acc
-                   item
-                   (dec level))
+            (do
+              (println \} path pos item)
+              (if (= pos 0)
+                (recur (inc i)
+                       path
+                       acc
+                       item
+                       (dec pos))
+                (recur (inc i)
+                       (-> path
+                           (assoc pos 0)
+                           (clojure.core/update (dec pos) inc))
+                       (if item
+                         (vassoc-in acc path item)
+                         acc)
+                       nil
+                       (dec pos))))
             \,
-            (recur (inc i)
-                   (clojure.core/update coord level inc)
-                   (conj acc item)
-                   ""
-                   level)
+            (do
+              (println \, path pos item)
+              (recur (inc i)
+                     (clojure.core/update path pos inc)
+                     (if item
+                       (vassoc-in acc path item)
+                       acc)
+                     nil
+                     pos))
 
-            (recur (inc i) coord acc (str item c) level)))))))
+            ;; else
+            (recur (inc i) path acc (str item c) pos)))))))
+
+
+
+#_
+(foo "{{{1,2,3},{1,2,3}},{{1,2,3},{1,2,3}}}" 3)
+
+
+
+
+
+
+
+
+
+
+#_ _
