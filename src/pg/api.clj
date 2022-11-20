@@ -477,17 +477,24 @@ select
     (vassoc v i x)))
 
 
-(defn -parse-int [start string]
+(defn -parse-int [start ^bytes buf]
   (let [len
-        (count string)]
-    (loop [i start
-           sb (new StringBuilder)]
+        (alength buf)
+
+        out
+        (new java.io.ByteArrayOutputStream)]
+
+    (loop [i start]
       (if (= i len)
-        [(str sb) i]
-        (let [c (get string i)]
-          (if (<= 48 (int c) 59)
-            (recur (inc i) (.append sb c))
-            [(str sb) i]))))))
+
+        [(.toByteArray out) i]
+
+        (let [b (aget buf i)]
+          (if (<= 48 b 59)
+            (do
+              (.write out b)
+              (recur (inc i)))
+            [(.toByteArray out) i]))))))
 
 
 (defn parse-array [string parser]
