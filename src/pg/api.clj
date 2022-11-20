@@ -465,9 +465,10 @@ select
 
 
 (defn vassoc [v i x]
-  (if (>= i (count v))
+  (if (= i (count v))
     (conj (or v []) x)
     (assoc (or v []) i x)))
+
 
 (defn vassoc-in
   [v [i & is] x]
@@ -476,8 +477,7 @@ select
     (vassoc v i x)))
 
 
-#_
-(defn foo [string dims]
+(defn parse-array [string dims]
   (let [len (count string)]
     (loop [i 0
            path (vec (repeat dims 0))
@@ -509,8 +509,7 @@ select
                        (dec pos))
                 (recur (inc i)
                        (-> path
-                           (assoc pos 0)
-                           (clojure.core/update (dec pos) inc))
+                           (assoc pos 0))
                        (if item
                          (vassoc-in acc path item)
                          acc)
@@ -531,17 +530,5 @@ select
             (recur (inc i) path acc (str item c) pos)))))))
 
 
-
 #_
-(foo "{{{1,2,3},{1,2,3}},{{1,2,3},{1,2,3}}}" 3)
-
-
-
-
-
-
-
-
-
-
-#_ _
+(parse-array "{{{1,2,3},{1,2,3}},{{1,2,3},{1,2,3}}}" 3)
