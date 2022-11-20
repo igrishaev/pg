@@ -501,20 +501,14 @@ select
             \}
             (do
               (println \} path pos item)
-              (if (= pos 0)
-                (recur (inc i)
-                       path
-                       acc
-                       item
-                       (dec pos))
-                (recur (inc i)
-                       (-> path
-                           (assoc pos 0))
-                       (if item
-                         (vassoc-in acc path item)
-                         acc)
-                       nil
-                       (dec pos))))
+              (recur (inc i)
+                     (-> path
+                         (assoc pos 0))
+                     (if item
+                       (vassoc-in acc path item)
+                       acc)
+                     nil
+                     (dec pos)))
             \,
             (do
               (println \, path pos item)
