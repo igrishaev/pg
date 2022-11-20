@@ -497,27 +497,60 @@ select
             [(.toByteArray out) i]))))))
 
 
-(defn parse-array [string parser]
+(defn -parse-bytes [^long start ^bytes buf pred]
   (let [len
-        (count string)
+        (alength buf)
+
+        out
+        (new java.io.ByteArrayOutputStream)]
+
+    (loop [i start]
+      (if (= i len)
+
+        [(.toByteArray out) i]
+
+        (let [b (aget buf i)]
+          (if (pred b)
+            (do
+              (.write out b)
+              (recur (inc i)))
+            [(.toByteArray out) i]))))))
+
+
+(defn -pred-int [b]
+  (<= 48 b 57))
+
+
+(defn -pred-bool [b]
+  (or (= b 102) (= b 116)))
+
+
+(defn parse-array [^bytes buf pred]
+  (let [len
+        (alength buf)
 
         dims
-        (count
-         (take-while (fn [c]
-                       (= c \{))
-                     string))]
+        (loop [i 0
+               result 0]
+          (if (= i len)
+            result
+            (let [b (aget buf i)]
+              (if (= b (byte \{))
+                (recur (inc i) (inc result))
+                result))))]
 
     (loop [i 0
            path (vec (repeat dims 0))
            acc nil
            item nil
            pos -1]
+
       (if (= i len)
         acc
-        (let [c (get string i)]
-          (case c
+        (let [b (aget buf i)]
+          (case b
 
-            \{
+            123 ;; (byte \{)
             (do
               (println \{ path pos item)
               (recur (inc i)
@@ -526,7 +559,7 @@ select
                      item
                      (inc pos)))
 
-            \}
+            125 ;; (byte \})
             (do
               (println \} path pos item)
               (recur (inc i)
@@ -537,7 +570,8 @@ select
                        acc)
                      nil
                      (dec pos)))
-            \,
+
+            44 ;; (byte \,)
             (do
               (println \, path pos item)
               (recur (inc i)
@@ -550,11 +584,12 @@ select
 
             ;; else
             (let [[item end]
-                  (parser i string)]
-              (recur end path acc item pos))))))))
+                  (-parse-bytes i buf pred)]
+              (recur (int end) path acc item pos))))))))
 
 
 #_
 (parse-array "{{{1,2,3},{1,2,3}},{{1,2,3},{1,2,3}}}" 3)
 
-(parse-array "{{{1,2,3},{1,2,3}},{{1,2,3},{1,2,3}}}" -parse-int)
+#_
+(parse-array (.getBytes "{{{1,2,3},{1,2,3}},{{1,2,3},{1,2,3}}}") -pred-int)
