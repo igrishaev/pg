@@ -477,8 +477,29 @@ select
     (vassoc v i x)))
 
 
-(defn parse-array [string dims]
-  (let [len (count string)]
+(defn -parse-int [start string]
+  (let [len
+        (count string)]
+    (loop [i start
+           sb (new StringBuilder)]
+      (if (= i len)
+        [(str sb) i]
+        (let [c (get string i)]
+          (if (<= 48 (int c) 59)
+            (recur (inc i) (.append sb c))
+            [(str sb) i]))))))
+
+
+(defn parse-array [string parser]
+  (let [len
+        (count string)
+
+        dims
+        (count
+         (take-while (fn [c]
+                       (= c \{))
+                     string))]
+
     (loop [i 0
            path (vec (repeat dims 0))
            acc nil
@@ -521,8 +542,12 @@ select
                      pos))
 
             ;; else
-            (recur (inc i) path acc (str item c) pos)))))))
+            (let [[item end]
+                  (parser i string)]
+              (recur end path acc item pos))))))))
 
 
 #_
 (parse-array "{{{1,2,3},{1,2,3}},{{1,2,3},{1,2,3}}}" 3)
+
+(parse-array "{{{1,2,3},{1,2,3}},{{1,2,3},{1,2,3}}}" -parse-int)
