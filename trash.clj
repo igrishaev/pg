@@ -135,6 +135,8 @@ now() as date,
 (-> (query -conn "select array[$1,$2] as val" ["a\ta" "ccc\na\r\naa"] [pg.oid/TEXT pg.oid/TEXT] const/FORMAT_BINARY) first first second println)
 
 
+(-> (query -conn "select gen_random_uuid() as uuid" [] [] const/FORMAT_BINARY))
+
 (defmethod print-method (type (byte-array []))
   [b writer]
   (print-method (vec b) writer))
@@ -162,3 +164,12 @@ now() as date,
 {:type :CommandComplete, :tag SELECT 1}
 {:type :ReadyForQuery, :tx-status I}
 [{:arr "{\"sd\\\\r,sf\",\"sd,fs'sf\",\"sdfs\\\"fdsfd\",\"sdf sdf\"}"}]
+
+
+https://stackoverflow.com/questions/24408984/convert-bytearray-to-uuid-java
+
+> (-> (query -conn "select gen_random_uuid() as uuid" [] [] const/FORMAT_BINARY))
+[{:uuid [107, 85, 96, 117, 66, 16, 65, -76, -74, 9, -33, -14, -71, 30, 8, -19]}]
+pg.api
+> (count [107, 85, 96, 117, 66, 16, 65, -76, -74, 9, -33, -14, -71, 30, 8, -19])
+16
