@@ -8,7 +8,8 @@
   (:require
    [pg.oid :as oid]
    [pg.codec :as codec]
-   [pg.bb :as bb]))
+   [pg.bb :as bb]
+   [pg.bytes :as b]))
 
 
 (defmacro get-enc [options]
@@ -126,24 +127,37 @@
         bytes-rest
         (bb/read-rest bb)
 
-        ;; len-bits
-        ;; (alength bits-rest)
-
         pad-count
         (- 8 (alength bytes-rest))
 
         bytes-full
-        (byte-array
-         (concat (repeat pad-count 0) bytes-rest))
+        (if (zero? pad-count)
+          bytes-rest
+          (b/concat (byte-array pad-count) bytes-rest))
 
-        int-value
-        (new BigInteger bytes-full)
+        shift-neg
+        (mod bits-count 8)
 
-        ]
+        shift-pos
+        (if (zero? shift-neg)
+          0
+          (- 8 shift-neg))
 
-    int-value
-    )
-)
+        int-val
+        (-> (new BigInteger bytes-full)
+            (.shiftRight shift-pos))]
+
+    (loop [n 0
+           mask (BigInteger/valueOf 1)
+           acc ()]
+      (println n mask (.and int-val mask))
+      (if (= n bits-count)
+        (vec acc)
+        (let [bool
+              (not (zero? (.and int-val mask)))]
+          (recur (inc n)
+                 (.shiftLeft mask 1)
+                 (conj acc bool)))))))
 
 
 (defn decode
