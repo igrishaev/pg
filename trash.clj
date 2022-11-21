@@ -173,3 +173,11 @@ https://stackoverflow.com/questions/24408984/convert-bytearray-to-uuid-java
 pg.api
 > (count [107, 85, 96, 117, 66, 16, 65, -76, -74, 9, -33, -14, -71, 30, 8, -19])
 16
+
+
+(query -conn "select b'1010111110010101100'" [] [] const/FORMAT_BINARY)
+[{:?column? [0, 0, 0, 19, -81, -107, -128]}]
+(new BigInteger (byte-array [0 0 0 0 0 -81, -107, -128]))
+11507072
+101011111001010110000000
+1010111110010101100       ;; 24 - 19 = 5
