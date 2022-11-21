@@ -19,6 +19,10 @@
   (.getShort bb))
 
 
+(defn read-long8 [^ByteBuffer bb]
+  (.getLong bb))
+
+
 (defmacro rewind [bb]
   `(.. ~(with-meta bb {:tag `ByteBuffer}) (rewind)))
 
