@@ -349,31 +349,33 @@
                  (update-in acc (butlast path) conj item)))))))
 
 
+#_
 (defmethod decode-binary oid/INT2_ARRAY
   [^bytes bytes field enc]
   (decode-binary-array bytes field enc))
 
 
+#_
 (defmethod decode-binary oid/INT4_ARRAY
   [^bytes bytes field enc]
   (decode-binary-array bytes field enc))
 
-
+#_
 (defmethod decode-binary oid/INT8_ARRAY
   [^bytes bytes field enc]
   (decode-binary-array bytes field enc))
 
-
+#_
 (defmethod decode-binary oid/FLOAT4_ARRAY
   [^bytes bytes field enc]
   (decode-binary-array bytes field enc))
 
-
+#_
 (defmethod decode-binary oid/FLOAT8_ARRAY
   [^bytes bytes field enc]
   (decode-binary-array bytes field enc))
 
-
+#_
 (defmethod decode-binary oid/TEXT_ARRAY
   [^bytes bytes field enc]
   (decode-binary-array bytes field enc))

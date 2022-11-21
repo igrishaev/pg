@@ -160,6 +160,157 @@
                  (conj acc bool)))))))
 
 
+(defn new-matrix
+  [[dim & dimensions]]
+  (if (and dim (seq dimensions))
+    (vec (repeat dim (new-matrix dimensions)))
+    []))
+
+
+(defn matrix-path [dims n]
+  (let [len (count dims)]
+    (loop [i 0
+           acc! (transient [])]
+      (if (= i len)
+        (persistent! acc!)
+        (let [sub
+              (subvec dims (inc i))
+              idx
+              (mod (quot n (reduce * sub)) (get dims i))]
+          (recur (inc i) (conj! acc! idx)))))))
+
+
+(defn decode-array
+  ([buf]
+   (decode-array buf nil))
+
+  ([buf opt]
+   (let [bb
+         (bb/wrap buf)
+
+         levels
+         (bb/read-int32 bb)
+
+         _
+         (bb/read-int32 bb)
+
+         oid
+         (bb/read-int32 bb)
+
+         dims
+         (loop [i 0
+                acc []]
+           (if (= i levels)
+             acc
+             (let [len
+                   (bb/read-int32 bb)
+                   _
+                   (bb/read-int32 bb)]
+               (recur (inc i)
+                      (conj acc len)))))
+
+         total
+         (reduce * dims)]
+
+     (loop [i 0
+            matrix (new-matrix dims)]
+
+       (if (= i total)
+         matrix
+         (let [len
+               (bb/read-int32 bb)
+
+               item
+               (when-not (= len -1)
+                 (mm-decode oid (bb/read-bytes bb len) nil))
+
+               path
+               (matrix-path dims i)]
+
+           (recur (inc i)
+                  (update-in matrix (butlast path) conj item))))))))
+
+
+(defmethod mm-decode oid/INT2_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
+(defmethod mm-decode oid/INT4_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
+(defmethod mm-decode oid/INT4_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
+(defmethod mm-decode oid/TEXT_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
+(defmethod mm-decode oid/FLOAT4_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
+(defmethod mm-decode oid/FLOAT8_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
+(defmethod mm-decode oid/BOOL_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
+(defmethod mm-decode oid/UUID_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
+(defmethod mm-decode oid/NUMERIC_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
+(defmethod mm-decode oid/BYTEA_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
+(defmethod mm-decode oid/OID_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
+(defmethod mm-decode oid/VARCHAR_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
+(defmethod mm-decode oid/BPCHAR_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
+(defmethod mm-decode oid/MONEY_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
+(defmethod mm-decode oid/BIT_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
+(defmethod mm-decode oid/CHAR_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
 (defn decode
   ([oid buf]
    (mm-decode oid buf nil))
