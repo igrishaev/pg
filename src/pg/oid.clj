@@ -22,8 +22,8 @@
 (def ^int BOOL_ARRAY         1000) ;;   1
 (def ^int DATE               1082) ;; 0 1
 (def ^int DATE_ARRAY         1182) ;;   1
-(def ^int TIME               1083) ;; 0
-(def ^int TIME_ARRAY         1183) ;;
+(def ^int TIME               1083) ;; 0 1
+(def ^int TIME_ARRAY         1183) ;;   1
 (def ^int TIMETZ             1266) ;;
 (def ^int TIMETZ_ARRAY       1270) ;;
 (def ^int TIMESTAMP          1114) ;;

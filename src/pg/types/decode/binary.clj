@@ -326,6 +326,11 @@
   (decode-array buf opt))
 
 
+(defmethod mm-decode oid/TIME_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
 (def ^Duration PG_EPOCH_DIFF
   (Duration/between Instant/EPOCH
                     (-> (LocalDate/of 2000 1 1)
@@ -345,6 +350,16 @@
      (+ days (.toDays PG_EPOCH_DIFF)))))
 
 
+;; TODO oid/TIME :check decimal/double
+(defmethod mm-decode oid/TIME
+  [_ ^bytes buf opt]
+  (let [bb
+        (bb/wrap buf)
+
+        micros
+        (bb/read-long8 bb)]
+
+    (LocalTime/ofNanoOfDay (* micros 1000))))
 
 
 
