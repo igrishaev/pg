@@ -4,7 +4,12 @@
   https://github.com/postgres/postgres/blob/master/src/backend/utils/adt/varbit.c
   "
   (:import
-   java.util.UUID)
+   java.util.UUID
+   java.time.Duration
+   java.time.LocalDate
+   java.time.LocalTime
+   java.time.ZoneOffset
+   java.time.Instant)
   (:require
    [pg.error :as e]
    [pg.oid :as oid]
@@ -314,6 +319,35 @@
 (defmethod mm-decode oid/CHAR_ARRAY
   [_ ^bytes buf opt]
   (decode-array buf opt))
+
+
+(defmethod mm-decode oid/DATE_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
+(def ^Duration PG_EPOCH_DIFF
+  (Duration/between Instant/EPOCH
+                    (-> (LocalDate/of 2000 1 1)
+                        (.atStartOfDay)
+                        (.toInstant ZoneOffset/UTC))))
+
+
+(defmethod mm-decode oid/DATE
+  [_ ^bytes buf opt]
+  (let [bb
+        (bb/wrap buf)
+
+        days
+        (bb/read-int32 bb)]
+
+    (LocalDate/ofEpochDay
+     (+ days (.toDays PG_EPOCH_DIFF)))))
+
+
+
+
+
 
 
 (defn decode

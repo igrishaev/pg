@@ -20,8 +20,8 @@
 (def ^int FLOAT8_ARRAY       1022) ;;   1
 (def ^int BOOL                 16) ;; 0 1
 (def ^int BOOL_ARRAY         1000) ;;   1
-(def ^int DATE               1082) ;; 0
-(def ^int DATE_ARRAY         1182) ;;
+(def ^int DATE               1082) ;; 0 1
+(def ^int DATE_ARRAY         1182) ;;   1
 (def ^int TIME               1083) ;; 0
 (def ^int TIME_ARRAY         1183) ;;
 (def ^int TIMETZ             1266) ;;
