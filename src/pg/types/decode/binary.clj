@@ -6,6 +6,7 @@
   (:import
    java.util.UUID)
   (:require
+   [pg.error :as e]
    [pg.oid :as oid]
    [pg.codec :as codec]
    [pg.bb :as bb]
@@ -161,10 +162,14 @@
 
 
 (defn new-matrix
-  [[dim & dimensions]]
-  (if (and dim (seq dimensions))
-    (vec (repeat dim (new-matrix dimensions)))
-    []))
+  [[dim & dims]]
+  (if dim
+    (if (seq dims)
+      (vec (repeat dim (new-matrix dims)))
+      (vec (repeat dim nil)))
+    (e/error! "Wrong matrix dimensions"
+              {:dim dim
+               :dims dims})))
 
 
 (defn matrix-path [dims n]
@@ -228,7 +233,7 @@
                (matrix-path dims i)]
 
            (recur (inc i)
-                  (update-in matrix (butlast path) conj item))))))))
+                  (assoc-in matrix path item))))))))
 
 
 (defmethod mm-decode oid/INT2_ARRAY
