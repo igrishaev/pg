@@ -8,6 +8,7 @@
    java.time.Duration
    java.time.LocalDate
    java.time.LocalTime
+   java.time.OffsetTime
    java.time.ZoneOffset
    java.time.Instant)
   (:require
@@ -241,6 +242,8 @@
                   (assoc-in matrix path item))))))))
 
 
+;; TODO: batch defmethod(s)
+
 (defmethod mm-decode oid/INT2_ARRAY
   [_ ^bytes buf opt]
   (decode-array buf opt))
@@ -331,6 +334,11 @@
   (decode-array buf opt))
 
 
+(defmethod mm-decode oid/TIMETZ_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
 (def ^Duration PG_EPOCH_DIFF
   (Duration/between Instant/EPOCH
                     (-> (LocalDate/of 2000 1 1)
@@ -360,6 +368,22 @@
         (bb/read-long8 bb)]
 
     (LocalTime/ofNanoOfDay (* micros 1000))))
+
+;; TODO: check decimal/double
+(defmethod mm-decode oid/TIMETZ
+  [_ ^bytes buf opt]
+  (let [bb
+        (bb/wrap buf)
+
+        micros
+        (bb/read-long8 bb)
+
+        offset
+        (bb/read-int32 bb)]
+
+    (OffsetTime/of
+     (LocalTime/ofNanoOfDay (* micros 1000))
+     (ZoneOffset/ofTotalSeconds (- offset)))))
 
 
 

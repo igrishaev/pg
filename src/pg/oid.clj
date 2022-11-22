@@ -24,8 +24,8 @@
 (def ^int DATE_ARRAY         1182) ;;   1
 (def ^int TIME               1083) ;; 0 1
 (def ^int TIME_ARRAY         1183) ;;   1
-(def ^int TIMETZ             1266) ;;
-(def ^int TIMETZ_ARRAY       1270) ;;
+(def ^int TIMETZ             1266) ;;   1
+(def ^int TIMETZ_ARRAY       1270) ;;   1
 (def ^int TIMESTAMP          1114) ;;
 (def ^int TIMESTAMP_ARRAY    1115) ;;
 (def ^int TIMESTAMPTZ        1184) ;;
