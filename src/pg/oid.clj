@@ -26,10 +26,10 @@
 (def ^int TIME_ARRAY         1183) ;;   1
 (def ^int TIMETZ             1266) ;;   1
 (def ^int TIMETZ_ARRAY       1270) ;;   1
-(def ^int TIMESTAMP          1114) ;;
-(def ^int TIMESTAMP_ARRAY    1115) ;;
+(def ^int TIMESTAMP          1114) ;;   1
+(def ^int TIMESTAMP_ARRAY    1115) ;;   1
 (def ^int TIMESTAMPTZ        1184) ;;
-(def ^int TIMESTAMPTZ_ARRAY  1185) ;;
+(def ^int TIMESTAMPTZ_ARRAY  1185) ;;   1
 (def ^int BYTEA                17) ;; 0 1
 (def ^int BYTEA_ARRAY        1001) ;;   1
 (def ^int VARCHAR            1043) ;; 0 1

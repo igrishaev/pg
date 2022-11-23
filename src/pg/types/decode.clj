@@ -12,6 +12,7 @@
    java.time.ZoneId
    java.time.LocalDate
    java.time.LocalTime
+   java.time.LocalDateTime
    java.time.format.DateTimeFormatter
    java.time.Instant)
   (:require

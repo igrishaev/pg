@@ -9,6 +9,7 @@
    java.time.LocalDate
    java.time.LocalTime
    java.time.OffsetTime
+   java.time.LocalDateTime
    java.time.ZoneOffset
    java.time.Instant)
   (:require
@@ -339,6 +340,16 @@
   (decode-array buf opt))
 
 
+(defmethod mm-decode oid/TIMESTAMP_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
+(defmethod mm-decode oid/TIMESTAMPTZ_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
 (def ^Duration PG_EPOCH_DIFF
   (Duration/between Instant/EPOCH
                     (-> (LocalDate/of 2000 1 1)
@@ -384,6 +395,27 @@
     (OffsetTime/of
      (LocalTime/ofNanoOfDay (* micros 1000))
      (ZoneOffset/ofTotalSeconds (- offset)))))
+
+;; TODO: check decimal/double
+(defmethod mm-decode oid/TIMESTAMP
+  [_ ^bytes buf opt]
+  (let [bb
+        (bb/wrap buf)
+
+        micros
+        (bb/read-long8 bb)
+
+        secs
+        (-> (quot micros 1000000)
+            (+ (.toSeconds PG_EPOCH_DIFF)))
+
+        nanos
+        (-> (mod micros 1000000)
+            (* 1000))]
+
+    (LocalDateTime/ofEpochSecond secs
+                                 nanos
+                                 ZoneOffset/UTC)))
 
 
 
