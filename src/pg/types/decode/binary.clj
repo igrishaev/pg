@@ -193,6 +193,9 @@
 
 
 (defn decode-array
+  "
+  https://github.com/pgjdbc/pgjdbc/blob/135be5a4395033a4ba23a1dd70ad76e0bd443a8d/pgjdbc/src/main/java/org/postgresql/jdbc/ArrayDecoding.java#L498
+  "
   ([buf]
    (decode-array buf nil))
 
@@ -203,8 +206,8 @@
          levels
          (bb/read-int32 bb)
 
-         _
-         (bb/read-int32 bb)
+         has-nulls?
+         (not= 0 (bb/read-int32 bb))
 
          oid
          (bb/read-int32 bb)
@@ -223,6 +226,8 @@
 
          total
          (reduce * dims)]
+
+     ;; TODO: special cases for levels = 0 and 1
 
      (loop [i 0
             matrix (new-matrix dims)]
