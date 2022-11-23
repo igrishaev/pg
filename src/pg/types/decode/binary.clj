@@ -418,6 +418,30 @@
                                  ZoneOffset/UTC)))
 
 
+#_
+(defmethod mm-decode oid/INTERVAL
+  [_ ^bytes buf opt]
+
+  micro days months
+
+  (let [bb
+        (bb/wrap buf)
+
+        micros
+        (bb/read-long8 bb)
+
+        days
+        (bb/read-int32 bb)
+
+        months
+        (bb/read-int32 bb)]
+
+
+
+
+))
+
+
 
 
 
