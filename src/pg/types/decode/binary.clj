@@ -1,5 +1,10 @@
 (ns pg.types.decode.binary
   "
+  https://github.com/pgjdbc/pgjdbc/blob/master/pgjdbc/src/main/java/org/postgresql/util/ByteConverter.java#L124
+  https://github.com/pgjdbc/pgjdbc/blob/master/pgjdbc/src/main/java/org/postgresql/jdbc/TimestampUtils.java
+  https://github.com/pgjdbc/pgjdbc/blob/master/pgjdbc/src/main/java/org/postgresql/util/PGbytea.java
+  https://www.postgresql.org/message-id/attachment/13504/arrayAccess.txt
+  https://postgrespro.ru/docs/postgresql/14/runtime-config-client
   https://hackage.haskell.org/package/postgresql-binary-0.9/docs/src/PostgreSQL-Binary-Decoder.html
   https://github.com/postgres/postgres/blob/master/src/backend/utils/adt/varbit.c
   "
