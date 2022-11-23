@@ -6,6 +6,7 @@
   https://www.postgresql.org/message-id/attachment/13504/arrayAccess.txt
   https://postgrespro.ru/docs/postgresql/14/runtime-config-client
   https://hackage.haskell.org/package/postgresql-binary-0.9/docs/src/PostgreSQL-Binary-Decoder.html
+  https://github.com/nikita-volkov/postgresql-binary/tree/master/library/PostgreSQL/Binary
   https://github.com/postgres/postgres/blob/master/src/backend/utils/adt/varbit.c
   "
   (:import
