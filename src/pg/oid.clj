@@ -45,7 +45,7 @@
 (def ^int BIT                1560) ;;   1
 (def ^int BIT_ARRAY          1561) ;;   1
 (def ^int VOID               2278) ;;   1
-(def ^int INTERVAL           1186) ;;   1 TODO
+(def ^int INTERVAL           1186) ;;   1
 (def ^int INTERVAL_ARRAY     1187) ;;   1
 (def ^int CHAR                 18) ;;   1
 (def ^int CHAR_ARRAY         1002) ;;   1
@@ -68,7 +68,7 @@
 (def ^int LSEG                601)
 (def ^int PATH                602)
 (def ^int POLYGON             604)
-(def ^int CIRCLE              718)
+(def ^int CIRCLE              718) ;;   1
 (def ^int CIDR                650)
 (def ^int INET                869)
 (def ^int MACADDR             829)

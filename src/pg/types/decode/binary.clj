@@ -21,6 +21,7 @@
    java.time.Instant
    java.time.temporal.ChronoUnit)
   (:require
+   [pg.types.time :as time]
    [pg.types.geom :as geom]
    [pg.error :as e]
    [pg.oid :as oid]
@@ -442,6 +443,29 @@
                                  ZoneOffset/UTC)))
 
 
+#_
+(defmethod mm-decode oid/TIMESTAMPTZ
+  [_ ^bytes buf opt]
+  (let [bb
+        (bb/wrap buf)
+
+        micros
+        (bb/read-long8 bb)
+
+        secs
+        (-> (quot micros 1000000)
+            (+ (.toSeconds PG_EPOCH_DIFF)))
+
+        nanos
+        (-> (mod micros 1000000)
+            (* 1000))]
+
+    (LocalDateTime/ofEpochSecond secs
+                                 nanos
+                                 ZoneOffset/UTC)))
+
+
+
 (defmethod mm-decode oid/INTERVAL
   [_ ^bytes buf opt]
 
@@ -457,17 +481,7 @@
         months
         (bb/read-int32 bb)]
 
-    [micros days months]
-
-    #_
-    (-> (Duration/ofNanos (* micros 1000))
-        (.plus days ChronoUnit/DAYS)
-        (.plus months ChronoUnit/MONTHS))
-
-    #_
-    (java.time.Period ...)))
-
-
+    (time/make-interval micros days months)))
 
 
 (defmethod mm-decode oid/POINT
@@ -487,7 +501,25 @@
     (geom/make-point x y)))
 
 
+(defmethod mm-decode oid/CIRCLE
+  [_ ^bytes buf _]
 
+  (let [bb
+        (bb/wrap buf)
+
+        x
+        (Double/longBitsToDouble
+         (bb/read-long8 bb))
+
+        y
+        (Double/longBitsToDouble
+         (bb/read-long8 bb))
+
+        r
+        (Double/longBitsToDouble
+         (bb/read-long8 bb))]
+
+    (geom/make-circle x y r)))
 
 
 (defn decode
