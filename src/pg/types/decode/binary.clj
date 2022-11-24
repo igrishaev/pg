@@ -15,10 +15,13 @@
    java.time.LocalDate
    java.time.LocalTime
    java.time.OffsetTime
+   java.time.Duration
    java.time.LocalDateTime
    java.time.ZoneOffset
-   java.time.Instant)
+   java.time.Instant
+   java.time.temporal.ChronoUnit)
   (:require
+   [pg.types.geom :as geom]
    [pg.error :as e]
    [pg.oid :as oid]
    [pg.codec :as codec]
@@ -361,6 +364,16 @@
   (decode-array buf opt))
 
 
+(defmethod mm-decode oid/POINT_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
+(defmethod mm-decode oid/INTERVAL_ARRAY
+  [_ ^bytes buf opt]
+  (decode-array buf opt))
+
+
 (def ^Duration PG_EPOCH_DIFF
   (Duration/between Instant/EPOCH
                     (-> (LocalDate/of 2000 1 1)
@@ -429,11 +442,8 @@
                                  ZoneOffset/UTC)))
 
 
-#_
 (defmethod mm-decode oid/INTERVAL
   [_ ^bytes buf opt]
-
-  micro days months
 
   (let [bb
         (bb/wrap buf)
@@ -447,10 +457,34 @@
         months
         (bb/read-int32 bb)]
 
+    [micros days months]
+
+    #_
+    (-> (Duration/ofNanos (* micros 1000))
+        (.plus days ChronoUnit/DAYS)
+        (.plus months ChronoUnit/MONTHS))
+
+    #_
+    (java.time.Period ...)))
 
 
 
-))
+
+(defmethod mm-decode oid/POINT
+  [_ ^bytes buf _]
+
+  (let [bb
+        (bb/wrap buf)
+
+        x
+        (Double/longBitsToDouble
+         (bb/read-long8 bb))
+
+        y
+        (Double/longBitsToDouble
+         (bb/read-long8 bb))]
+
+    (geom/make-point x y)))
 
 
 

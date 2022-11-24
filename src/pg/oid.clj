@@ -45,8 +45,8 @@
 (def ^int BIT                1560) ;;   1
 (def ^int BIT_ARRAY          1561) ;;   1
 (def ^int VOID               2278) ;;   1
-(def ^int INTERVAL           1186)
-(def ^int INTERVAL_ARRAY     1187)
+(def ^int INTERVAL           1186) ;;   1 TODO
+(def ^int INTERVAL_ARRAY     1187) ;;   1
 (def ^int CHAR                 18) ;;   1
 (def ^int CHAR_ARRAY         1002) ;;   1
 (def ^int VARBIT             1562)
@@ -55,8 +55,8 @@
 (def ^int UUID_ARRAY         2951) ;;   1
 (def ^int XML                 142)
 (def ^int XML_ARRAY           143)
-(def ^int POINT               600)
-(def ^int POINT_ARRAY        1017)
+(def ^int POINT               600) ;;   1
+(def ^int POINT_ARRAY        1017) ;;   1
 (def ^int BOX                 603)
 (def ^int JSONB              3802)
 (def ^int JSONB_ARRAY        3807)
