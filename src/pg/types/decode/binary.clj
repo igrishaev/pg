@@ -446,7 +446,10 @@
 #_
 (defmethod mm-decode oid/TIMESTAMPTZ
   [_ ^bytes buf opt]
-  (let [bb
+  (let [len
+        (alength buf)
+
+        bb
         (bb/wrap buf)
 
         micros
