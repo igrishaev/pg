@@ -1,4 +1,21 @@
-(ns pg.types.time)
+(ns pg.types.time
+  (:import
+   java.time.Instant
+   java.time.Duration
+   java.time.LocalDate
+   java.time.ZoneOffset))
+
+
+(def MICROS 1000000)
+
+(def MILLIS 1000)
+
+
+(def ^Duration PG_EPOCH_DIFF
+  (Duration/between Instant/EPOCH
+                    (-> (LocalDate/of 2000 1 1)
+                        (.atStartOfDay)
+                        (.toInstant ZoneOffset/UTC))))
 
 
 (defrecord Interval

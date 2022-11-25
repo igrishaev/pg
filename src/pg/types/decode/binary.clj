@@ -11,15 +11,13 @@
   "
   (:import
    java.util.UUID
-   java.time.Duration
    java.time.LocalDate
    java.time.LocalTime
    java.time.OffsetTime
-   java.time.Duration
    java.time.LocalDateTime
+   java.time.OffsetDateTime
    java.time.ZoneOffset
-   java.time.Instant
-   java.time.temporal.ChronoUnit)
+   java.time.Instant)
   (:require
    [pg.types.time :as time]
    [pg.types.geom :as geom]
@@ -374,14 +372,6 @@
   [_ ^bytes buf opt]
   (decode-array buf opt))
 
-
-(def ^Duration PG_EPOCH_DIFF
-  (Duration/between Instant/EPOCH
-                    (-> (LocalDate/of 2000 1 1)
-                        (.atStartOfDay)
-                        (.toInstant ZoneOffset/UTC))))
-
-
 (defmethod mm-decode oid/DATE
   [_ ^bytes buf opt]
   (let [bb
@@ -391,7 +381,7 @@
         (bb/read-int32 bb)]
 
     (LocalDate/ofEpochDay
-     (+ days (.toDays PG_EPOCH_DIFF)))))
+     (+ days (.toDays time/PG_EPOCH_DIFF)))))
 
 
 ;; TODO oid/TIME :check decimal/double
@@ -403,7 +393,7 @@
         micros
         (bb/read-long8 bb)]
 
-    (LocalTime/ofNanoOfDay (* micros 1000))))
+    (LocalTime/ofNanoOfDay (* micros time/MILLIS))))
 
 ;; TODO: check decimal/double
 (defmethod mm-decode oid/TIMETZ
@@ -418,7 +408,7 @@
         (bb/read-int32 bb)]
 
     (OffsetTime/of
-     (LocalTime/ofNanoOfDay (* micros 1000))
+     (LocalTime/ofNanoOfDay (* micros time/MILLIS))
      (ZoneOffset/ofTotalSeconds (- offset)))))
 
 ;; TODO: check decimal/double
@@ -431,41 +421,38 @@
         (bb/read-long8 bb)
 
         secs
-        (-> (quot micros 1000000)
-            (+ (.toSeconds PG_EPOCH_DIFF)))
+        (-> (quot micros time/MICROS)
+            (+ (.toSeconds time/PG_EPOCH_DIFF)))
 
         nanos
-        (-> (mod micros 1000000)
-            (* 1000))]
+        (-> (rem micros time/MICROS)
+            (* time/MILLIS))]
 
     (LocalDateTime/ofEpochSecond secs
                                  nanos
                                  ZoneOffset/UTC)))
 
-
-#_
+;; TODO: check decimal/double
 (defmethod mm-decode oid/TIMESTAMPTZ
   [_ ^bytes buf opt]
-  (let [len
-        (alength buf)
-
-        bb
+  (let [bb
         (bb/wrap buf)
 
         micros
         (bb/read-long8 bb)
 
         secs
-        (-> (quot micros 1000000)
-            (+ (.toSeconds PG_EPOCH_DIFF)))
+        (-> (quot micros time/MICROS)
+            (+ (.toSeconds time/PG_EPOCH_DIFF)))
 
         nanos
-        (-> (mod micros 1000000)
-            (* 1000))]
+        (-> (mod micros time/MICROS)
+            (* time/MILLIS))
 
-    (LocalDateTime/ofEpochSecond secs
-                                 nanos
-                                 ZoneOffset/UTC)))
+        instant
+        (Instant/ofEpochSecond secs nanos)]
+
+    (OffsetDateTime/ofInstant instant ZoneOffset/UTC)))
 
 
 
