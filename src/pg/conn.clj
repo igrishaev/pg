@@ -15,7 +15,7 @@
         (.write ch (bb/rewind bb))]
     (if (zero? (bb/remaining bb))
       conn
-      (e/error! "Uncomplete write to the channel"
+      (e/error! "Incomplete write to the channel"
                 {:in ::here
                  :bb bb
                  :written written}))))

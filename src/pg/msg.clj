@@ -485,7 +485,7 @@
       (bb/write-cstring stmt-name)
       (bb/write-cstring query)
       (bb/write-int16 type-count)
-      (bb/write-int32s oid-types))))
+      (bb/write-int32s oid-types)))) ;; TODO: consider nil (0) oid
 
 
 (defn make-execute

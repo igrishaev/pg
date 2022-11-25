@@ -247,6 +247,11 @@
   state)
 
 
+(defn handle-param-description
+  [conn state msg]
+  (assoc state :ParameterDescription msg))
+
+
 (defn process-message
   [conn state {:as msg :keys [type]}]
 
@@ -293,6 +298,9 @@
 
     :NoticeResponse
     (handle-notice-response conn state msg)
+
+    :ParameterDescription
+    (handle-param-description conn state msg)
 
     :BackendKeyData
     (handle-backend-data conn state msg)

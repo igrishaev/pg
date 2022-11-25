@@ -72,13 +72,18 @@
          enc
          (conn/client-encoding conn)
 
-         bb
+         bb-parse
          (msg/make-parse (codec/str->bytes stmt-name enc)
                          (codec/str->bytes sql enc)
-                         oid-params)]
+                         oid-params)
+
+         bb-describe
+         (msg/make-describe-statement
+          (codec/str->bytes stmt-name))]
 
      (-> conn
-         (conn/write-bb bb)
+         (conn/write-bb bb-parse)
+         (conn/write-bb bb-describe)
          (sync)
          (pipeline/pipeline))
 
