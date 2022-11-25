@@ -42,3 +42,12 @@
               b2 (aget bytes2 i)]
           (aset result i ^Byte (bit-xor b1 b2))
           (recur result (inc i)))))))
+
+
+(defn zeros-left [^bytes buf total]
+  (let [diff
+        (- total (alength buf))]
+
+    (if (pos? diff)
+      (concat (byte-array diff) buf)
+      buf)))

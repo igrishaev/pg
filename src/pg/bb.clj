@@ -23,6 +23,10 @@
   (.getLong bb))
 
 
+(defn write-long8 [^ByteBuffer bb ^long value]
+  (.putLong bb value))
+
+
 (defmacro rewind [bb]
   `(.. ~(with-meta bb {:tag `ByteBuffer}) (rewind)))
 
