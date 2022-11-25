@@ -115,7 +115,7 @@
 
 
 (defn execute-statement
-  [conn stmt params out-formats]
+  [conn stmt params #_out-formats]
   (let [enc
         (conn/client-encoding conn)
 
@@ -123,34 +123,41 @@
         #_
         (name (gensym "portal-"))
 
-        pairs
+        req-formats [const/FORMAT_BINARY]
+        res-formats [const/FORMAT_BINARY]
+
+        req-bytes
         (for [param params]
-          (encode/encode param enc))
+          (pg.types.encode.binary/mm-encode param nil))
 
-        in-formats
-        (mapv first pairs)
+        ;; pairs
+        ;; (for [param params]
+        ;;   (encode/encode param enc))
 
-        in-bytes
-        (mapv second pairs)
+        ;; in-formats
+        ;; (mapv first pairs)
 
-        out-formats
-        (cond
-          (int? out-formats)
-          [out-formats]
-          (coll? out-formats)
-          out-formats
-          :else
-          (e/error!
-           "Wrong output format. Must be either an integer or a coll of integers."
-           {:out-formats out-formats}))
+        ;; in-bytes
+        ;; (mapv second pairs)
+
+        ;; out-formats
+        ;; (cond
+        ;;   (int? out-formats)
+        ;;   [out-formats]
+        ;;   (coll? out-formats)
+        ;;   out-formats
+        ;;   :else
+        ;;   (e/error!
+        ;;    "Wrong output format. Must be either an integer or a coll of integers."
+        ;;    {:out-formats out-formats}))
 
         bb-bind
         (msg/make-bind
          (codec/str->bytes portal enc)
          (codec/str->bytes stmt enc)
-         in-formats
-         in-bytes
-         out-formats)
+         req-formats
+         req-bytes
+         res-formats)
 
         bb-exe
         (msg/make-execute
