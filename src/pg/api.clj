@@ -85,9 +85,8 @@
          (conn/write-bb bb-parse)
          (conn/write-bb bb-describe)
          (sync)
-         (pipeline/pipeline))
-
-     stmt-name)))
+         (pipeline/pipeline)
+         (assoc :Statement stmt-name)))))
 
 
 (defn close-statement [conn stmt-name]

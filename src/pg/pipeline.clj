@@ -252,6 +252,10 @@
   (assoc state :ParameterDescription msg))
 
 
+(defn handle-parse-complete [conn state msg]
+  (assoc state :ParseComplete msg))
+
+
 (defn process-message
   [conn state {:as msg :keys [type]}]
 
@@ -305,7 +309,10 @@
     :BackendKeyData
     (handle-backend-data conn state msg)
 
-    (:CloseComplete :ParseComplete :BindComplete :NoData)
+    :ParseComplete
+    (handle-parse-complete conn state msg)
+
+    (:CloseComplete :BindComplete :NoData)
     state
 
     :RowDescription
@@ -331,7 +338,10 @@
 
         {:keys [Rows!
                 ErrorResponse
-                ReadyForQuery]}
+                ReadyForQuery
+                RowDescription
+                ParameterDescription
+                ParseComplete]}
         state
 
         {:keys [errors]}
@@ -353,8 +363,13 @@
                 (println " -" label (codec/bytes->str bytes enc))))]
         (e/error! message))
 
+      ParseComplete
+      {:RowDescription RowDescription
+       :ParameterDescription ParameterDescription}
+
       Rows!
       (persistent! Rows!)
+
 
       :else
       nil
