@@ -3,6 +3,7 @@
    java.util.UUID
    clojure.lang.Symbol)
   (:require
+   [pg.oid :as oid]
    [pg.bb :as bb]
    [pg.bytes :as b]
    [pg.error :as e]
@@ -14,33 +15,37 @@
 
 
 (defmulti mm-encode
-  (fn [value _]
-    (class value)))
+  (fn [value oid _]
+    [(class value) oid]))
 
 
 (defmethod mm-encode :default
-  [value _]
-  (e/error! "Cannot binary encode value"
-            {:value value}))
+  [value oid opt]
+  (e/error! (format "Cannot binary encode value: [%s %s]"
+                    (type value) oid)
+            {:oid oid
+             :opt opt
+             :value value
+             :class (type value)}))
 
 
-(defmethod mm-encode String
-  [value opt]
+(defmethod mm-encode [String oid/TEXT]
+  [value _ opt]
   (codec/str->bytes value (get-enc opt)))
 
 
-(defmethod mm-encode Symbol
-  [value opt]
+(defmethod mm-encode [Symbol oid/TEXT]
+  [value _ opt]
   (codec/str->bytes (str value) (get-enc opt)))
 
 
-(defmethod mm-encode Character
-  [value opt]
+(defmethod mm-encode [Character oid/CHAR]
+  [value _ opt]
   (codec/str->bytes (str value) (get-enc opt)))
 
 
-(defmethod mm-encode Boolean
-  [value _]
+(defmethod mm-encode [Boolean oid/BOOL]
+  [value _ _]
   (let [b
         (case value
           true 1
@@ -48,45 +53,79 @@
     (byte-array [b])))
 
 
-(defmethod mm-encode Integer
-  [^Integer value _]
-  (-> (BigInteger/valueOf value)
-      (.toByteArray)
-      (b/zeros-left 4)))
+(defn int->bytes ^bytes [value len]
+  (byte-array
+   (loop [i 0
+          acc []]
+     (if (= i len)
+       acc
+       (let [b
+             (-> value
+                 (bit-shift-right (* 8 (- len i 1)))
+                 (bit-and 0xff)
+                 unchecked-byte)]
+         (recur (inc i)
+                (conj acc b)))))))
 
 
-(defmethod mm-encode Long
-  [value _]
-  (-> (BigInteger/valueOf value)
-      (.toByteArray )
-      (b/zeros-left 8)))
+(defmethod mm-encode [Integer oid/INT2]
+  [^Integer value _ _]
+  (int->bytes (short value) 2))
 
 
-(defmethod mm-encode Float
-  [^Float value _]
+(defmethod mm-encode [Integer oid/INT4]
+  [^Integer value _ _]
+  (int->bytes value 4))
+
+
+(defmethod mm-encode [Integer oid/INT8]
+  [^Integer value _ _]
+  (int->bytes value 8))
+
+
+(defmethod mm-encode [Long oid/INT2]
+  [value oid opt]
+  (mm-encode (short value) oid opt))
+
+
+(defmethod mm-encode [Long oid/INT4]
+  [value oid opt]
+  (mm-encode (int value) oid opt))
+
+
+(defmethod mm-encode [Long oid/INT8]
+  [value _ _]
+  (int->bytes value 8))
+
+
+(defmethod mm-encode [Float oid/FLOAT4]
+  [^Float value _ _]
   (-> (Float/floatToIntBits value)
-      (BigInteger/valueOf)
-      (.toByteArray)
-      (b/zeros-left 4)))
+      (int->bytes 4)))
 
 
-(defmethod mm-encode Double
-  [^Double value _]
+(defmethod mm-encode [Double oid/FLOAT4]
+  [^Double value oid opt]
+  (mm-encode (float value) oid opt))
+
+
+(defmethod mm-encode [Double oid/FLOAT8]
+  [^Double value _ _]
   (-> (Double/doubleToLongBits value)
-      (BigInteger/valueOf)
-      (.toByteArray)
-      (b/zeros-left 8)))
+      (int->bytes 8)))
 
 
-(defmethod mm-encode BigInteger
-  [^BigInteger value _]
-  (-> value
-      (.toByteArray)
-      (b/zeros-left 8)))
+#_
+java.math.BigDecimal
+
+#_
+(defmethod mm-encode [BigInteger oid/INT8]
+  [^BigInteger value _ _]
+  (int->bytes value 8))
 
 
-(defmethod mm-encode UUID
-  [^UUID value _]
+(defmethod mm-encode [UUID oid/UUID]
+  [^UUID value _ _]
   (let [bb
         (bb/allocate 16)
 
@@ -101,3 +140,8 @@
       (bb/write-long8 least-bits))
 
     (bb/array bb)))
+
+
+(defmethod mm-encode [UUID oid/TEXT]
+  [^UUID value oid opt]
+  (mm-encode (str value) oid opt))

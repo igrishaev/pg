@@ -2,8 +2,11 @@
   "
   Public client API.
   "
+  (:import pg.stmt.Statement)
   (:refer-clojure :exclude [sync flush update])
   (:require
+   [pg.stmt :as stmt]
+   [pg.oid :as oid]
    [pg.error :as e]
    [pg.const :as const]
    [pg.codec :as codec]
@@ -60,7 +63,7 @@
 ;; Statement
 ;;
 
-(defn prepare-statement
+(defn ^Statement prepare-statement
   ([conn sql]
    (prepare-statement conn sql nil))
 
@@ -79,22 +82,31 @@
 
          bb-describe
          (msg/make-describe-statement
-          (codec/str->bytes stmt-name))]
+          (codec/str->bytes stmt-name))
 
-     (-> conn
-         (conn/write-bb bb-parse)
-         (conn/write-bb bb-describe)
-         (sync)
-         (pipeline/pipeline)
-         (assoc :Statement stmt-name)))))
+         {:keys [RowDescription
+                 ParameterDescription]}
+         (-> conn
+             (conn/write-bb bb-parse)
+             (conn/write-bb bb-describe)
+             (sync)
+             (pipeline/pipeline))]
+
+     ;; TODO: pass encoding
+     ;; TODO: pass query
+     (stmt/make-statement stmt-name
+                          ParameterDescription
+                          RowDescription))))
 
 
-(defn close-statement [conn stmt-name]
+(defn close-statement [conn ^Statement stmt]
   (let [enc
         (conn/client-encoding conn)
         bb
         (msg/make-close-statement
-         (codec/str->bytes stmt-name enc))]
+         (-> stmt
+             (stmt/get-name)
+             (codec/str->bytes enc)))]
 
     (-> conn
         (conn/write-bb bb)
@@ -115,7 +127,7 @@
 
 
 (defn execute-statement
-  [conn stmt params #_out-formats]
+  [conn ^Statement stmt params #_out-formats]
   (let [enc
         (conn/client-encoding conn)
 
@@ -126,9 +138,21 @@
         req-formats [const/FORMAT_BINARY]
         res-formats [const/FORMAT_BINARY]
 
+        enc-opt
+        {}
+
+        param-count
+        (stmt/param-count stmt)
+
         req-bytes
-        (for [param params]
-          (pg.types.encode.binary/mm-encode param nil))
+        (loop [i 0
+               acc []]
+          (if (= i param-count)
+            acc
+            (let [param (get params i)
+                  oid (stmt/param-type stmt i)
+                  buf (pg.types.encode.binary/mm-encode param oid enc-opt)]
+              (recur (inc i) (conj acc buf)))))
 
         ;; pairs
         ;; (for [param params]
@@ -153,15 +177,15 @@
 
         bb-bind
         (msg/make-bind
-         (codec/str->bytes portal enc)
-         (codec/str->bytes stmt enc)
+         (-> portal (codec/str->bytes enc))
+         (-> stmt stmt/get-name (codec/str->bytes enc))
          req-formats
          req-bytes
          res-formats)
 
         bb-exe
         (msg/make-execute
-         (codec/str->bytes portal) 0)
+         (codec/str->bytes portal) 0) ;; TODO: amount of rows
 
         bb-desc
         (msg/make-describe-portal
