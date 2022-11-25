@@ -127,7 +127,7 @@
 
 
 (defn execute-statement
-  [conn ^Statement stmt params #_out-formats]
+  [conn ^Statement stmt params & [_out-formats]]
   (let [enc
         (conn/client-encoding conn)
 
@@ -445,14 +445,13 @@
        (jdbc/query -db "select date, kv from log1v"))))
 
   (with-statement [st -conn "select 1 as one"]
-    (println (execute -conn st nil))
-    (println (execute -conn st nil))
-    )
+    (println (execute-statement -conn st nil))
+    (println (execute-statement -conn st nil)))
 
   (with-connection [-conn -cfg]
     (with-statement [st -conn "select 1 as one"]
-      (println (execute -conn st nil))
-      (println (execute -conn st nil))))
+      (println (execute-statement -conn st nil))
+      (println (execute-statement -conn st nil))))
 
   (query -conn
          "select $1 as line1, $1 as line2, now() as time"
