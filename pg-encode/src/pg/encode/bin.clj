@@ -192,7 +192,6 @@
 ;; Instant
 ;;
 
-
 (def ^Duration PG_EPOCH_DIFF
   (Duration/between Instant/EPOCH
                     (-> (LocalDate/of 2000 1 1)
