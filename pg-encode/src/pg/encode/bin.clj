@@ -5,6 +5,7 @@
    java.time.Duration
    java.time.Instant
    java.time.LocalDate
+   java.time.ZoneId
    java.time.ZoneOffset
    java.util.Date
    java.util.UUID)
@@ -214,21 +215,51 @@
      (+ (* seconds 1000 1000) nanos))))
 
 
-(defmethod -encode [Date oid/TIMESTAMP]
+(defmethod -encode [Instant oid/DATE]
+  [^Instant value oid opt]
+  (let [local-date
+        (LocalDate/ofInstant value
+                             (ZoneId/systemDefault))]
+    (-encode local-date oid opt)))
+
+
+;;
+;; Date
+;;
+
+(defmethod -encode [Date oid/DATE]
   [^Date value oid opt]
-  (-encode (.toInstant value) oid opt))
+  (let [local-date
+        (LocalDate/ofInstant (.toInstant value)
+                             (ZoneId/systemDefault))]
+    (-encode local-date oid opt)))
 
 
+;;
+;; LocalDate
+;;
+
+(defmethod -encode [LocalDate oid/DATE]
+  [^LocalDate value oid opt]
+  (let []
+    (array/arr32
+     (- (.toEpochDay value)
+        (.toDays PG_EPOCH_DIFF)))))
+
+;;
+;; API
+;;
 
 (def defaults
-  {String  oid/TEXT
-   Instant oid/TIMESTAMP
-   Date    oid/TIMESTAMP
-   Symbol  oid/TEXT
-   Long    oid/INT8
-   Float   oid/FLOAT4
-   Double  oid/FLOAT8
-   UUID    oid/UUID})
+  {String    oid/TEXT
+   Instant   oid/TIMESTAMP
+   Date      oid/TIMESTAMP
+   LocalDate oid/DATE
+   Symbol    oid/TEXT
+   Long      oid/INT8
+   Float     oid/FLOAT4
+   Double    oid/FLOAT8
+   UUID      oid/UUID})
 
 
 (defn encode
