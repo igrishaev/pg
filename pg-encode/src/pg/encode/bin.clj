@@ -198,6 +198,12 @@
 ;; UUID
 ;;
 
+
+(defmethod -encode [UUID nil]
+  [value _ opt]
+  (-encode value oid/UUID opt))
+
+
 (defmethod -encode [UUID oid/UUID]
   [^UUID value oid opt]
 
