@@ -1,16 +1,16 @@
 (ns pg.encode.bin
   (:import
+   clojure.lang.Keyword
+   clojure.lang.Symbol
    java.time.Duration
-   java.time.LocalDate
    java.time.Instant
+   java.time.LocalDate
    java.time.ZoneOffset
    java.util.Date
-   clojure.lang.Symbol
-   clojure.lang.Keyword
    java.util.UUID)
   (:require
-   [pg.oid :as oid]
-   [pg.bytes.array :as array]))
+   [pg.bytes.array :as array]
+   [pg.oid :as oid]))
 
 
 (defmulti -encode
