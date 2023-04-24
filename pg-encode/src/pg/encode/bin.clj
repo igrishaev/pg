@@ -11,6 +11,7 @@
    java.util.UUID)
   (:require
    [pg.bytes.array :as array]
+   [pg.error :as e]
    [pg.oid :as oid]))
 
 
@@ -21,11 +22,11 @@
 
 (defmethod -encode :default
   [value oid opt]
-  (throw (ex-info "Cannot binary encode a value"
-                  {:type ::error
-                   :value value
-                   :oid oid
-                   :opt opt})))
+  (e/with-context
+    {:value value
+     :oid oid
+     :opt opt}
+    (e/error! "Cannot binary encode a value")))
 
 
 ;;
@@ -262,9 +263,14 @@
    UUID      oid/UUID})
 
 
-(defn encode
+(defn get-oid [Type]
+  (or (get defaults Type)
+      (e/error! "Type %s has no a default OID" Type)))
+
+
+(defn ^bytes encode
   ([value]
-   (encode value (get defaults (type value))))
+   (encode value (get-oid (type value))))
 
   ([value oid]
    (encode value oid nil))
