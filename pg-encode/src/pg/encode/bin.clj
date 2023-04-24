@@ -1,6 +1,5 @@
 (ns pg.encode.bin
   (:import
-   clojure.lang.Keyword
    clojure.lang.Symbol
    java.time.Duration
    java.time.Instant
@@ -10,6 +9,7 @@
    java.util.Date
    java.util.UUID)
   (:require
+   [pg.const :as c]
    [pg.bytes.array :as array]
    [pg.error :as e]
    [pg.oid :as oid]))
@@ -29,23 +29,26 @@
     (e/error! "Cannot binary encode a value")))
 
 
+(defmacro -default [Type oid]
+  `(defmethod -encode [~Type nil]
+     [value# _# opt#]
+     (-encode value# ~oid opt#)))
+
+
 ;;
 ;; Symbol
 ;;
 
-
-(defmethod -encode [Symbol nil]
-  [^Symbol value oid opt]
-  (-encode value oid/TEXT opt))
+(-default Symbol oid/TEXT)
 
 
 (defmethod -encode [Symbol oid/TEXT]
-  [^Symbol value oid opt]
+  [value oid opt]
   (-encode (str value) oid opt))
 
 
 (defmethod -encode [Symbol oid/VARCHAR]
-  [^Symbol value oid opt]
+  [value oid opt]
   (-encode (str value) oid opt))
 
 
@@ -54,9 +57,7 @@
 ;;
 
 
-(defmethod -encode [String nil]
-  [value _ opt]
-  (-encode value oid/TEXT opt))
+(-default String oid/TEXT)
 
 
 (defmethod -encode [String oid/TEXT]
@@ -65,7 +66,7 @@
 
 
 (defmethod -encode [String oid/VARCHAR]
-  [^String value _ opt]
+  [value _ opt]
   (-encode value oid/TEXT opt))
 
 
@@ -73,13 +74,16 @@
 ;; Character
 ;;
 
+(-default Character oid/TEXT)
+
+
 (defmethod -encode [Character oid/TEXT]
-  [^Character value oid opt]
+  [value oid opt]
   (-encode (str val) oid opt))
 
 
 (defmethod -encode [Character oid/VARCHAR]
-  [^Character value oid opt]
+  [value oid opt]
   (-encode value oid/TEXT opt))
 
 
@@ -87,13 +91,16 @@
 ;; Long
 ;;
 
+(-default Long oid/INT8)
+
+
 (defmethod -encode [Long oid/INT8]
-  [^Long value _ _]
+  [value _ _]
   (array/arr64 value))
 
 
 (defmethod -encode [Long oid/INT4]
-  [^Long value oid opt]
+  [value oid opt]
   (-encode (int value) oid opt))
 
 
@@ -106,18 +113,21 @@
 ;; Integer
 ;;
 
+(-default Integer oid/INT8)
+
+
 (defmethod -encode [Integer oid/INT8]
-  [^Integer value oid opt]
+  [value oid opt]
   (-encode (long value) oid opt))
 
 
 (defmethod -encode [Integer oid/INT4]
-  [^Integer value oid opt]
+  [value oid opt]
   (array/arr32 value))
 
 
 (defmethod -encode [Integer oid/INT2]
-  [^Integer value oid opt]
+  [value oid opt]
   (-encode (short value) oid opt))
 
 
@@ -125,18 +135,21 @@
 ;; Short
 ;;
 
+(-default Short oid/INT2)
+
+
 (defmethod -encode [Short oid/INT8]
-  [^Short value oid opt]
+  [value oid opt]
   (-encode (long value) oid opt))
 
 
 (defmethod -encode [Short oid/INT4]
-  [^Short value oid opt]
+  [value oid opt]
   (-encode (int value) oid opt))
 
 
 (defmethod -encode [Short oid/INT2]
-  [^Short value oid opt]
+  [value oid opt]
   (array/arr16 value))
 
 
@@ -144,9 +157,7 @@
 ;; Bool
 ;;
 
-(defmethod -encode [Boolean nil]
-  [value _ opt]
-  (-encode value oid/BOOL opt))
+(-default Boolean oid/BOOL)
 
 
 (defmethod -encode [Boolean oid/BOOL]
@@ -163,9 +174,7 @@
 ;;
 
 
-(defmethod -encode [Float nil]
-  [value _ opt]
-  (-encode value oid/FLOAT4 opt))
+(-default Float oid/FLOAT4)
 
 
 (defmethod -encode [Float oid/FLOAT4]
@@ -183,9 +192,8 @@
 ;; Double
 ;;
 
-(defmethod -encode [Double oid/FLOAT4]
-  [^Double value oid opt]
-  (-encode (float value) oid opt))
+
+(-default Double oid/FLOAT8)
 
 
 (defmethod -encode [Double oid/FLOAT8]
@@ -194,14 +202,16 @@
       (array/arr64)))
 
 
+(defmethod -encode [Double oid/FLOAT4]
+  [^Double value oid opt]
+  (-encode (float value) oid opt))
+
+
 ;;
 ;; UUID
 ;;
 
-
-(defmethod -encode [UUID nil]
-  [value _ opt]
-  (-encode value oid/UUID opt))
+(-default UUID nil)
 
 
 (defmethod -encode [UUID oid/UUID]
@@ -223,11 +233,7 @@
 ;; Instant
 ;;
 
-(def ^Duration PG_EPOCH_DIFF
-  (Duration/between Instant/EPOCH
-                    (-> (LocalDate/of 2000 1 1)
-                        (.atStartOfDay)
-                        (.toInstant ZoneOffset/UTC))))
+(-default Instant oid/TIMESTAMP)
 
 
 (defmethod -encode [Instant oid/TIMESTAMP]
@@ -236,7 +242,7 @@
 
   (let [seconds
         (- (.getEpochSecond value)
-           (.toSeconds PG_EPOCH_DIFF))
+           (.toSeconds c/PG_EPOCH_DIFF))
 
         nanos
         (.getNano value)]
@@ -257,6 +263,9 @@
 ;; Date
 ;;
 
+(-default Date oid/DATE)
+
+
 (defmethod -encode [Date oid/DATE]
   [^Date value oid opt]
   (let [local-date
@@ -269,12 +278,15 @@
 ;; LocalDate
 ;;
 
+(-default LocalDate oid/DATE)
+
+
 (defmethod -encode [LocalDate oid/DATE]
   [^LocalDate value oid opt]
   (let []
     (array/arr32
      (- (.toEpochDay value)
-        (.toDays PG_EPOCH_DIFF)))))
+        (.toDays c/PG_EPOCH_DIFF)))))
 
 
 ;;
