@@ -11,3 +11,6 @@ pom.xml.asc
 /.prepl-port
 .hgignore
 .hg/
+
+pg-oid/target
+pg-encode/target
