@@ -17,4 +17,10 @@
              :plugins
              :repositories
              :url
-             [:profiles :dev]]})
+             [:profiles :dev]]}
+
+  :profiles
+  {:test
+   {:dependencies
+    [[com.github.seancorfield/next.jdbc]
+     [org.postgresql/postgresql]]}})

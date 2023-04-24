@@ -31,7 +31,9 @@
    [com.github.igrishaev/pg-encode :version]
    [com.github.igrishaev/pg-copy :version]
    [com.github.igrishaev/pg-joda-time :version]
-   [joda-time/joda-time "2.12.5"]]
+   [joda-time/joda-time "2.12.5"]
+   [com.github.seancorfield/next.jdbc "1.2.796"]
+   [org.postgresql/postgresql "42.2.18"]]
 
   :profiles
   {:dev
