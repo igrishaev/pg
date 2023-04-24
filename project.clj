@@ -18,10 +18,12 @@
 
   :sub
   ["pg-oid"
-   "pg-encode"]
+   "pg-encode"
+   "pg-copy"]
 
   :managed-dependencies
-  [[com.github.igrishaev/pg-oid "0.1.0-SNAPSHOT"]]
+  [[com.github.igrishaev/pg-oid "0.1.0-SNAPSHOT"]
+   [com.github.igrishaev/pg-encode "0.1.0-SNAPSHOT"]]
 
   :profiles
   {:dev

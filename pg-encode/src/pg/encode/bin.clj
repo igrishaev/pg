@@ -279,12 +279,12 @@
 ;; API
 ;;
 
-(defn ^bytes encode
-  ([value]
+(defn encode
+  (^bytes [value]
    (encode value (get-oid (type value))))
 
-  ([value oid]
+  (^bytes [value oid]
    (encode value oid nil))
 
-  ([value oid opt]
+  (^bytes [value oid opt]
    (-encode value oid opt)))
