@@ -6,7 +6,8 @@
   (:require
    [clojure.java.io :as io]
    [pg.bytes.array :as array]
-   [pg.encode.bin :as bin]))
+   [pg.encode.bin :as bin]
+   [pg.error :as e]))
 
 
 ;;
@@ -29,26 +30,45 @@
   (array/arr16 -1))
 
 
+(defn coerce-oids [oids]
+  (cond
+
+    (map? oids)
+    oids
+
+    (sequential? oids)
+    (into {} (map-indexed vector oids))
+
+    :else
+    (e/error! "Wrong oids: %s" oids)))
+
+
 ;;
 ;; API
 ;;
 
 ;; TODO: oids
 
-(defn table->out [table ^OutputStream out]
-  (.write out HEADER)
-  (.write out zero32)
-  (.write out zero32)
-  (doseq [row table]
-    (.write out (array/arr16 (count row)))
-    (doseq [item row]
-      (if (nil? item)
-        (.write out -one32)
-        (let [buf (bin/encode item)]
-          (.write out (array/arr32 (alength buf)))
-          (.write out buf)))))
-  (.write out -one16)
-  (.close out))
+(defn table->out
+
+  ([table out]
+   (table->out table out nil))
+
+  ([table ^OutputStream out opt]
+
+   (.write out HEADER)
+   (.write out zero32)
+   (.write out zero32)
+   (doseq [row table]
+     (.write out (array/arr16 (count row)))
+     (doseq [item row]
+       (if (nil? item)
+         (.write out -one32)
+         (let [buf (bin/encode item)]
+           (.write out (array/arr32 (alength buf)))
+           (.write out buf)))))
+   (.write out -one16)
+   (.close out)))
 
 
 (defn table->bytes ^bytes [table]
