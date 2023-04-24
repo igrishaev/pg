@@ -30,6 +30,10 @@
   (array/arr16 -1))
 
 
+;;
+;; Misc
+;;
+
 (defn coerce-oids [oids]
   (cond
 
@@ -43,51 +47,69 @@
     (e/error! "Wrong oids: %s" oids)))
 
 
+(defn enumerate [coll]
+  (map-indexed vector coll))
+
+
 ;;
 ;; API
 ;;
-
-;; TODO: oids
 
 (defn table->out
 
   ([table out]
    (table->out table out nil))
 
-  ([table ^OutputStream out opt]
+  ([table ^OutputStream out {:as opt :keys [oids]}]
 
-   (.write out HEADER)
-   (.write out zero32)
-   (.write out zero32)
-   (doseq [row table]
-     (.write out (array/arr16 (count row)))
-     (doseq [item row]
-       (if (nil? item)
-         (.write out -one32)
-         (let [buf (bin/encode item)]
-           (.write out (array/arr32 (alength buf)))
-           (.write out buf)))))
-   (.write out -one16)
-   (.close out)))
-
-
-(defn table->bytes ^bytes [table]
-  (with-open [out (new ByteArrayOutputStream)]
-    (table->out table out)
-    (.toByteArray out)))
+   (let [oids (some-> oids coerce-oids)]
+     (.write out HEADER)
+     (.write out zero32)
+     (.write out zero32)
+     (doseq [row table]
+       (.write out (array/arr16 (count row)))
+       (doseq [[i item] (enumerate row)]
+         (if (nil? item)
+           (.write out -one32)
+           (let [oid (get oids i)
+                 buf (bin/encode item oid opt)]
+             (.write out (array/arr32 (alength buf)))
+             (.write out buf)))))
+     (.write out -one16)
+     (.close out))))
 
 
-(defn table->file [table ^String path]
-  (with-open [out (-> path
-                      io/file
-                      io/output-stream)]
-    (table->out table out)))
+(defn table->bytes
+
+  (^bytes [table]
+   (table->bytes table nil))
+
+  (^bytes [table opt]
+   (with-open [out (new ByteArrayOutputStream)]
+     (table->out table out opt)
+     (.toByteArray out))))
 
 
-(defn table->input-stream ^InputStream [table]
-  (-> table
-      table->bytes
-      io/input-stream))
+(defn table->file
+
+  ([table ^String path]
+   (table->file table path nil))
+
+  ([table ^String path opt]
+   (with-open [out (-> path
+                       io/file
+                       io/output-stream)]
+     (table->out table out opt))))
+
+
+(defn table->input-stream
+  (^InputStream [table]
+   (table->input-stream table nil))
+
+  (^InputStream [table opt]
+   (-> table
+       (table->bytes opt)
+       io/input-stream)))
 
 
 (defn maps->table [maps row-keys]

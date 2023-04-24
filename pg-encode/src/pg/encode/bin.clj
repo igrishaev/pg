@@ -33,6 +33,12 @@
 ;; Symbol
 ;;
 
+
+(defmethod -encode [Symbol nil]
+  [^Symbol value oid opt]
+  (-encode value oid/TEXT opt))
+
+
 (defmethod -encode [Symbol oid/TEXT]
   [^Symbol value oid opt]
   (-encode (str value) oid opt))
@@ -47,13 +53,19 @@
 ;; String
 ;;
 
+
+(defmethod -encode [String nil]
+  [value _ opt]
+  (-encode value oid/TEXT opt))
+
+
 (defmethod -encode [String oid/TEXT]
   [^String value _ _]
   (.getBytes value "UTF-8"))
 
 
 (defmethod -encode [String oid/VARCHAR]
-  [^String value oid opt]
+  [^String value _ opt]
   (-encode value oid/TEXT opt))
 
 
@@ -132,6 +144,11 @@
 ;; Bool
 ;;
 
+(defmethod -encode [Boolean nil]
+  [value _ opt]
+  (-encode value oid/BOOL opt))
+
+
 (defmethod -encode [Boolean oid/BOOL]
   [^Boolean value _ _]
   (let [b
@@ -144,6 +161,12 @@
 ;;
 ;; Float
 ;;
+
+
+(defmethod -encode [Float nil]
+  [value _ opt]
+  (-encode value oid/FLOAT4 opt))
+
 
 (defmethod -encode [Float oid/FLOAT4]
   [^Float value oid opt]
@@ -249,39 +272,12 @@
 
 
 ;;
-;; Defaults mapping
-;;
-
-(def ^:private defaults
-  (atom
-   {String    oid/TEXT
-    Instant   oid/TIMESTAMP
-    Date      oid/TIMESTAMP
-    LocalDate oid/DATE
-    Symbol    oid/TEXT
-    Long      oid/INT8
-    Float     oid/FLOAT4
-    Double    oid/FLOAT8
-    UUID      oid/UUID}))
-
-
-(defn set-default [Type oid]
-  (swap! defaults assoc Type oid)
-  nil)
-
-
-(defn get-oid [Type]
-  (or (get @defaults Type)
-      (e/error! "Type %s has no a default OID" Type)))
-
-
-;;
 ;; API
 ;;
 
 (defn encode
   (^bytes [value]
-   (encode value (get-oid (type value))))
+   (encode value nil nil))
 
   (^bytes [value oid]
    (encode value oid nil))
