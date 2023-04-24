@@ -12,9 +12,9 @@ pom.xml.asc
 .hgignore
 .hg/
 
-pg-oid/target
+pg-common/target
 pg-encode/target
-pg-copy/target/
-pg-joda-time/target/
+pg-copy/target
+pg-joda-time/target
 
 .docker
