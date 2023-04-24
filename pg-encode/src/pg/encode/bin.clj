@@ -1,5 +1,10 @@
 (ns pg.encode.bin
   (:import
+   java.time.Duration
+   java.time.LocalDate
+   java.time.Instant
+   java.time.ZoneOffset
+   java.util.Date
    clojure.lang.Symbol
    clojure.lang.Keyword
    java.util.UUID)
@@ -183,13 +188,48 @@
          (into (array/arr64 least-bits))))))
 
 
+;;
+;; Instant
+;;
+
+
+(def ^Duration PG_EPOCH_DIFF
+  (Duration/between Instant/EPOCH
+                    (-> (LocalDate/of 2000 1 1)
+                        (.atStartOfDay)
+                        (.toInstant ZoneOffset/UTC))))
+
+
+(defmethod -encode [Instant oid/TIMESTAMP]
+
+  [^Instant value _ _]
+
+  (let [seconds
+        (- (.getEpochSecond value)
+           (.toSeconds PG_EPOCH_DIFF))
+
+        nanos
+        (.getNano value)]
+
+    (array/arr64
+     (+ (* seconds 1000 1000) nanos))))
+
+
+(defmethod -encode [Date oid/TIMESTAMP]
+  [^Date value oid opt]
+  (-encode (.toInstant value) oid opt))
+
+
+
 (def defaults
-  {String oid/TEXT
-   Symbol oid/TEXT
-   Long   oid/INT8
-   Float  oid/FLOAT4
-   Double oid/FLOAT8
-   UUID   oid/UUID})
+  {String  oid/TEXT
+   Instant oid/TIMESTAMP
+   Date    oid/TIMESTAMP
+   Symbol  oid/TEXT
+   Long    oid/INT8
+   Float   oid/FLOAT4
+   Double  oid/FLOAT8
+   UUID    oid/UUID})
 
 
 (defn encode
