@@ -247,26 +247,37 @@
      (- (.toEpochDay value)
         (.toDays PG_EPOCH_DIFF)))))
 
+
 ;;
-;; API
+;; Defaults mapping
 ;;
 
-(def defaults
-  {String    oid/TEXT
-   Instant   oid/TIMESTAMP
-   Date      oid/TIMESTAMP
-   LocalDate oid/DATE
-   Symbol    oid/TEXT
-   Long      oid/INT8
-   Float     oid/FLOAT4
-   Double    oid/FLOAT8
-   UUID      oid/UUID})
+(def ^:private defaults
+  (atom
+   {String    oid/TEXT
+    Instant   oid/TIMESTAMP
+    Date      oid/TIMESTAMP
+    LocalDate oid/DATE
+    Symbol    oid/TEXT
+    Long      oid/INT8
+    Float     oid/FLOAT4
+    Double    oid/FLOAT8
+    UUID      oid/UUID}))
+
+
+(defn set-default [Type oid]
+  (swap! defaults assoc Type oid)
+  nil)
 
 
 (defn get-oid [Type]
-  (or (get defaults Type)
+  (or (get @defaults Type)
       (e/error! "Type %s has no a default OID" Type)))
 
+
+;;
+;; API
+;;
 
 (defn ^bytes encode
   ([value]
