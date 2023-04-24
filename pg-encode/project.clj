@@ -7,7 +7,7 @@
   [[lein-parent "0.3.8"]]
 
   :dependencies
-  [[com.github.igrishaev/pg-oid]]
+  [[com.github.igrishaev/pg-common]]
 
   :parent-project
   {:path "../project.clj"

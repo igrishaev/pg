@@ -21,14 +21,16 @@
    [com.github.igrishaev/pg-joda-time :version]]
 
   :sub
-  ["pg-oid"
+  ["pg-common"
    "pg-encode"
    "pg-copy"
    "pg-joda-time"]
 
   :managed-dependencies
-  [[com.github.igrishaev/pg-oid :version]
+  [[com.github.igrishaev/pg-common :version]
    [com.github.igrishaev/pg-encode :version]
+   [com.github.igrishaev/pg-copy :version]
+   [com.github.igrishaev/pg-joda-time :version]
    [joda-time/joda-time "2.12.5"]]
 
   :profiles

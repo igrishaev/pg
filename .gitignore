@@ -16,3 +16,5 @@ pg-oid/target
 pg-encode/target
 pg-copy/target/
 pg-joda-time/target/
+
+.docker

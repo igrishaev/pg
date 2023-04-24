@@ -1,0 +1,18 @@
+version: "3.6"
+
+services:
+
+  postgres:
+    image: postgres:14
+    command: -E
+    restart: always
+    hostname: postgres
+    ports:
+      - "35432:5432"
+    volumes:
+      - ./.docker/postgres/data:/var/lib/postgresql/data
+      - ./.docker/postgres/initdb.d:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_DB=test
+      - POSTGRES_PASSWORD=test
+      - POSTGRES_USER=test

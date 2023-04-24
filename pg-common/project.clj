@@ -1,7 +1,7 @@
-(defproject com.github.igrishaev/pg-oid "0.1.0-SNAPSHOT"
+(defproject com.github.igrishaev/pg-common "0.1.0-SNAPSHOT"
 
   :description
-  "PG OID registry"
+  "Common PG modules"
 
   :plugins
   [[lein-parent "0.3.8"]]
