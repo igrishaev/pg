@@ -1,5 +1,7 @@
 (ns pg.copy-test
   (:import
+   java.util.Date
+   java.time.Instant
    org.postgresql.copy.CopyManager)
   (:require
    [next.jdbc :as jdbc]
@@ -116,17 +118,71 @@
 
 
 (deftest test-copy-float-to-double
-  (test-script "x double precision"
+  (test-script "x float"
                [[(float 1.0)]
                 [(float 2.0)]
                 [(float 3.0)]]
                [{:x 1.0} {:x 2.0} {:x 3.0}]
                {:oids [oid/FLOAT8]}))
 
-#_
-(deftest test-double-float4
+
+(deftest test-copy-double-float4
+  (test-script "x real"
+               [[1.0]
+                [2.0]
+                [3.0]]
+               [{:x 1.0} {:x 2.0} {:x 3.0}]
+               {:oids [oid/FLOAT4]}))
+
+
+(deftest test-copy-double-float8
   (test-script "x float"
                [[1.1]
                 [2.2]
                 [3.3]]
-               1))
+               [{:x 1.1} {:x 2.2} {:x 3.3}]))
+
+
+(deftest test-copy-bool
+  (test-script "x boolean"
+               [[true]
+                [false]
+                [nil]]
+               [{:x true} {:x false} {:x nil}]))
+
+
+(deftest test-copy-uuid
+  (test-script "x UUID"
+               [[#uuid "415ca101-9d02-417d-91f8-36df31e9cb04"]
+                [nil]]
+               [{:x #uuid "415ca101-9d02-417d-91f8-36df31e9cb04"}
+                {:x nil}]))
+
+
+(deftest test-copy-uuid-from-string
+  (test-script "x UUID"
+               [["415ca101-9d02-417d-91f8-36df31e9cb04"]]
+               [{:x #uuid "415ca101-9d02-417d-91f8-36df31e9cb04"}]
+               {:oids [oid/UUID]}))
+
+
+(deftest test-copy-uuid-to-string
+  (test-script "x text"
+               [[#uuid "415ca101-9d02-417d-91f8-36df31e9cb04"]]
+               [{:x "415ca101-9d02-417d-91f8-36df31e9cb04"}]
+               {:oids [oid/TEXT]}))
+
+
+(deftest test-copy-date-to-timestamp
+  (let [d (new Date (- 2000 1900) 0 1 23 59 59)]
+    (test-script "x timestamp"
+                 [[d]]
+                 [{:x d}])))
+
+
+(deftest test-copy-date-to-date
+  (let [d (new Date (- 2000 1900) 1 1 0 0 0)]
+    (test-script "x date"
+                 [[d]]
+                 [{:x d}]
+                 {:oids [oid/DATE]})))

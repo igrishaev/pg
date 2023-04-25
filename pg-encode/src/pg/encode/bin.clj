@@ -208,7 +208,7 @@
 ;; UUID
 ;;
 
-(-default UUID nil)
+(-default UUID oid/UUID)
 
 
 (defmethod -encode [UUID oid/UUID]
@@ -224,6 +224,16 @@
      (-> []
          (into (array/arr64 most-bits))
          (into (array/arr64 least-bits))))))
+
+
+(defmethod -encode [String oid/UUID]
+  [value oid opt]
+  (-encode (UUID/fromString value) oid opt))
+
+
+(defmethod -encode [UUID oid/TEXT]
+  [value oid opt]
+  (-encode (str value) oid opt))
 
 
 ;;
@@ -260,7 +270,7 @@
 ;; Date
 ;;
 
-(-default Date oid/DATE)
+(-default Date oid/TIMESTAMP)
 
 
 (defmethod -encode [Date oid/DATE]
@@ -269,6 +279,22 @@
         (LocalDate/ofInstant (.toInstant value)
                              (ZoneId/systemDefault))]
     (-encode local-date oid opt)))
+
+
+(defmethod -encode [Date oid/TIMESTAMP]
+  [^Date value oid opt]
+  (let [millis
+        (- (.getTime value)
+           (.toMillis c/PG_EPOCH_DIFF))
+
+        offset-minutes
+        (.getTimezoneOffset value)
+
+        nanos
+        (- (* millis 1000)
+           (* offset-minutes 60 1000 1000))]
+
+    (array/arr64 nanos)))
 
 
 ;;
