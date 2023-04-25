@@ -12,9 +12,6 @@ pom.xml.asc
 .hgignore
 .hg/
 
-pg-common/target
-pg-encode/target
-pg-copy/target
-pg-joda-time/target
-
 .docker
+out.bin
+target

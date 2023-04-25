@@ -55,10 +55,10 @@
 ;; API
 ;;
 
-(defn table->out
+(defn table->output-stream
 
   ([table out]
-   (table->out table out nil))
+   (table->output-stream table out nil))
 
   ([table ^OutputStream out {:as opt :keys [oids]}]
 
@@ -86,7 +86,7 @@
 
   (^bytes [table opt]
    (with-open [out (new ByteArrayOutputStream)]
-     (table->out table out opt)
+     (table->output-stream table out opt)
      (.toByteArray out))))
 
 
@@ -99,7 +99,7 @@
    (with-open [out (-> path
                        io/file
                        io/output-stream)]
-     (table->out table out opt))))
+     (table->output-stream table out opt))))
 
 
 (defn table->input-stream

@@ -113,7 +113,7 @@
 ;; Integer
 ;;
 
-(-default Integer oid/INT8)
+(-default Integer oid/INT4)
 
 
 (defmethod -encode [Integer oid/INT8]
