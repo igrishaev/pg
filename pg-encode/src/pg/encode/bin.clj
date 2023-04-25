@@ -79,7 +79,7 @@
 
 (defmethod -encode [Character oid/TEXT]
   [value oid opt]
-  (-encode (str val) oid opt))
+  (-encode (str value) oid opt))
 
 
 (defmethod -encode [Character oid/VARCHAR]
@@ -161,30 +161,27 @@
 
 
 (defmethod -encode [Boolean oid/BOOL]
-  [^Boolean value _ _]
-  (let [b
-        (case value
-          true 1
-          false 0)]
-    (byte-array [b])))
+  [value _ _]
+  (case value
+    true (byte-array [(byte 1)])
+    false (byte-array [(byte 0)])))
 
 
 ;;
 ;; Float
 ;;
 
-
 (-default Float oid/FLOAT4)
 
 
 (defmethod -encode [Float oid/FLOAT4]
-  [^Float value oid opt]
+  [value oid opt]
   (-> (Float/floatToIntBits value)
       (array/arr32)))
 
 
 (defmethod -encode [Float oid/FLOAT8]
-  [^Float value oid opt]
+  [value oid opt]
   (-encode (double value) oid opt))
 
 
@@ -197,13 +194,13 @@
 
 
 (defmethod -encode [Double oid/FLOAT8]
-  [^Double value oid opt]
-  (-> (Double/longBitsToDouble value)
+  [value oid opt]
+  (-> (Double/doubleToLongBits value)
       (array/arr64)))
 
 
 (defmethod -encode [Double oid/FLOAT4]
-  [^Double value oid opt]
+  [value oid opt]
   (-encode (float value) oid opt))
 
 
@@ -302,3 +299,6 @@
 
   (^bytes [value oid opt]
    (-encode value oid opt)))
+
+;; clojure.lang.BigInt
+;; BigInteger
