@@ -43,7 +43,7 @@
         (copy/table->input-stream payload opt)]
 
     ;; for debug
-    (copy/table->file payload "out.bin" opt)
+    ;; (copy/table->file payload "out.bin" opt)
 
     (jdbc/execute! conn [sql-table])
     (.copyIn copy-mgr sql-copy input)
@@ -190,9 +190,7 @@
 
 
 (deftest test-copy-instant-to-timestamp
-  (let [i (Instant/ofEpochSecond 1682443251 123456000)]
+  (let [i (Instant/ofEpochSecond 1682443251 123456789)]
     (test-script "x timestamp"
                  [[i]]
-                 [{:x 1}]
-
-)))
+                 [{:x i}])))

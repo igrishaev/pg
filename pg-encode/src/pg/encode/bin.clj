@@ -254,7 +254,8 @@
         (.getNano value)]
 
     (array/arr64
-     (+ (* seconds 1000 1000) (quot nanos 1000)))))
+     (+ (* seconds 1000 1000)
+        (quot nanos 1000)))))
 
 
 (defmethod -encode [Instant oid/DATE]
