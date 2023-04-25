@@ -244,7 +244,6 @@
 
 
 (defmethod -encode [Instant oid/TIMESTAMP]
-
   [^Instant value _ _]
 
   (let [seconds
@@ -255,7 +254,7 @@
         (.getNano value)]
 
     (array/arr64
-     (+ (* seconds 1000 1000) nanos))))
+     (+ (* seconds 1000 1000) (quot nanos 1000)))))
 
 
 (defmethod -encode [Instant oid/DATE]

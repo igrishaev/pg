@@ -1,5 +1,6 @@
 (ns pg.copy-test
   (:import
+   java.sql.Timestamp
    java.util.Date
    java.time.Instant
    org.postgresql.copy.CopyManager)
@@ -186,3 +187,12 @@
                  [[d]]
                  [{:x d}]
                  {:oids [oid/DATE]})))
+
+
+(deftest test-copy-instant-to-timestamp
+  (let [i (Instant/ofEpochSecond 1682443251 123456000)]
+    (test-script "x timestamp"
+                 [[i]]
+                 [{:x 1}]
+
+)))
