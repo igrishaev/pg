@@ -199,7 +199,9 @@
 
 
 (deftest test-copy-instant-to-timestamp
-  (let [i (Instant/ofEpochSecond 0 #_1546938000 0 #_123456789)]
+  (let [secs -1
+        nans 123456789
+        inst (Instant/ofEpochSecond secs nans)]
     (test-script "x timestamp"
-                 [[i]]
-                 [{:x i}])))
+                 [[inst]]
+                 [{:x #inst "1969-12-31T23:59:59.123456000-00:00"}])))

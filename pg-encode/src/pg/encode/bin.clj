@@ -1,6 +1,7 @@
 (ns pg.encode.bin
   (:import
    clojure.lang.Symbol
+   java.util.TimeZone
    java.time.Duration
    java.time.Instant
    java.time.LocalDate
@@ -243,6 +244,22 @@
 (-default Instant oid/TIMESTAMP)
 
 
+#_
+(defmethod -encode [Date oid/TIMESTAMP]
+  [^Date value oid opt]
+  (let [millis
+        (- (.getTime value)
+           (.toMillis c/PG_EPOCH_DIFF))
+
+        offset-minutes
+        (.getTimezoneOffset value)
+
+        nanos
+        (- (* millis 1000)
+           (* offset-minutes 60 1000 1000))]
+
+    (array/arr64 nanos)))
+
 (defmethod -encode [Instant oid/TIMESTAMP]
   [^Instant value _ _]
 
@@ -250,12 +267,16 @@
         (- (.getEpochSecond value)
            (.toSeconds c/PG_EPOCH_DIFF))
 
+        offset-millis
+        (.getRawOffset (TimeZone/getDefault))
+
         nanos
         (.getNano value)]
 
     (array/arr64
-     (+ (* seconds 1000 1000)
-        (quot nanos 1000)))))
+     (-> (* seconds 1000 1000)
+         (+ (quot nanos 1000))
+         (+ (* offset-millis 1000))))))
 
 
 (defmethod -encode [Instant oid/DATE]
