@@ -244,22 +244,6 @@
 (-default Instant oid/TIMESTAMP)
 
 
-#_
-(defmethod -encode [Date oid/TIMESTAMP]
-  [^Date value oid opt]
-  (let [millis
-        (- (.getTime value)
-           (.toMillis c/PG_EPOCH_DIFF))
-
-        offset-minutes
-        (.getTimezoneOffset value)
-
-        nanos
-        (- (* millis 1000)
-           (* offset-minutes 60 1000 1000))]
-
-    (array/arr64 nanos)))
-
 (defmethod -encode [Instant oid/TIMESTAMP]
   [^Instant value _ _]
 
