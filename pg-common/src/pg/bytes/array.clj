@@ -3,20 +3,16 @@
    java.nio.ByteBuffer))
 
 
-;; TODO: bb
-
-(defn arr16 ^bytes [value]
-  (byte-array
-   [(-> value (bit-and 0xff00) (bit-shift-right 8))
-    (-> value (bit-and 0x00ff))]))
+(defn arr16 ^bytes [^Short value]
+  (-> (ByteBuffer/allocate 2)
+      (.putShort value)
+      (.array)))
 
 
-(defn arr32 ^bytes [value]
-  (byte-array
-   [(-> value (bit-and 0xff000000) (bit-shift-right 24))
-    (-> value (bit-and 0x00ff0000) (bit-shift-right 16))
-    (-> value (bit-and 0x0000ff00) (bit-shift-right  8))
-    (-> value (bit-and 0x000000ff))]))
+(defn arr32 ^bytes [^Integer value]
+  (-> (ByteBuffer/allocate 4)
+      (.putInt value)
+      (.array)))
 
 
 (defn arr64 ^bytes [^Long value]

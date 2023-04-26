@@ -176,8 +176,15 @@
                {:oids [oid/TEXT]}))
 
 
-(deftest test-copy-date-to-timestamp
-  (let [d (new Date (- 1900 1900) 0 1 23 59 59)]
+(deftest test-copy-date-to-timestamp-after-epoch
+  (let [d (new Date (- 2000 1900) 0 1 23 59 59)]
+    (test-script "x timestamp without time zone"
+                 [[d]]
+                 [{:x d}])))
+
+
+(deftest test-copy-date-to-timestamp-before-epoch
+  (let [d (new Date (- 1935 1900) 0 1 23 59 59)]
     (test-script "x timestamp without time zone"
                  [[d]]
                  [{:x d}])))
@@ -195,4 +202,4 @@
   (let [i (Instant/ofEpochSecond 0 #_1546938000 0 #_123456789)]
     (test-script "x timestamp"
                  [[i]]
-                 [{:x 1}])))
+                 [{:x i}])))
