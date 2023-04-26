@@ -1,5 +1,9 @@
-(ns pg.bytes.array)
+(ns pg.bytes.array
+  (:import
+   java.nio.ByteBuffer))
 
+
+;; TODO: bb
 
 (defn arr16 ^bytes [value]
   (byte-array
@@ -15,17 +19,7 @@
     (-> value (bit-and 0x000000ff))]))
 
 
-(defn arr64 ^bytes [value]
-  (let [buf
-        (-> value
-            (BigInteger/valueOf)
-            (.toByteArray))
-
-        pad
-        (- 8 (alength buf))]
-
-    (if (pos? pad)
-      (byte-array (-> []
-                      (into (repeat pad 0))
-                      (into buf)))
-      buf)))
+(defn arr64 ^bytes [^Long value]
+  (-> (ByteBuffer/allocate 8)
+      (.putLong value)
+      (.array)))
