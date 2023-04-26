@@ -222,4 +222,4 @@
   (let [dt (new DateTime 1969 3 15 23 59 59 123)]
     (test-script "x timestamp"
                  [[dt]]
-                 [{:x 1}])))
+                 [1])))

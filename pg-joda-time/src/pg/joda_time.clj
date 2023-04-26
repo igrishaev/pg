@@ -1,5 +1,6 @@
 (ns pg.joda-time
   (:import
+   java.util.TimeZone
    org.joda.time.Days
    org.joda.time.DateTime
    org.joda.time.LocalDate
@@ -56,11 +57,14 @@
         (- (.getMillis value)
            (.toMillis c/PG_EPOCH_DIFF))
 
-        sec-millis
-        (.getMillisOfSecond value)]
+        offset-millis
+        (.getRawOffset (TimeZone/getDefault))]
 
     (array/arr64
      (-> (* millis 1000)
+         (- (* offset-millis 1000))
+
+         #_
          (+ sec-millis)
 
          )
