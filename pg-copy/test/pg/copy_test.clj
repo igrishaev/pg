@@ -177,14 +177,14 @@
 
 
 (deftest test-copy-date-to-timestamp
-  (let [d (new Date (- 2000 1900) 0 1 23 59 59)]
-    (test-script "x timestamp"
+  (let [d (new Date (- 1900 1900) 0 1 23 59 59)]
+    (test-script "x timestamp without time zone"
                  [[d]]
                  [{:x d}])))
 
 
 (deftest test-copy-date-to-date
-  (let [d (new Date (- 2000 1900) 1 1 0 0 0)]
+  (let [d (new Date (- 1969 1900) 1 1 0 0 0)]
     (test-script "x date"
                  [[d]]
                  [{:x d}]
@@ -192,7 +192,7 @@
 
 
 (deftest test-copy-instant-to-timestamp
-  (let [i (Instant/ofEpochSecond 0 #_1546938000 123456789)]
+  (let [i (Instant/ofEpochSecond 0 #_1546938000 0 #_123456789)]
     (test-script "x timestamp"
                  [[i]]
-                 [{:x i}])))
+                 [{:x 1}])))
