@@ -45,6 +45,8 @@
     ;; for debug
     ;; (copy/table->file payload "out.bin" opt)
 
+    ;; (is (= 1 (jdbc/execute! conn ["select '1970-01-01'::timestamp"])))
+
     (jdbc/execute! conn [sql-table])
     (.copyIn copy-mgr sql-copy input)
 
@@ -190,7 +192,7 @@
 
 
 (deftest test-copy-instant-to-timestamp
-  (let [i (Instant/ofEpochSecond 1682443251 123456789)]
+  (let [i (Instant/ofEpochSecond 0 #_1546938000 123456789)]
     (test-script "x timestamp"
                  [[i]]
                  [{:x i}])))
