@@ -1,10 +1,12 @@
 (ns pg.copy-test
   (:import
+   org.joda.time.LocalDate
    java.sql.Timestamp
    java.util.Date
    java.time.Instant
    org.postgresql.copy.CopyManager)
   (:require
+   pg.joda-time
    [next.jdbc :as jdbc]
    [next.jdbc.result-set :as rs]
    [pg.oid :as oid]
@@ -205,3 +207,17 @@
     (test-script "x timestamp"
                  [[inst]]
                  [{:x #inst "1969-12-31T23:59:59.123456000-00:00"}])))
+
+
+(deftest test-copy-yoda-ld-to-date
+
+  (let [ld (new LocalDate 2021 3 15)]
+    (test-script "x date"
+                 [[ld]]
+                 [1])
+
+   )
+
+
+
+  )

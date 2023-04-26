@@ -23,4 +23,5 @@
   {:test
    {:dependencies
     [[com.github.seancorfield/next.jdbc]
-     [org.postgresql/postgresql]]}})
+     [org.postgresql/postgresql]
+     [com.github.igrishaev/pg-joda-time]]}})
