@@ -1,5 +1,6 @@
 (ns pg.copy-test
   (:import
+   org.joda.time.DateTime
    org.joda.time.LocalDate
    java.sql.Timestamp
    java.util.Date
@@ -193,7 +194,7 @@
 
 
 (deftest test-copy-date-to-date
-  (let [d (new Date (- 1969 1900) 1 1 0 0 0)]
+  (let [d (new Date (- 1969 1900) 0 1 0 0 0)]
     (test-script "x date"
                  [[d]]
                  [{:x d}]
@@ -210,14 +211,15 @@
 
 
 (deftest test-copy-yoda-ld-to-date
-
-  (let [ld (new LocalDate 2021 3 15)]
+  (let [ld (new LocalDate 1969 1 1)
+        date (new Date (- 1969 1900) 0 1)]
     (test-script "x date"
                  [[ld]]
-                 [1])
-
-   )
+                 [{:x date}])))
 
 
-
-  )
+(deftest test-copy-yoda-ts-to-timestamp
+  (let [dt (new DateTime 1969 3 15 23 59 59 123)]
+    (test-script "x timestamp"
+                 [[dt]]
+                 [{:x 1}])))

@@ -53,11 +53,17 @@
 (defmethod -encode [DateTime oid/TIMESTAMP]
   [^DateTime value _ _]
   (let [millis
-        (.getMillis value)
+        (- (.getMillis value)
+           (.toMillis c/PG_EPOCH_DIFF))
 
         sec-millis
         (.getMillisOfSecond value)]
 
     (array/arr64
+     (-> (* millis 1000)
+         (+ sec-millis)
+
+         )
+     #_
      (+ (- millis (.toMillis c/PG_EPOCH_DIFF))
         (* sec-millis 1000)))))

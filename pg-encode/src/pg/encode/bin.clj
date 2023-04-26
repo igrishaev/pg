@@ -310,11 +310,10 @@
 
 
 (defmethod -encode [LocalDate oid/DATE]
-  [^LocalDate value oid opt]
-  (let []
-    (array/arr32
-     (- (.toEpochDay value)
-        (.toDays c/PG_EPOCH_DIFF)))))
+  [^LocalDate value _ _]
+  (array/arr32
+   (- (.toEpochDay value)
+      (.toDays c/PG_EPOCH_DIFF))))
 
 
 ;;
