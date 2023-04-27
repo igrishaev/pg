@@ -1,4 +1,7 @@
-(ns pg.oid)
+;; Mostly machine-generated, see `fetch_oids.clj`
+(ns pg.oid
+  (:refer-clojure :exclude [char name time]))
+
 
 (def ^int bool                             16)
 (def ^int _bool                          1000)
@@ -393,3 +396,9 @@
 
 (defn name->oid ^Integer [^String oid-name]
   (get -name->oid oid-name))
+
+
+(defn ->oid [x]
+  (cond
+    (int? x) x
+    (string? x) (name->oid x)))

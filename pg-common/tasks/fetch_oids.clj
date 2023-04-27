@@ -54,8 +54,6 @@
          {}
          content)]
 
-    (println "(ns pg.oid)")
-    (println)
     (println)
 
     (doseq [{:syms [oid

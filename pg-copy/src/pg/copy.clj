@@ -7,7 +7,7 @@
    [clojure.java.io :as io]
    [pg.bytes.array :as array]
    [pg.encode.bin :as bin]
-   [pg.error :as e]))
+   [pg.oid :as oid]))
 
 
 ;;
@@ -34,17 +34,18 @@
 ;; Misc
 ;;
 
-(defn coerce-oids [oids]
+(defn- coerce-oids [oids]
   (cond
 
     (map? oids)
-    oids
+    (reduce-kv
+     (fn [acc k v]
+       (assoc acc k (oid/->oid v)))
+     {}
+     oids)
 
     (sequential? oids)
-    (into {} (map-indexed vector oids))
-
-    :else
-    (e/error! "Wrong oids: %s" oids)))
+    (into {} (map-indexed vector (map oid/->oid oids)))))
 
 
 (defn enumerate [coll]

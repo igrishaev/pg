@@ -223,3 +223,19 @@
     (test-script "x timestamp"
                  [[dt]]
                  [{:x inst}])))
+
+
+(def coerce-oids
+  @#'copy/coerce-oids)
+
+
+(deftest test-coerce-oids
+
+  (is (= {0 25 1 16}
+         (coerce-oids [oid/text oid/bool])))
+
+  (is (= {0 16 1 23}
+         (coerce-oids [oid/bool "int4"])))
+
+  (is (= {5 1114}
+         (coerce-oids {5 oid/timestamp}))))
