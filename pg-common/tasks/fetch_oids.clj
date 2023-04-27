@@ -4,9 +4,7 @@
   (:require
    [clojure.edn :as edn]
    [clojure.string :as str]
-   [clojure.java.io :as io])
-
-  )
+   [clojure.java.io :as io]))
 
 
 (def URL_RAW
@@ -35,9 +33,52 @@
             (str/replace #"#.*" "")
             (str/replace #"'" "\"")
             (str/replace #"=>" "")
-            (edn/read-string))]
+            (edn/read-string))
 
-    content
+        content
+        (map (fn [info]
+               (-> info
+                   (update 'typname name)
+                   (update 'oid parse-long)
+                   (update 'array_type_oid (fnil parse-long ""))))
+             content)
 
-    )
-  )
+        name->oid
+        (reduce
+         (fn [acc {:syms [typname oid array_type_oid]}]
+           (cond-> acc
+             oid
+             (assoc typname oid)
+             array_type_oid
+             (assoc (format "_%s" typname) array_type_oid)))
+         {}
+         content)]
+
+    (println "(ns pg.oid)")
+    (println)
+    (println)
+
+    (doseq [{:syms [oid
+                    typname
+                    descr
+                    array_type_oid]} content]
+
+      (println (format "(defn ^int %-30s %4d)" typname oid))
+
+      (when array_type_oid
+        (println (format "(defn ^int _%-29s %4d)" typname array_type_oid))))
+
+    (println)
+
+    (printf "
+(def ^:private -name->oid
+  %s) "
+            (with-out-str
+              (clojure.pprint/pprint name->oid)))
+
+    (println)
+
+    (println "
+(defn name->oid ^int [^String oid-name]
+  (get -name->oid oid-name))
+")))

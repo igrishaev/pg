@@ -1,4 +1,12 @@
 
+all: sub-install sub-test
+
+sub-install:
+	lein sub install
+
+sub-test:
+	lein sub test
+
 docker-up:
 	docker-compose up
 

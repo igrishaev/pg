@@ -15,3 +15,4 @@ pom.xml.asc
 .docker
 out.bin
 target
+.lein-failures

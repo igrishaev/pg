@@ -6,6 +6,10 @@
   :plugins
   [[lein-parent "0.3.8"]]
 
+  :profiles
+  {:tasks
+   {:source-paths ["tasks"]}}
+
   :parent-project
   {:path "../project.clj"
    :inherit [:deploy-repositories

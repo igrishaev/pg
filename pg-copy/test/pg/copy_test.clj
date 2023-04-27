@@ -94,7 +94,7 @@
                 [2]
                 [3]]
                [{:x 1} {:x 2} {:x 3}]
-               {:oids [oid/INT4]}))
+               {:oids [oid/int4]}))
 
 
 (deftest test-copy-long-as-int2
@@ -103,7 +103,7 @@
                 [2]
                 [3]]
                [{:x 1} {:x 2} {:x 3}]
-               {:oids [oid/INT2]}))
+               {:oids [oid/int2]}))
 
 
 (deftest test-copy-float
@@ -130,7 +130,7 @@
                 [(float 2.0)]
                 [(float 3.0)]]
                [{:x 1.0} {:x 2.0} {:x 3.0}]
-               {:oids [oid/FLOAT8]}))
+               {:oids [oid/float8]}))
 
 
 (deftest test-copy-double-float4
@@ -139,7 +139,7 @@
                 [2.0]
                 [3.0]]
                [{:x 1.0} {:x 2.0} {:x 3.0}]
-               {:oids [oid/FLOAT4]}))
+               {:oids [oid/float4]}))
 
 
 (deftest test-copy-double-float8
@@ -170,14 +170,14 @@
   (test-script "x UUID"
                [["415ca101-9d02-417d-91f8-36df31e9cb04"]]
                [{:x #uuid "415ca101-9d02-417d-91f8-36df31e9cb04"}]
-               {:oids [oid/UUID]}))
+               {:oids [oid/uuid]}))
 
 
 (deftest test-copy-uuid-to-string
   (test-script "x text"
                [[#uuid "415ca101-9d02-417d-91f8-36df31e9cb04"]]
                [{:x "415ca101-9d02-417d-91f8-36df31e9cb04"}]
-               {:oids [oid/TEXT]}))
+               {:oids [oid/text]}))
 
 
 (deftest test-copy-date-to-timestamp-after-epoch
@@ -199,7 +199,7 @@
     (test-script "x date"
                  [[d]]
                  [{:x d}]
-                 {:oids [oid/DATE]})))
+                 {:oids [oid/date]})))
 
 
 (deftest test-copy-instant-to-timestamp

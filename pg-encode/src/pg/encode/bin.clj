@@ -40,15 +40,15 @@
 ;; Symbol
 ;;
 
-(-default Symbol oid/TEXT)
+(-default Symbol oid/text)
 
 
-(defmethod -encode [Symbol oid/TEXT]
+(defmethod -encode [Symbol oid/text]
   [value oid opt]
   (-encode (str value) oid opt))
 
 
-(defmethod -encode [Symbol oid/VARCHAR]
+(defmethod -encode [Symbol oid/varchar]
   [value oid opt]
   (-encode (str value) oid opt))
 
@@ -58,54 +58,54 @@
 ;;
 
 
-(-default String oid/TEXT)
+(-default String oid/text)
 
 
-(defmethod -encode [String oid/TEXT]
+(defmethod -encode [String oid/text]
   [^String value _ _]
   (.getBytes value "UTF-8"))
 
 
-(defmethod -encode [String oid/VARCHAR]
+(defmethod -encode [String oid/varchar]
   [value _ opt]
-  (-encode value oid/TEXT opt))
+  (-encode value oid/text opt))
 
 
 ;;
 ;; Character
 ;;
 
-(-default Character oid/TEXT)
+(-default Character oid/text)
 
 
-(defmethod -encode [Character oid/TEXT]
+(defmethod -encode [Character oid/text]
   [value oid opt]
   (-encode (str value) oid opt))
 
 
-(defmethod -encode [Character oid/VARCHAR]
+(defmethod -encode [Character oid/varchar]
   [value oid opt]
-  (-encode value oid/TEXT opt))
+  (-encode value oid/text opt))
 
 
 ;;
 ;; Long
 ;;
 
-(-default Long oid/INT8)
+(-default Long oid/int8)
 
 
-(defmethod -encode [Long oid/INT8]
+(defmethod -encode [Long oid/int8]
   [value _ _]
   (array/arr64 value))
 
 
-(defmethod -encode [Long oid/INT4]
+(defmethod -encode [Long oid/int4]
   [value oid opt]
   (-encode (int value) oid opt))
 
 
-(defmethod -encode [Long oid/INT2]
+(defmethod -encode [Long oid/int2]
   [^Long value oid opt]
   (-encode (short value) oid opt))
 
@@ -114,20 +114,20 @@
 ;; Integer
 ;;
 
-(-default Integer oid/INT4)
+(-default Integer oid/int4)
 
 
-(defmethod -encode [Integer oid/INT8]
+(defmethod -encode [Integer oid/int8]
   [value oid opt]
   (-encode (long value) oid opt))
 
 
-(defmethod -encode [Integer oid/INT4]
+(defmethod -encode [Integer oid/int4]
   [value oid opt]
   (array/arr32 value))
 
 
-(defmethod -encode [Integer oid/INT2]
+(defmethod -encode [Integer oid/int2]
   [value oid opt]
   (-encode (short value) oid opt))
 
@@ -136,20 +136,20 @@
 ;; Short
 ;;
 
-(-default Short oid/INT2)
+(-default Short oid/int2)
 
 
-(defmethod -encode [Short oid/INT8]
+(defmethod -encode [Short oid/int8]
   [value oid opt]
   (-encode (long value) oid opt))
 
 
-(defmethod -encode [Short oid/INT4]
+(defmethod -encode [Short oid/int4]
   [value oid opt]
   (-encode (int value) oid opt))
 
 
-(defmethod -encode [Short oid/INT2]
+(defmethod -encode [Short oid/int2]
   [value oid opt]
   (array/arr16 value))
 
@@ -158,10 +158,10 @@
 ;; Bool
 ;;
 
-(-default Boolean oid/BOOL)
+(-default Boolean oid/bool)
 
 
-(defmethod -encode [Boolean oid/BOOL]
+(defmethod -encode [Boolean oid/bool]
   [value _ _]
   (case value
     true (byte-array [(byte 1)])
@@ -172,16 +172,16 @@
 ;; Float
 ;;
 
-(-default Float oid/FLOAT4)
+(-default Float oid/float4)
 
 
-(defmethod -encode [Float oid/FLOAT4]
+(defmethod -encode [Float oid/float4]
   [value oid opt]
   (-> (Float/floatToIntBits value)
       (array/arr32)))
 
 
-(defmethod -encode [Float oid/FLOAT8]
+(defmethod -encode [Float oid/float8]
   [value oid opt]
   (-encode (double value) oid opt))
 
@@ -191,16 +191,16 @@
 ;;
 
 
-(-default Double oid/FLOAT8)
+(-default Double oid/float8)
 
 
-(defmethod -encode [Double oid/FLOAT8]
+(defmethod -encode [Double oid/float8]
   [value oid opt]
   (-> (Double/doubleToLongBits value)
       (array/arr64)))
 
 
-(defmethod -encode [Double oid/FLOAT4]
+(defmethod -encode [Double oid/float4]
   [value oid opt]
   (-encode (float value) oid opt))
 
@@ -209,10 +209,10 @@
 ;; UUID
 ;;
 
-(-default UUID oid/UUID)
+(-default UUID oid/uuid)
 
 
-(defmethod -encode [UUID oid/UUID]
+(defmethod -encode [UUID oid/uuid]
   [^UUID value oid opt]
 
   (let [most-bits
@@ -227,12 +227,12 @@
          (into (array/arr64 least-bits))))))
 
 
-(defmethod -encode [String oid/UUID]
+(defmethod -encode [String oid/uuid]
   [value oid opt]
   (-encode (UUID/fromString value) oid opt))
 
 
-(defmethod -encode [UUID oid/TEXT]
+(defmethod -encode [UUID oid/text]
   [value oid opt]
   (-encode (str value) oid opt))
 
@@ -241,10 +241,10 @@
 ;; Instant
 ;;
 
-(-default Instant oid/TIMESTAMP)
+(-default Instant oid/timestamp)
 
 
-(defmethod -encode [Instant oid/TIMESTAMP]
+(defmethod -encode [Instant oid/timestamp]
   [^Instant value _ _]
 
   (let [seconds
@@ -263,7 +263,7 @@
          (+ (* offset-millis 1000))))))
 
 
-(defmethod -encode [Instant oid/DATE]
+(defmethod -encode [Instant oid/date]
   [^Instant value oid opt]
   (let [local-date
         (LocalDate/ofInstant value
@@ -275,10 +275,10 @@
 ;; Date
 ;;
 
-(-default Date oid/TIMESTAMP)
+(-default Date oid/timestamp)
 
 
-(defmethod -encode [Date oid/DATE]
+(defmethod -encode [Date oid/date]
   [^Date value oid opt]
   (let [local-date
         (LocalDate/ofInstant (.toInstant value)
@@ -286,7 +286,7 @@
     (-encode local-date oid opt)))
 
 
-(defmethod -encode [Date oid/TIMESTAMP]
+(defmethod -encode [Date oid/timestamp]
   [^Date value oid opt]
   (let [millis
         (- (.getTime value)
@@ -306,10 +306,10 @@
 ;; LocalDate
 ;;
 
-(-default LocalDate oid/DATE)
+(-default LocalDate oid/date)
 
 
-(defmethod -encode [LocalDate oid/DATE]
+(defmethod -encode [LocalDate oid/date]
   [^LocalDate value _ _]
   (array/arr32
    (- (.toEpochDay value)
