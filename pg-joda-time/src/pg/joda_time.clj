@@ -62,12 +62,4 @@
 
     (array/arr64
      (-> (* millis 1000)
-         (- (* offset-millis 1000))
-
-         #_
-         (+ sec-millis)
-
-         )
-     #_
-     (+ (- millis (.toMillis c/PG_EPOCH_DIFF))
-        (* sec-millis 1000)))))
+         (+ (* offset-millis 1000))))))

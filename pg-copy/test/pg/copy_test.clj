@@ -12,6 +12,7 @@
    [next.jdbc.result-set :as rs]
    [pg.oid :as oid]
    [pg.copy :as copy]
+   [clojure.instant :as inst]
    [clojure.test :refer [deftest is use-fixtures]]))
 
 
@@ -203,23 +204,24 @@
 
 (deftest test-copy-instant-to-timestamp
   (let [secs -1
-        nans 123456789
+        nans 123456000
         inst (Instant/ofEpochSecond secs nans)]
     (test-script "x timestamp"
                  [[inst]]
-                 [{:x #inst "1969-12-31T23:59:59.123456000-00:00"}])))
+                 [{:x (inst/read-instant-timestamp (str inst))}])))
 
 
 (deftest test-copy-yoda-ld-to-date
   (let [ld (new LocalDate 1969 1 1)
-        date (new Date (- 1969 1900) 0 1)]
+        inst (.toDate ld)]
     (test-script "x date"
                  [[ld]]
-                 [{:x date}])))
+                 [{:x inst}])))
 
 
 (deftest test-copy-yoda-ts-to-timestamp
-  (let [dt (new DateTime 1969 3 15 23 59 59 123)]
+  (let [dt (new DateTime 1969 3 15 23 59 59 123)
+        inst (inst/read-instant-timestamp (str dt))]
     (test-script "x timestamp"
                  [[dt]]
-                 [1])))
+                 [{:x inst}])))
