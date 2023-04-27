@@ -49,8 +49,6 @@
     ;; for debug
     ;; (copy/table->file payload "out.bin" opt)
 
-    ;; (is (= 1 (jdbc/execute! conn ["select '1970-01-01'::timestamp"])))
-
     (jdbc/execute! conn [sql-table])
     (.copyIn copy-mgr sql-copy input)
 
