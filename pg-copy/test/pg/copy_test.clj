@@ -236,7 +236,7 @@
          [2 "haha!" false]]
 
         table
-        (str (gensym "table"))
+        (str "table" (System/nanoTime))
 
         sql-table
         (format "create table %s (a integer, x timestamp, b text, y uuid, c bool)" table)
@@ -249,6 +249,8 @@
 
         result
         (copy.jdbc/copy-in ds sql-copy data {:oids {0 oid/int4}})]
+
+    (jdbc/execute! ds [(format "drop table %s" table)])
 
     (is (= 2 result))))
 
@@ -266,7 +268,7 @@
           [x (str "hello_" x) (> (rand) 0.5)])
 
         table
-        (str (gensym "table"))
+        (str "table" (System/nanoTime))
 
         sql-table
         (format "create table %s (a integer, x timestamp, b text, y uuid, c bool)" table)
@@ -285,6 +287,8 @@
          4
          10000
          {:oids {0 oid/int4}})]
+
+    (jdbc/execute! conn [(format "drop table %s" table)])
 
     (is (= result total))))
 
