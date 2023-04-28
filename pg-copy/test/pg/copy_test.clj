@@ -228,17 +228,48 @@
 
 (deftest test-copy-jdbc
 
-  (let [conn
-        (jdbc/get-connection db-spec)
+  (let [ds
+        (jdbc/get-datasource db-spec)
 
         data
-        [[1 "hello" true]]
+        [[1 "hello" true]
+         [2 "haha!" false]]
 
         table
         (str (gensym "table"))
 
         sql-table
-        (format "create temp table %s (a integer, x timestamp, b text, y uuid, c bool)" table)
+        (format "create table %s (a integer, x timestamp, b text, y uuid, c bool)" table)
+
+        sql-copy
+        (format "copy %s (a, b, c) from stdin with binary" table)
+
+        _
+        (jdbc/execute! ds [sql-table])
+
+        result
+        (copy.jdbc/copy-in ds sql-copy data {:oids {0 oid/int4}})]
+
+    (is (= 2 result))))
+
+
+(deftest test-copy-jdbc-parallel
+
+  (let [conn
+        (jdbc/get-connection db-spec)
+
+        total
+        99999
+
+        data
+        (for [x (range 0 total)]
+          [x (str "hello_" x) (> (rand) 0.5)])
+
+        table
+        (str (gensym "table"))
+
+        sql-table
+        (format "create table %s (a integer, x timestamp, b text, y uuid, c bool)" table)
 
         sql-copy
         (format "copy %s (a, b, c) from stdin with binary" table)
@@ -247,9 +278,15 @@
         (jdbc/execute! conn [sql-table])
 
         result
-        (copy.jdbc/copy-in conn sql-copy data {:oids {0 oid/int4}})]
+        (copy.jdbc/copy-in-parallel
+         db-spec
+         sql-copy
+         data
+         4
+         10000
+         {:oids {0 oid/int4}})]
 
-    (is (= 1 result))))
+    (is (= result total))))
 
 
 (def coerce-oids
