@@ -5,7 +5,7 @@
     (doseq [[a b c] chunk]
       (println a \, b \, c))))
 
-(defn ->input-stream [^String text]
+(defn ->input-stream ^InputStream [^String text]
   (-> text
       (.getBytes "UTF-8")
       clojure.java.io/input-stream))

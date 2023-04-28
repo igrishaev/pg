@@ -288,7 +288,7 @@
          data
          4
          10000
-         {:oids {0 oid/int4}})]
+         {:oids {0 oid/int4 1 oid/text 2 oid/bool}})]
 
     (jdbc/execute! conn [(format "drop table %s" table)])
 
