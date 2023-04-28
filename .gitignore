@@ -16,3 +16,7 @@ pom.xml.asc
 out.bin
 target
 .lein-failures
+
+node_modules
+package-lock.json
+package.json
