@@ -1,10 +1,10 @@
 (defproject com.github.igrishaev/pg "0.1.0-SNAPSHOT"
 
   :description
-  "FIXME: write description"
+  "Postgres stuff in pure Clojure"
 
   :url
-  "http://example.com/FIXME"
+  "https://github.com/igrishaev/pg"
 
   :license
   {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
