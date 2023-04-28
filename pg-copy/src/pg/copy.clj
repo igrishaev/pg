@@ -56,18 +56,18 @@
 ;; API
 ;;
 
-(defn table->output-stream
+(defn data->output-stream
 
-  ([table out]
-   (table->output-stream table out nil))
+  ([data out]
+   (data->output-stream data out nil))
 
-  ([table ^OutputStream out {:as opt :keys [oids]}]
+  ([data ^OutputStream out {:as opt :keys [oids]}]
 
    (let [oids (some-> oids coerce-oids)]
      (.write out HEADER)
      (.write out zero32)
      (.write out zero32)
-     (doseq [row table]
+     (doseq [row data]
        (.write out (array/arr16 (count row)))
        (doseq [[i item] (enumerate row)]
          (if (nil? item)
@@ -80,38 +80,38 @@
      (.close out))))
 
 
-(defn table->bytes
+(defn data->bytes
 
-  (^bytes [table]
-   (table->bytes table nil))
+  (^bytes [data]
+   (data->bytes data nil))
 
-  (^bytes [table opt]
+  (^bytes [data opt]
    (with-open [out (new ByteArrayOutputStream)]
-     (table->output-stream table out opt)
+     (data->output-stream data out opt)
      (.toByteArray out))))
 
 
-(defn table->file
+(defn data->file
 
-  ([table ^String path]
-   (table->file table path nil))
+  ([data ^String path]
+   (data->file data path nil))
 
-  ([table ^String path opt]
+  ([data ^String path opt]
    (with-open [out (-> path
                        io/file
                        io/output-stream)]
-     (table->output-stream table out opt))))
+     (data->output-stream data out opt))))
 
 
-(defn table->input-stream
-  (^InputStream [table]
-   (table->input-stream table nil))
+(defn data->input-stream
+  (^InputStream [data]
+   (data->input-stream data nil))
 
-  (^InputStream [table opt]
-   (-> table
-       (table->bytes opt)
+  (^InputStream [data opt]
+   (-> data
+       (data->bytes opt)
        io/input-stream)))
 
 
-(defn maps->table [maps row-keys]
+(defn maps->data [maps row-keys]
   (map (apply juxt row-keys) maps))

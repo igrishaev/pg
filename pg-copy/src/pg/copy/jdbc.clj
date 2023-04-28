@@ -9,10 +9,10 @@
 
 (defn copy-in
 
-  ([^Connection conn ^String sql]
-   (-> (new CopyManager conn)
-       (.copyIn sql)))
+  ([^Connection conn ^String sql data]
+   (copy-in conn sql data nil))
 
-  ([^Connection conn ^String sql ^InputStream in]
-   (-> (new CopyManager conn)
-       (.copyIn sql in))))
+  ([^Connection conn ^String sql data opt]
+   (let [in (copy/data->input-stream data opt)]
+     (-> (new CopyManager conn)
+         (.copyIn sql in)))))

@@ -12,6 +12,7 @@
    [next.jdbc.result-set :as rs]
    [pg.oid :as oid]
    [pg.copy :as copy]
+   [pg.copy.jdbc :as copy.jdbc]
    [clojure.instant :as inst]
    [clojure.test :refer [deftest is use-fixtures]]))
 
@@ -44,10 +45,10 @@
         (new CopyManager conn)
 
         input
-        (copy/table->input-stream payload opt)]
+        (copy/data->input-stream payload opt)]
 
     ;; for debug
-    ;; (copy/table->file payload "out.bin" opt)
+    ;; (copy/data->file payload "out.bin" opt)
 
     (jdbc/execute! conn [sql-table])
     (.copyIn copy-mgr sql-copy input)
@@ -223,6 +224,32 @@
     (test-script "x timestamp"
                  [[dt]]
                  [{:x inst}])))
+
+
+(deftest test-copy-jdbc
+
+  (let [conn
+        (jdbc/get-connection db-spec)
+
+        data
+        [[1 "hello" true]]
+
+        table
+        (str (gensym "table"))
+
+        sql-table
+        (format "create temp table %s (a integer, x timestamp, b text, y uuid, c bool)" table)
+
+        sql-copy
+        (format "copy %s (a, b, c) from stdin with binary" table)
+
+        _
+        (jdbc/execute! conn [sql-table])
+
+        result
+        (copy.jdbc/copy-in conn sql-copy data {:oids {0 oid/int4}})]
+
+    (is (= 1 result))))
 
 
 (def coerce-oids
