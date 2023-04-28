@@ -309,3 +309,30 @@
 
   (is (= {5 1114}
          (coerce-oids {5 oid/timestamp}))))
+
+
+(deftest test-table-oids
+
+  (let [conn
+        (jdbc/get-connection db-spec)
+
+        table
+        (str "table" (System/nanoTime))
+
+        sql-table
+        (format "create table %s (a integer, x timestamp, b text, y uuid, c bool)" table)
+
+        _
+        (jdbc/execute! conn [sql-table])
+
+        result
+        (copy.jdbc/table-oids conn table)]
+
+    (jdbc/execute! conn [(format "drop table %s" table)])
+
+    (is (= [[:a "int4"]
+            [:x "timestamp"]
+            [:b "text"]
+            [:y "uuid"]
+            [:c "bool"]]
+           result))))

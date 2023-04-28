@@ -115,3 +115,24 @@
 
 (defn maps->data [maps row-keys]
   (map (apply juxt row-keys) maps))
+
+
+(defn sqlvec-oids
+
+  ([table]
+   (sql-oids table "public"))
+
+  ([table schema]
+
+   ["
+SELECT
+  ordinal_position, column_name, udt_name
+FROM
+  information_schema.columns
+WHERE
+  table_schema = ?
+  AND table_name = ?
+ORDER BY
+  ordinal_position;
+"
+    schema table]))

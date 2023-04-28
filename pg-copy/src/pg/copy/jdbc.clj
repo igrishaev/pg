@@ -8,6 +8,7 @@
    org.postgresql.copy.CopyManager)
   (:require
    [next.jdbc :as jdbc]
+   [next.jdbc.result-set :as rs]
    [pg.copy :as copy]))
 
 
@@ -69,3 +70,23 @@
           (.add futures fut)))
 
       (reduce + (map deref futures)))))
+
+
+(defn table-oids
+  ([db table]
+   (table-oids db table "public"))
+
+  ([db table schema]
+   (let [sqlvec
+         (copy/sqlvec-oids table schema)
+
+         result
+         (jdbc/execute! db
+                        sqlvec
+                        {:builder-fn rs/as-unqualified-maps})]
+
+     (reduce
+      (fn [acc {:keys [column_name udt_name]}]
+        (conj acc [(keyword column_name) udt_name]))
+      []
+      result))))
