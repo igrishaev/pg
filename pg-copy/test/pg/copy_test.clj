@@ -33,7 +33,7 @@
         (jdbc/get-connection db-spec)
 
         table
-        (str (gensym "table"))
+        (str "table" (System/nanoTime))
 
         sql-table
         (format "create temp table %s (%s)" table sql-fields)
@@ -58,7 +58,9 @@
                          [(format "select * from %s" table)]
                          {:builder-fn rs/as-unqualified-maps})]
 
-      (is (= expected result)))))
+      (is (= expected result)))
+
+    (jdbc/execute! conn [(format "drop table %s" table)])))
 
 
 (deftest test-copy-string
