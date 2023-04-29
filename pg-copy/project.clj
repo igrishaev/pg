@@ -17,11 +17,4 @@
              :plugins
              :repositories
              :url
-             [:profiles :dev]]}
-
-  :profiles
-  {:test
-   {:dependencies
-    [[com.github.seancorfield/next.jdbc]
-     [org.postgresql/postgresql]
-     [com.github.igrishaev/pg-joda-time]]}})
+             [:profiles :dev]]})

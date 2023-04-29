@@ -1,20 +1,20 @@
-(ns pg.copy-test
+(ns pg.copy-jdbc-test
   (:import
+   java.sql.Timestamp
+   java.time.Instant
+   java.util.Date
    org.joda.time.DateTime
    org.joda.time.LocalDate
-   java.sql.Timestamp
-   java.util.Date
-   java.time.Instant
    org.postgresql.copy.CopyManager)
   (:require
-   pg.joda-time
+   [clojure.instant :as inst]
+   [clojure.test :refer [deftest is use-fixtures]]
    [next.jdbc :as jdbc]
    [next.jdbc.result-set :as rs]
-   [pg.oid :as oid]
    [pg.copy :as copy]
    [pg.copy.jdbc :as copy.jdbc]
-   [clojure.instant :as inst]
-   [clojure.test :refer [deftest is use-fixtures]]))
+   [pg.joda-time]
+   [pg.oid :as oid]))
 
 
 (def db-spec
@@ -249,7 +249,7 @@
           (jdbc/execute! conn [sql-table])
 
           result
-          (copy.jdbc/copy-in conn sql-copy data {:oids {0 oid/int4}})]
+          (copy.jdbc/copy-in conn sql-copy (copy/with-oids data {0 oid/int4}))]
 
       (is (= 2 result)))))
 
