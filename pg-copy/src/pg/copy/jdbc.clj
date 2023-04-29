@@ -13,7 +13,10 @@
 
 
 (defn by-chunks [coll n]
-  (partition n n [] coll))
+  (let [m (meta coll)]
+    (map (fn [p]
+           (with-meta p m))
+         (partition n n [] coll))))
 
 
 (defmacro with-pool [[bind threads] & body]
@@ -33,11 +36,10 @@
 
 
 (defn copy-in
-  [connectable ^String sql data & [opt]]
-  (with-conn [conn connectable]
-    (let [in (copy/data->input-stream data opt)]
-      (-> (new CopyManager conn)
-          (.copyIn sql in)))))
+  [^Connection conn ^String sql data & [opt]]
+  (let [in (copy/data->input-stream data opt)]
+    (-> (new CopyManager conn)
+        (.copyIn sql in))))
 
 
 (defn copy-in-parallel

@@ -198,7 +198,7 @@
 (def ^int pg_brin_minmax_multi_summary   4601)
 
 
-(def ^:private -name->oid
+(def ^:private oid-name->oid-int
   {"_int8multirange"              6157
    "json"                         114
    "pg_snapshot"                  5038
@@ -394,11 +394,11 @@
    "table_am_handler"             269})
 
 
-(defn name->oid ^Integer [^String oid-name]
-  (get -name->oid oid-name))
+(defn name->int ^Integer [^String oid-name]
+  (get oid-name->oid-int oid-name))
 
 
 (defn ->oid [x]
   (cond
     (int? x) x
-    (string? x) (name->oid x)))
+    (string? x) (name->int x)))

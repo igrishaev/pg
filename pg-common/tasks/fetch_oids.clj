@@ -69,7 +69,7 @@
     (println)
 
     (printf "
-(def ^:private -name->oid
+(def ^:private oid-name->oid-int
   %s) "
             (with-out-str
               (clojure.pprint/pprint name->oid)))
@@ -77,6 +77,6 @@
     (println)
 
     (println "
-(defn name->oid ^int [^String oid-name]
-  (get -name->oid oid-name))
+(defn name->int ^int [^String oid-name]
+  (get oid-name->oid-int oid-name))
 ")))

@@ -34,6 +34,10 @@
 ;; Misc
 ;;
 
+(defn enumerate [coll]
+  (map-indexed vector coll))
+
+
 (defn- coerce-oids [oids]
   (cond
 
@@ -45,25 +49,28 @@
      oids)
 
     (sequential? oids)
-    (into {} (map-indexed vector (map oid/->oid oids)))))
-
-
-(defn enumerate [coll]
-  (map-indexed vector coll))
+    (recur (into {} (enumerate oids)))))
 
 
 ;;
 ;; API
 ;;
 
+
+(defn with-oids [data oids]
+  (with-meta data {:pg/oids oids}))
+
+
 (defn data->output-stream
 
   ([data out]
    (data->output-stream data out nil))
 
-  ([data ^OutputStream out {:as opt :keys [oids]}]
-
-   (let [oids (some-> oids coerce-oids)]
+  ([data ^OutputStream out opt]
+   (let [idx->oid
+         (some-> (or (:oids opt)
+                     (-> data meta :pg/oids))
+                 (coerce-oids))]
      (.write out HEADER)
      (.write out zero32)
      (.write out zero32)
@@ -72,7 +79,7 @@
        (doseq [[i item] (enumerate row)]
          (if (nil? item)
            (.write out -one32)
-           (let [oid (get oids i)
+           (let [oid (get idx->oid i)
                  buf (bin/encode item oid opt)]
              (.write out (array/arr32 (alength buf)))
              (.write out buf)))))
@@ -113,14 +120,20 @@
        io/input-stream)))
 
 
-(defn maps->data [maps row-keys]
-  (map (apply juxt row-keys) maps))
+(defn maps->data
+  [maps cols & [col->oid]]
+  (let [idx->oid
+        (when col->oid
+          (map col->oid cols))]
+    (cond-> (map (apply juxt cols) maps)
+      idx->oid
+      (with-oids idx->oid))))
 
 
 (defn sqlvec-oids
 
   ([table]
-   (sql-oids table "public"))
+   (sqlvec-oids table "public"))
 
   ([table schema]
 

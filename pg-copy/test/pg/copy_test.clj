@@ -230,31 +230,28 @@
 
 (deftest test-copy-jdbc
 
-  (let [ds
-        (jdbc/get-datasource db-spec)
+  (copy.jdbc/with-conn [conn db-spec]
 
-        data
-        [[1 "hello" true]
-         [2 "haha!" false]]
+    (let [data
+          [[1 "hello" true]
+           [2 "haha!" false]]
 
-        table
-        (str "table" (System/nanoTime))
+          table
+          (str "table" (System/nanoTime))
 
-        sql-table
-        (format "create table %s (a integer, x timestamp, b text, y uuid, c bool)" table)
+          sql-table
+          (format "create temp table %s (a integer, x timestamp, b text, y uuid, c bool)" table)
 
-        sql-copy
-        (format "copy %s (a, b, c) from stdin with binary" table)
+          sql-copy
+          (format "copy %s (a, b, c) from stdin with binary" table)
 
-        _
-        (jdbc/execute! ds [sql-table])
+          _
+          (jdbc/execute! conn [sql-table])
 
-        result
-        (copy.jdbc/copy-in ds sql-copy data {:oids {0 oid/int4}})]
+          result
+          (copy.jdbc/copy-in conn sql-copy data {:oids {0 oid/int4}})]
 
-    (jdbc/execute! ds [(format "drop table %s" table)])
-
-    (is (= 2 result))))
+      (is (= 2 result)))))
 
 
 (deftest test-copy-jdbc-parallel
@@ -289,6 +286,46 @@
          4
          10000
          {:oids {0 oid/int4 1 oid/text 2 oid/bool}})]
+
+    (jdbc/execute! conn [(format "drop table %s" table)])
+
+    (is (= result total))))
+
+
+(deftest test-copy-jdbc-parallel-maps
+
+  (let [conn
+        (jdbc/get-connection db-spec)
+
+        total
+        99
+
+        maps
+        (for [x (range 0 total)]
+          {:a x :b (str "hello_" x) :c (> (rand) 0.5)})
+
+        data
+        (copy/maps->data maps [:a :b :c] {:a oid/int4 :b oid/text :c oid/bool})
+
+        table
+        (str "table" (System/nanoTime))
+
+        sql-table
+        (format "create table %s (a integer, x timestamp, b text, y uuid, c bool)" table)
+
+        sql-copy
+        (format "copy %s (a, b, c) from stdin with binary" table)
+
+        _
+        (jdbc/execute! conn [sql-table])
+
+        result
+        (copy.jdbc/copy-in-parallel
+         db-spec
+         sql-copy
+         data
+         4
+         5)]
 
     (jdbc/execute! conn [(format "drop table %s" table)])
 
