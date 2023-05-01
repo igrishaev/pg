@@ -15,6 +15,8 @@ the code are now shipped as separated packages and might be useful for someone.
 - [pg-encode](#pg-encode)
   * [Installation](#installation-1)
   * [Usage](#usage-1)
+  * [Type-specific encoding](#type-specific-encoding)
+  * [Table of supported types and OIDs](#table-of-supported-types-and-oids)
 - [pg-joda-time](#pg-joda-time)
 - [pg-copy](#pg-copy)
 - [pg-copy-jdbc](#pg-copy-jdbc)
