@@ -103,6 +103,29 @@ Complex types like `Date` and `UUID` are supported as well:
 [-89, 69, -70, 4, -61, -17, 71, 112, -94, -57, -6, 47, -42, 41, 24, 62]
 ~~~
 
+### Type-specific encoding
+
+### Table of supported types and OIDs
+
+| Clojure | Postgres | Default? | Comment         |
+|---------|----------|----------|-----------------|
+|         |          |          |                 |
+|         |          |          |                 |
+| Long    | int8     | +        |                 |
+| Long    | int4     |          | Cast to Integer |
+| Long    | int2     |          | Cast to Short   |
+| Integer | int8     |          | Cast to Long    |
+| Integer | int4     | +        |                 |
+| Integer | int2     |          | Cast to Short   |
+| Short   | int8     |          | Cast to Long    |
+| Short   | int4     |          | Cast to Integer |
+| Short   | int2     | +        |                 |
+|         |          |          |                 |
+|         |          |          |                 |
+|         |          |          |                 |
+|         |          |          |                 |
+
+
 ## pg-joda-time
 
 ## pg-copy
