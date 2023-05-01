@@ -110,7 +110,7 @@ Complex types like `Date` and `UUID` are supported as well:
 ### Table of supported types and OIDs
 
 | Clojure       | Postgres            | Default   |
-|---------------+---------------------+-----------|
+|---------------|---------------------|-----------|
 | Symbol        | text, varchar       | text      |
 | String        | text, varchar, uuid | text      |
 | Character     | text, varchar       | text      |
