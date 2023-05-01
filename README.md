@@ -17,6 +17,8 @@ the code are now shipped as separated packages and might be useful for someone.
   * [Usage](#usage-1)
   * [Type-specific encoding](#type-specific-encoding)
   * [Table of supported types and OIDs](#table-of-supported-types-and-oids)
+  * [Extending the encoding rules](#extending-the-encoding-rules)
+  * [Default OIDs](#default-oids)
 - [pg-joda-time](#pg-joda-time)
 - [pg-copy](#pg-copy)
 - [pg-copy-jdbc](#pg-copy-jdbc)
@@ -107,7 +109,42 @@ Complex types like `Date` and `UUID` are supported as well:
 
 ### Type-specific encoding
 
+Sometimes you need precise on control on encoding. Say, a Long value 1 gets
+encoded to int8 but you want it to be int4. The second argument of the `encode`
+function takes an integer OID that specifies a column type. You can reach the
+built-in OIDs using the `pg.oid` module.
+
+Thus, to encode Long 1 as int4, do this:
+
+~~~clojure
+(encode 1 pg.oid/int4)
+[0, 0, 0, 1]
+~~~
+
+To encode an integer as int8, do:
+
+~~~clojure
+(let [i (int 42)]
+  (encode i pg.oid/int8))
+[0, 0, 0, 0, 0, 0, 0, 42]
+~~~
+
+The same applies to Float and Double types. Float gets encoded to float4 by
+default and Double does to float8. Passing explicit OIDs corrects the output
+types.
+
+~~~clojure
+(encode 1.01 pg.oid/float4)
+[63, -127, 71, -82]
+
+(encode 1.01 pg.oid/float8)
+[63, -16, 40, -11, -62, -113, 92, 41]
+~~~
+
 ### Table of supported types and OIDs
+
+At the moment of writing this, the module has the following mapping between
+Clojure types and Postgres OIDs.
 
 | Clojure       | Postgres            | Default   |
 |---------------|---------------------|-----------|
@@ -125,6 +162,59 @@ Complex types like `Date` and `UUID` are supported as well:
 | j.t.Instant   | timestamp, date     | timestamp |
 | j.t.LocalDate | date                | date      |
 
+### Extending the encoding rules
+
+Encoding a type that is missing the table above leads to an exception:
+
+~~~clojure
+(encode {:foo 42} pg.oid/json)
+
+Execution error (ExceptionInfo) at pg.error/error! (error.clj:14).
+Cannot binary encode a value
+
+{:value {:foo 42}, :oid 114, :opt nil}
+~~~
+
+But it can easily fixed by extending the `-encode` multimethod from the
+`pg.encode.bin` namespace. Its dispatch function takes a vector where the first
+item is a type of the value and the second is OID:
+
+~~~clojure
+(defmethod -encode [UUID oid/uuid]
+  [^UUID value oid opt]
+  (let [most-bits (.getMostSignificantBits value)
+        least-bits (.getLeastSignificantBits value)]
+    (byte-array
+     (-> []
+         (into (array/arr64 most-bits))
+         (into (array/arr64 least-bits))))))
+~~~
+
+To extend the encoder with a map such that it becomes JSON in Postgres, use
+something like this:
+
+~~~clojure
+(defmethod -encode [clojure.lang.IPersistentMap pg.oid/json]
+    [mapping _ _]
+    (-> mapping
+        (cheshire.core/generate-string )
+        (.getBytes "UTF-8")))
+
+(encode {:foo 42} pg.oid/json)
+[123, 34, 102, 111, 111, 34, 58, 52, 50, 125]
+~~~
+
+Let's try the opposite: copy the output and restore the origin string:
+
+~~~clojure
+(-> [123, 34, 102, 111, 111, 34, 58, 52, 50, 125]
+    (byte-array)
+    (String. "UTF-8"))
+
+"{\"foo\":42}"
+~~~
+
+### Default OIDs
 
 ## pg-joda-time
 
