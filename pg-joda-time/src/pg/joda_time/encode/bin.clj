@@ -8,7 +8,7 @@
   (:require
    [pg.const :as c]
    [pg.bytes.array :as array]
-   [pg.encode.bin :refer [-default -encode]]
+   [pg.encode.bin :refer [set-default -encode]]
    [pg.oid :as oid]))
 
 
@@ -20,9 +20,6 @@
 ;; LocalDate
 ;;
 
-(-default LocalDate oid/date)
-
-
 (defmethod -encode [LocalDate oid/date]
   [^LocalDate value _ _]
   (let [days
@@ -32,24 +29,24 @@
     (array/arr32 days)))
 
 
+(set-default LocalDate oid/date)
+
+
 ;;
 ;; LocalTime
 ;;
-
-(-default LocalTime oid/time)
-
 
 (defmethod -encode [LocalTime oid/time]
   [^LocalTime value _ _]
   (array/arr64 (.getMillisOfDay value)))
 
 
+(set-default LocalTime oid/time)
+
+
 ;;
 ;; DateTime
 ;;
-
-(-default DateTime oid/timestamp)
-
 
 (defmethod -encode [DateTime oid/timestamp]
   [^DateTime value _ _]
@@ -63,3 +60,6 @@
     (array/arr64
      (-> (* millis 1000)
          (+ (* offset-millis 1000))))))
+
+
+(set-default DateTime oid/timestamp)

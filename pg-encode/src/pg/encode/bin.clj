@@ -1,5 +1,6 @@
 (ns pg.encode.bin
   (:import
+   clojure.lang.MultiFn
    clojure.lang.Symbol
    java.util.TimeZone
    java.time.Duration
@@ -30,18 +31,18 @@
     (e/error! "Cannot binary encode a value")))
 
 
-(defmacro -default [Type oid]
-  `(defmethod -encode [~Type nil]
-     [value# _# opt#]
-     (-encode value# ~oid opt#)))
+(defn set-default [Type oid]
+  (let [method
+        (.getMethod ^MultiFn -encode [Type oid])]
+    (if (or (nil? method)
+            (= method (.getMethod ^MultiFn -encode :default)))
+      (e/error! "There is no a method with [%s %s] dispatch value." Type oid)
+      (.addMethod ^MultiFn -encode [Type nil] method))))
 
 
 ;;
 ;; Symbol
 ;;
-
-(-default Symbol oid/text)
-
 
 (defmethod -encode [Symbol oid/text]
   [value oid opt]
@@ -53,13 +54,12 @@
   (-encode (str value) oid opt))
 
 
+(set-default Symbol oid/text)
+
+
 ;;
 ;; String
 ;;
-
-
-(-default String oid/text)
-
 
 (defmethod -encode [String oid/text]
   [^String value _ _]
@@ -71,12 +71,11 @@
   (-encode value oid/text opt))
 
 
+(set-default String oid/text)
+
 ;;
 ;; Character
 ;;
-
-(-default Character oid/text)
-
 
 (defmethod -encode [Character oid/text]
   [value oid opt]
@@ -88,12 +87,12 @@
   (-encode value oid/text opt))
 
 
+(set-default Character oid/text)
+
+
 ;;
 ;; Long
 ;;
-
-(-default Long oid/int8)
-
 
 (defmethod -encode [Long oid/int8]
   [value _ _]
@@ -110,12 +109,12 @@
   (-encode (short value) oid opt))
 
 
+(set-default Long oid/int8)
+
+
 ;;
 ;; Integer
 ;;
-
-(-default Integer oid/int4)
-
 
 (defmethod -encode [Integer oid/int8]
   [value oid opt]
@@ -132,12 +131,12 @@
   (-encode (short value) oid opt))
 
 
+(set-default Integer oid/int4)
+
+
 ;;
 ;; Short
 ;;
-
-(-default Short oid/int2)
-
 
 (defmethod -encode [Short oid/int8]
   [value oid opt]
@@ -154,12 +153,12 @@
   (array/arr16 value))
 
 
+(set-default Short oid/int2)
+
+
 ;;
 ;; Bool
 ;;
-
-(-default Boolean oid/bool)
-
 
 (defmethod -encode [Boolean oid/bool]
   [value _ _]
@@ -168,12 +167,12 @@
     false (byte-array [(byte 0)])))
 
 
+(set-default Boolean oid/bool)
+
+
 ;;
 ;; Float
 ;;
-
-(-default Float oid/float4)
-
 
 (defmethod -encode [Float oid/float4]
   [value oid opt]
@@ -186,13 +185,12 @@
   (-encode (double value) oid opt))
 
 
+(set-default Float oid/float4)
+
+
 ;;
 ;; Double
 ;;
-
-
-(-default Double oid/float8)
-
 
 (defmethod -encode [Double oid/float8]
   [value oid opt]
@@ -205,12 +203,12 @@
   (-encode (float value) oid opt))
 
 
+(set-default Double oid/float8)
+
+
 ;;
 ;; UUID
 ;;
-
-(-default UUID oid/uuid)
-
 
 (defmethod -encode [UUID oid/uuid]
   [^UUID value oid opt]
@@ -237,12 +235,12 @@
   (-encode (str value) oid opt))
 
 
+(set-default UUID oid/uuid)
+
+
 ;;
 ;; Instant
 ;;
-
-(-default Instant oid/timestamp)
-
 
 (defmethod -encode [Instant oid/timestamp]
   [^Instant value _ _]
@@ -271,12 +269,12 @@
     (-encode local-date oid opt)))
 
 
+(set-default Instant oid/timestamp)
+
+
 ;;
 ;; Date
 ;;
-
-(-default Date oid/timestamp)
-
 
 (defmethod -encode [Date oid/date]
   [^Date value oid opt]
@@ -302,18 +300,21 @@
     (array/arr64 nanos)))
 
 
+(set-default Date oid/timestamp)
+
+
 ;;
 ;; LocalDate
 ;;
-
-(-default LocalDate oid/date)
-
 
 (defmethod -encode [LocalDate oid/date]
   [^LocalDate value _ _]
   (array/arr32
    (- (.toEpochDay value)
       (.toDays c/PG_EPOCH_DIFF))))
+
+
+(set-default LocalDate oid/date)
 
 
 ;;
