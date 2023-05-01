@@ -109,23 +109,21 @@ Complex types like `Date` and `UUID` are supported as well:
 
 ### Table of supported types and OIDs
 
-| Clojure | Postgres | Default? | Comment         |
-|---------|----------|----------|-----------------|
-|         |          |          |                 |
-|         |          |          |                 |
-| Long    | int8     | +        |                 |
-| Long    | int4     |          | Cast to Integer |
-| Long    | int2     |          | Cast to Short   |
-| Integer | int8     |          | Cast to Long    |
-| Integer | int4     | +        |                 |
-| Integer | int2     |          | Cast to Short   |
-| Short   | int8     |          | Cast to Long    |
-| Short   | int4     |          | Cast to Integer |
-| Short   | int2     | +        |                 |
-|         |          |          |                 |
-|         |          |          |                 |
-|         |          |          |                 |
-|         |          |          |                 |
+| Clojure       | Postgres            | Default   |
+|---------------+---------------------+-----------|
+| Symbol        | text, varchar       | text      |
+| String        | text, varchar, uuid | text      |
+| Character     | text, varchar       | text      |
+| Long          | int8, int4, int2    | int8      |
+| Integer       | int8, int4, int2    | int4      |
+| Short         | int8, int4, int2    | int2      |
+| Boolean       | bool                | bool      |
+| Float         | float4, float8      | float4    |
+| Double        | float4, float8      | float8    |
+| UUID          | uuid, text          | uuid      |
+| j.u.Date      | timestamp, date     | timestamp |
+| j.t.Instant   | timestamp, date     | timestamp |
+| j.t.LocalDate | date                | date      |
 
 
 ## pg-joda-time
