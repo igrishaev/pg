@@ -317,8 +317,8 @@ Postgres operator.
 The main `data->input-stream` function takes data and returns an input stream
 that is passed to `CopyManager`. The data must be a sequence of sequences each
 of the same size. The stream contains a binary payload that Postgres knows how
-to parse. Assuming you have a table with `bigint`, `text` and `bool` fileds,
-here is how an input string might look like:
+to parse. Assuming you have a table with `bigint`, `text` and `bool` fields,
+here is how building an input stream looks like:
 
 ~~~clojure
 (def data
