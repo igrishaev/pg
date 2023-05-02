@@ -30,6 +30,10 @@ the code are now shipped as separated packages and might be useful for someone.
   * [Working with maps](#working-with-maps)
   * [Other functions](#other-functions)
 - [pg-copy-jdbc](#pg-copy-jdbc)
+  * [Installation](#installation-4)
+  * [Usage](#usage-4)
+  * [Parallel COPY](#parallel-copy)
+  * [Measurements](#measurements)
 
 <!-- tocstop -->
 
@@ -360,3 +364,11 @@ partial subset of columns in another order:
 ### Other functions
 
 ## pg-copy-jdbc
+
+### Installation
+
+### Usage
+
+### Parallel COPY
+
+### Measurements
