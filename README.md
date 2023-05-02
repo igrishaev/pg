@@ -24,6 +24,11 @@ the code are now shipped as separated packages and might be useful for someone.
   * [Usage](#usage-2)
   * [Table of Types and OIDs](#table-of-types-and-oids)
 - [pg-copy](#pg-copy)
+  * [Installation](#installation-3)
+  * [Usage](#usage-3)
+  * [OID hints](#oid-hints)
+  * [Working with maps](#working-with-maps)
+  * [Other functions](#other-functions)
 - [pg-copy-jdbc](#pg-copy-jdbc)
 
 <!-- tocstop -->
@@ -286,5 +291,72 @@ above.
 | o.j.t.DateTime  | timestamp        | timestamp |
 
 ## pg-copy
+
+A module to prepare an InputStream to be `COPY`ied into the database. Uses the
+binary format and thus is a bit faster than CSV.
+
+### Installation
+
+Leiningen/Boot:
+
+~~~clojure
+[com.github.igrishaev/pg-copy "0.1.0-SNAPSHOT"]
+~~~
+
+Clojure CLI/deps.edn:
+
+~~~clojure
+com.github.igrishaev/pg-copy {:mvn/version "0.1.0-SNAPSHOT"}
+~~~
+
+### Usage
+
+The `pg.copy` namespace provides a set of functions related to the `COPY`
+Postgres operator.
+
+The main `data->input-stream` function takes data and returns an input stream
+that is passed to `CopyManager`. The data must be a sequence of sequences each
+of the same size. The stream contains a binary payload that Postgres knows how
+to parse. Assuming you have a table with `bigint`, `text` and `bool` fileds,
+here is how an input string might look like:
+
+~~~clojure
+(def data
+  [[1 "User 1" true]
+   [2 "User 2" false]
+   [3 "User 3" nil]])
+
+(def input
+  (data->input-stream data))
+
+(def sql-copy
+  "COPY users(id, name, active) FROM STDIN WITH BINARY")
+
+(def copy-mgr
+  (new CopyManager <tcp-conn>))
+
+(.copyIn copy-mgr sql-copy input)
+~~~
+
+If the data matches the table, you can skip the columns in the COPY expression
+ans type just `COPY users FROM`. But they are mandatory when you insert a
+partial subset of columns in another order:
+
+~~~clojure
+(def data
+  [["User 1" 1]
+   ["User 2" 2]])
+
+...
+
+(def sql-copy
+  "COPY users(name, id) FROM STDIN WITH BINARY")
+~~~
+
+### OID hints
+
+### Working with maps
+
+### Other functions
 
 ## pg-copy-jdbc
