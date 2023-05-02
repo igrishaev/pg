@@ -20,6 +20,9 @@ the code are now shipped as separated packages and might be useful for someone.
   * [Extending the encoding rules](#extending-the-encoding-rules)
   * [Default OIDs](#default-oids)
 - [pg-joda-time](#pg-joda-time)
+  * [Installation](#installation-2)
+  * [Usage](#usage-2)
+  * [Table of Types and OIDs](#table-of-types-and-oids)
 - [pg-copy](#pg-copy)
 - [pg-copy-jdbc](#pg-copy-jdbc)
 
@@ -216,7 +219,71 @@ Let's try the opposite: copy the output and restore the origin string:
 
 ### Default OIDs
 
+When no OID is passed, it's nil. Thus, you must specify one more method for the
+`[Type, nil]` pair. This method is used when the `encode` function is called
+with only one argument.
+
+To keep the code short, there is a shortcut `set-default` in `pg.encode.bin`
+that takes a type, an OID and clones the method declared for this pair into the
+`[Type nil]` pair. The corresponding `[Type OID]` method should be declared in
+advance or you'll get an exception.
+
+Here is an example for the Integer type. It has tree pairs for int8, int4 and
+int2, and the int4 case is set as default.
+
+~~~clojure
+(defmethod -encode [Integer oid/int8]
+  [value oid opt]
+  (-encode (long value) oid opt))
+
+(defmethod -encode [Integer oid/int4]
+  [value oid opt]
+  (array/arr32 value))
+
+(defmethod -encode [Integer oid/int2]
+  [value oid opt]
+  (-encode (short value) oid opt))
+
+(set-default Integer oid/int4)
+~~~
+
 ## pg-joda-time
+
+[joda-time]: https://www.joda.org/joda-time/
+
+Extends the encoding protocols with [Joda Time][joda-time] types.
+
+### Installation
+
+Leiningen/Boot:
+
+~~~clojure
+[com.github.igrishaev/pg-joda-time "0.1.0-SNAPSHOT"]
+~~~
+
+Clojure CLI/deps.edn:
+
+~~~clojure
+com.github.igrishaev/pg-joda-time {:mvn/version "0.1.0-SNAPSHOT"}
+~~~
+
+### Usage
+
+Import the `pg.joda-time` namespace to extend the `-encode` protocol mentioned
+above.
+
+~~~clojure
+(encode (new org.joda.time.DateTime))
+[0, 2, -99, -79, 88, 15, 48, -128]
+~~~
+
+### Table of Types and OIDs
+
+| Clojure         | Postgres         | Default   |
+|-----------------|------------------|-----------|
+| o.j.t.LocalDate | date             | date      |
+| o.j.t.LocalTime | time             | time      |
+| o.j.t.DateTime  | timestamp        | timestamp |
 
 ## pg-copy
 
