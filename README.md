@@ -27,6 +27,7 @@ the code are now shipped as separated packages and might be useful for someone.
   * [Installation](#installation-3)
   * [Usage](#usage-3)
   * [OID hints](#oid-hints)
+  * [Hints in metadata](#hints-in-metadata)
   * [Working with maps](#working-with-maps)
   * [Other functions](#other-functions)
 - [pg-copy-jdbc](#pg-copy-jdbc)
@@ -359,7 +360,122 @@ partial subset of columns in another order:
 
 ### OID hints
 
+Imagine you have a column of `integer` in a table. This type consists from 4
+bytes whereas the standard Long type in Java consists from 8 bytes. If you
+encode a Long value and COPY it into Postgres, it will argue on the payload
+saying it's incorrect.
+
+To solve the problem, either you coerce a Long value to Integer or, which is
+better and simpler, specify that the Long column must be encoded as
+Integer. This is know as OID hints.
+
+The `data->input-stream` function accepts a map of options. The `:oids` field
+might be either a vector or a map of Postgres OIDs:
+
+~~~clojure
+(def oids [oid/int4])
+
+(def data
+  [[1 "User 1" true]
+   [2 "User 2" false]
+   [3 "User 3" nil]])
+
+(def input
+  (data->input-stream data {:oids oids}))
+~~~
+
+Above, we specify that the first column (Long values 1, 2, 3) must be encoded as
+4-byte integers.
+
+It's not necessary to specify OIDs for all columns. Internally, the vector is
+passed into the `(get oids i)` form where the `i` is an index of a column. A nil
+OID stands for the default encoding rule.
+
+Another example where you specify the type the third column:
+
+~~~clojure
+(def oids [nil nil oid/int4])
+
+(def data
+  [["User 1" true  1]
+   ["User 2" false 2]
+   ["User 3" nil   3]])
+~~~
+
+You can also use a map of index &rarr; OID where the index starts from zero:
+
+~~~clojure
+(def oids {2 oid/int4})
+
+(def data
+  [["User 1" true  1]
+   ["User 2" false 2]
+   ["User 3" nil   3]])
+~~~
+
+Finally, OID hints might carry not integer OIDs but their names as well, for
+example:
+
+~~~clojure
+[nil nil "int4"]
+
+{2 "int4"}
+~~~
+
+See the `pg.oid` for their names and values.
+
+### Hints in metadata
+
+When the `:oids` field is not passed, the library makes an attempt to fetch the
+hints from the metadata of a matrix. Their field is `:pg/oids`. There is a
+function `with-oids` that supplies a matrix with the type hints as follows:
+
+~~~clojure
+(def data
+  (with-oids
+    [["User 1" true  1]
+     ["User 2" false 2]
+     ["User 3" nil   3]]
+    {2 oid/int4}))
+~~~
+
+Then you passed the data into the `data->input-stream` function without the
+`:oids` option.
+
 ### Working with maps
+
+The code shown above works with matrices although most often we deal with
+maps. The former might be transformed to the latter with a helper function
+called `maps->data`. It takes a seq of maps, the keys to select, and,
+optionally, a map of key => OID for encoding.
+
+~~~clojure
+(def rows
+  [{:name "User 1" :id 1 :active true}
+   {:name "User 2" :id 2 :active false}
+   {:name "User 3" :id 3 :active nil}])
+
+(maps->data rows [:id :name])
+
+([1 "User 1"]
+ [2 "User 2"]
+ [3 "User 3"])
+~~~
+
+An example with the third argument produces the same result but with an
+additional field in its metadata:
+
+~~~clojure
+(maps->data rows [:id :name] {:id "int4"})
+
+(meta *1)
+
+{:pg/oids ["int4" nil]}
+~~~
+
+Since the matrix is already charged with OID hints, there is no need to pass
+them in the `:oids` option.
+
 
 ### Other functions
 
