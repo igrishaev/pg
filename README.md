@@ -39,7 +39,7 @@ the code are now shipped as separated packages and might be useful for someone.
 
 ## pg-common
 
-A set of common modules with utilities and constant. The most important
+A set of common modules with utilities and constants. The most important
 namespace is `pg.oid` which holds the registry of builtin OIDs in Postgres. It
 has been generated out directly from the `pg_type.dat` file stored in the
 official Postgres repository.
