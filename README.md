@@ -474,10 +474,38 @@ additional field in its metadata:
 ~~~
 
 Since the matrix is already charged with OID hints, there is no need to pass
-them in the `:oids` option.
-
+them into the `:oids` option.
 
 ### Other functions
+
+`data->bytes` acts the same but dumps the payload into a byte array:
+
+~~~clojure
+(data->bytes [[1 "User 1" true]])
+
+[80, 71, 67, 79, 80, 89, 10, -1, 13, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0,
+ 0, 8, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 6, 85, 115, 101, 114, 32, 49, 0, 0, 0,
+ 1, 1, -1, -1]
+~~~
+
+`data->file` saves the binary payload into a file:
+
+~~~clojure
+(data->file [[1 "User 1" true]] "out.bin")
+~~~
+
+~~~bash
+> od -c out.bin
+
+0000000    P   G   C   O   P   Y  \n 377  \r  \n  \0  \0  \0  \0  \0  \0
+0000020   \0  \0  \0  \0 001  \0  \0  \0 001 001  \0 001  \0  \0  \0 001
+0000040   \0  \0 001 377 377 377 377 377 377
+~~~
+
+A more general function `data->input-stream` redirects the payload into an
+instance of an `OutputStream`.
+
+All the functions accept an additional map of options with the `:oids` field.
 
 ## pg-copy-jdbc
 
