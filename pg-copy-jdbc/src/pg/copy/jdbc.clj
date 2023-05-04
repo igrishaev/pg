@@ -1,14 +1,14 @@
 (ns pg.copy.jdbc
   (:import
-   java.io.InputStream
    java.sql.Connection
+   java.sql.PreparedStatement
    java.util.ArrayList
+   java.util.Map
    java.util.concurrent.Executors
    java.util.concurrent.ThreadPoolExecutor
+   javax.sql.DataSource
    org.postgresql.copy.CopyManager)
   (:require
-   [next.jdbc :as jdbc]
-   [next.jdbc.result-set :as rs]
    [pg.copy :as copy]))
 
 
@@ -24,12 +24,12 @@
          (.shutdown ~bind)))))
 
 
-(defmacro with-conn [[bind spec] & body]
-  `(let [~bind (jdbc/get-connection ~spec)]
-     (try
-       ~@body
-       (finally
-         (.close ~bind)))))
+(defn get-jdbc-url [{:keys [port
+                            host
+                            dbname]
+                     :or {host "127.0.0.1"
+                          port 5432}}]
+  (format "jdbc:postgresql://%s:%d/%s" host port dbname))
 
 
 (defn copy-in
@@ -40,7 +40,7 @@
 
 
 (defn copy-in-parallel
-  [connectable
+  [^DataSource datasource
    ^String sql
    data
    ^Integer threads
@@ -67,7 +67,7 @@
               (.submit pool
                        ^Callable
                        (fn []
-                         (with-conn [conn connectable]
+                         (with-open [conn (.getConnection datasource)]
                            (let [mgr (new CopyManager conn)
                                  in (copy/data->input-stream chunk' opt)]
                              (.copyIn mgr sql in)))))]
@@ -77,21 +77,33 @@
       (reduce + (map deref futures)))))
 
 
-(defn table-oids
-  ([db table]
-   (table-oids db table "public"))
+(defn enumerate [coll]
+  (map-indexed vector coll))
 
-  ([db table schema]
+
+(defn table-oids
+  ([^Connection conn table]
+   (table-oids conn table "public"))
+
+  ([^Connection conn table schema]
    (let [sqlvec
          (copy/sqlvec-oids table schema)
 
-         result
-         (jdbc/execute! db
-                        sqlvec
-                        {:builder-fn rs/as-unqualified-maps})]
+         [query & args]
+         sqlvec
+
+         ^PreparedStatement stmt
+         (.prepareStatement conn query)
+
+         _
+         (doseq [[i arg] (enumerate args)]
+           (.setString stmt (inc i) arg))
+
+         rs
+         (.executeQuery stmt)]
 
      (reduce
       (fn [acc {:keys [column_name udt_name]}]
         (conj acc [(keyword column_name) udt_name]))
       []
-      result))))
+      (resultset-seq rs)))))

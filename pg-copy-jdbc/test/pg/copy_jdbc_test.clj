@@ -5,6 +5,7 @@
    java.util.Date
    org.joda.time.DateTime
    org.joda.time.LocalDate
+   org.postgresql.jdbc.PgConnection
    org.postgresql.copy.CopyManager)
   (:require
    [clojure.instant :as inst]
@@ -230,7 +231,7 @@
 
 (deftest test-copy-jdbc
 
-  (copy.jdbc/with-conn [conn db-spec]
+  (with-open [conn (jdbc/get-connection db-spec)]
 
     (let [data
           [[1 "hello" true]
@@ -256,8 +257,8 @@
 
 (deftest test-copy-jdbc-parallel
 
-  (let [conn
-        (jdbc/get-connection db-spec)
+  (let [ds
+        (jdbc/get-datasource db-spec)
 
         total
         99999
@@ -276,26 +277,26 @@
         (format "copy %s (a, b, c) from stdin with binary" table)
 
         _
-        (jdbc/execute! conn [sql-table])
+        (jdbc/execute! ds [sql-table])
 
         result
         (copy.jdbc/copy-in-parallel
-         db-spec
+         ds
          sql-copy
          data
          4
          10000
          {:oids {0 oid/int4 1 oid/text 2 oid/bool}})]
 
-    (jdbc/execute! conn [(format "drop table %s" table)])
+    (jdbc/execute! ds [(format "drop table %s" table)])
 
     (is (= result total))))
 
 
 (deftest test-copy-jdbc-parallel-maps
 
-  (let [conn
-        (jdbc/get-connection db-spec)
+  (let [ds
+        (jdbc/get-datasource db-spec)
 
         total
         99
@@ -317,17 +318,17 @@
         (format "copy %s (a, b, c) from stdin with binary" table)
 
         _
-        (jdbc/execute! conn [sql-table])
+        (jdbc/execute! ds [sql-table])
 
         result
         (copy.jdbc/copy-in-parallel
-         db-spec
+         ds
          sql-copy
          data
          4
          5)]
 
-    (jdbc/execute! conn [(format "drop table %s" table)])
+    (jdbc/execute! ds [(format "drop table %s" table)])
 
     (is (= result total))))
 
@@ -346,6 +347,7 @@
 
   (is (= {5 1114}
          (coerce-oids {5 oid/timestamp}))))
+
 
 
 (deftest test-table-oids

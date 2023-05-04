@@ -8,7 +8,6 @@
 
   :dependencies
   [[com.github.igrishaev/pg-copy]
-   [com.github.seancorfield/next.jdbc]
    [org.postgresql/postgresql]]
 
   :parent-project
@@ -24,4 +23,5 @@
   :profiles
   {:test
    {:dependencies
-    [[com.github.igrishaev/pg-joda-time]]}})
+    [[com.github.igrishaev/pg-joda-time]
+     [com.github.seancorfield/next.jdbc]]}})
