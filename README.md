@@ -644,8 +644,8 @@ CSV:
 These tables prove the following rules:
 
 1. The more threads you allocate for COPY, the faster it goes. But it's not
-   linear: doubling the threads from 4 to 8 doens't cuts the time twice.
+   linear: doubling the threads from 4 to 8 doesn't cuts the time twice.
 
-2. Wit a lots of threads, the difference between binary and CSV not
+2. With a lots of threads, the difference between binary and CSV not
    significant. But it **is** when you have only one thread: on 10M rows, the
    binary format beats CSV by 2.5 times.
