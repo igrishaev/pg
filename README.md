@@ -612,7 +612,7 @@ results.
 
 ### Measurements
 
-Let's compare timings. The data was collected on Apple M1 Max 32Gb 10 Cores.
+Let's compare timings. The data was collected on Apple M1 Max 32Gb with 10 Cores.
 
 #### Plain COPY
 
@@ -643,9 +643,9 @@ CSV:
 
 These tables prove the following rules:
 
-1. The more threads you assign for COPY, the faster it goes. But it's not
+1. The more threads you allocate for COPY, the faster it goes. But it's not
    linear: doubling the threads from 4 to 8 doens't cuts the time twice.
 
 2. Wit a lots of threads, the difference between binary and CSV not
-   significant. But it IS when you have only one thread: on 10M rows, the binary
-   format beats CSV by 2.5 times.
+   significant. But it **is** when you have only one thread: on 10M rows, the
+   binary format beats CSV by 2.5 times.
