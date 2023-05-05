@@ -35,6 +35,9 @@ the code are now shipped as separated packages and might be useful for someone.
   * [Usage](#usage-4)
   * [Parallel COPY](#parallel-copy)
   * [Measurements](#measurements)
+    + [Plain COPY](#plain-copy)
+    + [Parallel COPY](#parallel-copy-1)
+    + [Summary](#summary)
 
 <!-- tocstop -->
 
@@ -509,10 +512,140 @@ All the functions accept an additional map of options with the `:oids` field.
 
 ## pg-copy-jdbc
 
+A wrapper on top of `pg-copy` that performs the `COPY` command using the
+Postgres driver. Depends on `[org.postgresql/postgresql "42.2.18"]`.
+
 ### Installation
+
+Leiningen/Boot:
+
+~~~clojure
+[com.github.igrishaev/pg-copy-jdbc "0.1.0-SNAPSHOT"]
+~~~
+
+Clojure CLI/deps.edn:
+
+~~~clojure
+com.github.igrishaev/pg-copy-jdbc {:mvn/version "0.1.0-SNAPSHOT"}
+~~~
 
 ### Usage
 
+The `pg.copy.jdbc` namespace carries a function `copy-in` that takes a
+connection, a SQL expression with COPY, the data to load and the options. The
+connection must be an instance of `org.postgresql.jdbc.PgConnection` but not a
+Clojure map. You can easily get that connection using `next.jdbc`:
+
+~~~clojure
+(with-open [conn (jdbc/get-connection db-spec)]
+  ...)
+~~~
+
+The function returns a number of records have been loaded:
+
+~~~clojure
+(def sql-copy
+  "COPY users (id, name) FROM STDIN WITH BINARY")
+
+(def data
+  [[1 "User 1"]
+   [2 "User 2"]])
+
+(copy-in conn sql-copy data)
+;; 2
+~~~
+
+All the said above about OID hints applies here as well. Say, if the `id`
+column is of the `integer` type but not `bigint`, specify the hint:
+
+~~~clojure
+(copy-in conn sql-copy data {:oids ["int4"]})
+;; or
+(copy-in conn sql-copy (copy/with-oids data {0 oid/int4}))
+~~~
+
 ### Parallel COPY
 
+The `copy-in` function loads the data in one thread which is usually OK. Often
+though you have millions of rows to load which is time consuming. Splitting the
+rows on chunks and loading them in parallel using separate connections might
+save your time.
+
+The `copy-in-parallel` function does it for you. It accepts a `DataSource`
+instance, a SQL expression, the data, the number of threads and the chunk
+size. Under the hood, it creates a new `FixedThreadPool` of the `threads`
+size. For each data chunk, it spawns a new connection that loads that chunk.
+
+The datasource object can be obtained with `next.jdbc` as follows:
+
+~~~clojure
+(let [ds (jdbc/get-datasource db-spec)]
+  ...)
+~~~
+
+Here we COPY the user rows in parallel in 4 threads (and simultaneous
+connections) by 10K rows in each:
+
+~~~clojure
+(def sql-copy
+  "COPY users (id, name) FROM STDIN WITH BINARY")
+
+(def data
+  [[1 "User 1"]
+   [2 "User 2"]
+   ... ;; 10M or so
+   ])
+
+(copy-in-parallel
+ ds
+ sql-copy
+ data
+ 4
+ 10000
+ {:oids {0 oid/int4 1 oid/text 2}})
+
+;; 10M
+~~~
+
+The function returns the total numbers of rows copied summing the intermediate
+results.
+
 ### Measurements
+
+Let's compare timings. The data was collected on Apple M1 Max 32Gb 10 Cores.
+
+#### Plain COPY
+
+| Total | Format | Time, sec |
+|-------|--------|-----------|
+| 10M   | binary | 17.4      |
+| 10M   | CSV    | 51.2      |
+
+#### Parallel COPY
+
+Binary:
+
+| Total | Threads | Chunk | Format | Time, sec |
+|-------|---------|-------|--------|-----------|
+| 10M   | 8       | 10k   | binary | 11.3      |
+| 10M   | 4       | 10k   | binary | 13.7      |
+| 10M   | 1       | 10k   | binary | 28.6      |
+
+CSV:
+
+| Total | Threads | Chunk | Format | Time, sec |
+|-------|---------|-------|--------|-----------|
+| 10M   | 8       | 10k   | CSV    | 10.6      |
+| 10M   | 4       | 10k   | CSV    | 19.9      |
+| 10M   | 1       | 10k   | CSV    | 71.7      |
+
+#### Summary
+
+These tables prove the following rules:
+
+1. The more threads you assign for COPY, the faster it goes. But it's not
+   linear: doubling the threads from 4 to 8 doens't cuts the time twice.
+
+2. Wit a lots of threads, the difference between binary and CSV not
+   significant. But it IS when you have only one thread: on 10M rows, the binary
+   format beats CSV by 2.5 times.
