@@ -1,4 +1,4 @@
-(defproject com.github.igrishaev/pg-encode "0.1.0"
+(defproject com.github.igrishaev/pg-encode "0.1.1-SNAPSHOT"
 
   :description
   "PG data encoding"
