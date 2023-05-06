@@ -3,7 +3,7 @@
 This repository holds a set of packages related to PostgreSQL. This is a
 breakdown of my unsuccessful attempt to write a PostgreSQL client in pure
 Clojure (stored in the `_` directory). Although I didn't achieve the goal, some
-parts of the code are now shipped in separated packages and might be useful for
+parts of the code are now shipped as separated packages and might be useful for
 someone.
 
 At the moment, the most interesting modules are `pg-copy` and `pg-copy-jdbc`
