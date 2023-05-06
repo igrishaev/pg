@@ -53,13 +53,13 @@ official Postgres repository.
 Leiningen/Boot:
 
 ~~~clojure
-[com.github.igrishaev/pg-common "0.1.0-SNAPSHOT"]
+[com.github.igrishaev/pg-common "0.1.0"]
 ~~~
 
 Clojure CLI/deps.edn:
 
 ~~~clojure
-com.github.igrishaev/pg-common {:mvn/version "0.1.0-SNAPSHOT"}
+com.github.igrishaev/pg-common {:mvn/version "0.1.0"}
 ~~~
 
 ### Usage
@@ -75,13 +75,13 @@ date/time types.
 ### Installation
 
 ~~~clojure
-[com.github.igrishaev/pg-encode "0.1.0-SNAPSHOT"]
+[com.github.igrishaev/pg-encode "0.1.0"]
 ~~~
 
 Clojure CLI/deps.edn:
 
 ~~~clojure
-com.github.igrishaev/pg-encode {:mvn/version "0.1.0-SNAPSHOT"}
+com.github.igrishaev/pg-encode {:mvn/version "0.1.0"}
 ~~~
 
 ### Usage
@@ -271,13 +271,13 @@ Extends the encoding protocols with [Joda Time][joda-time] types.
 Leiningen/Boot:
 
 ~~~clojure
-[com.github.igrishaev/pg-joda-time "0.1.0-SNAPSHOT"]
+[com.github.igrishaev/pg-joda-time "0.1.0"]
 ~~~
 
 Clojure CLI/deps.edn:
 
 ~~~clojure
-com.github.igrishaev/pg-joda-time {:mvn/version "0.1.0-SNAPSHOT"}
+com.github.igrishaev/pg-joda-time {:mvn/version "0.1.0"}
 ~~~
 
 ### Usage
@@ -308,13 +308,13 @@ binary format and thus is a bit faster than CSV.
 Leiningen/Boot:
 
 ~~~clojure
-[com.github.igrishaev/pg-copy "0.1.0-SNAPSHOT"]
+[com.github.igrishaev/pg-copy "0.1.0"]
 ~~~
 
 Clojure CLI/deps.edn:
 
 ~~~clojure
-com.github.igrishaev/pg-copy {:mvn/version "0.1.0-SNAPSHOT"}
+com.github.igrishaev/pg-copy {:mvn/version "0.1.0"}
 ~~~
 
 ### Usage
@@ -520,13 +520,13 @@ Postgres driver. Depends on `[org.postgresql/postgresql "42.2.18"]`.
 Leiningen/Boot:
 
 ~~~clojure
-[com.github.igrishaev/pg-copy-jdbc "0.1.0-SNAPSHOT"]
+[com.github.igrishaev/pg-copy-jdbc "0.1.0"]
 ~~~
 
 Clojure CLI/deps.edn:
 
 ~~~clojure
-com.github.igrishaev/pg-copy-jdbc {:mvn/version "0.1.0-SNAPSHOT"}
+com.github.igrishaev/pg-copy-jdbc {:mvn/version "0.1.0"}
 ~~~
 
 ### Usage

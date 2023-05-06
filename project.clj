@@ -14,8 +14,7 @@
   {"releases" {:url "https://repo.clojars.org" :creds :gpg}}
 
   :release-tasks
-  [
-   ;; ["vcs" "assert-committed"]
+  [["vcs" "assert-committed"]
    ["sub" "test"]
    ["sub" "change" "version" "leiningen.release/bump-version" "release"]
    ["change" "version" "leiningen.release/bump-version" "release"]
