@@ -14,12 +14,16 @@
   {"releases" {:url "https://repo.clojars.org" :creds :gpg}}
 
   :release-tasks
-  [["vcs" "assert-committed"]
-   ["test"]
+  [
+   ;; ["vcs" "assert-committed"]
+   ["sub" "test"]
+   ["sub" "change" "version" "leiningen.release/bump-version" "release"]
    ["change" "version" "leiningen.release/bump-version" "release"]
    ["vcs" "commit"]
    ["vcs" "tag" "--no-sign"]
-   ["deploy"]
+   ["sub" "with-profile" "uberjar" "install"]
+   ["sub" "with-profile" "uberjar" "deploy"]
+   ["sub" "change" "version" "leiningen.release/bump-version"]
    ["change" "version" "leiningen.release/bump-version"]
    ["vcs" "commit"]
    ["vcs" "push"]]
@@ -29,11 +33,11 @@
    [exoscale/lein-replace "0.1.1"]]
 
   :dependencies
-  [[com.github.igrishaev/pg-common :version]
-   [com.github.igrishaev/pg-encode :version]
-   [com.github.igrishaev/pg-copy :version]
-   [com.github.igrishaev/pg-copy-jdbc :version]
-   [com.github.igrishaev/pg-joda-time :version]]
+  [[com.github.igrishaev/pg-common]
+   [com.github.igrishaev/pg-encode]
+   [com.github.igrishaev/pg-copy]
+   [com.github.igrishaev/pg-copy-jdbc]
+   [com.github.igrishaev/pg-joda-time]]
 
   :sub
   ["pg-common"
