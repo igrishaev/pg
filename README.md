@@ -1,9 +1,13 @@
 # PG: Postgres-related libraries for Clojure
 
-This repository holds a set of packages related to PostgreSQL. This a breakdown
-of my (unsuccessful) attempt to write a PostgreSQL client in pure Clojure
-(stored in the `_` directory). Although I didn't achieve the goal, some parts of
-the code are now shipped as separated packages and might be useful for someone.
+This repository holds a set of packages related to PostgreSQL. This is a
+breakdown of my unsuccessful attempt to write a PostgreSQL client in pure
+Clojure (stored in the `_` directory). Although I didn't achieve the goal, some
+parts of the code are now shipped in separated packages and might be useful for
+someone.
+
+At the moment, the most interesting modules are `pg-copy` and `pg-copy-jdbc`
+that `COPY` the data using the binary Postgres format which is faster than CSV.
 
 ## Table of Contents
 
@@ -44,9 +48,9 @@ the code are now shipped as separated packages and might be useful for someone.
 ## pg-common
 
 A set of common modules with utilities and constants. The most important
-namespace is `pg.oid` which holds the registry of builtin OIDs in Postgres. It
-has been generated out directly from the `pg_type.dat` file stored in the
-official Postgres repository.
+namespace is `pg.oid` which is a registry of builtin OIDs in Postgres. It has
+been generated out directly from the `pg_type.dat` file stored in the official
+Postgres repository.
 
 ### Installation
 
@@ -64,7 +68,7 @@ com.github.igrishaev/pg-common {:mvn/version "0.1.0"}
 
 ### Usage
 
-That's unlikely you'll need that package directly as the rest depend on it.
+That's unlikely you'll need that package directly.
 
 ## pg-encode
 
