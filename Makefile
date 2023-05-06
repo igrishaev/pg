@@ -1,6 +1,9 @@
 
 all: sub-install sub-test
 
+sub-release:
+	lein sub release
+
 sub-install:
 	lein sub install
 

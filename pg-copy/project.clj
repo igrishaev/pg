@@ -13,6 +13,7 @@
   {:path "../project.clj"
    :inherit [:deploy-repositories
              :license
+             :release-tasks
              :managed-dependencies
              :plugins
              :repositories
