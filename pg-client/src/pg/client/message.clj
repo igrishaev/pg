@@ -12,91 +12,75 @@
 
 
 (defrecord AuthenticationOk
-    [^Keyword tag
-     ^Integer status])
+    [^Integer status])
 
 
 (defrecord AuthenticationKerberosV5
-    [^Keyword tag
-     ^Integer status])
+    [^Integer status])
 
 
 (defrecord AuthenticationCleartextPassword
-    [^Keyword tag
-     ^Integer status])
+    [^Integer status])
 
 
 (defrecord AuthenticationMD5Password
-    [^Keyword tag
-     ^Integer status
+    [^Integer status
      ^bytes salt])
 
 
 (defrecord AuthenticationSCMCredential
-    [^Keyword tag
-     ^Integer status])
+    [^Integer status])
 
 
 (defrecord AuthenticationGSS
-    [^Keyword tag
-     ^Integer status])
+    [^Integer status])
 
 
 (defrecord AuthenticationGSSContinue
-    [^Keyword tag
-     ^Integer status
+    [^Integer status
      ^bytes auth])
 
 
 (defrecord AuthenticationSSPI
-    [^Keyword tag
-     ^Integer status])
+    [^Integer status])
 
 
 (defrecord AuthenticationSASL
-    [^Keyword tag
-     ^Integer status
+    [^Integer status
      ^Set sasl-types])
 
 
 (defrecord AuthenticationSASL
-    [^Keyword tag
-     ^Integer status
+    [^Integer status
      ^Set sasl-types])
 
 
 (defrecord AuthenticationSASLContinue
-    [^Keyword tag
-     ^Integer status
+    [^Integer status
      ^String server-first-message])
 
 
 (defrecord AuthenticationSASLFinal
-    [^Keyword tag
-     ^Integer status
+    [^Integer status
      ^String server-final-message])
 
 
 (defrecord ReadyForQuery
-    [^Keyword tag
-     ^Character tx-status])
+    [^Character tx-status])
 
 
 (defrecord BackendKeyData
-    [^Keyword tag
-     ^Integer pid
+    [^Integer pid
      ^Integer secret-key])
 
 
 (defrecord RowDescription
-    [^Keyword tag
-     ^Integer column-count
+    [^Integer column-count
      ^List columns])
 
 
 (defrecord ParameterStatus
-    [^Keyword tag
-     ^String param
+    [^String param
      ^Object value])
 
 
@@ -106,96 +90,43 @@
 
 
 (defrecord ErrorResponse
-    [^Keyword tag
-     ^List errors])
+    [^List errors])
 
 
 (defrecord NoticeResponse
-    [^Keyword tag
-     ^List messages])
+    [^List messages])
 
 
 (defrecord EmptyQueryResponse
-    [^Keyword tag])
+    [])
 
 
 (defrecord DataRow
-    [^Keyword tag
+    [^List values])
+
+
+(defrecord NoData [])
+
+
+(defrecord RowColumn
+    [^Integer index
+     ^String  name
+     ^Integer table-oid
+     ^Short   column-oid
+     ^Integer type-oid
+     ^Short   type-len
+     ^Integer type-mod
+     ^Short   format])
+
+
+(defrecord RowDescription
+    [^Integer column-count
      ^List columns])
 
 
-(defrecord NoData
-    [^Keyword tag])
+(defrecord CommandComplete
+    [^String tag])
 
 
 (defn ready-for-query? [message]
   (instance? ReadyForQuery message))
-
-
-
-
-
-
-
-
-(defrecord Result
-    [connection
-
-     Rows
-     RowDescription])
-
-
-
-(defmulti -handle
-  (fn [result message]
-    (:tag message)))
-
-
-(defmethod -handle :ErrorResponse
-  [{:as result :keys [connection]}
-   {:as message :keys [tag]}]
-  #_
-  (let [response
-        (send-message conn response)]
-    result))
-
-
-(defmethod -handle :ErrorResponse
-  [{:as result :keys [connection]} {:as message :keys [tag]}]
-  #_
-  (let [response
-        (send-message conn response)]
-    result))
-
-
-(defmethod -handle :AuthenticationSASLContinue
-  [{:as result :keys [connection]}
-   message]
-  #_
-  (let [response
-        (send-message conn response)]
-    result))
-
-
-
-#_
-(defn foobar [{:as result :keys [connection]}
-              {:as message :keys [tag]}]
-
-  (case tag
-
-    :ErrorResponse
-    (assoc result :ErrorResponse message)
-
-    :RowDescription
-    (assoc result
-           :Rows (transient [])
-           :RowDescription message)
-
-    :DataRow
-    (let [row (decode-row RowDescription message)]
-      (update result :Rows conj! row)))
-
-
-
-  )

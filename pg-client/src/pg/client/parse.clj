@@ -2,6 +2,7 @@
   (:import
    [pg.client.message
     AuthenticationOk
+    CommandComplete
     AuthenticationKerberosV5
     AuthenticationCleartextPassword
     AuthenticationMD5Password
@@ -9,12 +10,15 @@
     AuthenticationGSS
     ErrorResponse
     ErrorNode
+    RowDescription
+    RowColumn
+    DataRow
     ParameterStatus
     BackendKeyData
     ReadyForQuery])
   (:require
-   [pg.client.message :as message]
    [pg.client.bb :as bb]
+   [pg.client.message :as message]
    [pg.error :as e]))
 
 
@@ -35,24 +39,24 @@
     (case status
 
       0
-      (new AuthenticationOk :AuthenticationOk status)
+      (new AuthenticationOk status)
 
       2
-      (new AuthenticationKerberosV5 :AuthenticationKerberosV5 status)
+      (new AuthenticationKerberosV5 status)
 
       3
-      (new AuthenticationCleartextPassword :AuthenticationCleartextPassword status)
+      (new AuthenticationCleartextPassword status)
 
       5
       (let [salt
             (bb/read-bytes bb 4)]
-        (new AuthenticationMD5Password :AuthenticationMD5Password status salt))
+        (new AuthenticationMD5Password status salt))
 
       6
-      (new AuthenticationSCMCredential :AuthenticationSCMCredential status)
+      (new AuthenticationSCMCredential status)
 
       7
-      (new AuthenticationGSS :AuthenticationGSS status)
+      (new AuthenticationGSS status)
 
       ;; 8
       ;; {:type :AuthenticationGSSContinue
@@ -120,7 +124,7 @@
 
                 (recur (conj acc error))))))]
 
-    (new ErrorResponse :ErrorResponse errors)))
+    (new ErrorResponse errors)))
 
 
 (defn- coerce-value [value]
@@ -136,7 +140,7 @@
   (let [param (-> bb bb/read-cstring)
         value (-> bb bb/read-cstring coerce-value)]
 
-    (new ParameterStatus :ParameterStatus param value)))
+    (new ParameterStatus param value)))
 
 
 (defmethod -parse \K [_ bb]
@@ -147,9 +151,59 @@
         secret-key
         (bb/read-int32 bb)]
 
-    (new BackendKeyData :BackendKeyData pid secret-key)))
+    (new BackendKeyData pid secret-key)))
 
 
 (defmethod -parse \Z [_ bb]
   (let [tx-status (char (bb/read-byte bb))]
-    (new ReadyForQuery :ReadyForQuery tx-status)))
+    (new ReadyForQuery tx-status)))
+
+
+(defmethod -parse \T [_ bb]
+
+  (let [column-count
+        (bb/read-int16 bb)
+
+        columns
+        (loop [i 0
+               acc! (transient [])]
+          (if (= i column-count)
+            (persistent! acc!)
+            (recur
+             (inc i)
+             (conj! acc!
+                    (new RowColumn
+                         i
+                         (bb/read-cstring bb)
+                         (bb/read-int32 bb)
+                         (bb/read-int16 bb)
+                         (bb/read-int32 bb)
+                         (bb/read-int16 bb)
+                         (bb/read-int32 bb)
+                         (bb/read-int16 bb))))))]
+
+    (new RowDescription column-count columns)))
+
+
+(defmethod -parse \D [_ bb]
+
+  (let [value-count
+        (bb/read-int16 bb)
+
+        values
+        (loop [i 0
+               acc! (transient [])]
+          (if (= i value-count)
+            (persistent! acc!)
+            (let [len (bb/read-int32 bb)
+                  col (when-not (= len -1)
+                        (bb/read-bytes bb len))]
+              (recur (inc i)
+                     (conj! acc! col)))))]
+
+    (new DataRow values)))
+
+
+(defmethod -parse \C [_ bb]
+  (let [tag (bb/read-cstring bb)]
+    (new CommandComplete tag)))

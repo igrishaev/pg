@@ -1,15 +1,24 @@
 (ns pg.client.handle
   (:import
-   pg.client.result.Result
-   pg.client.connection.Connection)
+   pg.client.connection.Connection
+   [pg.client.message
+    AuthenticationOk
+    DataRow
+    CommandComplete
+    RowDescription
+    ParameterStatus
+    BackendKeyData
+    ReadyForQuery]
+   pg.client.result.Result)
   (:require
-   [pg.error :as e]
-   [pg.client.connection :as connection]))
+   [pg.client.result :as result]
+   [pg.client.connection :as connection]
+   [pg.error :as e]))
 
 
 (defmulti -handle
   (fn [^Result result message]
-    (:tag message)))
+    (type message)))
 
 
 (defmethod -handle :default
@@ -17,12 +26,12 @@
   (e/error! "Cannot handle a message: %s" message))
 
 
-(defmethod -handle :AuthenticationOk
+(defmethod -handle AuthenticationOk
   [^Result result _]
   result)
 
 
-(defmethod -handle :ParameterStatus
+(defmethod -handle ParameterStatus
   [^Result result message]
 
   (let [{:keys [^Connection connection]}
@@ -36,7 +45,7 @@
   result)
 
 
-(defmethod -handle :BackendKeyData
+(defmethod -handle BackendKeyData
   [^Result result message]
 
   (let [{:keys [^Connection connection]}
@@ -51,7 +60,7 @@
   result)
 
 
-(defmethod -handle :ReadyForQuery
+(defmethod -handle ReadyForQuery
   [^Result result message]
 
   (let [{:keys [^Connection connection]}
@@ -63,3 +72,22 @@
     (connection/set-tx-status connection tx-status))
 
   result)
+
+
+(defmethod -handle RowDescription
+  [^Result result message]
+  (result/add-RowDescription result message))
+
+
+(defmethod -handle DataRow
+  [^Result result message]
+  (result/add-DataRow result message))
+
+
+(defmethod -handle CommandComplete
+  [^Result result message]
+  (result/add-CommandComplete result message))
+
+
+(defn handle-messages [^Result result messages]
+  (reduce -handle result messages))

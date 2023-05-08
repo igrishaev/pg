@@ -148,10 +148,10 @@
 
   (vec (message-seq -c))
 
-  (def -q (compose/query "select 1 as foo"))
+  (def -q (compose/query "select 1 as foo; select 2 as bar"))
 
   (send-message -c -q)
 
-  (vec (message-seq -c))
+  (run! println (message-seq -c))
 
   )

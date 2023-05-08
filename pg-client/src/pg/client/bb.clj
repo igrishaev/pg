@@ -12,6 +12,10 @@
   `(.. ~(with-meta bb {:tag `ByteBuffer}) (rewind)))
 
 
+(defn read-int16 [^ByteBuffer bb]
+  (.getShort bb))
+
+
 (defmacro allocate [size]
   `(ByteBuffer/allocate ~size))
 
