@@ -41,6 +41,7 @@
   :sub
   ["pg-common"
    "pg-encode"
+   "pg-decode"
    "pg-copy"
    "pg-copy-jdbc"
    "pg-joda-time"]
@@ -48,6 +49,7 @@
   :managed-dependencies
   [[com.github.igrishaev/pg-common :version]
    [com.github.igrishaev/pg-encode :version]
+   [com.github.igrishaev/pg-decode :version]
    [com.github.igrishaev/pg-copy :version]
    [com.github.igrishaev/pg-copy-jdbc :version]
    [com.github.igrishaev/pg-joda-time :version]
