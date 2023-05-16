@@ -6,11 +6,6 @@
    java.nio.ByteBuffer))
 
 
-(defprotocol IMessage
-  (--parse [this bb])
-  )
-
-
 (defrecord AuthenticationOk
     [^Integer status])
 

@@ -207,3 +207,7 @@
 (defmethod -parse \C [_ bb]
   (let [tag (bb/read-cstring bb)]
     (new CommandComplete tag)))
+
+
+(defn parse [tag body]
+  (-parse tag body))

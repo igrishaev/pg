@@ -1,6 +1,5 @@
 (ns pg.client.handle
   (:import
-   pg.client.connection.Connection
    [pg.client.message
     AuthenticationOk
     DataRow
@@ -9,34 +8,33 @@
     RowDescription
     ParameterStatus
     BackendKeyData
-    ReadyForQuery]
-   pg.client.result.Result)
+    ReadyForQuery])
   (:require
-   [pg.client.result :as result]
-   [pg.client.connection :as connection]
+   [pg.client.proto.connection :as connection]
+   [pg.client.proto.result :as result]
    [pg.error :as e]))
 
 
 (defmulti -handle
-  (fn [^Result result message]
+  (fn [result message]
     (type message)))
 
 
 (defmethod -handle :default
-  [^Result result message]
+  [result message]
   (e/error! "Cannot handle a message: %s" message))
 
 
 (defmethod -handle AuthenticationOk
-  [^Result result _]
+  [result _]
   result)
 
 
 (defmethod -handle ParameterStatus
-  [^Result result message]
+  [result message]
 
-  (let [{:keys [^Connection connection]}
-        result
+  (let [connection
+        (result/get-connection result)
 
         {:keys [param value]}
         message]
@@ -47,10 +45,10 @@
 
 
 (defmethod -handle BackendKeyData
-  [^Result result message]
+  [result message]
 
-  (let [{:keys [^Connection connection]}
-        result
+  (let [connection
+        (result/get-connection result)
 
         {:keys [pid secret-key]}
         message]
@@ -62,38 +60,38 @@
 
 
 (defmethod -handle ReadyForQuery
-  [^Result result message]
+  [result message]
 
-  (let [{:keys [^Connection connection]}
-        result
+  (let [connection
+        (result/get-connection result)
 
         {:keys [tx-status]}
         message]
 
     (connection/set-tx-status connection tx-status))
 
-  (reduced result))
+  result)
 
 
 (defmethod -handle RowDescription
-  [^Result result message]
+  [result message]
   (result/add-RowDescription result message))
 
 
 (defmethod -handle DataRow
-  [^Result result message]
+  [result message]
   (result/add-DataRow result message))
 
 
 (defmethod -handle CommandComplete
-  [^Result result message]
+  [result message]
   (result/add-CommandComplete result message))
 
 
 (defmethod -handle ErrorResponse
-  [^Result result message]
+  [result message]
   (result/add-ErrorResponse result message))
 
 
-(defn handle [^Result result messages]
+(defn handle [result messages]
   (reduce -handle result messages))

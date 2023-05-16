@@ -1,14 +1,12 @@
-(ns pg.client.connection
-  (:import
-   pg.client.message.ReadyForQuery
-   pg.client.message.ErrorResponse
-   pg.client.message.AuthenticationOk)
+(ns pg.client.impl.connection
   (:require
-   [pg.client.message :as message]
+   [pg.client.proto.connection :as connection]
+   [pg.client.proto.result :as result]
+   [pg.client.impl.result :as impl.result]
+   [pg.client.message]
    [pg.error :as e]
    [pg.client.parse :as parse]
    [pg.client.handle :as handle]
-   [pg.client.result :as result]
    [pg.client.compose :as compose]
    [pg.client.bb :as bb])
   (:import
@@ -17,7 +15,10 @@
    java.util.Map
    java.util.HashMap
    java.net.InetSocketAddress
-   java.nio.channels.SocketChannel))
+   java.nio.channels.SocketChannel
+   pg.client.message.ReadyForQuery
+   pg.client.message.ErrorResponse
+   pg.client.message.AuthenticationOk))
 
 
 (defn read-bb [^SocketChannel ch ^ByteBuffer bb]
@@ -49,43 +50,6 @@
         (cons (first s) (take-until pred (rest s))))))))
 
 
-(defprotocol IConnection
-
-  (set-pid [this pid])
-
-  (get-pid [this])
-
-  (set-secret-key [this secret-key])
-
-  (get-secret-key [this])
-
-  (set-tx-status [this tx-status])
-
-  (get-tx-status [this])
-
-  (set-parameter [this param value])
-
-  (get-server-encoding [this])
-
-  (get-client-encoding [this])
-
-  (get-parameter [this param])
-
-  (read-message [this])
-
-  (read-messages [this])
-
-  (read-messages-until [this set-classes])
-
-  (send-message [this bb])
-
-  (authenticate [this])
-
-  (initiate [this])
-
-  (query [this str-sql]))
-
-
 (deftype Connection
     [^Map -config
      ^InetSocketAddress -addr
@@ -93,7 +57,7 @@
      ^Map -params
      ^Map -state]
 
-  IConnection
+  connection/IConnection
 
   (set-pid [this pid]
     (.put -state "pid" pid))
@@ -125,6 +89,9 @@
   (get-client-encoding [this]
     (or (.get -params "client_encoding") "UTF-8"))
 
+  (make-result [this]
+    (impl.result/result this))
+
   (send-message [this bb]
 
     (let [written (.write -ch (bb/rewind bb))
@@ -153,17 +120,17 @@
         (read-bb -ch bb-body)
         (bb/rewind bb-body)
 
-        (parse/-parse tag bb-body))))
+        (parse/parse tag bb-body))))
 
   (read-messages [this]
-    (lazy-seq (cons (read-message this)
-                    (read-messages this))))
+    (lazy-seq (cons (connection/read-message this)
+                    (connection/read-messages this))))
 
   (read-messages-until [this set-classes]
     (let [pred
           (fn [msg]
             (contains? set-classes (type msg)))]
-      (take-until pred (read-messages this))))
+      (take-until pred (connection/read-messages this))))
 
   (authenticate [this]
 
@@ -174,22 +141,22 @@
           (compose/startup database user)
 
           result
-          (result/result this)
+          (connection/make-result this)
 
           messages
-          (read-messages-until this #{AuthenticationOk ErrorResponse})]
+          (connection/read-messages-until this #{AuthenticationOk ErrorResponse})]
 
-      (send-message this bb)
+      (connection/send-message this bb)
 
       (handle/handle result messages)))
 
   (initiate [this]
 
     (let [messages
-          (read-messages-until this #{ReadyForQuery})
+          (connection/read-messages-until this #{ReadyForQuery})
 
           result
-          (result/result this)]
+          (connection/make-result this)]
 
       (handle/handle result messages)))
 
@@ -199,12 +166,12 @@
           (compose/query str-sql)
 
           messages
-          (read-messages-until this #{ReadyForQuery})
+          (connection/read-messages-until this #{ReadyForQuery})
 
           result
-          (result/result this)]
+          (connection/make-result this)]
 
-      (send-message this bb)
+      (connection/send-message this bb)
 
       (-> result
           (handle/handle messages)
@@ -246,10 +213,10 @@
                     :password "ivan"
                     :database "ivan"}))
 
-  (authenticate -c)
+  (connection/authenticate -c)
 
-  (initiate -c)
+  (connection/initiate -c)
 
-  (def -r (query -c "select 1 as foo; select 2 as bar"))
+  (def -r (connection/query -c "select 1 as foo; select 2 as bar"))
 
   )

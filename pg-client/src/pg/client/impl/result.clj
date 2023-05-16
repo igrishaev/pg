@@ -1,13 +1,10 @@
-(ns pg.client.result
+(ns pg.client.impl.result
   (:import
    java.util.List
    java.util.Map)
   (:require
+   [pg.client.proto.result :as result]
    [pg.decode.txt :as txt]))
-
-
-(def vconj
-  (fnil conj []))
 
 
 (defn decode-row [RowDescription DataRow]
@@ -50,69 +47,58 @@
           (recur (inc i) res'))))))
 
 
-(defprotocol IResult
-
-  (add-RowDescription [this RowDescription])
-
-  (add-DataRow [this DataRow])
-
-  (add-ErrorResponse [this ErrorResponse])
-
-  (add-CommandComplete [this CommandComplete])
-
-  (complete [this]))
-
-
 (defrecord Result
-    [^Connection connection
+    [connection
      ^Integer index
      ^List list-RowDescription
      ^List list-DataRow
      ^List list-CommandComplete
      ^List list-ErrorResponse]
 
-  IResult
+    result/IResult
 
-  (add-RowDescription [this RowDescription]
-    (let [index (inc index)]
+    (get-connection [this]
+      connection)
+
+    (add-RowDescription [this RowDescription]
+      (let [index (inc index)]
+        (-> this
+            (update :list-RowDescription conj RowDescription)
+            (update :list-DataRow conj [])
+            (update :index inc))))
+
+    (add-DataRow [this DataRow]
+
+      (let [RowDescription
+            (peek list-RowDescription)
+
+            row
+            (decode-row RowDescription DataRow)]
+
+        (update-in this
+                   [:list-DataRow index]
+                   conj
+                   row)))
+
+    (add-ErrorResponse [this ErrorResponse]
+      (update this :ErrorResponse conj ErrorResponse))
+
+    (add-CommandComplete [this CommandComplete]
       (-> this
-          (update :list-RowDescription conj RowDescription)
-          (update :list-DataRow conj [])
-          (update :index inc))))
+          (update :list-CommandComplete conj CommandComplete)))
 
-  (add-DataRow [this DataRow]
+    (complete [this]
 
-    (let [RowDescription
-          (peek list-RowDescription)
+      (cond
 
-          row
-          (decode-row RowDescription DataRow)]
+        (first list-ErrorResponse)
+        (throw (first list-ErrorResponse))
 
-      (update-in this
-               [:list-DataRow index]
-               conj
-               row
-               #_DataRow)))
+        (zero? index)
+        (first list-DataRow)
 
-  (add-ErrorResponse [this ErrorResponse]
-    (update this :ErrorResponse conj ErrorResponse))
-
-  (add-CommandComplete [this CommandComplete]
-    (-> this
-        (update :list-CommandComplete conj CommandComplete)))
-
-  (complete [this]
-
-    (cond
-
-      (first list-ErrorResponse)
-      (throw (first list-ErrorResponse))
-
-      (zero? index)
-      (first list-DataRow)
-
-      (pos? index)
-      list-DataRow)))
+        (pos? index)
+        list-DataRow)))
 
 
 (defn result [connection]
