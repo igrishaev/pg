@@ -4,6 +4,7 @@
    [pg.client.message
     AuthenticationOk
     DataRow
+    ErrorResponse
     CommandComplete
     RowDescription
     ParameterStatus
@@ -87,6 +88,11 @@
 (defmethod -handle CommandComplete
   [^Result result message]
   (result/add-CommandComplete result message))
+
+
+(defmethod -handle ErrorResponse
+  [^Result result message]
+  (result/add-ErrorResponse result message))
 
 
 (defn handle [^Result result messages]

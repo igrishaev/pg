@@ -206,7 +206,9 @@
 
       (send-message this bb)
 
-      (handle/handle result messages)))
+      (-> result
+          (handle/handle messages)
+          (result/complete))))
 
   Closeable
 
