@@ -1,10 +1,7 @@
 (ns pg.client.result
   (:import
    java.util.List
-   java.util.Map
-   pg.client.connection.Connection)
-  (:require
-   [pg.client.connection :as connection]))
+   java.util.Map))
 
 
 (def vconj
@@ -22,40 +19,34 @@
 
 (defrecord Result
     [^Connection connection
-     ^Integer result-count
-     ^Map index->RowDescription
-     ^Map index->DataRow
-     ^Map index->CommandComplete]
+     ^Integer index
+     ^List list-RowDescription
+     ^List list-DataRow
+     ^List list-CommandComplete]
 
   IResult
 
   (add-RowDescription [this RowDescription]
-    (let [index (inc result-count)]
+    (let [index (inc index)]
       (-> this
-          (update-in [:index->RowDescription index]
-                     update
-                     vconj
-                     RowDescription)
-          (assoc :result-count index))))
+          (update :list-RowDescription conj RowDescription)
+          (update :list-DataRow conj [])
+          (update :index inc))))
 
   (add-DataRow [this DataRow]
     (update-in this
-               [:index->RowDescription result-count]
-               update
-               vconj
+               [:list-DataRow index]
+               conj
                DataRow))
 
   (add-CommandComplete [this CommandComplete]
-    (update-in this
-               [:index->CommandComplete result-count]
-               update
-               vconj
-               CommandComplete)))
+    (-> this
+        (update :list-CommandComplete conj CommandComplete))))
 
 
-(defn result [^Connection connection]
+(defn result [connection]
   (map->Result {:connection connection
-                :result-count 0
-                :index->RowDescription {}
-                :index->DataRow {}
-                :index->CommandComplete {}}))
+                :index -1
+                :list-RowDescription []
+                :list-DataRow []
+                :list-CommandComplete []}))

@@ -126,7 +126,3 @@
 
 (defrecord CommandComplete
     [^String tag])
-
-
-(defn ready-for-query? [message]
-  (instance? ReadyForQuery message))

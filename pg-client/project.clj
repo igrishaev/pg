@@ -8,7 +8,8 @@
 
   :dependencies
   [[com.github.igrishaev/pg-common]
-   [com.github.igrishaev/pg-encode]]
+   [com.github.igrishaev/pg-encode]
+   [com.github.igrishaev/pg-decode]]
 
   :parent-project
   {:path "../project.clj"

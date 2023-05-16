@@ -1,8 +1,14 @@
 (ns pg.client.connection
+  (:import
+   pg.client.message.ReadyForQuery
+   pg.client.message.ErrorResponse
+   pg.client.message.AuthenticationOk)
   (:require
    [pg.client.message :as message]
    [pg.error :as e]
    [pg.client.parse :as parse]
+   [pg.client.handle :as handle]
+   [pg.client.result :as result]
    [pg.client.compose :as compose]
    [pg.client.bb :as bb])
   (:import
@@ -17,6 +23,30 @@
 (defn read-bb [^SocketChannel ch ^ByteBuffer bb]
   (while (not (zero? (bb/remaining bb)))
     (.read ch bb)))
+
+
+(defn take-until
+  "Returns a lazy sequence of successive items from coll until
+  (pred item) returns true, including that item. pred must be
+  free of side-effects. Returns a transducer when no collection
+  is provided."
+  {:added "1.7"
+   :static true}
+  ([pred]
+   (fn [rf]
+     (fn
+       ([] (rf))
+       ([result] (rf result))
+       ([result input]
+        (if (pred input)
+          (ensure-reduced (rf result input))
+          (rf result input))))))
+  ([pred coll]
+   (lazy-seq
+    (when-let [s (seq coll)]
+      (if (pred (first s))
+        (cons (first s) nil)
+        (cons (first s) (take-until pred (rest s))))))))
 
 
 (defprotocol IConnection
@@ -35,30 +65,65 @@
 
   (set-parameter [this param value])
 
+  (get-server-encoding [this])
+
+  (get-client-encoding [this])
+
   (get-parameter [this param])
 
   (read-message [this])
 
-  (message-seq [this])
+  (read-messages [this])
+
+  (read-messages-until [this set-classes])
 
   (send-message [this bb])
 
-  (authenticate [this]))
+  (authenticate [this])
+
+  (initiate [this])
+
+  (query [this str-sql]))
 
 
 (deftype Connection
     [^Map -config
      ^InetSocketAddress -addr
      ^SocketChannel -ch
-     ^Map -params]
+     ^Map -params
+     ^Map -state]
 
   IConnection
+
+  (set-pid [this pid]
+    (.put -state "pid" pid))
+
+  (get-pid [this]
+    (.get -state "pid"))
+
+  (set-secret-key [this secret-key]
+    (.put -state "secret-key" secret-key))
+
+  (get-secret-key [this]
+    (.get -state "secret-key"))
+
+  (set-tx-status [this tx-status]
+    (.put -state "tx-status" tx-status))
+
+  (get-tx-status [this]
+    (.get -state "tx-status"))
 
   (set-parameter [this param value]
     (.put -params param value))
 
   (get-parameter [this param]
     (.get -params param))
+
+  (get-server-encoding [this]
+    (or (.get -params "server_encoding") "UTF-8"))
+
+  (get-client-encoding [this]
+    (or (.get -params "client_encoding") "UTF-8"))
 
   (send-message [this bb]
 
@@ -90,12 +155,15 @@
 
         (parse/-parse tag bb-body))))
 
-  (message-seq [this]
-    (lazy-seq
-     (let [message (read-message this)]
-       (if (message/ready-for-query? message)
-         [message]
-         (cons message (message-seq this))))))
+  (read-messages [this]
+    (lazy-seq (cons (read-message this)
+                    (read-messages this))))
+
+  (read-messages-until [this set-classes]
+    (let [pred
+          (fn [msg]
+            (contains? set-classes (type msg)))]
+      (take-until pred (read-messages this))))
 
   (authenticate [this]
 
@@ -103,9 +171,42 @@
           -config
 
           bb
-          (compose/startup database user)]
+          (compose/startup database user)
 
-      (send-message this bb)))
+          result
+          (result/result this)
+
+          messages
+          (read-messages-until this #{AuthenticationOk ErrorResponse})]
+
+      (send-message this bb)
+
+      (handle/handle result messages)))
+
+  (initiate [this]
+
+    (let [messages
+          (read-messages-until this #{ReadyForQuery})
+
+          result
+          (result/result this)]
+
+      (handle/handle result messages)))
+
+  (query [this str-sql]
+
+    (let [bb
+          (compose/query str-sql)
+
+          messages
+          (read-messages-until this #{ReadyForQuery})
+
+          result
+          (result/result this)]
+
+      (send-message this bb)
+
+      (handle/handle result messages)))
 
   Closeable
 
@@ -130,7 +231,8 @@
          config
          addr
          ch
-         params)))
+         (new HashMap)
+         (new HashMap))))
 
 
 #_
@@ -144,14 +246,8 @@
 
   (authenticate -c)
 
-  (def -m (read-message -c))
+  (initiate -c)
 
-  (vec (message-seq -c))
-
-  (def -q (compose/query "select 1 as foo; select 2 as bar"))
-
-  (send-message -c -q)
-
-  (run! println (message-seq -c))
+  (def -r (query -c "select 1 as foo; select 2 as bar"))
 
   )

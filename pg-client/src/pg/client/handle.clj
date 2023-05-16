@@ -55,7 +55,7 @@
         message]
 
     (connection/set-pid connection pid)
-    (connection/set-secret-key connection pid))
+    (connection/set-secret-key connection secret-key))
 
   result)
 
@@ -71,7 +71,7 @@
 
     (connection/set-tx-status connection tx-status))
 
-  result)
+  (reduced result))
 
 
 (defmethod -handle RowDescription
@@ -89,5 +89,5 @@
   (result/add-CommandComplete result message))
 
 
-(defn handle-messages [^Result result messages]
+(defn handle [^Result result messages]
   (reduce -handle result messages))
