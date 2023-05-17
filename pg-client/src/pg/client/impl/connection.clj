@@ -1,24 +1,23 @@
 (ns pg.client.impl.connection
   (:require
-   [pg.client.proto.connection :as connection]
-   [pg.client.proto.result :as result]
-   [pg.client.impl.result :as impl.result]
-   [pg.client.message]
-   [pg.error :as e]
-   [pg.client.parse :as parse]
-   [pg.client.handle :as handle]
+   [pg.client.bb :as bb]
    [pg.client.compose :as compose]
-   [pg.client.bb :as bb])
+   [pg.client.handle :as handle]
+   [pg.client.impl.result :as result]
+   [pg.client.message]
+   [pg.client.parse :as parse]
+   [pg.client.proto.connection :as connection]
+   [pg.error :as e])
   (:import
-   java.nio.ByteBuffer
    java.io.Closeable
-   java.util.Map
-   java.util.HashMap
    java.net.InetSocketAddress
+   java.nio.ByteBuffer
    java.nio.channels.SocketChannel
-   pg.client.message.ReadyForQuery
+   java.util.HashMap
+   java.util.Map
+   pg.client.message.AuthenticationOk
    pg.client.message.ErrorResponse
-   pg.client.message.AuthenticationOk))
+   pg.client.message.ReadyForQuery))
 
 
 (defn read-bb [^SocketChannel ch ^ByteBuffer bb]
@@ -89,9 +88,6 @@
   (get-client-encoding [this]
     (or (.get -params "client_encoding") "UTF-8"))
 
-  (make-result [this]
-    (impl.result/result this))
-
   (send-message [this bb]
 
     (let [written (.write -ch (bb/rewind bb))
@@ -141,13 +137,12 @@
           (compose/startup database user)
 
           result
-          (connection/make-result this)
+          (result/result this)
 
           messages
           (connection/read-messages-until this #{AuthenticationOk ErrorResponse})]
 
       (connection/send-message this bb)
-
       (handle/handle result messages)))
 
   (initiate [this]
@@ -156,7 +151,7 @@
           (connection/read-messages-until this #{ReadyForQuery})
 
           result
-          (connection/make-result this)]
+          (result/result this)]
 
       (handle/handle result messages)))
 
@@ -169,13 +164,10 @@
           (connection/read-messages-until this #{ReadyForQuery})
 
           result
-          (connection/make-result this)]
+          (result/result this)]
 
       (connection/send-message this bb)
-
-      (-> result
-          (handle/handle messages)
-          (result/complete))))
+      (handle/handle result messages)))
 
   Closeable
 

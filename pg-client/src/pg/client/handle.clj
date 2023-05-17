@@ -94,4 +94,5 @@
 
 
 (defn handle [result messages]
-  (reduce -handle result messages))
+  (-> (reduce -handle result messages)
+      (result/complete)))

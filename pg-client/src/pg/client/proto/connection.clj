@@ -34,6 +34,4 @@
 
   (initiate [this])
 
-  (query [this str-sql])
-
-  (make-result [this]))
+  (query [this str-sql]))
