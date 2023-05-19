@@ -48,7 +48,7 @@
         (new PasswordMessage hashed-password)
 
         bb
-        (message/to-bb message)]
+        (message/to-bb message connection)]
 
     (connection/send-message connection bb))
 

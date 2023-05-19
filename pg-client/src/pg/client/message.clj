@@ -5,6 +5,7 @@
    clojure.lang.Keyword
    java.nio.ByteBuffer)
   (:require
+   [pg.client.proto.connection :as connection]
    [pg.client.proto.message :as message]
    [pg.client.codec :as codec]
    [pg.client.bb :as bb]))
@@ -89,7 +90,31 @@
 
 
 (defrecord ErrorResponse
-    [^List errors])
+    [^List errors]
+
+  message/IMessage
+
+  (from-bb [this bb connection]
+
+    (let [encoding
+          (connection/get-server-encoding connection)
+
+          errors
+          (loop [acc []]
+            (let [field-tag (bb/read-byte bb)]
+              (if (zero? field-tag)
+                acc
+                (let [field-text
+                      (bb/read-cstring bb encoding)
+
+                      error
+                      (new ErrorNode
+                           (char field-tag)
+                           field-text)]
+
+                  (recur (conj acc error))))))]
+
+      (assoc this :errors errors))))
 
 
 (defrecord NoticeResponse
@@ -132,10 +157,15 @@
 
   message/IMessage
 
-  (to-bb [this]
-    (let [len
+  (to-bb [this connection]
+
+    (let [encoding
+          (connection/get-client-encoding connection)
+
+          len
           (+ 4 (codec/bytes-count password) 1)]
+
       (doto (bb/allocate (inc len))
         (bb/write-byte \p)
         (bb/write-int32 len)
-        (bb/write-cstring password)))))
+        (bb/write-cstring password encoding)))))
