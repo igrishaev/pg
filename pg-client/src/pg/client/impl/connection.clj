@@ -207,8 +207,8 @@
 
   (def -c (connect {:host "127.0.0.1"
                     :port 15432
-                    :user "ivan"
-                    :password "ivan"
+                    :user "foobar"
+                    :password "foobar"
                     :database "ivan"}))
 
   (connection/authenticate -c)
