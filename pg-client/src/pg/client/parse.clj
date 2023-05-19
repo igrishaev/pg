@@ -18,6 +18,7 @@
     ReadyForQuery])
   (:require
    [pg.client.bb :as bb]
+   [pg.client.proto.connection :as connection]
    [pg.client.message :as message]
    [pg.error :as e]))
 
@@ -28,11 +29,11 @@
 
 
 (defmethod -parse :default
-  [^Character tag bb]
+  [^Character tag connection bb]
   (e/error! "Cannot parse a message, tag: %s" tag))
 
 
-(defmethod -parse \R [_ bb]
+(defmethod -parse \R [_ connection bb]
 
   (let [status (int (bb/read-int32 bb))]
 
@@ -107,15 +108,18 @@
 ))
 
 
-(defmethod -parse \E [_ bb]
+(defmethod -parse \E [_ connection bb]
 
-  (let [errors
+  (let [encoding
+        (connection/get-server-encoding connection)
+
+        errors
         (loop [acc []]
           (let [field-tag (bb/read-byte bb)]
             (if (zero? field-tag)
               acc
               (let [field-text
-                    (bb/read-cstring bb)
+                    (bb/read-cstring bb encoding)
 
                     error
                     (new ErrorNode
@@ -209,5 +213,5 @@
     (new CommandComplete tag)))
 
 
-(defn parse [tag body]
-  (-parse tag body))
+(defn parse [tag connection bb]
+  (-parse tag connection bb))

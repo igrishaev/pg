@@ -18,9 +18,11 @@
 
   (get-server-encoding [this])
 
-  (get-client-encoding [this])
+  (get-client-encoding ^String [this])
 
   (get-parameter [this param])
+
+  (write-message [this items])
 
   (get-password [this])
 

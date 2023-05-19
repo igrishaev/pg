@@ -34,3 +34,23 @@
       (bb/write-byte \Q)
       (bb/write-int32 len)
       (bb/write-cstring (codec/str->bytes query)))))
+
+
+(defn query2 [^String query]
+  [\Q query])
+
+
+(defn startup2
+
+  (^ByteBuffer [^String database ^String user]
+   (startup database user 196608))
+
+  (^ByteBuffer [^String database ^String user ^Integer protocol-version]
+
+   [nil
+    protocol-version
+    "user"
+    user
+    "database"
+    database
+    (byte 0)]))

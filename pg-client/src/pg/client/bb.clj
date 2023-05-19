@@ -33,9 +33,9 @@
 
 
 (defn write-cstring
-  [^ByteBuffer bb ^bytes string]
+  [^ByteBuffer bb ^String string ^String encoding]
   (doto bb
-    (write-bytes string)
+    (write-bytes (.getBytes string encoding))
     (write-byte 0)))
 
 
@@ -80,20 +80,15 @@
     buf))
 
 
-(defn read-cstring
-
-  (^String [^ByteBuffer bb]
-   (read-cstring bb "UTF-8"))
-
-  (^String [^ByteBuffer bb ^String encoding]
-   (let [out (new ByteArrayOutputStream)]
-     (loop []
-       (let [b (.get bb)]
-         (if (zero? b)
-           (.toString out encoding)
-           (do
-             (.write out b)
-             (recur))))))))
+(defn read-cstring ^String [^ByteBuffer bb ^String encoding]
+  (let [out (new ByteArrayOutputStream)]
+    (loop []
+      (let [b (.get bb)]
+        (if (zero? b)
+          (.toString out encoding)
+          (do
+            (.write out b)
+            (recur)))))))
 
 
 (defmacro read-int32 [^ByteBuffer bb]
