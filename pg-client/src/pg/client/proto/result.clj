@@ -8,6 +8,10 @@
 
   (add-DataRow [this DataRow])
 
+  (set-parameter [this param value])
+
+  (get-parameter [this param])
+
   (add-ErrorResponse [this ErrorResponse])
 
   (add-CommandComplete [this CommandComplete])

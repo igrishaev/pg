@@ -3,7 +3,11 @@
    java.util.Set
    java.util.List
    clojure.lang.Keyword
-   java.nio.ByteBuffer))
+   java.nio.ByteBuffer)
+  (:require
+   [pg.client.proto.message :as message]
+   [pg.client.codec :as codec]
+   [pg.client.bb :as bb]))
 
 
 (defrecord AuthenticationOk
@@ -121,3 +125,17 @@
 
 (defrecord CommandComplete
     [^String tag])
+
+
+(defrecord PasswordMessage
+    [^String password]
+
+  message/IMessage
+
+  (to-bb [this]
+    (let [len
+          (+ 4 (codec/bytes-count password) 1)]
+      (doto (bb/allocate (inc len))
+        (bb/write-byte \p)
+        (bb/write-int32 len)
+        (bb/write-cstring password)))))

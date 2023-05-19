@@ -22,6 +22,10 @@
 
   (get-parameter [this param])
 
+  (get-password [this])
+
+  (get-user [this])
+
   (read-message [this])
 
   (read-messages [this])

@@ -82,6 +82,12 @@
   (get-parameter [this param]
     (.get -params param))
 
+  (get-password [this]
+    (:password -config))
+
+  (get-user [this]
+    (:user -config))
+
   (get-server-encoding [this]
     (or (.get -params "server_encoding") "UTF-8"))
 

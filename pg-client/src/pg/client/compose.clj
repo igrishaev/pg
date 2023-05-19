@@ -1,4 +1,6 @@
 (ns pg.client.compose
+  (:import
+   java.nio.ByteBuffer)
   (:require
    [pg.client.codec :as codec]
    [pg.client.bb :as bb]))
@@ -6,10 +8,10 @@
 
 (defn startup
 
-  ([^String database ^String user]
+  (^ByteBuffer [^String database ^String user]
    (startup database user 196608))
 
-  ([^String database ^String user ^Integer protocol-version]
+  (^ByteBuffer [^String database ^String user ^Integer protocol-version]
    (let [len (+ 4 4 4
                 (codec/bytes-count user) 1
                 1 8 1
@@ -26,7 +28,7 @@
        (bb/write-byte 0)))))
 
 
-(defn query [^String query]
+(defn query ^ByteBuffer [^String query]
   (let [len (+ 4 (codec/bytes-count query) 1)]
     (doto (bb/allocate (inc len))
       (bb/write-byte \Q)

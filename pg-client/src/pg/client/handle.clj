@@ -33,11 +33,6 @@
   result)
 
 
-(defmethod -handle AuthenticationMD5Password
-  [result {:keys [salt]}]
-  result)
-
-
 (defmethod -handle ParameterStatus
   [result message]
 

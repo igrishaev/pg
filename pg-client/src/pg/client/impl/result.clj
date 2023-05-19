@@ -1,7 +1,8 @@
 (ns pg.client.impl.result
   (:import
    java.util.List
-   java.util.Map)
+   java.util.Map
+   java.util.HashMap)
   (:require
    [pg.client.proto.result :as result]
    [pg.decode.txt :as txt]))
@@ -53,9 +54,17 @@
      ^List list-RowDescription
      ^List list-DataRow
      ^List list-CommandComplete
-     ^List list-ErrorResponse]
+     ^List list-ErrorResponse
+     ^Map -params]
 
     result/IResult
+
+    (set-parameter [this param value]
+      (.put -params param value)
+      this)
+
+    (get-parameter [this param]
+      (.get -params param))
 
     (get-connection [this]
       connection)
@@ -107,4 +116,5 @@
                 :list-RowDescription []
                 :list-DataRow []
                 :list-CommandComplete []
-                :list-ErrorResponse []}))
+                :list-ErrorResponse []
+                :-params (new HashMap)}))
