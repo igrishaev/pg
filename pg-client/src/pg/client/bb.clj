@@ -28,7 +28,7 @@
   (.put bb (byte value)))
 
 
-(defn write-bytes [^ByteBuffer bb ^bytes  buf]
+(defn write-bytes [^ByteBuffer bb ^bytes buf]
   (.put bb buf))
 
 
@@ -62,3 +62,7 @@
 
 (defmacro read-int32 [^ByteBuffer bb]
   `(.. ~(with-meta bb {:tag `ByteBuffer}) (getInt)))
+
+
+(defn debug [^ByteBuffer bb]
+  (println (vec (.array bb))))

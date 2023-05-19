@@ -125,9 +125,13 @@
               bb-body
               (bb/allocate len)
 
+              _
+              (read-bb -ch bb-body)
+
               message-empty
               (message/tag->message tag)]
 
+          (bb/rewind bb-body)
           (message/from-bb message-empty bb-body this))))
 
     (read-messages [this]
@@ -273,8 +277,8 @@
 
   (def -c (connect {:host "127.0.0.1"
                     :port 15432
-                    :user "foobar"
-                    :password "foobar"
+                    :user "ivan"
+                    :password "ivan"
                     :database "ivan"}))
 
   (connection/authenticate -c)
