@@ -1,6 +1,9 @@
 (ns pg.client.handle
+  (:require
+   pg.client.message)
   (:import
    [pg.client.message
+    AuthenticationMD5Password
     AuthenticationOk
     DataRow
     ErrorResponse
@@ -27,6 +30,11 @@
 
 (defmethod -handle AuthenticationOk
   [result _]
+  result)
+
+
+(defmethod -handle AuthenticationMD5Password
+  [result {:keys [salt]}]
   result)
 
 
