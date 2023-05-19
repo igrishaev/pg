@@ -4,7 +4,8 @@
    java.util.Map
    java.util.HashMap)
   (:require
-   [pg.client.proto.result :as result]
+   [pg.client.prot.message :as message]
+   [pg.client.prot.result :as result]
    [pg.decode.txt :as txt]))
 
 
@@ -58,6 +59,15 @@
      ^Map -params]
 
     result/IResult
+
+    (handle [this messages]
+      (result/complete
+       (reduce
+        (fn [result message]
+          (println "-------" message)
+          (message/handle message result connection))
+        this
+        messages)))
 
     (set-parameter [this param value]
       (.put -params param value)

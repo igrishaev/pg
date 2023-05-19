@@ -13,18 +13,18 @@
 
   (^ByteBuffer [^String database ^String user ^Integer protocol-version]
    (let [len (+ 4 4 4
-                (codec/bytes-count user) 1
+                (codec/bytes-count user "UTF-8") 1
                 1 8 1
-                (codec/bytes-count database) 1
+                (codec/bytes-count database "UTF-8") 1
                 1)]
 
      (doto (bb/allocate len)
        (bb/write-int32 len)
        (bb/write-int32 protocol-version)
-       (bb/write-cstring (codec/str->bytes "user"))
-       (bb/write-cstring (codec/str->bytes user))
-       (bb/write-cstring (codec/str->bytes "database"))
-       (bb/write-cstring (codec/str->bytes database))
+       (bb/write-cstring "user" "UTF-8")
+       (bb/write-cstring user "UTF-8")
+       (bb/write-cstring "database" "UTF-8")
+       (bb/write-cstring database "UTF-8")
        (bb/write-byte 0)))))
 
 

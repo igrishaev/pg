@@ -1,4 +1,4 @@
-(ns pg.client.proto.connection)
+(ns pg.client.prot.connection)
 
 (defprotocol IConnection
 

@@ -46,11 +46,8 @@
 
 
 (defn bytes-count
-  (^Integer [^String input]
-   (bytes-count input UTF8))
-
-  (^Integer [^String input ^String encoding]
-   (-> input (str->bytes encoding) count)))
+  ^Integer [^String input ^String encoding]
+  (-> input (str->bytes encoding) count))
 
 
 (defn md5 ^bytes [^bytes input]

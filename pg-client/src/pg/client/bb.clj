@@ -39,17 +39,6 @@
     (write-byte 0)))
 
 
-#_
-(defn write-cstring
-  ([^ByteBuffer bb ^String string]
-   (write-cstring bb string "UTF-8"))
-
-  ([^ByteBuffer bb ^String string ^String encoding]
-   (doto bb
-     (write-bytes (.getBytes string encoding))
-     (write-byte 0))))
-
-
 (defn read-byte [^ByteBuffer bb]
   (.get bb))
 
@@ -57,26 +46,6 @@
 (defn read-bytes ^bytes [^ByteBuffer bb len]
   (let [buf (byte-array len)]
     (.get bb buf)
-    buf))
-
-
-#_
-(defn read-cstring ^bytes [^ByteBuffer bb]
-
-  (let [pos
-        (.position bb)
-
-        offset
-        (loop [offset 0]
-          (if (zero? (.get bb (+ pos offset)))
-            offset
-            (recur (inc offset))))
-
-        buf
-        (byte-array offset)]
-
-    (.get bb buf)
-    (.get bb)
     buf))
 
 

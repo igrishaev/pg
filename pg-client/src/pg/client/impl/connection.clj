@@ -1,12 +1,11 @@
 (ns pg.client.impl.connection
   (:require
    [pg.client.bb :as bb]
-   [pg.client.compose :as compose]
-   [pg.client.handle :as handle]
    [pg.client.impl.result :as result]
-   [pg.client.message]
-   [pg.client.parse :as parse]
-   [pg.client.proto.connection :as connection]
+   [pg.client.prot.result :as prot.result]
+   [pg.client.prot.message :as message]
+   pg.client.impl.message
+   [pg.client.prot.connection :as connection]
    [pg.error :as e])
   (:import
    java.io.Closeable
@@ -15,9 +14,11 @@
    java.nio.channels.SocketChannel
    java.util.HashMap
    java.util.Map
-   pg.client.message.AuthenticationOk
-   pg.client.message.ErrorResponse
-   pg.client.message.ReadyForQuery))
+   pg.client.impl.message.Query
+   pg.client.impl.message.StartupMessage
+   pg.client.impl.message.AuthenticationOk
+   pg.client.impl.message.ErrorResponse
+   pg.client.impl.message.ReadyForQuery))
 
 
 (defn read-bb [^SocketChannel ch ^ByteBuffer bb]
@@ -112,6 +113,7 @@
             (bb/allocate 5)]
 
         (read-bb -ch bb-head)
+
         (bb/rewind bb-head)
 
         (let [tag
@@ -121,12 +123,12 @@
               (- (bb/read-int32 bb-head) 4)
 
               bb-body
-              (bb/allocate len)]
+              (bb/allocate len)
 
-          (read-bb -ch bb-body)
-          (bb/rewind bb-body)
+              message-empty
+              (message/tag->message tag)]
 
-          (parse/parse tag this bb-body))))
+          (message/from-bb message-empty bb-body this))))
 
     (read-messages [this]
       (lazy-seq (cons (connection/read-message this)
@@ -143,17 +145,21 @@
       (let [{:keys [database user]}
             -config
 
+            message
+            (new StartupMessage 196608 user database nil)
+
             bb
-            (compose/startup database user)
+            (message/to-bb message this)
 
             result
             (result/result this)
 
+            _ (connection/send-message this bb)
+
             messages
             (connection/read-messages-until this #{AuthenticationOk ErrorResponse})]
 
-        (connection/send-message this bb)
-        (handle/handle result messages)))
+        (prot.result/handle result messages)))
 
     (initiate [this]
 
@@ -163,7 +169,7 @@
             result
             (result/result this)]
 
-        (handle/handle result messages)))
+        (prot.result/handle result messages)))
 
     (write-message [this items]
 
@@ -220,10 +226,11 @@
             (e/error! "Incomplete record to the channel, written: %s, remaining: %s"
                       written remaining)))))
 
-    (query [this str-sql]
+    (query [this sql]
 
       (let [bb
-            (compose/query str-sql)
+            (doto (new Query sql)
+              (message/to-bb this))
 
             messages
             (connection/read-messages-until this #{ReadyForQuery})
@@ -232,7 +239,7 @@
             (result/result this)]
 
         (connection/send-message this bb)
-        (handle/handle result messages)))
+        (prot.result/handle result messages)))
 
     Closeable
 

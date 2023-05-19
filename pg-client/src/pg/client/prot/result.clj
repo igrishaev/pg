@@ -1,6 +1,8 @@
-(ns pg.client.proto.result)
+(ns pg.client.prot.result)
 
 (defprotocol IResult
+
+  (handle [this messages])
 
   (get-connection [this])
 

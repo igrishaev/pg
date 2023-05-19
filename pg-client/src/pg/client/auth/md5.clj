@@ -1,18 +1,18 @@
 (ns pg.client.auth.md5
   (:require
-   pg.client.message
-   [pg.client.handle :as handle]
    [pg.client.bytes :as bytes]
    [pg.client.codec :as codec]
-   [pg.client.proto.message :as message]
-   [pg.client.proto.connection :as connection]
-   [pg.client.proto.result :as result])
+   [pg.client.prot.message :as message]
+   [pg.client.prot.connection :as connection]
+   [pg.client.prot.result :as result])
+  #_
   (:import
    [pg.client.message
     AuthenticationMD5Password
     PasswordMessage]))
 
 
+#_
 (defn hash-password ^String
   [^String user ^String password ^bytes salt]
 
@@ -29,6 +29,7 @@
          (str "md5"))))
 
 
+#_
 (defmethod handle/-handle AuthenticationMD5Password
   [result {:keys [salt]}]
 
