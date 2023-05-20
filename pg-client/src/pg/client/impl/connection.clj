@@ -233,8 +233,8 @@
     (query [this sql]
 
       (let [bb
-            (doto (new Query sql)
-              (message/to-bb this))
+            (-> (new Query sql)
+                (message/to-bb this))
 
             messages
             (connection/read-messages-until this #{ReadyForQuery})

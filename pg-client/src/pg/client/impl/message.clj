@@ -87,10 +87,10 @@
 (defrecord AuthenticationOk
     [^Integer status]
 
-  message/IMessage
+    message/IMessage
 
-  (handle [this result connection]
-    result))
+    (handle [this result connection]
+      result))
 
 
 (defrecord AuthenticationKerberosV5
@@ -406,6 +406,9 @@
     [^List values]
 
   message/IMessage
+
+  (handle [this result connection]
+    (result/add-DataRow result this))
 
   (from-bb [this bb connection]
 
