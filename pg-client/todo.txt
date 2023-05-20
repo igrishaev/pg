@@ -1,0 +1,17 @@
+
+- md5 auth in a separate module
+- plain auth in a separate module
+- debug-messages
+- debug bb
+- result select
+- result insert
+- result insert returning
+- result udpate
+- result delete
+- result multi
+- auth messages multi-method
+- sasl auth in a separate module
+- decode text mm opt
+- decode text encoding
+- main client module
+- json package
