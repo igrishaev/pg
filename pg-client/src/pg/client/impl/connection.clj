@@ -1,5 +1,6 @@
 (ns pg.client.impl.connection
   (:require
+   [pg.client.coll :as coll]
    [pg.client.bb :as bb]
    [pg.client.impl.result :as result]
    [pg.client.prot.result :as prot.result]
@@ -19,35 +20,6 @@
    pg.client.impl.message.AuthenticationOk
    pg.client.impl.message.ErrorResponse
    pg.client.impl.message.ReadyForQuery))
-
-
-(defn read-bb [^SocketChannel ch ^ByteBuffer bb]
-  (while (not (zero? (bb/remaining bb)))
-    (.read ch bb)))
-
-
-(defn take-until
-  "Returns a lazy sequence of successive items from coll until
-  (pred item) returns true, including that item. pred must be
-  free of side-effects. Returns a transducer when no collection
-  is provided."
-  {:added "1.7"
-   :static true}
-  ([pred]
-   (fn [rf]
-     (fn
-       ([] (rf))
-       ([result] (rf result))
-       ([result input]
-        (if (pred input)
-          (ensure-reduced (rf result input))
-          (rf result input))))))
-  ([pred coll]
-   (lazy-seq
-    (when-let [s (seq coll)]
-      (if (pred (first s))
-        (cons (first s) nil)
-        (cons (first s) (take-until pred (rest s))))))))
 
 
 (defn byte? [x]
@@ -100,19 +72,14 @@
       (or (.get -params "client_encoding") "UTF-8"))
 
     (send-message [this bb]
-
-      (let [written (.write -ch (bb/rewind bb))
-            remaining (bb/remaining bb)]
-        (when-not (zero? remaining)
-          (e/error! "Incomplete record to the channel, written: %s, remaining: %s"
-                    written remaining))))
+      (bb/write-to -ch bb))
 
     (read-message [this]
 
       (let [bb-head
             (bb/allocate 5)]
 
-        (read-bb -ch bb-head)
+        (bb/read-from -ch bb-head)
 
         (bb/rewind bb-head)
 
@@ -126,7 +93,7 @@
               (bb/allocate len)
 
               _
-              (read-bb -ch bb-body)
+              (bb/read-from -ch bb-body)
 
               message-empty
               (message/tag->message tag)]
@@ -142,7 +109,7 @@
       (let [pred
             (fn [msg]
               (contains? set-classes (type msg)))]
-        (take-until pred (connection/read-messages this))))
+        (coll/take-until pred (connection/read-messages this))))
 
     (authenticate [this]
 
@@ -174,61 +141,6 @@
             (result/result this)]
 
         (prot.result/handle result messages)))
-
-    (write-message [this items]
-
-      (let [[tag parts]
-            items
-
-            encoding
-            (connection/get-client-encoding this)
-
-            len-payload
-            (reduce
-             (fn [result part]
-               (cond
-
-                 (byte? part)
-                 (inc result)
-
-                 (bytes? part)
-                 (+ result (alength ^bytes part) part)
-
-                 (string? part)
-                 (+ result (alength (.getBytes ^String part encoding)) 1)))
-             0
-             parts)
-
-            len-header
-            (if tag 5 4)
-
-            bb
-            (bb/allocate (+ len-header len-payload))]
-
-        (when tag
-          (bb/write-byte bb tag))
-
-        (bb/write-int32 bb len-payload)
-
-        (doseq [part parts]
-          (cond
-
-            (byte? part)
-            (bb/write-byte part)
-
-            (bytes? part)
-            (bb/write-bytes bb part)
-
-            (string? part)
-            (bb/write-cstring bb part encoding)))
-
-        (bb/rewind bb)
-
-        (let [written (.write -ch bb)
-              remaining (bb/remaining bb)]
-          (when-not (zero? remaining)
-            (e/error! "Incomplete record to the channel, written: %s, remaining: %s"
-                      written remaining)))))
 
     (query [this sql]
 
@@ -285,6 +197,6 @@
 
   (connection/initiate -c)
 
-  (def -r (connection/query -c "select 1 as foo; select 2 as bar"))
+  (do (connection/query -c "select 1 as foo; select 2 as bar"))
 
   )

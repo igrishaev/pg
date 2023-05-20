@@ -1,5 +1,6 @@
 (ns pg.client.bb
   (:import
+   java.nio.channels.SocketChannel
    java.io.ByteArrayOutputStream
    java.nio.ByteBuffer))
 
@@ -66,3 +67,21 @@
 
 (defn debug [^ByteBuffer bb]
   (println (vec (.array bb))))
+
+
+(defn read-from [^SocketChannel ch ^ByteBuffer bb]
+  (while (not (zero? (remaining bb)))
+    (.read ch bb)))
+
+
+(defn write-to [^SocketChannel ch ^ByteBuffer bb]
+  (let [written
+        (.write ch (rewind bb))
+
+        remaining
+        (remaining bb)]
+
+    (when-not (zero? remaining)
+      (throw (ex-info "Incomplete `write-to` operation"
+                      {:written written
+                       :remaining remaining})))))

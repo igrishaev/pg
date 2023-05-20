@@ -22,8 +22,6 @@
 
   (get-parameter [this param])
 
-  (write-message [this items])
-
   (get-password [this])
 
   (get-user [this])
