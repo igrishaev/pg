@@ -479,3 +479,11 @@
     (let [encoding
           (connection/get-client-encoding connection)]
       (bb-encode encoding \Q [query]))))
+
+
+(defrecord Terminate []
+
+  message/IMessage
+
+  (to-bb [this connection]
+    (bb-encode nil \X nil)))

@@ -38,4 +38,6 @@
 
   (initiate [this])
 
-  (query [this str-sql]))
+  (query [this str-sql])
+
+  (terminate [this]))

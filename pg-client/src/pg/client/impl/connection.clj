@@ -16,6 +16,7 @@
    java.util.HashMap
    java.util.Map
    pg.client.impl.message.Query
+   pg.client.impl.message.Terminate
    pg.client.impl.message.StartupMessage
    pg.client.impl.message.AuthenticationOk
    pg.client.impl.message.ErrorResponse
@@ -125,7 +126,8 @@
             result
             (result/result this)
 
-            _ (connection/send-message this bb)
+            _
+            (connection/send-message this bb)
 
             messages
             (connection/read-messages-until this #{AuthenticationOk ErrorResponse})]
@@ -157,6 +159,17 @@
         (connection/send-message this bb)
         (prot.result/handle result messages)))
 
+    (terminate [this]
+
+      (let [bb
+            (-> (new Terminate)
+                (message/to-bb this))]
+
+        (connection/send-message this bb)
+        (.close -ch)
+
+        this))
+
     Closeable
 
     (close [this]
@@ -184,19 +197,26 @@
          (new HashMap))))
 
 
+(defmacro with-connection [[bind config] & body]
+  `(let [~bind (connect ~config)]
+     (try
+       (connection/authenticate ~bind)
+       (connection/initiate ~bind)
+       ~@body
+       (finally
+         (connection/terminate ~bind)))))
+
+
 #_
 (comment
 
-  (def -c (connect {:host "127.0.0.1"
-                    :port 15432
-                    :user "ivan"
-                    :password "ivan"
-                    :database "ivan"}))
+  (def -config {:host "127.0.0.1"
+                :port 15432
+                :user "ivan"
+                :password "ivan"
+                :database "ivan"})
 
-  (connection/authenticate -c)
+  (with-connection [db -config]
+    (connection/query db "select 1 as foo"))
 
-  (connection/initiate -c)
-
-  (do (connection/query -c "select 1 as foo; select 2 as bar"))
-
-  )
+)
