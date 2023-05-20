@@ -11,3 +11,8 @@
 
 
 (defmulti tag->message identity)
+
+
+(defmulti status->message
+  (fn [status bb connection]
+    status))

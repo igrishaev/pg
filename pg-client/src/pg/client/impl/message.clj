@@ -138,77 +138,46 @@
      ^String server-final-message])
 
 
+(defmethod message/status->message 0
+  [status bb connection]
+  (new AuthenticationOk status))
+
+
+(defmethod message/status->message 2
+  [status bb connection]
+  (new AuthenticationKerberosV5 status))
+
+
+(defmethod message/status->message 3
+  [status bb connection]
+  (new AuthenticationCleartextPassword status))
+
+
+(defmethod message/status->message 5
+  [status bb connection]
+  (let [salt (bb/read-bytes bb 4)]
+    (new AuthenticationMD5Password status salt)))
+
+
+(defmethod message/status->message 6
+  [status bb connection]
+  (new AuthenticationSCMCredential status))
+
+
+(defmethod message/status->message 7
+  [status bb connection]
+  (new AuthenticationGSS status))
+
+
 (defrecord AuthenticationResponse
     [^Integer status]
 
-  message/IMessage
+    message/IMessage
 
-  (from-bb [this bb connection]
+    (from-bb [this bb connection]
 
-    (let [status
-          (bb/read-int32 bb)]
-
-      (case status
-
-        0
-        (new AuthenticationOk status)
-
-        2
-        (new AuthenticationKerberosV5 status)
-
-        3
-        (new AuthenticationCleartextPassword status)
-
-        5
-        (let [salt (bb/read-bytes bb 4)]
-          (new AuthenticationMD5Password status salt))
-
-        6
-        (new AuthenticationSCMCredential status)
-
-        7
-        (new AuthenticationGSS status)
-
-        ;; 8
-        ;; {:type :AuthenticationGSSContinue
-        ;;  :status status
-        ;;  :auth (bb/read-rest bb)}
-
-        ;; 9
-        ;; {:type :AuthenticationSSPI
-        ;;  :status status}
-
-        ;; 10
-        ;; {:type :AuthenticationSASL
-        ;;  :status status
-        ;;  :sasl-types
-        ;;  (loop [acc #{}]
-        ;;    (let [item
-        ;;          (-> bb
-        ;;              bb/read-cstring
-        ;;              codec/bytes->str)]
-        ;;      (if (= item "")
-        ;;        acc
-        ;;        (recur (conj acc item)))))}
-
-        ;; 11
-        ;; {:type :AuthenticationSASLContinue
-        ;;  :status status
-        ;;  :server-first-message
-        ;;  (-> bb
-        ;;      bb/read-rest
-        ;;      codec/bytes->str)}
-
-        ;; 12
-        ;; {:type :AuthenticationSASLFinal
-        ;;  :status status
-        ;;  :server-final-message
-        ;;  (-> bb
-        ;;      bb/read-rest
-        ;;      codec/bytes->str)}
-
-        (throw (ex-info "Unknown authentication message"
-                        {:status status}))))))
+      (let [status (bb/read-int32 bb)]
+        (message/status->message status bb connection))))
 
 
 (defmethod message/tag->message \R [_]

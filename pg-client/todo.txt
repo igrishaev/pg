@@ -10,7 +10,6 @@
 - result udpate
 - result delete
 - result multi
-- auth messages multi-method
 - sasl auth in a separate module
 - decode text mm opt
 - decode text encoding
