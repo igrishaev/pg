@@ -4,6 +4,7 @@
 - debug-messages
 - debug bb
 - result select
+- result mutable
 - result insert
 - result insert returning
 - result udpate
@@ -15,3 +16,6 @@
 - decode text encoding
 - main client module
 - json package
+- terminate close
+- handle listen
+- handle norify
