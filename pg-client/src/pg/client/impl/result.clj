@@ -100,7 +100,7 @@
                    row)))
 
     (add-ErrorResponse [this ErrorResponse]
-      (update this :ErrorResponse conj ErrorResponse))
+      (update this :list-ErrorResponse conj ErrorResponse))
 
     (add-CommandComplete [this CommandComplete]
       (-> this
@@ -108,16 +108,18 @@
 
     (complete [this]
 
-      (cond
+      (let [er (first list-ErrorResponse)]
 
-        (first list-ErrorResponse)
-        (throw (first list-ErrorResponse))
+        (cond
 
-        (zero? index)
-        (first list-DataRow)
+          er
+          (throw (ex-info "ErrorResponse" er))
 
-        (pos? index)
-        list-DataRow)))
+          (zero? index)
+          (first list-DataRow)
+
+          (pos? index)
+          list-DataRow))))
 
 
 (defn result [connection]

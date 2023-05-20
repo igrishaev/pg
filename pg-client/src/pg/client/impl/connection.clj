@@ -219,4 +219,15 @@
   (with-connection [db -config]
     (connection/query db "select 1 as foo"))
 
+  (with-connection [db -config]
+    (connection/query db "create table aaa (id serial, title text)"))
+
+  (with-connection [db -config]
+    (connection/query db "select * from aaa"))
+
+  (with-connection [db -config]
+    (connection/query db "insert into aaa (title) values ('123')"))
+
+
+
 )
