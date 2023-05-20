@@ -1,12 +1,13 @@
 (ns pg.client.impl.connection
   (:require
-   [pg.client.coll :as coll]
+   [pg.client.auth.md5]
    [pg.client.bb :as bb]
+   [pg.client.coll :as coll]
+   [pg.client.impl.message]
    [pg.client.impl.result :as result]
-   [pg.client.prot.result :as prot.result]
-   [pg.client.prot.message :as message]
-   pg.client.impl.message
    [pg.client.prot.connection :as connection]
+   [pg.client.prot.message :as message]
+   [pg.client.prot.result :as prot.result]
    [pg.error :as e])
   (:import
    java.io.Closeable
@@ -15,12 +16,12 @@
    java.nio.channels.SocketChannel
    java.util.HashMap
    java.util.Map
-   pg.client.impl.message.Query
-   pg.client.impl.message.Terminate
-   pg.client.impl.message.StartupMessage
    pg.client.impl.message.AuthenticationOk
    pg.client.impl.message.ErrorResponse
-   pg.client.impl.message.ReadyForQuery))
+   pg.client.impl.message.Query
+   pg.client.impl.message.ReadyForQuery
+   pg.client.impl.message.StartupMessage
+   pg.client.impl.message.Terminate))
 
 
 (defn byte? [x]
@@ -212,8 +213,8 @@
 
   (def -config {:host "127.0.0.1"
                 :port 15432
-                :user "ivan"
-                :password "ivan"
+                :user "foo"
+                :password "foo"
                 :database "ivan"})
 
   (with-connection [db -config]

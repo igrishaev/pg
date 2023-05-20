@@ -1,18 +1,15 @@
 (ns pg.client.auth.md5
   (:require
+   [pg.client.bb :as bb]
    [pg.client.bytes :as bytes]
    [pg.client.codec :as codec]
-   [pg.client.prot.message :as message]
+   [pg.client.impl.message]
    [pg.client.prot.connection :as connection]
-   [pg.client.prot.result :as result])
-  #_
+   [pg.client.prot.message :as message])
   (:import
-   [pg.client.message
-    AuthenticationMD5Password
-    PasswordMessage]))
+   pg.client.impl.message.PasswordMessage))
 
 
-#_
 (defn hash-password ^String
   [^String user ^String password ^bytes salt]
 
@@ -29,28 +26,35 @@
          (str "md5"))))
 
 
-#_
-(defmethod handle/-handle AuthenticationMD5Password
-  [result {:keys [salt]}]
+(defrecord AuthenticationMD5Password
+    [^Integer status
+     ^bytes salt]
 
-  (let [connection
-        (result/get-connection result)
+    message/IMessage
 
-        user
-        (connection/get-user connection)
+    (handle [this result connection]
 
-        password
-        (connection/get-password connection)
+      (let [user
+            (connection/get-user connection)
 
-        hashed-password
-        (hash-password user password salt)
+            password
+            (connection/get-password connection)
 
-        message
-        (new PasswordMessage hashed-password)
+            hashed-password
+            (hash-password user password salt)
 
-        bb
-        (message/to-bb message connection)]
+            message
+            (new PasswordMessage hashed-password)
 
-    (connection/send-message connection bb))
+            bb
+            (message/to-bb message connection)]
 
-  result)
+        (connection/send-message connection bb))
+
+      result))
+
+
+(defmethod message/status->message 5
+  [status bb connection]
+  (let [salt (bb/read-bytes bb 4)]
+    (new AuthenticationMD5Password status salt)))

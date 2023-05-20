@@ -41,10 +41,5 @@
           (recur result (inc i)))))))
 
 
-(defn zeros-left [^bytes buf total]
-  (let [diff
-        (- total (alength buf))]
-
-    (if (pos? diff)
-      (concat (byte-array diff) buf)
-      buf)))
+(defmacro byte? [x]
+  `(instance? Byte ~x))

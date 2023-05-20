@@ -10,12 +10,9 @@
    [pg.client.prot.connection :as connection]
    [pg.client.prot.message :as message]
    [pg.client.prot.result :as result]
+   [pg.client.bytes :as bytes]
    [pg.client.codec :as codec]
    [pg.client.bb :as bb]))
-
-
-(defmacro byte? [x]
-  `(instance? Byte ~x))
 
 
 (defn bb-encode ^ByteBuffer [^String encoding tag parts]
@@ -25,7 +22,7 @@
          (fn [result part]
            (cond
 
-             (byte? part)
+             (bytes/byte? part)
              (inc result)
 
              (bytes? part)
@@ -50,7 +47,7 @@
     (doseq [part parts]
       (cond
 
-        (byte? part)
+        (bytes/byte? part)
         (bb/write-byte bb part)
 
         (bytes? part)
@@ -101,11 +98,6 @@
     [^Integer status])
 
 
-(defrecord AuthenticationMD5Password
-    [^Integer status
-     ^bytes salt])
-
-
 (defrecord AuthenticationSCMCredential
     [^Integer status])
 
@@ -151,12 +143,6 @@
 (defmethod message/status->message 3
   [status bb connection]
   (new AuthenticationCleartextPassword status))
-
-
-(defmethod message/status->message 5
-  [status bb connection]
-  (let [salt (bb/read-bytes bb 4)]
-    (new AuthenticationMD5Password status salt)))
 
 
 (defmethod message/status->message 6

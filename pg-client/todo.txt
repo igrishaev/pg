@@ -1,5 +1,4 @@
 
-- md5 auth in a separate module
 - plain auth in a separate module
 - debug-messages
 - debug bb
@@ -18,3 +17,5 @@
 - terminate close
 - handle listen
 - handle norify
+- check conn status
+- transaction macro
