@@ -171,7 +171,7 @@
     Closeable
 
     (close [this]
-      (.close -ch)))
+      (connection/terminate this)))
 
 
 (defn connect [{:as config

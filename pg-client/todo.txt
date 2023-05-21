@@ -13,7 +13,6 @@
 - decode text encoding
 - main client module
 - json package
-- terminate close
 - handle listen
 - handle norify
 - check conn status
