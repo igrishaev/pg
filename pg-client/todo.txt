@@ -13,7 +13,8 @@
 - decode text encoding
 - main client module
 - json package
+- add tests
 - handle listen
-- handle norify
+- handle notify
 - check conn status
 - transaction macro

@@ -1,5 +1,6 @@
 (ns pg.client.impl.connection
   (:require
+   [pg.client.debug :as debug]
    [pg.client.auth.clear]
    [pg.client.auth.md5]
    [pg.client.bb :as bb]
@@ -70,6 +71,7 @@
     (get-client-encoding [this]
       (or (.get -params "client_encoding") "UTF-8"))
 
+    ;; TODO: accept a message!
     (send-message [this bb]
       (bb/write-to -ch bb))
 
@@ -95,10 +97,17 @@
               (bb/read-from -ch bb-body)
 
               message-empty
-              (message/tag->message tag)]
+              (message/tag->message tag)
 
-          (bb/rewind bb-body)
-          (message/from-bb message-empty bb-body this))))
+              _
+              (bb/rewind bb-body)
+
+              message
+              (message/from-bb message-empty bb-body this)]
+
+          (debug/debug-message message ">>>")
+
+          message)))
 
     (read-messages [this]
       (lazy-seq (cons (connection/read-message this)

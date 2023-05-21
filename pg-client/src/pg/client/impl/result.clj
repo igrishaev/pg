@@ -64,7 +64,6 @@
       (result/complete
        (reduce
         (fn [result message]
-          (println "---" message)
           (message/handle message result connection))
         this
         messages)))
