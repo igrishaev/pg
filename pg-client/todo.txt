@@ -1,6 +1,7 @@
 
 - debug-messages
 - debug bb
+- add seconds in debug
 - result select
 - result mutable
 - result insert
