@@ -1,5 +1,4 @@
 
-- plain auth in a separate module
 - debug-messages
 - debug bb
 - result select

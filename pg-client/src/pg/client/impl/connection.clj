@@ -1,5 +1,6 @@
 (ns pg.client.impl.connection
   (:require
+   [pg.client.auth.clear]
    [pg.client.auth.md5]
    [pg.client.bb :as bb]
    [pg.client.coll :as coll]
@@ -22,10 +23,6 @@
    pg.client.impl.message.ReadyForQuery
    pg.client.impl.message.StartupMessage
    pg.client.impl.message.Terminate))
-
-
-(defn byte? [x]
-  (instance? Byte x))
 
 
 (deftype Connection

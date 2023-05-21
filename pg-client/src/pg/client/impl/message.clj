@@ -94,10 +94,6 @@
     [^Integer status])
 
 
-(defrecord AuthenticationCleartextPassword
-    [^Integer status])
-
-
 (defrecord AuthenticationSCMCredential
     [^Integer status])
 
@@ -138,11 +134,6 @@
 (defmethod message/status->message 2
   [status bb connection]
   (new AuthenticationKerberosV5 status))
-
-
-(defmethod message/status->message 3
-  [status bb connection]
-  (new AuthenticationCleartextPassword status))
 
 
 (defmethod message/status->message 6
