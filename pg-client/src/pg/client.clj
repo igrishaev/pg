@@ -24,29 +24,3 @@
 
 (defn query [conn sql]
   (prot.connection/query conn sql))
-
-
-#_
-(comment
-
-  (def -config {:host "127.0.0.1"
-                :port 15432
-                :user "foo"
-                :password "foo"
-                :database "ivan"})
-
-  (with-connection [db -config]
-    (query db "select 1 as foo"))
-
-  (with-connection [db -config]
-    (query db "create table aaa (id serial, title text)"))
-
-  (with-connection [db -config]
-    (query db "select * from aaa"))
-
-  (with-connection [db -config]
-    (query db "insert into aaa (title) values ('123')"))
-
-
-
-  )

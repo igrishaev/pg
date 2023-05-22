@@ -1,8 +1,12 @@
 
 - add tests
+- result mutable
+- field duplicates
+- field keywords
+- array rows
+- rows hashmap
 - protocol constant
 - result select
-- result mutable
 - result insert
 - result insert returning
 - result udpate
