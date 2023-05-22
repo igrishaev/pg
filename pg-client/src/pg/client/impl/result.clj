@@ -10,6 +10,47 @@
    [pg.decode.txt :as txt]))
 
 
+(defn unify-fields [fields]
+
+  (let [field->fields
+        (group-by identity fields)
+
+        len
+        (count fields)]
+
+    (loop [i 0
+           result []
+           field->idx {}]
+
+      (if (= i len)
+        result
+
+        (let [field
+              (get fields i)
+
+              fields
+              (get field->fields field)]
+
+          (if (= 1 (count fields))
+
+            (recur (inc i)
+                   (conj result field)
+                   field->idx)
+
+            (let [idx
+                  (get field->idx field 0)
+
+                  field'
+                  (format "%s_%s" field idx)
+
+                  field->idx'
+                  (assoc field->idx field (inc idx))]
+
+              (recur (inc i)
+                     (conj result field')
+                     field->idx'))))))))
+
+
 (defn decode-row [RowDescription DataRow]
 
   (let [{:keys [column-count
