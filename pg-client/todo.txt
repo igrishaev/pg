@@ -1,6 +1,6 @@
 
-- protocol constant
 - add tests
+- protocol constant
 - result select
 - result mutable
 - result insert

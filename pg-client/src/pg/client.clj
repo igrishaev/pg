@@ -6,7 +6,6 @@
    [pg.client.prot.connection :as prot.connection]))
 
 
-
 (defn get-connection [config]
   (let [conn (impl.connection/connect config)]
     (prot.connection/authenticate conn)
