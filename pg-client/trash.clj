@@ -1,16 +1,15 @@
 
 
-
 (time
- (with-connection [db -config]
-   (doseq [_ (range 10000)]
-     (connection/query db "select * from aaa"))))
+ (client/with-connection [conn CONFIG]
+   (doseq [_ (range 100000)]
+     (client/query conn "select 42 as foo"))))
 
 
 (time
  (let [conn (next.jdbc/get-connection {:dbtype "postgres" :dbname "ivan" :user "ivan" :password "ivan" :port 15432})]
-   (doseq [_ (range 10000)]
-     (next.jdbc/execute! conn ["select * from aaa"]))))
+   (doseq [_ (range 100000)]
+     (next.jdbc/execute! conn ["select 42 as foo"]))))
 
 
 ;; 8
