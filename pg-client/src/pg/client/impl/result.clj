@@ -53,42 +53,30 @@
 
 (defn decode-row [RowDescription DataRow]
 
-  (let [{:keys [column-count
-                columns]}
+  (let [{:keys [columns]}
         RowDescription
 
         {:keys [values]}
-        DataRow]
+        DataRow
 
-    (loop [i 0
-           res {}]
+        result
+        (new ArrayList)]
 
-      (if (= i column-count)
-        res
+    (map (fn [column value]
 
-        (let [column
-              (get columns i)
+           (let [{:keys [name
+                         format
+                         type-oid]}
+                 column]
 
-              value
-              (get values i)
+             (case (int format)
 
-              {:keys [name
-                      format
-                      type-oid]}
-              column
-
-              decoded
-              (case (int format)
-
-                0
-                (let [text
-                      (new String ^bytes value "UTF-8")]
-                  (txt/-decode type-oid text)))
-
-              res'
-              (assoc res name decoded)]
-
-          (recur (inc i) res'))))))
+               0
+               (let [text
+                     (new String ^bytes value "UTF-8")]
+                 (txt/-decode type-oid text)))))
+         columns
+         values)))
 
 
 (deftype Result
@@ -98,7 +86,8 @@
      ^List list-CommandComplete
      ^List list-ErrorResponse
      ^Map map-results
-     ^Map -params]
+     ^Map -params
+     ^List list-unified-fields]
 
   result/IResult
 
@@ -124,13 +113,27 @@
     (set! index (inc index))
     (.add list-RowDescription RowDescription)
     (.put map-results index (transient []))
+    (.add list-unified-fields
+          (->> RowDescription
+               (:columns)
+               (mapv :name)
+               (unify-fields)))
     this)
 
   (add-DataRow [this DataRow]
+
     (let [RowDescription
           (.get list-RowDescription index)
+
+          fields
+          (.get list-unified-fields index)
+
+          values
+          (decode-row RowDescription DataRow)
+
           row
-          (decode-row RowDescription DataRow)]
+          (zipmap fields values)]
+
       (conj! (.get map-results index) row))
     this)
 
@@ -168,4 +171,5 @@
        (new ArrayList)
        (new ArrayList)
        (new HashMap)
-       (new HashMap)))
+       (new HashMap)
+       (new ArrayList)))

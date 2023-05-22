@@ -52,7 +52,7 @@
     (let [res
           (client/query conn "select 1 as id, 2 as id")]
 
-      (is (= 1 res)))))
+      (is (= [{"id_0" 1 "id_1" 2}] res)))))
 
 
 ;; insert
