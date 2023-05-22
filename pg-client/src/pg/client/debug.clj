@@ -2,5 +2,5 @@
 
 
 (defmacro debug-message [message prefix]
-  (when true #_(System/getenv "PG_DEBUG_MESSAGE")
+  (when (System/getenv "PG_DEBUG")
     `(println ~prefix ~message)))

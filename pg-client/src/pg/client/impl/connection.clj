@@ -72,6 +72,7 @@
       (or (.get -params "client_encoding") "UTF-8"))
 
     (send-message [this message]
+      (debug/debug-message message "<<<")
       (let [bb (message/to-bb message this)]
         (bb/write-to -ch bb)))
 

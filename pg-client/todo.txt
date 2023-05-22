@@ -1,7 +1,6 @@
 
-- debug-messages
-- debug bb
-- add seconds in debug
+- protocol constant
+- add tests
 - result select
 - result mutable
 - result insert
@@ -14,8 +13,7 @@
 - decode text encoding
 - main client module
 - json package
-- add tests
-- handle listen
 - handle notify
+- handle notice
 - check conn status
 - transaction macro
