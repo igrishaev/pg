@@ -1,16 +1,13 @@
 (ns pg.client.impl.connection
   (:require
    [pg.client.debug :as debug]
-   [pg.client.auth.clear]
-   [pg.client.auth.md5]
    [pg.client.bb :as bb]
    [pg.client.coll :as coll]
    [pg.client.impl.message]
    [pg.client.impl.result :as result]
    [pg.client.prot.connection :as connection]
    [pg.client.prot.message :as message]
-   [pg.client.prot.result :as prot.result]
-   [pg.error :as e])
+   [pg.client.prot.result :as prot.result])
   (:import
    java.io.Closeable
    java.net.InetSocketAddress
@@ -198,39 +195,3 @@
          ch
          (new HashMap)
          (new HashMap))))
-
-
-(defmacro with-connection [[bind config] & body]
-  `(let [~bind (connect ~config)]
-     (try
-       (connection/authenticate ~bind)
-       (connection/initiate ~bind)
-       ~@body
-       (finally
-         (connection/terminate ~bind)))))
-
-
-#_
-(comment
-
-  (def -config {:host "127.0.0.1"
-                :port 15432
-                :user "foo"
-                :password "foo"
-                :database "ivan"})
-
-  (with-connection [db -config]
-    (connection/query db "select 1 as foo"))
-
-  (with-connection [db -config]
-    (connection/query db "create table aaa (id serial, title text)"))
-
-  (with-connection [db -config]
-    (connection/query db "select * from aaa"))
-
-  (with-connection [db -config]
-    (connection/query db "insert into aaa (title) values ('123')"))
-
-
-
-)

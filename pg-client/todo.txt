@@ -11,7 +11,6 @@
 - sasl auth in a separate module
 - decode text mm opt
 - decode text encoding
-- main client module
 - json package
 - handle notify
 - handle notice
