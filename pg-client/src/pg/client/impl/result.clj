@@ -1,6 +1,7 @@
 (ns pg.client.impl.result
   (:import
    java.util.List
+   java.util.ArrayList
    java.util.Map
    java.util.HashMap)
   (:require
@@ -49,83 +50,81 @@
           (recur (inc i) res'))))))
 
 
-(defrecord Result
+(deftype Result
     [connection
-     ^Integer index
+     ^Integer ^:unsynchronized-mutable index
      ^List list-RowDescription
-     ^List list-DataRow
      ^List list-CommandComplete
      ^List list-ErrorResponse
+     ^Map map-results
      ^Map -params]
 
-    result/IResult
+  result/IResult
 
-    (handle [this messages]
-      (result/complete
-       (reduce
-        (fn [result message]
-          (message/handle message result connection))
-        this
-        messages)))
+  (handle [this messages]
+    (result/complete
+     (reduce
+      (fn [result message]
+        (message/handle message result connection))
+      this
+      messages)))
 
-    (set-parameter [this param value]
-      (.put -params param value)
-      this)
+  (set-parameter [this param value]
+    (.put -params param value)
+    this)
 
-    (get-parameter [this param]
-      (.get -params param))
+  (get-parameter [this param]
+    (.get -params param))
 
-    (get-connection [this]
-      connection)
+  (get-connection [this]
+    connection)
 
-    (add-RowDescription [this RowDescription]
-      (let [index (inc index)]
-        (-> this
-            (update :list-RowDescription conj RowDescription)
-            (update :list-DataRow conj [])
-            (update :index inc))))
+  (add-RowDescription [this RowDescription]
+    (set! index (inc index))
+    (.add list-RowDescription RowDescription)
+    (.put map-results index (transient []))
+    this)
 
-    (add-DataRow [this DataRow]
+  (add-DataRow [this DataRow]
+    (let [RowDescription
+          (.get list-RowDescription index)
+          row
+          (decode-row RowDescription DataRow)]
+      (conj! (.get map-results index) row))
+    this)
 
-      (let [RowDescription
-            (peek list-RowDescription)
+  (add-ErrorResponse [this ErrorResponse]
+    (.add list-ErrorResponse ErrorResponse)
+    this)
 
-            row
-            (decode-row RowDescription DataRow)]
+  (add-CommandComplete [this CommandComplete]
+    (.add list-CommandComplete CommandComplete)
+    this)
 
-        (update-in this
-                   [:list-DataRow index]
-                   conj
-                   row)))
+  (complete [this]
 
-    (add-ErrorResponse [this ErrorResponse]
-      (update this :list-ErrorResponse conj ErrorResponse))
+    (let [er (first list-ErrorResponse)]
 
-    (add-CommandComplete [this CommandComplete]
-      (-> this
-          (update :list-CommandComplete conj CommandComplete)))
+      (cond
 
-    (complete [this]
+        er
+        (throw (ex-info "ErrorResponse" er))
 
-      (let [er (first list-ErrorResponse)]
+        (zero? index)
+        (-> map-results (.get 0) persistent!)
 
-        (cond
-
-          er
-          (throw (ex-info "ErrorResponse" er))
-
-          (zero? index)
-          (first list-DataRow)
-
-          (pos? index)
-          list-DataRow))))
+        (pos? index)
+        (->> map-results
+            (vals)
+            (mapv persistent!))))))
 
 
 (defn result [connection]
-  (map->Result {:connection connection
-                :index -1
-                :list-RowDescription []
-                :list-DataRow []
-                :list-CommandComplete []
-                :list-ErrorResponse []
-                :-params (new HashMap)}))
+  (new Result
+       connection
+       -1
+       (new ArrayList)
+       (new ArrayList)
+       (new ArrayList)
+       (new HashMap)
+       (new HashMap)))

@@ -1,6 +1,4 @@
 
-- add tests
-- result mutable
 - field duplicates
 - field keywords
 - array rows
@@ -12,6 +10,7 @@
 - result udpate
 - result delete
 - result multi
+- result text encoding
 - sasl auth in a separate module
 - decode text mm opt
 - decode text encoding
