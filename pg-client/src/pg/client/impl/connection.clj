@@ -71,9 +71,9 @@
     (get-client-encoding [this]
       (or (.get -params "client_encoding") "UTF-8"))
 
-    ;; TODO: accept a message!
-    (send-message [this bb]
-      (bb/write-to -ch bb))
+    (send-message [this message]
+      (let [bb (message/to-bb message this)]
+        (bb/write-to -ch bb)))
 
     (read-message [this]
 
@@ -127,14 +127,11 @@
             message
             (new StartupMessage 196608 user database nil)
 
-            bb
-            (message/to-bb message this)
-
             result
             (result/result this)
 
             _
-            (connection/send-message this bb)
+            (connection/send-message this message)
 
             messages
             (connection/read-messages-until this #{AuthenticationOk ErrorResponse})]
@@ -153,9 +150,8 @@
 
     (query [this sql]
 
-      (let [bb
-            (-> (new Query sql)
-                (message/to-bb this))
+      (let [message
+            (new Query sql)
 
             messages
             (connection/read-messages-until this #{ReadyForQuery})
@@ -163,16 +159,15 @@
             result
             (result/result this)]
 
-        (connection/send-message this bb)
+        (connection/send-message this message)
         (prot.result/handle result messages)))
 
     (terminate [this]
 
-      (let [bb
-            (-> (new Terminate)
-                (message/to-bb this))]
+      (let [message
+            (new Terminate)]
 
-        (connection/send-message this bb)
+        (connection/send-message this message)
         (.close -ch)
 
         this))

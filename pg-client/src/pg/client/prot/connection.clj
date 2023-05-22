@@ -32,7 +32,7 @@
 
   (read-messages-until [this set-classes])
 
-  (send-message [this bb])
+  (send-message [this message])
 
   (authenticate [this])
 

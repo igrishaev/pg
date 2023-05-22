@@ -19,12 +19,9 @@
           (connection/get-password connection)
 
           message
-          (new PasswordMessage password)
+          (new PasswordMessage password)]
 
-          bb
-          (message/to-bb message connection)]
-
-      (connection/send-message connection bb))
+      (connection/send-message connection message))
 
     result))
 

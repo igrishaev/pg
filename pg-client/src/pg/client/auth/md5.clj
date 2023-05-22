@@ -44,12 +44,9 @@
             (hash-password user password salt)
 
             message
-            (new PasswordMessage hashed-password)
+            (new PasswordMessage hashed-password)]
 
-            bb
-            (message/to-bb message connection)]
-
-        (connection/send-message connection bb))
+        (connection/send-message connection message))
 
       result))
 
