@@ -137,25 +137,31 @@
           values
           (decode-row RowDescription DataRow)
 
-          ;; {:keys [fn-field
-          ;;         reduce-fn
-          ;;         reduce-val
-          ;;         as-vectors?
-          ;;         as-maps?
-          ;;         as-hashmaps?]}
-          ;; opt
+          {:keys [column-count]}
+          RowDescription
+
+          {:keys [
+
+                  ;; reduce-fn
+                  ;; reduce-val
+                  as-vectors?
+                  as-maps?
+                  as-java-maps?
+                  ]}
+          opt
 
           row
           (cond
 
-            ;; as-maps?
-            ;; (zipmap fields values)
+            as-maps?
+            (zipmap fields values)
 
-            ;; as-vectors?
-            ;; values
+            as-vectors?
+            values
 
-            ;; as-hashmaps?
-            ;; (new HashMap)
+            as-java-maps?
+            (doto (new HashMap)
+              (.putAll (zipmap fields values)))
 
             :else
             (zipmap fields values))]
@@ -187,7 +193,6 @@
         (->> map-results
             (vals)
             (mapv persistent!))))))
-
 
 
 (def opt-default

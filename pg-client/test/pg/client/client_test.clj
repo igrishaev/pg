@@ -65,6 +65,27 @@
       (is (= [{:id_0 1 :id_1 2}] res)))))
 
 
+(deftest test-client-as-vectors
+
+  (client/with-connection [conn CONFIG]
+
+    (let [res
+          (client/query conn "select 1 as id, 2 as id" {:as-vectors? true})]
+
+      (is (= [[1 2]] res)))))
+
+
+(deftest test-client-as-java-maps
+
+  (client/with-connection [conn CONFIG]
+
+    (let [res
+          (client/query conn "select 1 as id, 2 as id" {:as-java-maps? true})]
+
+      (is (instance? java.util.HashMap (first res)))
+      (is (= [{:id_0 1 :id_1 2}] res)))))
+
+
 ;; insert
 ;; insert + returning
 ;; update
