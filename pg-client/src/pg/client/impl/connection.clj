@@ -146,7 +146,7 @@
 
         (prot.result/handle result messages)))
 
-    (query [this sql]
+    (query [this sql opt]
 
       (let [message
             (new Query sql)
@@ -155,7 +155,7 @@
             (connection/read-messages-until this #{ReadyForQuery})
 
             result
-            (result/result this)]
+            (result/result this opt)]
 
         (connection/send-message this message)
         (prot.result/handle result messages)))

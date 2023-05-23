@@ -1,6 +1,7 @@
 (ns pg.client.client-test
   (:require
    [pg.client :as client]
+   [clojure.string :as str]
    [clojure.test :refer [deftest is]]))
 
 
@@ -18,8 +19,17 @@
         (client/with-connection [conn CONFIG]
           (client/query conn "select 1 as foo, 'hello' as bar"))]
 
-    (is (= [{"foo" 1 "bar" "hello"}]
+    (is (= [{:foo 1 :bar "hello"}]
            result))))
+
+
+(deftest test-client-fn-column
+
+  (let [result
+        (client/with-connection [conn CONFIG]
+          (client/query conn "select 1 as foo" {:fn-column str/upper-case}))]
+
+    (is (= [{"FOO" 1}] result))))
 
 
 (deftest test-client-reuse-conn
@@ -31,8 +41,8 @@
           res2
           (client/query conn "select 'hello' as bar")]
 
-      (is (= [{"foo" 1}] res1))
-      (is (= [{"bar" "hello"}] res2)))))
+      (is (= [{:foo 1}] res1))
+      (is (= [{:bar "hello"}] res2)))))
 
 
 (deftest test-client-select-multi
@@ -42,7 +52,7 @@
     (let [res
           (client/query conn "select 1 as foo; select 2 as bar")]
 
-      (is (= [[{"foo" 1}] [{"bar" 2}]] res)))))
+      (is (= [[{:foo 1}] [{:bar 2}]] res)))))
 
 
 (deftest test-client-field-duplicates
@@ -52,7 +62,7 @@
     (let [res
           (client/query conn "select 1 as id, 2 as id")]
 
-      (is (= [{"id_0" 1 "id_1" 2}] res)))))
+      (is (= [{:id_0 1 :id_1 2}] res)))))
 
 
 ;; insert

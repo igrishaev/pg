@@ -81,6 +81,7 @@
 
 (deftype Result
     [connection
+     ^Map opt
      ^Integer ^:unsynchronized-mutable index
      ^List list-RowDescription
      ^List list-CommandComplete
@@ -110,14 +111,19 @@
     connection)
 
   (add-RowDescription [this RowDescription]
-    (set! index (inc index))
-    (.add list-RowDescription RowDescription)
-    (.put map-results index (transient []))
-    (.add list-unified-fields
-          (->> RowDescription
-               (:columns)
-               (mapv :name)
-               (unify-fields)))
+
+    (let [{:keys [fn-column]}
+          opt]
+
+      (set! index (inc index))
+      (.add list-RowDescription RowDescription)
+      (.put map-results index (transient []))
+      (.add list-unified-fields
+            (->> RowDescription
+                 (:columns)
+                 (mapv :name)
+                 (unify-fields)
+                 (mapv fn-column))))
     this)
 
   (add-DataRow [this DataRow]
@@ -131,8 +137,28 @@
           values
           (decode-row RowDescription DataRow)
 
+          ;; {:keys [fn-field
+          ;;         reduce-fn
+          ;;         reduce-val
+          ;;         as-vectors?
+          ;;         as-maps?
+          ;;         as-hashmaps?]}
+          ;; opt
+
           row
-          (zipmap fields values)]
+          (cond
+
+            ;; as-maps?
+            ;; (zipmap fields values)
+
+            ;; as-vectors?
+            ;; values
+
+            ;; as-hashmaps?
+            ;; (new HashMap)
+
+            :else
+            (zipmap fields values))]
 
       (conj! (.get map-results index) row))
     this)
@@ -163,13 +189,23 @@
             (mapv persistent!))))))
 
 
-(defn result [connection]
-  (new Result
-       connection
-       -1
-       (new ArrayList)
-       (new ArrayList)
-       (new ArrayList)
-       (new HashMap)
-       (new HashMap)
-       (new ArrayList)))
+
+(def opt-default
+  {:fn-column keyword})
+
+
+(defn result
+  ([connection]
+   (result connection nil))
+
+  ([connection opt]
+   (new Result
+        connection
+        (merge opt-default opt)
+        -1
+        (new ArrayList)
+        (new ArrayList)
+        (new ArrayList)
+        (new HashMap)
+        (new HashMap)
+        (new ArrayList))))

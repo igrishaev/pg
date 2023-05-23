@@ -22,5 +22,10 @@
          (prot.connection/terminate ~bind)))))
 
 
-(defn query [conn sql]
-  (prot.connection/query conn sql))
+(defn query
+
+  ([conn sql]
+   (prot.connection/query conn sql nil))
+
+  ([conn sql opt]
+   (prot.connection/query conn sql opt)))
