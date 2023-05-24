@@ -1,10 +1,8 @@
 
-- result select
-- result insert
-- result insert returning
+- result insert no returning
 - result udpate
 - result delete
-- result multi
+- result mixed
 - result text encoding
 - sasl auth in a separate module
 - decode text mm opt
@@ -13,5 +11,6 @@
 - handle notify
 - handle notice
 - check conn status
+- transaction commands
 - transaction macro
 - catch exceptions
