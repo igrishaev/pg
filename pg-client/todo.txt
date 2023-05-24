@@ -1,8 +1,4 @@
 
-- frame into a protocol
-- result insert no returning
-- result udpate
-- result delete
 - result mixed
 - result text encoding
 - sasl auth in a separate module
