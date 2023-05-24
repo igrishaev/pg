@@ -1,8 +1,9 @@
 (ns pg.client.impl.connection
   (:require
-   [pg.client.debug :as debug]
    [pg.client.bb :as bb]
    [pg.client.coll :as coll]
+   [pg.client.const :as const]
+   [pg.client.debug :as debug]
    [pg.client.impl.message]
    [pg.client.impl.result :as result]
    [pg.client.prot.connection :as connection]
@@ -123,7 +124,11 @@
             -config
 
             message
-            (new StartupMessage 196608 user database nil)
+            (new StartupMessage
+                 const/PROTOCOL-VERSION
+                 user
+                 database
+                 nil)
 
             result
             (result/result this)
