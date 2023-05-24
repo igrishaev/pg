@@ -104,7 +104,6 @@
              res)))))
 
 
-#_
 (deftest test-client-insert-result-no-returning
   (client/with-connection [conn CONFIG]
 
@@ -123,8 +122,61 @@
           res
           (client/query conn query2)]
 
-      (is (= 1
-             res)))))
+      (is (= 2 res)))))
+
+
+(deftest test-client-delete-result
+  (client/with-connection [conn CONFIG]
+
+    (let [table
+          (str (gensym "table"))
+
+          query1
+          (format "create temp table %s (id serial, title text)" table)
+
+          _
+          (client/query conn query1)
+
+          query2
+          (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
+
+          _
+          (client/query conn query2)
+
+          query3
+          (format "delete from %s " table)
+
+          res
+          (client/query conn query3)]
+
+      (is (= 2 res)))))
+
+
+(deftest test-client-update-result
+  (client/with-connection [conn CONFIG]
+
+    (let [table
+          (str (gensym "table"))
+
+          query1
+          (format "create temp table %s (id serial, title text)" table)
+
+          _
+          (client/query conn query1)
+
+          query2
+          (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
+
+          _
+          (client/query conn query2)
+
+          query3
+          (format "update %s set title = 'aaa'" table)
+
+          res
+          (client/query conn query3)]
+
+      (is (= 2 res)))))
 
 
 (deftest test-client-select-multi
