@@ -224,7 +224,8 @@
   message/IMessage
 
   (handle [this result connection]
-    (result/add-RowDescription result this))
+    (doto result
+      (result/add-RowDescription this)))
 
   (from-bb [this bb connection]
 
@@ -302,7 +303,8 @@
   message/IMessage
 
   (handle [this result connection]
-    (result/add-ErrorResponse result this))
+    (doto result
+      (result/add-ErrorResponse this)))
 
   (from-bb [this bb connection]
 
@@ -354,7 +356,8 @@
   message/IMessage
 
   (handle [this result connection]
-    (result/add-DataRow result this))
+    (doto result
+      (result/add-DataRow this)))
 
   (from-bb [this bb connection]
 
@@ -388,7 +391,8 @@
   message/IMessage
 
   (handle [this result connection]
-    (result/add-CommandComplete result this))
+    (doto result
+      (result/add-CommandComplete this)))
 
   (from-bb [this bb connection]
 

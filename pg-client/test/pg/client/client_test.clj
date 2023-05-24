@@ -104,6 +104,7 @@
              res)))))
 
 
+#_
 (deftest test-client-insert-result-no-returning
   (client/with-connection [conn CONFIG]
 

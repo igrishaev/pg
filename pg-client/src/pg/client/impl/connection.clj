@@ -131,7 +131,7 @@
                  nil)
 
             result
-            (result/result this)
+            (result/make-result this)
 
             _
             (connection/send-message this message)
@@ -147,7 +147,7 @@
             (connection/read-messages-until this #{ReadyForQuery})
 
             result
-            (result/result this)]
+            (result/make-result this)]
 
         (prot.result/handle result messages)))
 
@@ -160,7 +160,7 @@
             (connection/read-messages-until this #{ReadyForQuery})
 
             result
-            (result/result this opt)]
+            (result/make-result this opt)]
 
         (connection/send-message this message)
         (prot.result/handle result messages)))

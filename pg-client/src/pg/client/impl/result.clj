@@ -10,6 +10,34 @@
    [pg.decode.txt :as txt]))
 
 
+(defn decode-row [RowDescription DataRow]
+
+  (let [{:keys [columns]}
+        RowDescription
+
+        {:keys [values]}
+        DataRow
+
+        result
+        (new ArrayList)]
+
+    (map (fn [column value]
+
+           (let [{:keys [name
+                         format
+                         type-oid]}
+                 column]
+
+             (case (int format)
+
+               0
+               (let [text
+                     (new String ^bytes value "UTF-8")]
+                 (txt/-decode type-oid text)))))
+         columns
+         values)))
+
+
 (defn unify-fields [fields]
 
   (let [field->fields
@@ -51,45 +79,93 @@
                      field->idx'))))))))
 
 
-(defn decode-row [RowDescription DataRow]
+(defprotocol IFrame
+  (add-RowDescription [this RowDescription])
+  (add-CommandComplete [this CommandComplete])
+  (add-DataRow [this DataRow])
+  (complete [this]))
 
-  (let [{:keys [columns]}
-        RowDescription
 
-        {:keys [values]}
-        DataRow
+(deftype Frame
+    [;; init
+     ^Map  -opts
+     ^List -rows
+     ;; state
+     ^Map  ^:unsynchronized-mutable -RowDescription
+     ^Map  ^:unsynchronized-mutable -CommandComplete
+     ^List ^:unsynchronized-mutable -fields]
 
-        result
-        (new ArrayList)]
+  IFrame
 
-    (map (fn [column value]
+  (add-RowDescription [this RowDescription]
 
-           (let [{:keys [name
-                         format
-                         type-oid]}
-                 column]
+    (set! -RowDescription RowDescription)
 
-             (case (int format)
+    (let [{:keys [fn-column]}
+          -opts
 
-               0
-               (let [text
-                     (new String ^bytes value "UTF-8")]
-                 (txt/-decode type-oid text)))))
-         columns
-         values)))
+          fields
+          (->> RowDescription
+               (:columns)
+               (mapv :name)
+               (unify-fields)
+               (mapv fn-column))]
+
+      (set! -fields fields)))
+
+  (add-CommandComplete [this CommandComplete]
+    (set! -CommandComplete CommandComplete))
+
+  (add-DataRow [this DataRow]
+
+    (let [values
+          (decode-row -RowDescription DataRow)
+
+          {:keys [column-count]}
+          -RowDescription
+
+          {:keys [as-vectors?
+                  as-maps?
+                  as-java-maps?]}
+          -opts
+
+          row
+          (cond
+
+            as-maps?
+            (zipmap -fields values)
+
+            as-vectors?
+            values
+
+            as-java-maps?
+            (doto (new HashMap)
+              (.putAll (zipmap -fields values)))
+
+            :else
+            (zipmap -fields values))]
+
+      (conj! -rows row)))
+
+  (complete [this]
+    (persistent! -rows)))
+
+
+(defn make-frame [opt]
+  (new Frame opt (transient []) nil nil nil))
+
+
+(defn afirst [^List a]
+  (when (-> a .size (> 0))
+    (.get a 0)))
 
 
 (deftype Result
     [connection
-     ^Map opt
-     ^Integer ^:unsynchronized-mutable index
-     ^List list-RowDescription
-     ^List list-CommandComplete
-     ^List list-ErrorResponse
-     ^Map map-results
-     ^Map -params
-     ^List list-unified-fields
-     ^Map has-been-data-row?]
+     ^Map  -opts
+     ^Frame ^:unsynchronized-mutable -frame
+     ^List -frames
+     ^List -list-ErrorResponse]
 
   result/IResult
 
@@ -101,122 +177,55 @@
       this
       messages)))
 
-  (set-parameter [this param value]
-    (.put -params param value)
-    this)
-
-  (get-parameter [this param]
-    (.get -params param))
-
   (get-connection [this]
     connection)
 
   (add-RowDescription [this RowDescription]
-
-    (let [{:keys [fn-column]}
-          opt]
-
-      (set! index (inc index))
-
-      (.add list-RowDescription RowDescription)
-      (.put map-results index (transient []))
-      (.add list-unified-fields
-            (->> RowDescription
-                 (:columns)
-                 (mapv :name)
-                 (unify-fields)
-                 (mapv fn-column))))
-    this)
+    (add-RowDescription -frame RowDescription))
 
   (add-DataRow [this DataRow]
-
-    (let [RowDescription
-          (.get list-RowDescription index)
-
-          fields
-          (.get list-unified-fields index)
-
-          values
-          (decode-row RowDescription DataRow)
-
-          {:keys [column-count]}
-          RowDescription
-
-          {:keys [
-
-                  ;; reduce-fn
-                  ;; reduce-val
-                  as-vectors?
-                  as-maps?
-                  as-java-maps?
-                  ]}
-          opt
-
-          row
-          (cond
-
-            as-maps?
-            (zipmap fields values)
-
-            as-vectors?
-            values
-
-            as-java-maps?
-            (doto (new HashMap)
-              (.putAll (zipmap fields values)))
-
-            :else
-            (zipmap fields values))]
-
-      (conj! (.get map-results index) row))
-    this)
+    (add-DataRow -frame DataRow))
 
   (add-ErrorResponse [this ErrorResponse]
-    (.add list-ErrorResponse ErrorResponse)
-    this)
+    (.add -list-ErrorResponse ErrorResponse))
 
   (add-CommandComplete [this CommandComplete]
-    (.add list-CommandComplete CommandComplete)
-    this)
+    (add-CommandComplete -frame CommandComplete)
+    (.add -frames -frame)
+    (set! -frame (make-frame -opts)))
 
   (complete [this]
 
-    (let [er (first list-ErrorResponse)]
+    (let [er (afirst -list-ErrorResponse)]
 
       (cond
 
         er
         (throw (ex-info "ErrorResponse" er))
 
-        (zero? index)
-        (-> map-results (.get 0) persistent!)
+        (= (.size -frames) 1)
+        (-> -frames afirst complete)
 
-        (pos? index)
-        (->> map-results
-            (vals)
-            (mapv persistent!))
-
-        (neg? index)
-        42))))
+        (> (.size -frames) 1)
+        (mapv complete -frames)))))
 
 
 (def opt-default
   {:fn-column keyword})
 
 
-(defn result
+(defn make-result
   ([connection]
-   (result connection nil))
+   (make-result connection nil))
 
   ([connection opt]
-   (new Result
-        connection
-        (merge opt-default opt)
-        -1
-        (new ArrayList)
-        (new ArrayList)
-        (new ArrayList)
-        (new HashMap)
-        (new HashMap)
-        (new ArrayList)
-        (new HashMap))))
+
+   (let [opt
+         (merge opt-default opt)]
+
+     (new Result
+          connection
+          opt
+          (make-frame opt)
+          (new ArrayList)
+          (new ArrayList)))))
