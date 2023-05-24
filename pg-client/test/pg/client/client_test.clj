@@ -45,6 +45,87 @@
       (is (= [{:bar "hello"}] res2)))))
 
 
+(deftest test-client-create-table
+  (client/with-connection [conn CONFIG]
+
+    (let [table
+          (str (gensym "table"))
+
+          query
+          (format "create temp table %s (id serial, title text)" table)
+
+          res
+          (client/query conn query)]
+
+      (is (nil? res)))))
+
+
+(deftest test-client-empty-select
+  (client/with-connection [conn CONFIG]
+
+    (let [table
+          (str (gensym "table"))
+
+          query1
+          (format "create temp table %s (id serial, title text)" table)
+
+          _
+          (client/query conn query1)
+
+          query2
+          (format "select * from %s" table)
+
+          res
+          (client/query conn query2)]
+
+      (is (= [] res)))))
+
+
+(deftest test-client-insert-result-returning
+  (client/with-connection [conn CONFIG]
+
+    (let [table
+          (str (gensym "table"))
+
+          query1
+          (format "create temp table %s (id serial, title text)" table)
+
+          _
+          (client/query conn query1)
+
+          query2
+          (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2') returning *" table)
+
+          res
+          (client/query conn query2)]
+
+      (is (= [{:id 1 :title "test1"}
+              {:id 2 :title "test2"}]
+             res)))))
+
+
+(deftest test-client-insert-result-no-returning
+  (client/with-connection [conn CONFIG]
+
+    (let [table
+          (str (gensym "table"))
+
+          query1
+          (format "create temp table %s (id serial, title text)" table)
+
+          _
+          (client/query conn query1)
+
+          query2
+          (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
+
+          res
+          (client/query conn query2)]
+
+      (is (= 1
+             res)))))
+
+
 (deftest test-client-select-multi
 
   (client/with-connection [conn CONFIG]

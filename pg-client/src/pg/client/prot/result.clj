@@ -18,4 +18,6 @@
 
   (add-CommandComplete [this CommandComplete])
 
-  (complete [this]))
+  (complete [this])
+
+  (to-clojure [this i]))

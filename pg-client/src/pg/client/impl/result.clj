@@ -88,7 +88,8 @@
      ^List list-ErrorResponse
      ^Map map-results
      ^Map -params
-     ^List list-unified-fields]
+     ^List list-unified-fields
+     ^Map has-been-data-row?]
 
   result/IResult
 
@@ -116,6 +117,7 @@
           opt]
 
       (set! index (inc index))
+
       (.add list-RowDescription RowDescription)
       (.put map-results index (transient []))
       (.add list-unified-fields
@@ -192,7 +194,10 @@
         (pos? index)
         (->> map-results
             (vals)
-            (mapv persistent!))))))
+            (mapv persistent!))
+
+        (neg? index)
+        42))))
 
 
 (def opt-default
@@ -213,4 +218,5 @@
         (new ArrayList)
         (new HashMap)
         (new HashMap)
-        (new ArrayList))))
+        (new ArrayList)
+        (new HashMap))))
