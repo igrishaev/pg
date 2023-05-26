@@ -1,6 +1,6 @@
 
-- result mixed
 - result text encoding
+- query-one
 - sasl auth in a separate module
 - decode text mm opt
 - decode text encoding

@@ -179,6 +179,66 @@
       (is (= 2 res)))))
 
 
+(deftest test-client-mixed-result
+  (client/with-connection [conn CONFIG]
+
+    (let [table
+          (str (gensym "table"))
+
+          query
+          (format
+           "
+create temp table %1$s (id serial, title text);
+insert into %1$s (id, title) values (1, 'test1'), (2, 'test2');
+insert into %1$s (id, title) values (3, 'test3') returning *;
+select * from %1$s where id <> 3;
+update %1$s set title = 'aaa' where id = 1;
+delete from %1$s where id = 2;
+drop table %1$s;
+"
+           table)
+
+          res
+          (client/query conn query {:fn-column str/upper-case})]
+
+      (is (= [nil
+              2
+              [{"ID" 3 "TITLE" "test3"}]
+              [{"ID" 1 "TITLE" "test1"}
+               {"ID" 2 "TITLE" "test2"}]
+              1
+              1
+              nil]
+             res)))))
+
+
+(deftest test-client-truncate-result
+  (client/with-connection [conn CONFIG]
+
+    (let [table
+          (str (gensym "table"))
+
+          query1
+          (format "create temp table %s (id serial, title text)" table)
+
+          _
+          (client/query conn query1)
+
+          query2
+          (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
+
+          _
+          (client/query conn query2)
+
+          query3
+          (format "truncate %s" table)
+
+          res
+          (client/query conn query3)]
+
+      (is (nil? res)))))
+
+
 (deftest test-client-select-multi
 
   (client/with-connection [conn CONFIG]
@@ -218,11 +278,3 @@
 
       (is (instance? java.util.HashMap (first res)))
       (is (= [{:id_0 1 :id_1 2}] res)))))
-
-
-;; insert
-;; insert + returning
-;; update
-;; delete
-;; truncate
-;; multi

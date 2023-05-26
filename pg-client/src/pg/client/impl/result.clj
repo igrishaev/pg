@@ -80,21 +80,37 @@
                      field->idx'))))))))
 
 
+(defn subs-safe
+  (^String [^String string from]
+   (let [len (.length string)]
+     (when (<= from len)
+       (.substring string from len))))
+
+  (^String [^String string from to]
+   (let [len (.length string)]
+     (when (<= from to len)
+       (.substring string from to)))))
+
+
 (defn parse-tag [^String tag]
 
-  (or
+  (when-let [command
+             (subs-safe tag 0 6)]
 
-   (when-let [[_ _ value]
-              (re-matches #"INSERT (\d+) (\d+)" tag)]
-     (Long/parseLong value))
+    (case command
 
-   (when-let [[_ value]
-              (re-matches #"DELETE (\d+)" tag)]
-     (Long/parseLong value))
+      "INSERT"
+      (-> tag
+          (subs-safe 7)
+          (str/split #" " )
+          (second)
+          (Long/parseLong))
 
-   (when-let [[_ value]
-              (re-matches #"UPDATE (\d+)" tag)]
-     (Long/parseLong value))))
+
+      ("SELECT" "UPDATE" "DELETE")
+      (-> tag (subs-safe 7) Long/parseLong)
+
+      nil)))
 
 
 (deftype Frame
