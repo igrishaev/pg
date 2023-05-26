@@ -55,7 +55,6 @@
              [nil (do ~@body)]
              (catch Throwable e#
                [e# nil]))]
-
        (if e#
          (do
            (rollback ~conn)
