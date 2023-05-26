@@ -27,3 +27,6 @@ toc-install:
 
 toc-build:
 	node_modules/.bin/markdown-toc -i README.md
+
+pg-logs:
+	tail -f '/Users/ivan/Library/Application Support/Postgres/var-14/postgresql.log'

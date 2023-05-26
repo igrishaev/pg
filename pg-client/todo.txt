@@ -1,4 +1,6 @@
 
+- transaction commands
+- transaction macro
 - sasl auth in a separate module
 - decode text mm opt
 - decode text encoding
@@ -8,6 +10,4 @@
 - save query for error response
 - handle notice
 - check conn status
-- transaction commands
-- transaction macro
 - catch exceptions

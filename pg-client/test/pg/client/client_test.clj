@@ -45,6 +45,22 @@
       (is (= [{:bar "hello"}] res2)))))
 
 
+(deftest test-client-with-transaction-ok
+
+  (client/with-connection [conn CONFIG]
+
+    (let [res1
+          (client/with-tx [conn]
+            (client/query conn "select 1 as foo" {:fn-result first}))
+
+          res2
+          (client/with-tx [conn]
+            (client/query conn "select 2 as bar" {:fn-result first}))]
+
+      (is (= {:foo 1} res1))
+      (is (= {:bar 2} res2)))))
+
+
 (deftest test-client-create-table
   (client/with-connection [conn CONFIG]
 
