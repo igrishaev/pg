@@ -125,6 +125,33 @@
       (is (= 2 res)))))
 
 
+(deftest test-client-select-fn-result
+  (client/with-connection [conn CONFIG]
+
+    (let [table
+          (str (gensym "table"))
+
+          query1
+          (format "create temp table %s (id serial, title text)" table)
+
+          _
+          (client/query conn query1)
+
+          query2
+          (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
+
+          _
+          (client/query conn query2)
+
+          query3
+          (format "select * from %s where id = 1" table)
+
+          res
+          (client/query conn query3 {:fn-result first})]
+
+      (is (= {:id 1 :title "test1"} res)))))
+
+
 (deftest test-client-delete-result
   (client/with-connection [conn CONFIG]
 

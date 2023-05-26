@@ -1,11 +1,11 @@
 
-- result text encoding
-- query-one
 - sasl auth in a separate module
 - decode text mm opt
 - decode text encoding
 - json package
 - handle notify
+- test error response
+- save query for error response
 - handle notice
 - check conn status
 - transaction commands

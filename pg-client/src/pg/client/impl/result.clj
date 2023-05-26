@@ -6,12 +6,13 @@
    java.util.HashMap)
   (:require
    [clojure.string :as str]
+   [pg.client.prot.connection :as connection]
    [pg.client.prot.message :as message]
    [pg.client.prot.result :as result]
    [pg.decode.txt :as txt]))
 
 
-(defn decode-row [RowDescription DataRow]
+(defn decode-row [RowDescription DataRow ^String encoding]
 
   (let [{:keys [columns]}
         RowDescription
@@ -33,7 +34,7 @@
 
                0
                (let [text
-                     (new String ^bytes value "UTF-8")]
+                     (new String ^bytes value encoding)]
                  (txt/-decode type-oid text)))))
          columns
          values)))
@@ -114,7 +115,8 @@
 
 
 (deftype Frame
-    [ ;; init
+    [;; init
+     -connection
      ^Map  -opts
      ^List -rows
      ;; state
@@ -122,74 +124,82 @@
      ^Map  ^:unsynchronized-mutable -CommandComplete
      ^List ^:unsynchronized-mutable -fields]
 
-    result/IResult
+  result/IResult
 
-    (add-RowDescription [this RowDescription]
+  (add-RowDescription [this RowDescription]
 
-      (set! -RowDescription RowDescription)
+    (set! -RowDescription RowDescription)
 
-      (let [{:keys [fn-column]}
-            -opts
+    (let [{:keys [fn-column]}
+          -opts
 
-            fields
-            (->> RowDescription
-                 (:columns)
-                 (mapv :name)
-                 (unify-fields)
-                 (mapv fn-column))]
+          fields
+          (->> RowDescription
+               (:columns)
+               (mapv :name)
+               (unify-fields)
+               (mapv fn-column))]
 
-        (set! -fields fields)))
+      (set! -fields fields)))
 
-    (add-CommandComplete [this CommandComplete]
-      (set! -CommandComplete CommandComplete))
+  (add-CommandComplete [this CommandComplete]
+    (set! -CommandComplete CommandComplete))
 
-    (add-DataRow [this DataRow]
+  (add-DataRow [this DataRow]
 
-      (let [values
-            (decode-row -RowDescription DataRow)
+    (let [encoding
+          (connection/get-server-encoding -connection)
 
-            {:keys [column-count]}
-            -RowDescription
+          values
+          (decode-row -RowDescription DataRow encoding)
 
-            {:keys [as-vectors?
-                    as-maps?
-                    as-java-maps?]}
-            -opts
-
-            row
-            (cond
-
-              as-maps?
-              (zipmap -fields values)
-
-              as-vectors?
-              values
-
-              as-java-maps?
-              (doto (new HashMap)
-                (.putAll (zipmap -fields values)))
-
-              :else
-              (zipmap -fields values))]
-
-        (conj! -rows row)))
-
-    (complete [this]
-
-      (let [{:keys [tag]}
-            -CommandComplete]
-
-        (cond
-
+          {:keys [column-count]}
           -RowDescription
-          (persistent! -rows)
 
-          tag
-          (parse-tag tag)))))
+          {:keys [as-vectors?
+                  as-maps?
+                  as-java-maps?]}
+          -opts
+
+          row
+          (cond
+
+            as-maps?
+            (zipmap -fields values)
+
+            as-vectors?
+            values
+
+            as-java-maps?
+            (doto (new HashMap)
+              (.putAll (zipmap -fields values)))
+
+            :else
+            (zipmap -fields values))]
+
+      (conj! -rows row)))
+
+  (complete [this]
+
+    (let [{:keys [tag]}
+          -CommandComplete
+
+          {:keys [fn-result]}
+          -opts]
+
+      (cond
+
+        -RowDescription
+        (cond-> (persistent! -rows)
+          fn-result
+          fn-result)
+
+        tag
+        (parse-tag tag)))))
 
 
-(defn make-frame [opt]
-  (new Frame opt (transient []) nil nil nil))
+(defn make-frame [connection opt]
+  (new Frame connection opt (transient []) nil nil nil))
 
 
 (defn afirst [^List a]
@@ -229,7 +239,7 @@
   (add-CommandComplete [this CommandComplete]
     (result/add-CommandComplete -frame CommandComplete)
     (.add -frames -frame)
-    (set! -frame (make-frame -opts)))
+    (set! -frame (make-frame -connection -opts)))
 
   (complete [this]
 
@@ -238,15 +248,15 @@
       (throw (ex-info "ErrorResponse" er)))
 
     (let [results
-              (mapv result/complete -frames)]
+          (mapv result/complete -frames)]
 
-          (case (count results)
+      (case (count results)
 
-            0 nil
+        0 nil
 
-            1 (get results 0)
+        1 (get results 0)
 
-            results))))
+        results))))
 
 
 (def opt-default
@@ -265,6 +275,6 @@
      (new Result
           connection
           opt
-          (make-frame opt)
+          (make-frame connection opt)
           (new ArrayList)
           (new ArrayList)))))
