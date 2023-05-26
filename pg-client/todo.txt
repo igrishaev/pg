@@ -1,4 +1,5 @@
 
+- source protocol (map, conn)
 - tx macro isolation level
 - tx error tests
 - sasl auth in a separate module
