@@ -343,7 +343,10 @@
   message/IMessage
 
   (from-bb [this bb connection]
-    this))
+    this)
+
+  (handle [this result connection]
+    result))
 
 
 (defmethod message/tag->message \I [_]

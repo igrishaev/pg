@@ -23,6 +23,15 @@
            result))))
 
 
+(deftest test-client-empty-query
+
+  (let [result
+        (client/with-connection [conn CONFIG]
+          (client/query conn ""))]
+
+    (is (nil? result))))
+
+
 (deftest test-client-fn-column
 
   (let [result
