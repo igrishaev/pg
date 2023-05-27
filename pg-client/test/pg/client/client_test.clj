@@ -112,6 +112,17 @@
                    42)))))
 
 
+(deftest test-client-wrong-startup-params
+
+  (let [config
+        (assoc CONFIG :pg-params {"application_name" "Clojure"})]
+
+    (client/with-connection [conn config]
+      (let [param
+            (client/get-param conn "application_name")]
+        (is (= "Clojure" param))))))
+
+
 (deftest test-client-wrong-minor-protocol
 
   (let [config

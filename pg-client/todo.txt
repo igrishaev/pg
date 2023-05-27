@@ -1,6 +1,7 @@
 
 - keywords for tx status, notice, error response
-- test for startap params
+- query + prepare
+- query + cursor/fetch
 - tx macro isolation level
 - tx error tests
 - source protocol (map, conn)

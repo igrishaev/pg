@@ -47,6 +47,10 @@
   (prot.connection/query conn "COMMIT" nil))
 
 
+(defn get-param [conn ^String param]
+  (prot.connection/get-parameter conn param))
+
+
 (defmacro with-tx [[conn] & body]
   `(do
      (begin ~conn)
