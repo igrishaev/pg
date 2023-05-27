@@ -36,6 +36,8 @@
 
   (send-message [this message])
 
+  (handle-NoticeResponse [this NoticeResponse])
+
   (authenticate [this])
 
   (initiate [this])

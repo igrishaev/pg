@@ -155,6 +155,11 @@
     (send-sync [this]
       (connection/send-message this (new Sync)))
 
+    (handle-NoticeResponse [this NoticeResponse]
+      (let [{:keys [fn-notice]}
+            -config]
+        (fn-notice NoticeResponse)))
+
     (query [this sql opt]
 
       (let [message
@@ -185,21 +190,35 @@
       (connection/terminate this)))
 
 
-(defn connect [{:as config
-                :keys [^String host
-                       ^Integer port]}]
+(defn fn-notice-default [{:keys [entries]}]
+  (doseq [{:keys [tag notice]}
+          entries]
+    (println "PG NOTICE:" tag notice)))
 
-  (let [addr
+
+(def config-defaults
+  {:host "127.0.0.1"
+   :port 5432
+   :fn-notice fn-notice-default})
+
+
+(defn connect [config]
+
+  (let [config+
+        (merge config-defaults config)
+
+        {:keys [^String host
+                ^Integer port]}
+        config+
+
+        addr
         (new java.net.InetSocketAddress host port)
 
         ch
-        (SocketChannel/open addr)
-
-        params
-        (new HashMap)]
+        (SocketChannel/open addr)]
 
     (new Connection
-         config
+         config+
          addr
          ch
          (new HashMap)

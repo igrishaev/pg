@@ -1,7 +1,7 @@
 
-- source protocol (map, conn)
 - tx macro isolation level
 - tx error tests
+- source protocol (map, conn)
 - sasl auth in a separate module
 - decode text mm opt
 - decode text encoding
@@ -9,6 +9,6 @@
 - handle notify
 - test error response
 - save query for error response
-- handle notice
 - check conn status
-- catch exceptions
+- negotiation protocol message
+- startup parameters

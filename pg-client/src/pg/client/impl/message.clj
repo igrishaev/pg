@@ -15,6 +15,43 @@
    [pg.client.bb :as bb]))
 
 
+(defrecord NoticeEntry
+    [^Character tag
+     ^String notice])
+
+
+(defrecord NoticeResponse
+    [^List entries]
+
+  message/IMessage
+
+  (handle [this result connection]
+    (connection/handle-NoticeResponse connection this)
+    result)
+
+  (from-bb [this bb connection]
+
+    (let [encoding
+          (connection/get-server-encoding connection)
+
+          entries
+          (loop [acc []]
+            (let [b (bb/read-byte bb)]
+              (if (zero? b)
+                acc
+                (let [notice
+                      (bb/read-cstring bb encoding)
+                      entry
+                      (new NoticeEntry (char b) notice)]
+                  (recur (conj acc entry))))))]
+
+      (assoc this :entries entries))))
+
+
+(defmethod message/tag->message \N [_]
+  (new NoticeResponse nil))
+
+
 (defn bb-encode ^ByteBuffer [^String encoding tag parts]
 
   (let [len-payload
@@ -341,10 +378,6 @@
 
 (defmethod message/tag->message \E [_]
   (new ErrorResponse nil))
-
-
-(defrecord NoticeResponse
-    [^List messages])
 
 
 (defrecord EmptyQueryResponse

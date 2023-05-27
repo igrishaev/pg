@@ -146,6 +146,31 @@
              res)))))
 
 
+(deftest test-client-notice-ok
+  (let [capture!
+        (atom [])
+
+        config
+        (assoc CONFIG :fn-notice
+               (fn [{:keys [entries]}]
+                 (swap! capture! into entries)))]
+
+    (client/with-connection [conn config]
+      (let [res (client/query conn "ROLLBACK")]
+        (is (nil? res))))
+
+    (is (= {\S "WARNING"
+            \V "WARNING"
+            \C "25P01"
+            \M "there is no transaction in progress"
+            \R "UserAbortTransactionBlock"}
+
+           (-> @capture!
+               (->> (map (juxt :tag :notice)))
+               (->> (into {}))
+               (dissoc \L \F))))))
+
+
 (deftest test-client-insert-result-no-returning
   (client/with-connection [conn CONFIG]
 
