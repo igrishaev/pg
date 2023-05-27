@@ -1,4 +1,6 @@
 
+- startup parameters
+- negotiation protocol message
 - tx macro isolation level
 - tx error tests
 - source protocol (map, conn)
@@ -10,5 +12,3 @@
 - test error response
 - save query for error response
 - check conn status
-- negotiation protocol message
-- startup parameters
