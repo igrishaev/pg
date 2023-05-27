@@ -146,14 +146,14 @@
              res)))))
 
 
-(deftest test-client-notice-ok
+(deftest test-client-notice-custom-function
   (let [capture!
-        (atom [])
+        (atom nil)
 
         config
         (assoc CONFIG :fn-notice
-               (fn [{:keys [entries]}]
-                 (swap! capture! into entries)))]
+               (fn [fields]
+                 (reset! capture! fields)))]
 
     (client/with-connection [conn config]
       (let [res (client/query conn "ROLLBACK")]
@@ -166,8 +166,6 @@
             \R "UserAbortTransactionBlock"}
 
            (-> @capture!
-               (->> (map (juxt :tag :notice)))
-               (->> (into {}))
                (dissoc \L \F))))))
 
 

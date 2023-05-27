@@ -155,10 +155,10 @@
     (send-sync [this]
       (connection/send-message this (new Sync)))
 
-    (handle-NoticeResponse [this NoticeResponse]
+    (handle-notice [this fields]
       (let [{:keys [fn-notice]}
             -config]
-        (fn-notice NoticeResponse)))
+        (fn-notice fields)))
 
     (query [this sql opt]
 
@@ -190,10 +190,8 @@
       (connection/terminate this)))
 
 
-(defn fn-notice-default [{:keys [entries]}]
-  (doseq [{:keys [tag notice]}
-          entries]
-    (println "PG NOTICE:" tag notice)))
+(defn fn-notice-default [fields]
+  (println "PG NOTICE:" fields))
 
 
 (def config-defaults

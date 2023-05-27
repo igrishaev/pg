@@ -15,18 +15,13 @@
    [pg.client.bb :as bb]))
 
 
-(defrecord NoticeEntry
-    [^Character tag
-     ^String notice])
-
-
 (defrecord NoticeResponse
-    [^List entries]
+    [^List fields]
 
   message/IMessage
 
   (handle [this result connection]
-    (connection/handle-NoticeResponse connection this)
+    (connection/handle-notice connection fields)
     result)
 
   (from-bb [this bb connection]
@@ -34,18 +29,15 @@
     (let [encoding
           (connection/get-server-encoding connection)
 
-          entries
-          (loop [acc []]
-            (let [b (bb/read-byte bb)]
-              (if (zero? b)
+          fields
+          (loop [acc {}]
+            (let [token (bb/read-byte bb)]
+              (if (zero? token)
                 acc
-                (let [notice
-                      (bb/read-cstring bb encoding)
-                      entry
-                      (new NoticeEntry (char b) notice)]
-                  (recur (conj acc entry))))))]
+                (let [field (bb/read-cstring bb encoding)]
+                  (recur (assoc acc (char token) field))))))]
 
-      (assoc this :entries entries))))
+      (assoc this :fields fields))))
 
 
 (defmethod message/tag->message \N [_]

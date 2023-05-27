@@ -36,7 +36,7 @@
 
   (send-message [this message])
 
-  (handle-NoticeResponse [this NoticeResponse])
+  (handle-notice [this fields])
 
   (authenticate [this])
 
