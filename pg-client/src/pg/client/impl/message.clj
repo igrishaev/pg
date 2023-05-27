@@ -15,29 +15,66 @@
    [pg.client.bb :as bb]))
 
 
-(defrecord NoticeResponse
-    [^List fields]
+(defrecord NegotiateProtocolVersion
+    [^Integer version
+     ^List params]
 
   message/IMessage
 
   (handle [this result connection]
-    (connection/handle-notice connection fields)
     result)
 
   (from-bb [this bb connection]
 
-    (let [encoding
-          (connection/get-server-encoding connection)
+    (let [version
+          (bb/read-int32 bb)
 
-          fields
-          (loop [acc {}]
-            (let [token (bb/read-byte bb)]
-              (if (zero? token)
+          param-count
+          (bb/read-int32 bb)
+
+          params
+          (let [encoding
+                (connection/get-server-encoding connection)]
+            (loop [i 0
+                   acc []]
+              (if (= i param-count)
                 acc
-                (let [field (bb/read-cstring bb encoding)]
-                  (recur (assoc acc (char token) field))))))]
+                (let [param
+                      (bb/read-cstring bb encoding)]
+                  (recur (inc i) (conj acc param))))))]
 
-      (assoc this :fields fields))))
+      (assoc this
+             :version version
+             :params params))))
+
+
+(defmethod message/tag->message \v [_]
+  (new NegotiateProtocolVersion nil nil))
+
+
+(defrecord NoticeResponse
+    [^List fields]
+
+    message/IMessage
+
+    (handle [this result connection]
+      (connection/handle-notice connection fields)
+      result)
+
+    (from-bb [this bb connection]
+
+      (let [encoding
+            (connection/get-server-encoding connection)
+
+            fields
+            (loop [acc {}]
+              (let [token (bb/read-byte bb)]
+                (if (zero? token)
+                  acc
+                  (let [field (bb/read-cstring bb encoding)]
+                    (recur (assoc acc (char token) field))))))]
+
+        (assoc this :fields fields))))
 
 
 (defmethod message/tag->message \N [_]
@@ -112,12 +149,13 @@
           (connection/get-client-encoding connection)]
       (bb-encode encoding
                  nil
-                 [(array/arr32 protocol-version)
-                  "user"
-                  user
-                  "database"
-                  database
-                  (byte 0)]))))
+                 (-> [(array/arr32 protocol-version)
+                      "user"
+                      user
+                      "database"
+                      database]
+                     (into (mapcat identity options))
+                     (conj (byte 0)))))))
 
 
 (defrecord AuthenticationOk

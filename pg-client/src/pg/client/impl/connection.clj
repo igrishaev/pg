@@ -121,15 +121,18 @@
 
     (authenticate [this]
 
-      (let [{:keys [database user]}
+      (let [{:keys [database
+                    user
+                    pg-params
+                    protocol-version]}
             -config
 
             message
             (new StartupMessage
-                 const/PROTOCOL-VERSION
+                 protocol-version
                  user
                  database
-                 nil)
+                 pg-params)
 
             result
             (result/make-result this)
@@ -145,7 +148,7 @@
     (initiate [this]
 
       (let [messages
-            (connection/read-messages-until this #{ReadyForQuery})
+            (connection/read-messages-until this #{ReadyForQuery ErrorResponse})
 
             result
             (result/make-result this)]
@@ -197,7 +200,8 @@
 (def config-defaults
   {:host "127.0.0.1"
    :port 5432
-   :fn-notice fn-notice-default})
+   :fn-notice fn-notice-default
+   :protocol-version const/PROTOCOL-VERSION})
 
 
 (defn connect [config]

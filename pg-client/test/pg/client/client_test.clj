@@ -102,6 +102,26 @@
       (is (nil? res)))))
 
 
+(deftest test-client-wrong-startup-params
+
+  (let [config
+        (assoc CONFIG :pg-params {"pg_foobar" "111"})]
+
+    (is (thrown? Exception
+                 (client/with-connection [conn config]
+                   42)))))
+
+
+(deftest test-client-wrong-minor-protocol
+
+  (let [config
+        (assoc CONFIG :protocol-version 196609)]
+
+    (client/with-connection [conn config]
+      (is (= [{:foo 1}]
+             (client/query conn "select 1 as foo"))))))
+
+
 (deftest test-client-empty-select
   (client/with-connection [conn CONFIG]
 

@@ -1,6 +1,6 @@
 
-- startup parameters
-- negotiation protocol message
+- keywords for tx status, notice, error response
+- test for startap params
 - tx macro isolation level
 - tx error tests
 - source protocol (map, conn)
