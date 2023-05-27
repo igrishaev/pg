@@ -41,6 +41,23 @@
     (is (= [{"FOO" 1}] result))))
 
 
+(deftest test-client-exception-in-the-middle
+
+  (client/with-connection [conn CONFIG]
+
+    (is (thrown?
+         Exception
+         (with-redefs [pg.decode.txt/-decode
+                       (fn [& _]
+                         (throw (new Exception "boom")))]
+           (client/query conn "select 1 as foo"))))
+
+    (let [result
+          (client/query conn "select 2 as bar")]
+
+      (is (= [{:bar 2}] result)))))
+
+
 (deftest test-client-reuse-conn
 
   (client/with-connection [conn CONFIG]

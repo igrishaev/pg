@@ -26,6 +26,8 @@
 
   (get-user [this])
 
+  (send-sync [this])
+
   (read-message [this])
 
   (read-messages [this])

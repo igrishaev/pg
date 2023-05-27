@@ -212,15 +212,23 @@
      ^Map  -opts
      ^Frame ^:unsynchronized-mutable -frame
      ^List -frames
-     ^List -list-ErrorResponse]
+     ^List -list-ErrorResponse
+     ^List -list-Exception]
 
   result/IResult
+
+  (add-Exception [this e]
+    (.add -list-Exception e)
+    this)
 
   (handle [this messages]
     (result/complete
      (reduce
       (fn [result message]
-        (message/handle message result -connection))
+        (try
+          (message/handle message result -connection)
+          (catch Throwable e
+            (result/add-Exception this e))))
       this
       messages)))
 
@@ -243,8 +251,10 @@
 
   (complete [this]
 
-    (when-let [er
-               (afirst -list-ErrorResponse)]
+    (when-let [ex (afirst -list-Exception)]
+      (throw ex))
+
+    (when-let [er (afirst -list-ErrorResponse)]
       (throw (ex-info "ErrorResponse" er)))
 
     (let [results
@@ -276,5 +286,6 @@
           connection
           opt
           (make-frame connection opt)
+          (new ArrayList)
           (new ArrayList)
           (new ArrayList)))))

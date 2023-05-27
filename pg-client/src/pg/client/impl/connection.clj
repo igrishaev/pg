@@ -16,6 +16,7 @@
    java.nio.channels.SocketChannel
    java.util.HashMap
    java.util.Map
+   pg.client.impl.message.Sync
    pg.client.impl.message.AuthenticationOk
    pg.client.impl.message.ErrorResponse
    pg.client.impl.message.Query
@@ -70,7 +71,7 @@
       (or (.get -params "client_encoding") "UTF-8"))
 
     (send-message [this message]
-      (debug/debug-message message "<--")
+      (debug/debug-message message "<- ")
       (let [bb (message/to-bb message this)]
         (bb/write-to -ch bb)))
 
@@ -104,7 +105,7 @@
               message
               (message/from-bb message-empty bb-body this)]
 
-          (debug/debug-message message "-->")
+          (debug/debug-message message " ->")
 
           message)))
 
@@ -150,6 +151,9 @@
             (result/make-result this)]
 
         (prot.result/handle result messages)))
+
+    (send-sync [this]
+      (connection/send-message this (new Sync)))
 
     (query [this sql opt]
 

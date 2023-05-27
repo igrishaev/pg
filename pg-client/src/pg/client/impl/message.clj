@@ -60,6 +60,16 @@
     bb))
 
 
+(defrecord Sync []
+
+  message/IMessage
+
+  (to-bb [this connection]
+    (let [encoding
+          (connection/get-client-encoding connection)]
+      (bb-encode encoding \S nil))))
+
+
 (defrecord StartupMessage
     [^Integer protocol-version
      ^String user
@@ -84,10 +94,10 @@
 (defrecord AuthenticationOk
     [^Integer status]
 
-    message/IMessage
+  message/IMessage
 
-    (handle [this result connection]
-      result))
+  (handle [this result connection]
+    result))
 
 
 (defrecord AuthenticationKerberosV5
@@ -149,12 +159,12 @@
 (defrecord AuthenticationResponse
     [^Integer status]
 
-    message/IMessage
+  message/IMessage
 
-    (from-bb [this bb connection]
+  (from-bb [this bb connection]
 
-      (let [status (bb/read-int32 bb)]
-        (message/status->message status bb connection))))
+    (let [status (bb/read-int32 bb)]
+      (message/status->message status bb connection))))
 
 
 (defmethod message/tag->message \R [_]

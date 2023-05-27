@@ -2,6 +2,8 @@
 
 (defprotocol IResult
 
+  (add-Exception [this e])
+
   (handle [this messages])
 
   (get-connection [this])
