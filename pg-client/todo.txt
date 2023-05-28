@@ -2,14 +2,14 @@
 - keywords for tx status, notice, error response
 - tx macro isolation level
 - tx error tests
+- save query for error response
+- test error response
 - source protocol (map, conn)
 - sasl auth in a separate module
 - decode text mm opt
 - decode text encoding
 - json package
 - handle notify
-- test error response
-- save query for error response
 - check conn status
 - adopt honey-sql
 - adopt gosql
