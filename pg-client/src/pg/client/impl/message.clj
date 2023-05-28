@@ -55,29 +55,29 @@
 (defrecord NoticeResponse
     [^List fields]
 
-    message/IMessage
+  message/IMessage
 
-    (handle [this result connection]
-      (connection/handle-notice connection fields)
-      result)
+  (handle [this result connection]
+    (connection/handle-notice connection fields)
+    result)
 
-    (from-bb [this bb connection]
+  (from-bb [this bb connection]
 
-      (let [encoding
-            (connection/get-server-encoding connection)
+    (let [encoding
+          (connection/get-server-encoding connection)
 
-            fields
-            (loop [acc {}]
-              (let [b (bb/read-byte bb)]
-                (if (zero? b)
-                  acc
-                  (let [token
-                        (-> b char str keyword)
-                        field
-                        (bb/read-cstring bb encoding)]
-                    (recur (assoc acc token field))))))]
+          fields
+          (loop [acc {}]
+            (let [b (bb/read-byte bb)]
+              (if (zero? b)
+                acc
+                (let [token
+                      (-> b char str keyword)
+                      field
+                      (bb/read-cstring bb encoding)]
+                  (recur (assoc acc token field))))))]
 
-        (assoc this :fields fields))))
+      (assoc this :fields fields))))
 
 
 (defmethod message/tag->message \N [_]
@@ -496,6 +496,16 @@
 
   message/IMessage
 
+  (from-bb [this bb connection]
+
+    (let [encoding
+          (connection/get-server-encoding connection)
+
+          tag
+          (bb/read-cstring bb encoding)]
+
+      (assoc this :tag tag)))
+
   (to-bb [this connection]
     (let [encoding
           (connection/get-client-encoding connection)]
@@ -508,3 +518,38 @@
 
   (to-bb [this connection]
     (bb-encode nil \X nil)))
+
+
+(defrecord NotificationResponse
+    [^Integer pid
+     ^String channel
+     ^String message]
+
+  message/IMessage
+
+  (from-bb [this bb connection]
+
+    (let [encoding
+          (connection/get-server-encoding connection)
+
+          pid
+          (bb/read-int32 bb)
+
+          channel
+          (bb/read-cstring bb encoding)
+
+          message
+          (bb/read-cstring bb encoding)]
+
+      (assoc this
+             :pid pid
+             :channel channel
+             :message message)))
+
+  (handle [this result connection]
+    (connection/handle-notification connection this)
+    result))
+
+
+(defmethod message/tag->message \A [_]
+  (new NotificationResponse nil nil nil))

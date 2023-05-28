@@ -1,4 +1,7 @@
 
+- notifications worker
+- handle notice full message
+- verbose fields for notice/error resp
 - tx macro isolation level
 - tx error tests
 - save query for error response
@@ -7,7 +10,6 @@
 - decode text mm opt
 - decode text encoding
 - json package
-- handle notify
 - check conn status
 - adopt honey-sql
 - adopt gosql

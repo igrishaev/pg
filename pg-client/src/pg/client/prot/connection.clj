@@ -38,6 +38,8 @@
 
   (handle-notice [this fields])
 
+  (handle-notification [this NotificationResponse])
+
   (authenticate [this])
 
   (initiate [this])

@@ -163,6 +163,11 @@
             -config]
         (fn-notice fields)))
 
+    (handle-notification [this NotificationResponse]
+      (let [{:keys [fn-notification]}
+            -config]
+        (fn-notification NotificationResponse)))
+
     (query [this sql opt]
 
       (let [message
@@ -197,10 +202,15 @@
   (println "PG NOTICE:" fields))
 
 
+(defn fn-notification-default [NotificationResponse]
+  (println "PG NOTIFICATION:" NotificationResponse))
+
+
 (def config-defaults
   {:host "127.0.0.1"
    :port 5432
    :fn-notice fn-notice-default
+   :fn-notification fn-notification-default
    :protocol-version const/PROTOCOL-VERSION})
 
 

@@ -128,6 +128,48 @@
       (is (nil? res)))))
 
 
+(deftest test-client-listen-notify
+
+  (let [capture!
+        (atom [])
+
+        fn-notification
+        (fn [Message]
+          (swap! capture! conj Message))
+
+        config+
+        (assoc CONFIG :fn-notification fn-notification)]
+
+    (client/with-connection [conn config+]
+
+      (let [res1
+            (client/query conn "listen FOO")
+
+            res2
+            (client/query conn "notify FOO, 'kek-lol'")
+
+            res3
+            (client/query conn "unlisten FOO")
+
+            res4
+            (client/query conn "notify FOO, 'hello'")
+
+            messages
+            @capture!]
+
+        (is (nil? res1))
+        (is (nil? res2))
+        (is (nil? res3))
+        (is (nil? res4))
+
+        (is (= 1 (count messages)))
+
+        (is (= {:channel "foo" :message "kek-lol"}
+               (-> messages
+                   first
+                   (dissoc :pid))))))))
+
+
 (deftest test-client-broken-query
   (client/with-connection [conn CONFIG]
     (try
