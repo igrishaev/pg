@@ -57,6 +57,10 @@
   (prot.connection/get-tx-status conn))
 
 
+(defn pid [conn]
+  (prot.connection/get-pid conn))
+
+
 (defmacro with-tx [[conn] & body]
   `(do
      (begin ~conn)

@@ -16,12 +16,13 @@
    java.nio.channels.SocketChannel
    java.util.HashMap
    java.util.Map
-   pg.client.impl.message.Sync
    pg.client.impl.message.AuthenticationOk
    pg.client.impl.message.ErrorResponse
+   pg.client.impl.message.Flush
    pg.client.impl.message.Query
    pg.client.impl.message.ReadyForQuery
    pg.client.impl.message.StartupMessage
+   pg.client.impl.message.Sync
    pg.client.impl.message.Terminate))
 
 
@@ -157,6 +158,9 @@
 
     (send-sync [this]
       (connection/send-message this (new Sync)))
+
+    (send-flush [this]
+      (connection/send-message this (new Flush)))
 
     (handle-notice [this fields]
       (let [{:keys [fn-notice]}

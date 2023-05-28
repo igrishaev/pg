@@ -139,26 +139,36 @@
       (bb-encode encoding \S nil))))
 
 
-(defrecord StartupMessage
-    [^Integer protocol-version
-     ^String user
-     ^String database
-     ^Map options]
+(defrecord Flush []
 
   message/IMessage
 
   (to-bb [this connection]
     (let [encoding
           (connection/get-client-encoding connection)]
-      (bb-encode encoding
-                 nil
-                 (-> [(array/arr32 protocol-version)
-                      "user"
-                      user
-                      "database"
-                      database]
-                     (into (mapcat identity options))
-                     (conj (byte 0)))))))
+      (bb-encode encoding \H nil))))
+
+
+(defrecord StartupMessage
+    [^Integer protocol-version
+     ^String user
+     ^String database
+     ^Map options]
+
+    message/IMessage
+
+    (to-bb [this connection]
+      (let [encoding
+            (connection/get-client-encoding connection)]
+        (bb-encode encoding
+                   nil
+                   (-> [(array/arr32 protocol-version)
+                        "user"
+                        user
+                        "database"
+                        database]
+                       (into (mapcat identity options))
+                       (conj (byte 0)))))))
 
 
 (defrecord AuthenticationOk

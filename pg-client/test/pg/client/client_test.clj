@@ -13,6 +13,10 @@
    :database "ivan"})
 
 
+(defn ->map [Record]
+  (into {} Record))
+
+
 (deftest test-client-ok
 
   (let [result
@@ -168,6 +172,36 @@
                (-> messages
                    first
                    (dissoc :pid))))))))
+
+
+(deftest test-client-listen-notify-different-conns
+
+  (let [capture!
+        (atom [])
+
+        fn-notification
+        (fn [Message]
+          (swap! capture! conj Message))
+
+        config+
+        (assoc CONFIG :fn-notification fn-notification)]
+
+    (client/with-connection [conn1 CONFIG]
+      (client/with-connection [conn2 config+]
+
+        (let [pid1 (client/pid conn1)
+              pid2 (client/pid conn2)]
+
+          (client/query conn2 "listen FOO")
+          (client/query conn1 "notify FOO, 'message1'")
+          (client/query conn1 "notify FOO, 'message2'")
+
+          (client/query conn2 "")
+
+          (is (= [{:pid pid1 :channel "foo" :message "message1"}
+                  {:pid pid1 :channel "foo" :message "message2"}]
+
+                 (mapv ->map @capture!))))))))
 
 
 (deftest test-client-broken-query

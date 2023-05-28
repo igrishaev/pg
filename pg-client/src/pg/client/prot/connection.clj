@@ -28,6 +28,8 @@
 
   (send-sync [this])
 
+  (send-flush [this])
+
   (read-message [this])
 
   (read-messages [this])
