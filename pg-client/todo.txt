@@ -11,3 +11,5 @@
 - test error response
 - save query for error response
 - check conn status
+- adopt honey-sql
+- adopt gosql
