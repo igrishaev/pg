@@ -123,6 +123,78 @@
         (is (= "Clojure" param))))))
 
 
+(deftest test-client-prepare
+
+  (client/with-connection [conn CONFIG]
+
+    (let [query1
+          "prepare foo as select $1::integer as num"
+
+          res1
+          (client/query conn query1)
+
+          query2
+          "execute foo(42)"
+
+          res2
+          (client/query conn query2)
+
+          query3
+          "deallocate foo"
+
+          res3
+          (client/query conn query3)]
+
+      (is (nil? res1))
+      (is (= [{:num 42}] res2))
+      (is (nil? res3)))))
+
+
+(deftest test-client-cursor
+
+  (client/with-connection [conn CONFIG]
+
+    (let [table
+          (str (gensym "table"))
+
+          query1
+          (format "create temp table %s (id serial, title text)" table)
+
+          _
+          (client/query conn query1)
+
+          query2
+          (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2') returning *" table)
+
+          _
+          (client/query conn query2)
+
+          query3
+          (format "DECLARE cur CURSOR for select * from %s" table)]
+
+      (client/with-tx [conn]
+
+        (let [res3
+              (client/query conn query3)
+
+              res4
+              (client/query conn "fetch next from cur")
+
+              res5
+              (client/query conn "fetch next from cur")
+
+              res6
+              (client/query conn "fetch next from cur")]
+
+          (client/query conn "close cur")
+
+          (is (nil? res3))
+
+          (is (= [{:id 1 :title "test1"}] res4))
+          (is (= [{:id 2 :title "test2"}] res5))
+          (is (= [] res6)))))))
+
+
 (deftest test-client-wrong-minor-protocol
 
   (let [config
