@@ -1,4 +1,6 @@
 (ns pg.client
+  (:import
+   clojure.lang.Keyword)
   (:require
    pg.client.auth.md5
    pg.client.auth.clear
@@ -47,8 +49,12 @@
   (prot.connection/query conn "COMMIT" nil))
 
 
-(defn get-param [conn ^String param]
+(defn get-param ^String [conn ^String param]
   (prot.connection/get-parameter conn param))
+
+
+(defn tx-state ^Keyword [conn]
+  (prot.connection/get-tx-status conn))
 
 
 (defmacro with-tx [[conn] & body]

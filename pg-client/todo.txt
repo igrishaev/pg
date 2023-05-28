@@ -1,9 +1,7 @@
 
-- keywords for tx status, notice, error response
 - tx macro isolation level
 - tx error tests
 - save query for error response
-- test error response
 - source protocol (map, conn)
 - sasl auth in a separate module
 - decode text mm opt

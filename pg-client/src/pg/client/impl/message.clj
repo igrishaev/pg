@@ -68,11 +68,14 @@
 
             fields
             (loop [acc {}]
-              (let [token (bb/read-byte bb)]
-                (if (zero? token)
+              (let [b (bb/read-byte bb)]
+                (if (zero? b)
                   acc
-                  (let [field (bb/read-cstring bb encoding)]
-                    (recur (assoc acc (char token) field))))))]
+                  (let [token
+                        (-> b char str keyword)
+                        field
+                        (bb/read-cstring bb encoding)]
+                    (recur (assoc acc token field))))))]
 
         (assoc this :fields fields))))
 
@@ -248,7 +251,8 @@
     result)
 
   (from-bb [this bb connection]
-    (let [tx-status (char (bb/read-byte bb))]
+    (let [tx-status
+          (-> bb bb/read-byte char str keyword)]
       (assoc this :tx-status tx-status))))
 
 (defmethod message/tag->message \Z [_]
@@ -369,13 +373,8 @@
   (new ParameterStatus nil nil))
 
 
-(defrecord ErrorNode
-    [^Character tag
-     ^String message])
-
-
 (defrecord ErrorResponse
-    [^List errors]
+    [^Map errors]
 
   message/IMessage
 
@@ -389,19 +388,15 @@
           (connection/get-server-encoding connection)
 
           errors
-          (loop [acc []]
-            (let [field-tag (bb/read-byte bb)]
-              (if (zero? field-tag)
+          (loop [acc {}]
+            (let [b (bb/read-byte bb)]
+              (if (zero? b)
                 acc
-                (let [field-text
-                      (bb/read-cstring bb encoding)
-
-                      error
-                      (new ErrorNode
-                           (char field-tag)
-                           field-text)]
-
-                  (recur (conj acc error))))))]
+                (let [token
+                      (-> b char str keyword)
+                      field
+                      (bb/read-cstring bb encoding)]
+                  (recur (assoc acc token field))))))]
 
       (assoc this :errors errors))))
 

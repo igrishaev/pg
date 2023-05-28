@@ -23,6 +23,32 @@
            result))))
 
 
+(deftest test-client-tx-status
+
+  (client/with-connection [conn CONFIG]
+
+    (is (= :I (client/tx-state conn)))
+
+    (client/query conn "select 1")
+
+    (is (= :I (client/tx-state conn)))
+
+    (client/begin conn)
+
+    (is (= :T (client/tx-state conn)))
+
+    (try
+      (client/query conn "selekt 1")
+      (catch Exception _
+        nil))
+
+    (is (= :E (client/tx-state conn)))
+
+    (client/rollback conn)
+
+    (is (= :I (client/tx-state conn)))))
+
+
 (deftest test-client-empty-query
 
   (let [result
@@ -102,7 +128,25 @@
       (is (nil? res)))))
 
 
-(deftest test-client-wrong-startup-params
+(deftest test-client-broken-query
+  (client/with-connection [conn CONFIG]
+    (try
+      (client/query conn "selekt 1")
+      (catch Exception e
+        (is (= "ErrorResponse" (ex-message e)))
+        (is (= {:S "ERROR"
+                :V "ERROR"
+                :C "42601"
+                :M "syntax error at or near \"selekt\""
+                :P "1"
+                :R "scanner_yyerror"}
+               (-> e
+                   ex-data
+                   :errors
+                   (dissoc :F :L))))))))
+
+
+(deftest test-client-error-response
 
   (let [config
         (assoc CONFIG :pg-params {"pg_foobar" "111"})]
@@ -262,14 +306,14 @@
       (let [res (client/query conn "ROLLBACK")]
         (is (nil? res))))
 
-    (is (= {\S "WARNING"
-            \V "WARNING"
-            \C "25P01"
-            \M "there is no transaction in progress"
-            \R "UserAbortTransactionBlock"}
+    (is (= {:S "WARNING"
+            :V "WARNING"
+            :C "25P01"
+            :M "there is no transaction in progress"
+            :R "UserAbortTransactionBlock"}
 
            (-> @capture!
-               (dissoc \L \F))))))
+               (dissoc :L :F))))))
 
 
 (deftest test-client-insert-result-no-returning
