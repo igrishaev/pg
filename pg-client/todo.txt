@@ -1,5 +1,4 @@
 
-- rename tx-state to state
 - verbose fields for notice/error resp
 - tx macro isolation level
 - tx error tests

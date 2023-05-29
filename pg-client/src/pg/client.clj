@@ -53,7 +53,7 @@
   (prot.connection/get-parameter conn param))
 
 
-(defn tx-state ^Keyword [conn]
+(defn status ^Keyword [conn]
   (prot.connection/get-tx-status conn))
 
 

@@ -31,26 +31,26 @@
 
   (client/with-connection [conn CONFIG]
 
-    (is (= :I (client/tx-state conn)))
+    (is (= :I (client/status conn)))
 
     (client/query conn "select 1")
 
-    (is (= :I (client/tx-state conn)))
+    (is (= :I (client/status conn)))
 
     (client/begin conn)
 
-    (is (= :T (client/tx-state conn)))
+    (is (= :T (client/status conn)))
 
     (try
       (client/query conn "selekt 1")
       (catch Exception _
         nil))
 
-    (is (= :E (client/tx-state conn)))
+    (is (= :E (client/status conn)))
 
     (client/rollback conn)
 
-    (is (= :I (client/tx-state conn)))))
+    (is (= :I (client/status conn)))))
 
 
 (deftest test-client-empty-query
