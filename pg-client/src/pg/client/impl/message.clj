@@ -15,37 +15,60 @@
    [pg.client.bb :as bb]))
 
 
+(defn parse-token ^Keyword [^Byte b]
+  (case (char b)
+    \S :severity
+    \V :verbosity
+    \C :code
+    \M :message
+    \D :detail
+    \H :hint
+    \P :position
+    \p :position-internal
+    \q :query
+    \W :stacktrace
+    \s :schema
+    \t :table
+    \c :column
+    \d :datatype
+    \n :constraint
+    \F :file
+    \L :line
+    \R :function
+    (-> b char str keyword)))
+
+
 (defrecord NegotiateProtocolVersion
     [^Integer version
      ^List params]
 
-  message/IMessage
+    message/IMessage
 
-  (handle [this result connection]
-    result)
+    (handle [this result connection]
+      result)
 
-  (from-bb [this bb connection]
+    (from-bb [this bb connection]
 
-    (let [version
-          (bb/read-int32 bb)
+      (let [version
+            (bb/read-int32 bb)
 
-          param-count
-          (bb/read-int32 bb)
+            param-count
+            (bb/read-int32 bb)
 
-          params
-          (let [encoding
-                (connection/get-server-encoding connection)]
-            (loop [i 0
-                   acc []]
-              (if (= i param-count)
-                acc
-                (let [param
-                      (bb/read-cstring bb encoding)]
-                  (recur (inc i) (conj acc param))))))]
+            params
+            (let [encoding
+                  (connection/get-server-encoding connection)]
+              (loop [i 0
+                     acc []]
+                (if (= i param-count)
+                  acc
+                  (let [param
+                        (bb/read-cstring bb encoding)]
+                    (recur (inc i) (conj acc param))))))]
 
-      (assoc this
-             :version version
-             :params params))))
+        (assoc this
+               :version version
+               :params params))))
 
 
 (defmethod message/tag->message \v [_]
@@ -72,7 +95,7 @@
               (if (zero? b)
                 acc
                 (let [token
-                      (-> b char str keyword)
+                      (parse-token b)
                       field
                       (bb/read-cstring bb encoding)]
                   (recur (assoc acc token field))))))]
@@ -403,7 +426,7 @@
               (if (zero? b)
                 acc
                 (let [token
-                      (-> b char str keyword)
+                      (parse-token b)
                       field
                       (bb/read-cstring bb encoding)]
                   (recur (assoc acc token field))))))]

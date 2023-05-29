@@ -210,16 +210,16 @@
       (client/query conn "selekt 1")
       (catch Exception e
         (is (= "ErrorResponse" (ex-message e)))
-        (is (= {:S "ERROR"
-                :V "ERROR"
-                :C "42601"
-                :M "syntax error at or near \"selekt\""
-                :P "1"
-                :R "scanner_yyerror"}
+        (is (= {:severity "ERROR"
+                :verbosity "ERROR"
+                :code "42601"
+                :message "syntax error at or near \"selekt\""
+                :position "1"
+                :function "scanner_yyerror"}
                (-> e
                    ex-data
                    :errors
-                   (dissoc :F :L))))))))
+                   (dissoc :file :line))))))))
 
 
 (deftest test-client-error-response
@@ -382,14 +382,15 @@
       (let [res (client/query conn "ROLLBACK")]
         (is (nil? res))))
 
-    (is (= {:S "WARNING"
-            :V "WARNING"
-            :C "25P01"
-            :M "there is no transaction in progress"
-            :R "UserAbortTransactionBlock"}
+    (is (= {:severity "WARNING"
+            :verbosity "WARNING"
+            :code "25P01"
+            :message "there is no transaction in progress"
+            :file "xact.c"
+            :function "UserAbortTransactionBlock"}
 
            (-> @capture!
-               (dissoc :L :F))))))
+               (dissoc :line))))))
 
 
 (deftest test-client-insert-result-no-returning

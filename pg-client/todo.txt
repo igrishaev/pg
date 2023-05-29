@@ -1,5 +1,6 @@
 
-- verbose fields for notice/error resp
+- throw full error response?
+- handle notice full message?
 - tx macro isolation level
 - tx error tests
 - source protocol (map, conn)
@@ -9,6 +10,5 @@
 - json package
 - check conn status
 - pubsub pool + namespace
-- handle notice full message
 - adopt honey-sql
 - adopt gosql
