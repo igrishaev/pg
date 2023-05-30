@@ -4,6 +4,7 @@
   (:require
    pg.client.auth.md5
    pg.client.auth.clear
+   [pg.client.sql :as sql]
    [pg.client.impl.connection :as impl.connection]
    [pg.client.prot.connection :as prot.connection]))
 
@@ -61,12 +62,24 @@
   (prot.connection/get-pid conn))
 
 
-(defmacro with-tx [[conn] & body]
+(defmacro with-tx
+
+  {:arglists
+   '([conn]
+     [conn {:keys [read-only?
+                   isolation-level]}])}
+
+  [[conn opt]
+   & body]
   `(do
      (begin ~conn)
      (let [[e# result#]
            (try
-             [nil (do ~@body)]
+             [nil (do
+                    ~(when opt
+                       `(when-let [q# (sql/set-tx ~opt)]
+                          (query ~conn q#)))
+                    ~@body)]
              (catch Throwable e#
                [e# nil]))]
        (if e#

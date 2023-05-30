@@ -1,10 +1,9 @@
 
-- tx macro isolation level
-- tx error tests
-- sasl auth in a separate module
+- tx macro rollback
 - decode text mm opt
 - decode text encoding
 - json package
+- sasl auth in a separate module
 - check conn status
 - pubsub pool + namespace
 - source protocol (map, conn)

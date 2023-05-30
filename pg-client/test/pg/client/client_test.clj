@@ -117,6 +117,45 @@
       (is (= {:bar 2} res2)))))
 
 
+(deftest test-client-with-transaction-read-only
+
+  (client/with-connection [conn CONFIG]
+
+    (let [res1
+          (client/with-tx [conn {:read-only? true}]
+            (client/query conn "select 1 as foo"))]
+
+      (is (= [{:foo 1}] res1))
+
+      (is (thrown?
+           Exception
+           (client/with-tx [conn {:read-only? true}]
+             (client/query conn "create temp table foo123 (id integer)")))))))
+
+
+(deftest test-client-with-transaction-iso-level
+
+  (let [table
+        (str (gensym "table"))]
+
+    (client/with-connection [conn CONFIG]
+
+      (client/query conn (format "create table %s (id integer)" table))
+
+      (client/with-tx [conn {:isolation-level "serializable"}]
+        (client/query conn (format "insert into %s values (1), (2)" table))
+
+        (let [res1
+              (client/query conn (format "select * from %s" table))
+
+              res2
+              (client/with-connection [conn2 CONFIG]
+                (client/query conn2 (format "select * from %s" table)))]
+
+          (is (= [{:id 1} {:id 2}] res1))
+          (is (= [] res2)))))))
+
+
 (deftest test-client-create-table
   (client/with-connection [conn CONFIG]
 
