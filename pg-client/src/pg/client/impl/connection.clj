@@ -136,7 +136,7 @@
                  pg-params)
 
             result
-            (result/make-result this)
+            (result/make-result this nil {:phase :authenticate})
 
             _
             (connection/send-message this message)
@@ -152,7 +152,7 @@
             (connection/read-messages-until this #{ReadyForQuery ErrorResponse})
 
             result
-            (result/make-result this)]
+            (result/make-result this nil {:phase :initiate})]
 
         (prot.result/handle result messages)))
 
@@ -181,7 +181,7 @@
             (connection/read-messages-until this #{ReadyForQuery})
 
             result
-            (result/make-result this opt)]
+            (result/make-result this opt {:query sql})]
 
         (connection/send-message this message)
         (prot.result/handle result messages)))

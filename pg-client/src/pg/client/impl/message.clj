@@ -42,33 +42,33 @@
     [^Integer version
      ^List params]
 
-    message/IMessage
+  message/IMessage
 
-    (handle [this result connection]
-      result)
+  (handle [this result connection]
+    result)
 
-    (from-bb [this bb connection]
+  (from-bb [this bb connection]
 
-      (let [version
-            (bb/read-int32 bb)
+    (let [version
+          (bb/read-int32 bb)
 
-            param-count
-            (bb/read-int32 bb)
+          param-count
+          (bb/read-int32 bb)
 
-            params
-            (let [encoding
-                  (connection/get-server-encoding connection)]
-              (loop [i 0
-                     acc []]
-                (if (= i param-count)
-                  acc
-                  (let [param
-                        (bb/read-cstring bb encoding)]
-                    (recur (inc i) (conj acc param))))))]
+          params
+          (let [encoding
+                (connection/get-server-encoding connection)]
+            (loop [i 0
+                   acc []]
+              (if (= i param-count)
+                acc
+                (let [param
+                      (bb/read-cstring bb encoding)]
+                  (recur (inc i) (conj acc param))))))]
 
-        (assoc this
-               :version version
-               :params params))))
+      (assoc this
+             :version version
+             :params params))))
 
 
 (defmethod message/tag->message \v [_]
@@ -76,7 +76,7 @@
 
 
 (defrecord NoticeResponse
-    [^List fields]
+    [^Map fields]
 
   message/IMessage
 
@@ -178,20 +178,20 @@
      ^String database
      ^Map options]
 
-    message/IMessage
+  message/IMessage
 
-    (to-bb [this connection]
-      (let [encoding
-            (connection/get-client-encoding connection)]
-        (bb-encode encoding
-                   nil
-                   (-> [(array/arr32 protocol-version)
-                        "user"
-                        user
-                        "database"
-                        database]
-                       (into (mapcat identity options))
-                       (conj (byte 0)))))))
+  (to-bb [this connection]
+    (let [encoding
+          (connection/get-client-encoding connection)]
+      (bb-encode encoding
+                 nil
+                 (-> [(array/arr32 protocol-version)
+                      "user"
+                      user
+                      "database"
+                      database]
+                     (into (mapcat identity options))
+                     (conj (byte 0)))))))
 
 
 (defrecord AuthenticationOk

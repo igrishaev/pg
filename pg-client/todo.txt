@@ -1,14 +1,12 @@
 
-- throw full error response?
-- handle notice full message?
 - tx macro isolation level
 - tx error tests
-- source protocol (map, conn)
 - sasl auth in a separate module
 - decode text mm opt
 - decode text encoding
 - json package
 - check conn status
 - pubsub pool + namespace
+- source protocol (map, conn)
 - adopt honey-sql
 - adopt gosql

@@ -210,16 +210,19 @@
       (client/query conn "selekt 1")
       (catch Exception e
         (is (= "ErrorResponse" (ex-message e)))
-        (is (= {:severity "ERROR"
-                :verbosity "ERROR"
-                :code "42601"
-                :message "syntax error at or near \"selekt\""
-                :position "1"
-                :function "scanner_yyerror"}
+        (is (= {:errors
+                {:severity "ERROR"
+                 :verbosity "ERROR"
+                 :code "42601"
+                 :message "syntax error at or near \"selekt\""
+                 :position "1"
+                 :function "scanner_yyerror"}
+                :details {:query "selekt 1"}}
                (-> e
                    ex-data
-                   :errors
-                   (dissoc :file :line))))))))
+                   (update :errors
+                           (fn [errors]
+                             (dissoc errors :file :line))))))))))
 
 
 (deftest test-client-error-response

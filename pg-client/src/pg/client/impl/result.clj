@@ -213,7 +213,8 @@
      ^Frame ^:unsynchronized-mutable -frame
      ^List -frames
      ^List -list-ErrorResponse
-     ^List -list-Exception]
+     ^List -list-Exception
+     ^Map  -ex-data]
 
   result/IResult
 
@@ -254,8 +255,11 @@
     (when-let [ex (afirst -list-Exception)]
       (throw ex))
 
-    (when-let [er (afirst -list-ErrorResponse)]
-      (throw (ex-info "ErrorResponse" er)))
+    (when-let [{:keys [errors]}
+               (afirst -list-ErrorResponse)]
+      (throw (ex-info "ErrorResponse"
+                      {:errors errors
+                       :details -ex-data})))
 
     (let [results
           (mapv result/complete -frames)]
@@ -278,7 +282,9 @@
    (make-result connection nil))
 
   ([connection opt]
+   (make-result connection opt nil))
 
+  ([connection opt data]
    (let [opt
          (merge opt-default opt)]
 
@@ -288,4 +294,5 @@
           (make-frame connection opt)
           (new ArrayList)
           (new ArrayList)
-          (new ArrayList)))))
+          (new ArrayList)
+          data))))
