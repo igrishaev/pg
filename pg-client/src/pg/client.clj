@@ -10,6 +10,17 @@
 
 
 (defn get-connection [config]
+
+  {:arglists
+   '([{:keys [host
+              port
+              user
+              password
+              database
+              fn-notice
+              fn-notification
+              protocol-version]}])}
+
   (let [conn (impl.connection/connect config)]
     (prot.connection/authenticate conn)
     (prot.connection/initiate conn)))
@@ -27,14 +38,18 @@
 
 (defn query
 
+  {:arglists
+   '([conn sql]
+     [conn sql {:keys [fn-column
+                       fn-result
+                       as-vectors?
+                       as-maps?
+                       as-java-maps?]}])}
+
   ([conn sql]
    (prot.connection/query conn sql nil))
 
-  ([conn sql {:as opt :keys [fn-column
-                             fn-result
-                             as-vectors?
-                             as-maps?
-                             as-java-maps?]}]
+  ([conn sql opt]
    (prot.connection/query conn sql opt)))
 
 
