@@ -1,5 +1,6 @@
 
 - json package
+- jodo split encode/decode
 - sasl auth in a separate module
 - check conn status
 - pubsub pool + namespace
