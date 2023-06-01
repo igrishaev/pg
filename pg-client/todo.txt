@@ -1,6 +1,4 @@
 
-- decode text mm opt
-- decode text encoding
 - json package
 - sasl auth in a separate module
 - check conn status
