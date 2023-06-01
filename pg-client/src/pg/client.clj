@@ -67,9 +67,10 @@
   {:arglists
    '([conn]
      [conn {:keys [read-only?
-                   isolation-level]}])}
+                   isolation-level
+                   rollback?]}])}
 
-  [[conn opt]
+  [[conn {:as opt :keys [rollback?]}]
    & body]
   `(do
      (begin ~conn)
@@ -87,5 +88,7 @@
            (rollback ~conn)
            (throw e#))
          (do
-           (commit ~conn)
+           ~(if rollback?
+              `(rollback ~conn)
+              `(commit ~conn))
            result#)))))

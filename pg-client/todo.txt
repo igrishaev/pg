@@ -1,5 +1,4 @@
 
-- tx macro rollback
 - decode text mm opt
 - decode text encoding
 - json package
@@ -9,3 +8,4 @@
 - source protocol (map, conn)
 - adopt honey-sql
 - adopt gosql
+- errors addSuppressed

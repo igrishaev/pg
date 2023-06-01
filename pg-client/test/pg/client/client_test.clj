@@ -156,6 +156,24 @@
           (is (= [] res2)))))))
 
 
+(deftest test-client-with-transaction-rollback
+
+  (let [table
+        (str (gensym "table"))]
+
+    (client/with-connection [conn CONFIG]
+
+      (client/query conn (format "create table %s (id integer)" table))
+
+      (client/with-tx [conn {:rollback? true}]
+        (client/query conn (format "insert into %s values (1), (2)" table)))
+
+      (let [res1
+            (client/query conn (format "select * from %s" table))]
+
+        (is (= [] res1))))))
+
+
 (deftest test-client-create-table
   (client/with-connection [conn CONFIG]
 
