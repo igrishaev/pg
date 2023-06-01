@@ -1,7 +1,7 @@
 (defproject com.github.igrishaev/pg-client "0.1.1-SNAPSHOT"
 
   :description
-  "PG client"
+  "Postgres client in pure Clojure (no JDBC)"
 
   :plugins
   [[lein-parent "0.3.8"]]
