@@ -1,5 +1,6 @@
 (ns pg.client.client-test
   (:require
+   pg.json
    [pg.client :as client]
    [clojure.string :as str]
    [clojure.test :refer [deftest is]]))
@@ -658,3 +659,21 @@ drop table %1$s;
 
       (is (instance? java.util.HashMap (first res)))
       (is (= [{:id_0 1 :id_1 2}] res)))))
+
+
+(deftest test-client-json-read
+  (client/with-connection [conn CONFIG]
+    (let [res
+          (client/query conn "select '[1, 2, 3]'::json as arr")]
+      (is (= [{:arr [1 2 3]}] res)))))
+
+
+(deftest test-client-jsonb-read
+  (client/with-connection [conn CONFIG]
+    (let [res
+          (client/query conn "select '{\"foo\": 123}'::jsonb as obj")]
+      (is (= [{:obj {:foo 123}}] res)))))
+
+
+;; test-client-json-write
+;; test-client-jsonb-write

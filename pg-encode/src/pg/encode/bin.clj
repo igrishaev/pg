@@ -33,9 +33,12 @@
 
 (defn set-default [Type oid]
   (let [method
-        (.getMethod ^MultiFn -encode [Type oid])]
-    (if (or (nil? method)
-            (= method (.getMethod ^MultiFn -encode :default)))
+        (.getMethod ^MultiFn -encode [Type oid])
+
+        default
+        (.getMethod ^MultiFn -encode :default)]
+
+    (if (or (nil? method) (= method default))
       (e/error! "There is no a method with [%s %s] dispatch value." Type oid)
       (.addMethod ^MultiFn -encode [Type nil] method))))
 

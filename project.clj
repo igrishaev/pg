@@ -37,6 +37,7 @@
    [com.github.igrishaev/pg-copy]
    [com.github.igrishaev/pg-copy-jdbc]
    [com.github.igrishaev/pg-joda-time]
+   [com.github.igrishaev/pg-json]
    [com.github.igrishaev/pg-client]]
 
   :sub
@@ -46,6 +47,7 @@
    "pg-copy"
    "pg-copy-jdbc"
    "pg-joda-time"
+   "pg-json"
    "pg-client"]
 
   :managed-dependencies
@@ -55,10 +57,12 @@
    [com.github.igrishaev/pg-copy :version]
    [com.github.igrishaev/pg-copy-jdbc :version]
    [com.github.igrishaev/pg-joda-time :version]
+   [com.github.igrishaev/pg-json :version]
    [com.github.igrishaev/pg-client :version]
    [joda-time/joda-time "2.12.5"]
    [com.github.seancorfield/next.jdbc "1.2.796"]
-   [org.postgresql/postgresql "42.2.18"]]
+   [org.postgresql/postgresql "42.2.18"]
+   [cheshire "5.11.0"]]
 
   :profiles
   {:dev

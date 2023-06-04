@@ -20,4 +20,9 @@
              :plugins
              :repositories
              :url
-             [:profiles :dev]]})
+             [:profiles :dev]]}
+
+  :profiles
+  {:test
+   {:dependencies
+    [[com.github.igrishaev/pg-json]]}})
