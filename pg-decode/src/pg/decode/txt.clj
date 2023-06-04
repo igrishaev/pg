@@ -12,75 +12,75 @@
 
 
 (defmulti -decode
-  (fn [oid ^String _string _opt]
+  (fn [^String _string oid _opt]
     oid))
 
 
 (defmethod -decode :default
-  [_ string _]
+  [string _ _]
   string)
 
 
 (defmethod -decode oid/uuid
-  [_ string _]
+  [string _ _]
   (UUID/fromString string))
 
 
 (defmethod -decode oid/text
-  [_ string _]
+  [string _ _]
   string)
 
 
 (defmethod -decode oid/varchar
-  [_ string _]
+  [string _ _]
   string)
 
 
 (defmethod -decode oid/char
-  [_ string _]
+  [string _ _]
   (first string))
 
 
 (defmethod -decode oid/bool
-  [_ string _]
+  [string _ _]
   (case string
     "t" true
     "f" false))
 
 
 (defmethod -decode oid/int2
-  [_ string _]
+  [string _ _]
   (Short/parseShort string))
 
 
 (defmethod -decode oid/int4
-  [_ string _]
+  [string _ _]
   (Integer/parseInt string))
 
 
 (defmethod -decode oid/int8
-  [_ string _]
+  [string _ _]
   (Long/parseLong string))
 
 
 (defmethod -decode oid/float4
-  [_ string _]
+  [string _ _]
   (Float/parseFloat string))
 
 
 (defmethod -decode oid/float8
-  [_ string _]
+  [string _ _]
   (Double/parseDouble string))
 
 
 #_
 (defmethod -decode oid/xml
-  [_ string _]
+  [string _ _]
   ...)
 
 
 (defmethod -decode oid/numeric
-  [_ string _]
+  [string _ _]
   (bigdec string))
 
 
@@ -91,26 +91,30 @@
 
 
 (defmethod -decode oid/timestamptz
-  [_ string _]
+  [string _ _]
   (->> string
        (.parse dtfz)
        (Instant/from)))
 
 
 (defmethod -decode oid/date
-  [_ string _]
+  [string _ _]
   (LocalDate/parse string))
 
 
 (defmethod -decode oid/time
-  [_ string _]
+  [string _ _]
   (LocalTime/parse string))
 
 
+;;
+;; API
+;;
+
 (defn decode
 
-  ([oid string]
-   (-decode oid string nil))
+  ([string oid]
+   (-decode string oid nil))
 
-  ([oid string opt]
-   (-decode oid string opt)))
+  ([string oid opt]
+   (-decode string oid opt)))

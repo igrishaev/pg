@@ -35,7 +35,7 @@
                0
                (let [text
                      (new String ^bytes value encoding)]
-                 (txt/decode type-oid text)))))
+                 (txt/decode text type-oid)))))
          columns
          values)))
 

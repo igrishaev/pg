@@ -17,6 +17,10 @@
   (into {} Record))
 
 
+(defn gen-table []
+  (format "table_%s" (System/nanoTime)))
+
+
 (deftest test-client-ok
 
   (let [result
@@ -136,7 +140,7 @@
 (deftest test-client-with-transaction-iso-level
 
   (let [table
-        (str (gensym "table"))]
+        (gen-table)]
 
     (client/with-connection [conn CONFIG]
 
@@ -159,7 +163,7 @@
 (deftest test-client-with-transaction-rollback
 
   (let [table
-        (str (gensym "table"))]
+        (gen-table)]
 
     (client/with-connection [conn CONFIG]
 
@@ -178,7 +182,7 @@
   (client/with-connection [conn CONFIG]
 
     (let [table
-          (str (gensym "table"))
+          (gen-table)
 
           query
           (format "create temp table %s (id serial, title text)" table)
@@ -335,7 +339,7 @@
   (client/with-connection [conn CONFIG]
 
     (let [table
-          (str (gensym "table"))
+          (gen-table)
 
           query1
           (format "create temp table %s (id serial, title text)" table)
@@ -389,7 +393,7 @@
   (client/with-connection [conn CONFIG]
 
     (let [table
-          (str (gensym "table"))
+          (gen-table)
 
           query1
           (format "create temp table %s (id serial, title text)" table)
@@ -410,7 +414,7 @@
   (client/with-connection [conn CONFIG]
 
     (let [table
-          (str (gensym "table"))
+          (gen-table)
 
           query1
           (format "create temp table %s (id serial, title text)" table)
@@ -457,7 +461,7 @@
   (client/with-connection [conn CONFIG]
 
     (let [table
-          (str (gensym "table"))
+          (gen-table)
 
           query1
           (format "create temp table %s (id serial, title text)" table)
@@ -478,7 +482,7 @@
   (client/with-connection [conn CONFIG]
 
     (let [table
-          (str (gensym "table"))
+          (gen-table)
 
           query1
           (format "create temp table %s (id serial, title text)" table)
@@ -505,7 +509,7 @@
   (client/with-connection [conn CONFIG]
 
     (let [table
-          (str (gensym "table"))
+          (gen-table)
 
           query1
           (format "create temp table %s (id serial, title text)" table)
@@ -532,7 +536,7 @@
   (client/with-connection [conn CONFIG]
 
     (let [table
-          (str (gensym "table"))
+          (gen-table)
 
           query1
           (format "create temp table %s (id serial, title text)" table)
@@ -559,7 +563,7 @@
   (client/with-connection [conn CONFIG]
 
     (let [table
-          (str (gensym "table"))
+          (gen-table)
 
           query
           (format
@@ -592,7 +596,7 @@ drop table %1$s;
   (client/with-connection [conn CONFIG]
 
     (let [table
-          (str (gensym "table"))
+          (gen-table)
 
           query1
           (format "create temp table %s (id serial, title text)" table)
