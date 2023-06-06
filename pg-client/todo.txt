@@ -6,9 +6,14 @@
 - joda rename
 - joda structure: pg.joda, pg.joda.encode, pg.joda.decode
 - sasl auth in a separate module
+- parse/bind/execute
 - check conn status
 - pubsub pool + namespace
 - source protocol (map, conn)
 - adopt honey-sql
 - adopt gosql
 - errors addSuppressed
+- cursor package
+- json package docs
+- client package docs
+- joda update docs
