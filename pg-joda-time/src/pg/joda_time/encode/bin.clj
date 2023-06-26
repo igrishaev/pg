@@ -1,4 +1,5 @@
 (ns pg.joda-time.encode.bin
+  (:refer-clojure :exclude [extend])
   (:import
    java.util.TimeZone
    org.joda.time.Days
@@ -8,7 +9,7 @@
   (:require
    [pg.const :as c]
    [pg.bytes.array :as array]
-   [pg.encode.bin :refer [set-default -encode]]
+   [pg.encode.bin :refer [extend]]
    [pg.oid :as oid]))
 
 
@@ -20,7 +21,8 @@
 ;; LocalDate
 ;;
 
-(defmethod -encode [LocalDate oid/date]
+(extend [LocalDate nil
+         LocalDate oid/date]
   [^LocalDate value _ _]
   (let [days
         (-> (Days/daysBetween LD_EPOCH value)
@@ -29,26 +31,22 @@
     (array/arr32 days)))
 
 
-(set-default LocalDate oid/date)
-
-
 ;;
 ;; LocalTime
 ;;
 
-(defmethod -encode [LocalTime oid/time]
+(extend [LocalTime nil
+         LocalTime oid/time]
   [^LocalTime value _ _]
   (array/arr64 (.getMillisOfDay value)))
-
-
-(set-default LocalTime oid/time)
 
 
 ;;
 ;; DateTime
 ;;
 
-(defmethod -encode [DateTime oid/timestamp]
+(extend [DateTime nil
+         DateTime oid/timestamp]
   [^DateTime value _ _]
   (let [millis
         (- (.getMillis value)
@@ -60,6 +58,3 @@
     (array/arr64
      (-> (* millis 1000)
          (+ (* offset-millis 1000))))))
-
-
-(set-default DateTime oid/timestamp)
