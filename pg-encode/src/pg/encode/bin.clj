@@ -277,10 +277,10 @@
 
 (defn encode
   (^bytes [value]
-   (encode value nil nil))
+   (-encode value nil nil))
 
   (^bytes [value oid]
-   (encode value oid nil))
+   (-encode value oid nil))
 
   (^bytes [value oid opt]
    (-encode value oid opt)))
