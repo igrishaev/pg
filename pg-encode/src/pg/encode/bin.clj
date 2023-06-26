@@ -30,7 +30,7 @@
                 (defmethod -encode [Type# oid#]
                   ~binding
                   ~@body)
-                ~type-oid's))
+                ~@type-oid's))
 
 
 (defmethod -encode :default
