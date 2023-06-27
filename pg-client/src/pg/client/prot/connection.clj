@@ -54,7 +54,7 @@
 
   (bind [this statement params])
 
-  (execute [this portal])
+  (execute [this portal row-count])
 
   (close-statement [this statement-name])
 

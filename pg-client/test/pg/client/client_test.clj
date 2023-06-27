@@ -14,6 +14,15 @@
    :database "ivan"})
 
 
+#_
+(def CONFIG
+  {:host "127.0.0.1"
+   :port 35432
+   :user "test"
+   :password "test"
+   :database "test"})
+
+
 (defn ->map [Record]
   (into {} Record))
 
@@ -700,7 +709,7 @@ drop table %1$s;
 (deftest test-execute
   (client/with-connection [conn CONFIG]
     (let [result
-          (client/execute conn "select $1::integer as foo" [1])]
+          (client/execute conn "select 1 as foo" [])]
       (is (= 1 result)))))
 
 

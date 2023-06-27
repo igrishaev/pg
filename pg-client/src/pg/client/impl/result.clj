@@ -295,4 +295,4 @@
           (new ArrayList)
           (new ArrayList)
           (new ArrayList)
-          data))))
+          (or data {})))))

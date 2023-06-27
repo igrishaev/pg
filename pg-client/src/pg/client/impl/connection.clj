@@ -207,34 +207,58 @@
     (parse [this query]
 
       (let [statement
-            (name (gensym "statement_"))
+            ""
+            ;; (name (gensym "statement_"))
 
             message
-            (new Parse statement query [])]
+            (new Parse statement query [])
+
+            messages
+            (connection/read-messages-until this #{ReadyForQuery ErrorResponse})
+
+            result
+            (result/make-result this nil nil)]
 
         (connection/send-message this message)
+        (connection/send-sync this)
+        (connection/send-message this (new Describe \S statement))
+
+        (prot.result/handle result messages)
 
         statement))
 
     (bind [this statement params]
 
       (let [portal
-            (name (gensym "portal_"))
+            ""
+            ;; (name (gensym "portal_"))
 
             message
-            (new Bind portal statement [] params [0])]
-
-        (connection/send-message this message)
-
-        portal))
-
-    (execute [this portal]
-
-      (let [message
-            (new Execute portal 0)
+            (new Bind portal statement [] params [0])
 
             messages
             (connection/read-messages-until this #{ReadyForQuery ErrorResponse})
+
+            result
+            (result/make-result this nil nil)]
+
+        (connection/send-message this message)
+        (connection/send-sync this)
+        (connection/send-message this (new Describe \P portal))
+
+        (prot.result/handle result messages)
+
+        portal))
+
+    (execute [this portal row-count]
+
+      (let [message
+            (new Execute portal row-count)
+
+            messages
+            (connection/read-messages-until this #{
+                                                   ;; ReadyForQuery ErrorResponse
+                                                   })
 
             result
             (result/make-result this nil nil)]
