@@ -434,6 +434,7 @@
   message/IMessage
 
   (to-bb [this connection]
+
     (let [encoding
           (connection/get-client-encoding connection)
 
@@ -443,23 +444,29 @@
       (doto parts
         (.add portal-name)
         (.add statement-name)
-        (.add (count format-params))
-        (.addAll format-params)
-        (.add (count params)))
+        (.add (array/arr16 (count format-params)))
+        (.addAll (mapv array/arr16 format-params))
+        (.add (array/arr16 (count params))))
 
       (doseq [param params]
+
         (if (nil? param)
-          (.add parts -1)
+          (.add parts (array/arr32 -1))
+
           (let [encoded
-                (txt/encode param nil nil)]
-            (.add parts (count encoded))
+                (txt/encode param nil nil)
+
+                len
+                (count (.getBytes encoded encoding))]
+
+            (.add parts (array/arr32 len))
             (.add parts encoded))))
 
       (doto parts
-        (.add (count format-columns))
-        (.addAll format-columns))
+        (.add (array/arr16 (count format-columns)))
+        (.addAll (mapv array/arr16 format-columns)))
 
-      (bb-encode encoding \B parts))))
+      (bb-encode encoding \B (vec parts)))))
 
 
 (defrecord BindComplete []
@@ -489,7 +496,7 @@
       (bb-encode encoding
                  \E
                  [portal-name
-                  row-count]))))
+                  (array/arr32 row-count)]))))
 
 
 (defrecord RowColumn

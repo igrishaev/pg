@@ -697,5 +697,13 @@ drop table %1$s;
       (is (string? stmt)))))
 
 
+(deftest test-execute
+  (client/with-connection [conn CONFIG]
+    (client/execute conn "select $1::integer as foo" [1])))
+
+
+
+
+
 ;; test-client-json-write
 ;; test-client-jsonb-write

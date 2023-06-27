@@ -209,50 +209,54 @@
       (let [statement
             (name (gensym "statement_"))
 
-            message-parse
-            (new Parse statement query [])
+            message
+            (new Parse statement query [])]
 
-            message-flush
-            (new Flush)
-
-            messages
-            (connection/read-messages-until this #{ParseComplete ErrorResponse})
-
-            ex-data
-            {:query query
-             :statement statement}
-
-            result
-            (result/make-result this nil ex-data)]
-
-        (connection/send-message this message-parse)
-        (connection/send-message this message-flush)
-
-        (prot.result/handle result messages)
+        (connection/send-message this message)
 
         statement))
 
-    (bind [this params])
+    (bind [this statement params]
 
-    (execute [this portal])
+      (let [portal
+            (name (gensym "portal_"))
 
-    (close-statement [this statement]
+            message
+            (new Bind portal statement [] params [])]
 
-      (let [message-close
-            (new Close \S statement)
+        (connection/send-message this message)
 
-            message-flush
-            (new Flush)
+        portal))
+
+    (execute [this portal]
+
+      (let [message
+            (new Execute portal 0)
 
             messages
-            (connection/read-messages-until this #{CloseComplete ErrorResponse})
+            (connection/read-messages-until this #{ReadyForQuery ErrorResponse})
 
             result
             (result/make-result this nil nil)]
 
-        (connection/send-message this message-close)
-        (connection/send-message this message-flush)
+        (connection/send-message this message)
         (prot.result/handle result messages)))
+
+    (close-statement [this statement]
+
+      (let [message
+            (new Close \S statement)]
+        (connection/send-message this message))
+
+      nil)
+
+    (close-portal [this portal]
+
+      (let [message
+            (new Close \P portal)]
+        (connection/send-message this message))
+
+      nil)
 
     (describe-statement [this statement-name]
 

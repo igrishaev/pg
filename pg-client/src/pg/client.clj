@@ -110,13 +110,7 @@
 
 
 (defn prepare [conn query]
-  (let [statement
-        (prot.connection/parse conn query)
-
-        result
-        (prot.connection/describe-statement conn statement)]
-
-    statement))
+  (prot.connection/parse conn query))
 
 
 (defn close-statement [conn statement]
@@ -133,13 +127,26 @@
          (close-statement conn# ~bind)))))
 
 
-(defn bind [conn statement params])
+(defn bind [conn statement params]
+  (prot.connection/bind conn statement params))
 
 
-(defn execute [conn portal])
+(defn close-portal [conn portal]
+  (prot.connection/close-portal conn portal))
 
 
-(defmacro with-statement [])
+(defmacro with-portal [[bind conn statement params] & body]
+  `(let [conn# ~conn
+         stmt# ~statement
+         params# ~params
+         ~bind (bind conn# stmt# params#)]
+     (try
+       ~@body
+       (finally
+         (close-portal conn# ~bind)))))
 
 
-(defmacro with-portal [])
+(defn execute [conn query params]
+  (with-prepare [stmt conn query]
+    (with-portal [portal conn stmt params]
+      (prot.connection/execute conn portal))))

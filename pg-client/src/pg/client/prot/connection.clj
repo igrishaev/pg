@@ -52,7 +52,7 @@
 
   (parse [this query])
 
-  (bind [this params])
+  (bind [this statement params])
 
   (execute [this portal])
 
