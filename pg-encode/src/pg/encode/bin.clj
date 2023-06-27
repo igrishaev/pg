@@ -1,7 +1,6 @@
 (ns pg.encode.bin
   (:refer-clojure :exclude [extend])
   (:import
-   clojure.lang.MultiFn
    clojure.lang.Symbol
    java.time.Duration
    java.time.Instant
@@ -41,6 +40,10 @@
                    :opt opt})))
 
 
+(defn get-encoding ^String [options]
+  (get options :client-encoding "UTF-8"))
+
+
 ;;
 ;; Symbol
 ;;
@@ -60,7 +63,7 @@
          String oid/text
          String oid/varchar]
   [^String value oid opt]
-  (.getBytes value "UTF-8"))
+  (.getBytes value ^String (get-encoding opt)))
 
 
 ;;
@@ -71,7 +74,7 @@
          Character oid/text
          Character oid/varchar]
   [^Character value oid opt]
-  (.getBytes (str value) "UTF-8"))
+  (.getBytes (str value) (get-encoding opt)))
 
 
 ;;
@@ -180,7 +183,7 @@
 
 (extend [UUID nil
          UUID oid/uuid]
-  [value oid opt]
+  [^UUID value oid opt]
   (let [most-bits
         (.getMostSignificantBits value)
 
