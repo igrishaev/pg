@@ -250,6 +250,36 @@
 
         portal))
 
+    (execute2 [this query params]
+
+      (let [statement
+            (name (gensym "stmt"))
+
+            portal
+            (name (gensym "prtl"))
+
+            message-parse
+            (new Parse statement query [])
+
+            message-bind
+            (new Bind portal statement [0] params [0])
+
+            message-execute
+            (new Execute portal 999)
+
+            messages
+            (connection/read-messages-until this #{ReadyForQuery ErrorResponse})
+
+            result
+            (result/make-result this nil nil)]
+
+        (connection/send-message this message-parse)
+        (connection/send-message this message-bind)
+        (connection/send-message this message-execute)
+        (connection/send-sync this)
+
+        (prot.result/handle result messages)))
+
     (execute [this portal row-count]
 
       (let [message

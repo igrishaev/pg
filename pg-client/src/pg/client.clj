@@ -148,6 +148,11 @@
 
 (defn execute [conn query params]
 
+  (prot.connection/execute2 conn query params)
+
+
+
+  #_
   (let [stmt
         (prepare conn query)
 

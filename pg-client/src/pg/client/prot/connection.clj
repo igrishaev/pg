@@ -56,6 +56,8 @@
 
   (execute [this portal row-count])
 
+  (execute2 [this query params])
+
   (close-statement [this statement-name])
 
   (close-portal [this portal-name])
