@@ -1,6 +1,6 @@
 (ns pg.client.client-test
   (:require
-   pg.json
+   ;; pg.json
    [pg.client :as client]
    [clojure.string :as str]
    [clojure.test :refer [deftest is]]))
@@ -699,10 +699,9 @@ drop table %1$s;
 
 (deftest test-execute
   (client/with-connection [conn CONFIG]
-    (client/execute conn "select $1::integer as foo" [1])))
-
-
-
+    (let [result
+          (client/execute conn "select $1::integer as foo" [1])]
+      (is (= 1 result)))))
 
 
 ;; test-client-json-write

@@ -222,7 +222,7 @@
             (name (gensym "portal_"))
 
             message
-            (new Bind portal statement [] params [])]
+            (new Bind portal statement [] params [0])]
 
         (connection/send-message this message)
 
@@ -259,28 +259,14 @@
       nil)
 
     (describe-statement [this statement-name]
+      (let [message
+            (new Describe \S statement-name)]
+        (connection/send-message this message)))
 
-      (let [message-describe
-            (new Describe \S statement-name)
-
-            message-flush
-            (new Flush)
-
-            messages
-            (connection/read-messages-until this #{ReadyForQuery ErrorResponse})
-
-            ex-data
-            {:op :Describe
-             :statement statement-name}
-
-            result
-            (result/make-result this nil ex-data)]
-
-        (connection/send-message this message-describe)
-        (connection/send-message this message-flush)
-        (prot.result/handle result messages)))
-
-    (describe-portal [this portal-name])
+    (describe-portal [this portal-name]
+      (let [message
+            (new Describe \P portal-name)]
+        (connection/send-message this message)))
 
     Closeable
 

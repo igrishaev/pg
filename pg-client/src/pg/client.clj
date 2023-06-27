@@ -146,7 +146,53 @@
          (close-portal conn# ~bind)))))
 
 
+
+(defn execute [conn query params]
+
+  (let [stmt
+        (prepare conn query)
+
+        _
+        (prot.connection/describe-statement conn stmt)
+        _
+        (prot.connection/send-sync conn)
+        _
+        (prot.connection/send-flush conn)
+
+        portal
+        (bind conn stmt params)
+
+        _
+        (prot.connection/describe-portal conn portal)
+
+        _
+        (prot.connection/send-sync conn)
+        _
+        (prot.connection/send-flush conn)
+
+        result
+        (prot.connection/execute conn portal)
+
+        _
+        (prot.connection/send-sync conn)
+        _
+        (prot.connection/send-flush conn)
+
+        ]
+
+    result))
+
+
+#_
 (defn execute [conn query params]
   (with-prepare [stmt conn query]
+
+    (prot.connection/describe-statement conn stmt)
+    (prot.connection/send-sync conn)
+
     (with-portal [portal conn stmt params]
+
+      (prot.connection/describe-portal conn portal)
+      (prot.connection/send-sync conn)
+
       (prot.connection/execute conn portal))))

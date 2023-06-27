@@ -456,11 +456,14 @@
           (let [encoded
                 (txt/encode param nil nil)
 
+                buf
+                (.getBytes encoded encoding)
+
                 len
-                (count (.getBytes encoded encoding))]
+                (count buf)]
 
             (.add parts (array/arr32 len))
-            (.add parts encoded))))
+            (.add parts buf))))
 
       (doto parts
         (.add (array/arr16 (count format-columns)))
