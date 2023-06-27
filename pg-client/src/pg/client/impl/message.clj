@@ -1,18 +1,20 @@
 (ns pg.client.impl.message
   (:import
-   java.util.Set
-   java.util.Map
-   java.util.List
+   clojure.lang.Keyword
    java.nio.ByteBuffer
-   clojure.lang.Keyword)
+   java.util.ArrayList
+   java.util.List
+   java.util.Map
+   java.util.Set)
   (:require
    [pg.bytes.array :as array]
+   [pg.client.bb :as bb]
+   [pg.client.bytes :as bytes]
+   [pg.client.codec :as codec]
    [pg.client.prot.connection :as connection]
    [pg.client.prot.message :as message]
    [pg.client.prot.result :as result]
-   [pg.client.bytes :as bytes]
-   [pg.client.codec :as codec]
-   [pg.client.bb :as bb]))
+   [pg.encode.txt :as txt]))
 
 
 (defn parse-token ^Keyword [^Byte b]
@@ -318,6 +320,78 @@
 
 (defmethod message/tag->message \K [_]
   (new BackendKeyData nil nil))
+
+
+(defrecord Parse
+    [^String prep-stmt-name
+     ^String query
+     ^Short param-count
+     ^List param-oids]
+
+  message/IMessage
+
+  (to-bb [this connection]
+    (let [encoding
+          (connection/get-client-encoding connection)]
+      (bb-encode encoding
+                 \P
+                 [prep-stmt-name
+                  query
+                  param-count
+                  param-oids]))))
+
+
+(defrecord ParseComplete []
+
+  message/IMessage
+
+  (handle [this result connection]
+    result)
+
+  (from-bb [this bb connection]
+    this))
+
+
+(defmethod message/tag->message \1 [_]
+  (new ParseComplete))
+
+
+(defrecord Bind
+    [^String portal-name
+     ^String prep-stmt-name
+     ^List format-params
+     ^List params
+     ^List format-columns]
+
+  message/IMessage
+
+  (to-bb [this connection]
+    (let [encoding
+          (connection/get-client-encoding connection)
+
+          parts
+          (new ArrayList)]
+
+      (doto parts
+        (.add portal-name)
+        (.add prep-stmt-name)
+        (.add (count format-params))
+        (.addAll format-params)
+        (.add (count params)))
+
+      (doseq [param params]
+        (if (nil? param)
+          (.add parts -1)
+          (let [encoded
+                (txt/encode param nil nil)]
+            (.add parts (count encoded))
+            (.add parts encoded))))
+
+      (doto parts
+        (.add (count format-columns))
+        (.addAll format-columns))
+
+      (bb-encode encoding \B parts))))
 
 
 (defrecord RowColumn
