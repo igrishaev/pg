@@ -48,4 +48,14 @@
 
   (query [this str-sql opt])
 
-  (terminate [this]))
+  (terminate [this])
+
+  (parse [this query])
+
+  (bind [this params])
+
+  (execute [this portal])
+
+  (close-statement [this statement-name])
+
+  (close-portal [this portal-name]))

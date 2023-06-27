@@ -675,5 +675,27 @@ drop table %1$s;
       (is (= [{:obj {:foo 123}}] res)))))
 
 
+(deftest test-client-prepare-&-close-ok
+
+  (client/with-connection [conn CONFIG]
+
+    (let [statement
+          (client/prepare conn "select 1 as foo")]
+
+      (is (string? statement))
+      (is (str/starts-with? statement "statement"))
+
+      (let [result
+            (client/close-statement conn statement)]
+
+      (is (nil? result))))))
+
+
+(deftest test-with-prepare
+  (client/with-connection [conn CONFIG]
+    (client/with-prepare [stmt conn "select 1 as foo"]
+      (is (string? stmt)))))
+
+
 ;; test-client-json-write
 ;; test-client-jsonb-write

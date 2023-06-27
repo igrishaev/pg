@@ -323,9 +323,8 @@
 
 
 (defrecord Parse
-    [^String prep-stmt-name
+    [^String statement-name
      ^String query
-     ^Short param-count
      ^List param-oids]
 
   message/IMessage
@@ -335,10 +334,40 @@
           (connection/get-client-encoding connection)]
       (bb-encode encoding
                  \P
-                 [prep-stmt-name
-                  query
-                  param-count
-                  param-oids]))))
+                 (-> [statement-name
+                      query
+                      (array/arr16 (count param-oids))]
+                     (into (mapv array/arr32 param-oids)))))))
+
+
+(defrecord Close
+    [^Character source-type
+     ^String source]
+
+  message/IMessage
+
+  (to-bb [this connection]
+    (let [encoding
+          (connection/get-client-encoding connection)]
+      (bb-encode encoding
+                 \C
+                 [(byte source-type)
+                  source]))))
+
+
+(defrecord CloseComplete []
+
+  message/IMessage
+
+  (handle [this result connection]
+    result)
+
+  (from-bb [this bb connection]
+    this))
+
+
+(defmethod message/tag->message \3 [_]
+  (new CloseComplete))
 
 
 (defrecord ParseComplete []
@@ -358,7 +387,7 @@
 
 (defrecord Bind
     [^String portal-name
-     ^String prep-stmt-name
+     ^String statement-name
      ^List format-params
      ^List params
      ^List format-columns]
@@ -374,7 +403,7 @@
 
       (doto parts
         (.add portal-name)
-        (.add prep-stmt-name)
+        (.add statement-name)
         (.add (count format-params))
         (.addAll format-params)
         (.add (count params)))
@@ -392,6 +421,36 @@
         (.addAll format-columns))
 
       (bb-encode encoding \B parts))))
+
+
+(defrecord BindComplete []
+
+  message/IMessage
+
+  (handle [this result connection]
+    result)
+
+  (from-bb [this bb connection]
+    this))
+
+
+(defmethod message/tag->message \2 [_]
+  (new BindComplete))
+
+
+(defrecord Execute
+    [^String portal-name
+     ^Integer row-count]
+
+  message/IMessage
+
+  (to-bb [this connection]
+    (let [encoding
+          (connection/get-client-encoding connection)]
+      (bb-encode encoding
+                 \E
+                 [portal-name
+                  row-count]))))
 
 
 (defrecord RowColumn

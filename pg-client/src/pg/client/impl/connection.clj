@@ -19,6 +19,13 @@
    pg.client.impl.message.AuthenticationOk
    pg.client.impl.message.ErrorResponse
    pg.client.impl.message.Flush
+   pg.client.impl.message.Parse
+   pg.client.impl.message.ParseComplete
+   pg.client.impl.message.Bind
+   pg.client.impl.message.BindComplete
+   pg.client.impl.message.Execute
+   pg.client.impl.message.Close
+   pg.client.impl.message.CloseComplete
    pg.client.impl.message.Query
    pg.client.impl.message.ReadyForQuery
    pg.client.impl.message.StartupMessage
@@ -195,6 +202,56 @@
         (.close -ch)
 
         this))
+
+    (parse [this query]
+
+      (let [statement
+            (name (gensym "statement_"))
+
+            message-parse
+            (new Parse statement query [])
+
+            message-flush
+            (new Flush)
+
+            messages
+            (connection/read-messages-until this #{ParseComplete ErrorResponse})
+
+            ex-data
+            {:query query
+             :statement statement}
+
+            result
+            (result/make-result this nil ex-data)]
+
+        (connection/send-message this message-parse)
+        (connection/send-message this message-flush)
+
+        (prot.result/handle result messages)
+
+        statement))
+
+    (bind [this params])
+
+    (execute [this portal])
+
+    (close-statement [this statement]
+
+      (let [message-close
+            (new Close \S statement)
+
+            message-flush
+            (new Flush)
+
+            messages
+            (connection/read-messages-until this #{CloseComplete ErrorResponse})
+
+            result
+            (result/make-result this nil nil)]
+
+        (connection/send-message this message-close)
+        (connection/send-message this message-flush)
+        (prot.result/handle result messages)))
 
     Closeable
 

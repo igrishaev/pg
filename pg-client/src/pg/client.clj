@@ -107,3 +107,33 @@
               `(rollback ~conn)
               `(commit ~conn))
            result#)))))
+
+
+(defn prepare [conn query]
+  (prot.connection/parse conn query))
+
+
+(defn close-statement [conn statement]
+  (prot.connection/close-statement conn statement))
+
+
+(defmacro with-prepare [[bind conn query] & body]
+  `(let [conn# ~conn
+         query# ~query
+         ~bind (prepare conn# query#)]
+     (try
+       ~@body
+       (finally
+         (close-statement conn# ~bind)))))
+
+
+(defn bind [conn statement params])
+
+
+(defn execute [conn portal])
+
+
+(defmacro with-statement [])
+
+
+(defmacro with-portal [])
