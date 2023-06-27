@@ -58,4 +58,8 @@
 
   (close-statement [this statement-name])
 
-  (close-portal [this portal-name]))
+  (close-portal [this portal-name])
+
+  (describe-statement [this statement-name])
+
+  (describe-portal [this portal-name]))

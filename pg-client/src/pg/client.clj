@@ -110,7 +110,13 @@
 
 
 (defn prepare [conn query]
-  (prot.connection/parse conn query))
+  (let [statement
+        (prot.connection/parse conn query)
+
+        result
+        (prot.connection/describe-statement conn statement)]
+
+    statement))
 
 
 (defn close-statement [conn statement]

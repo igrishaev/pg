@@ -21,6 +21,7 @@
    pg.client.impl.message.Flush
    pg.client.impl.message.Parse
    pg.client.impl.message.ParseComplete
+   pg.client.impl.message.Describe
    pg.client.impl.message.Bind
    pg.client.impl.message.BindComplete
    pg.client.impl.message.Execute
@@ -252,6 +253,30 @@
         (connection/send-message this message-close)
         (connection/send-message this message-flush)
         (prot.result/handle result messages)))
+
+    (describe-statement [this statement-name]
+
+      (let [message-describe
+            (new Describe \S statement-name)
+
+            message-flush
+            (new Flush)
+
+            messages
+            (connection/read-messages-until this #{ReadyForQuery ErrorResponse})
+
+            ex-data
+            {:op :Describe
+             :statement statement-name}
+
+            result
+            (result/make-result this nil ex-data)]
+
+        (connection/send-message this message-describe)
+        (connection/send-message this message-flush)
+        (prot.result/handle result messages)))
+
+    (describe-portal [this portal-name])
 
     Closeable
 

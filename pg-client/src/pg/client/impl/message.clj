@@ -9,6 +9,7 @@
   (:require
    [pg.bytes.array :as array]
    [pg.client.bb :as bb]
+   [pg.client.coll :as coll]
    [pg.client.bytes :as bytes]
    [pg.client.codec :as codec]
    [pg.client.prot.connection :as connection]
@@ -51,22 +52,18 @@
 
   (from-bb [this bb connection]
 
-    (let [version
+    (let [encoding
+          (connection/get-server-encoding connection)
+
+          version
           (bb/read-int32 bb)
 
           param-count
           (bb/read-int32 bb)
 
           params
-          (let [encoding
-                (connection/get-server-encoding connection)]
-            (loop [i 0
-                   acc []]
-              (if (= i param-count)
-                acc
-                (let [param
-                      (bb/read-cstring bb encoding)]
-                  (recur (inc i) (conj acc param))))))]
+          (coll/doN [_ param-count]
+            (bb/read-cstring bb encoding))]
 
       (assoc this
              :version version
@@ -370,6 +367,48 @@
   (new CloseComplete))
 
 
+(defrecord Describe
+    [^Character source-type
+     ^String source]
+
+  message/IMessage
+
+  (to-bb [this connection]
+    (let [encoding
+          (connection/get-client-encoding connection)]
+      (bb-encode encoding
+                 \D
+                 [(byte source-type)
+                  source]))))
+
+
+(defrecord ParameterDescription
+    [^Short param-count
+     ^List param-oids]
+
+  message/IMessage
+
+  (handle [this result connection]
+    result)
+
+  (from-bb [this bb connection]
+
+    (let [param-count
+          (bb/read-int16 bb)
+
+          param-oids
+          (coll/doN [_ param-count]
+            (bb/read-int32 bb))]
+
+      (assoc this
+             :param-count param-count
+             :param-oids param-oids))))
+
+
+(defmethod message/tag->message \t [_]
+  (new ParameterDescription nil nil))
+
+
 (defrecord ParseComplete []
 
   message/IMessage
@@ -483,22 +522,16 @@
           (bb/read-int16 bb)
 
           columns
-          (loop [i 0
-                 acc! (transient [])]
-            (if (= i column-count)
-              (persistent! acc!)
-              (recur
-               (inc i)
-               (conj! acc!
-                      (new RowColumn
-                           i
-                           (bb/read-cstring bb encoding)
-                           (bb/read-int32 bb)
-                           (bb/read-int16 bb)
-                           (bb/read-int32 bb)
-                           (bb/read-int16 bb)
-                           (bb/read-int32 bb)
-                           (bb/read-int16 bb))))))]
+          (coll/doN [i column-count]
+            (new RowColumn
+                 i
+                 (bb/read-cstring bb encoding)
+                 (bb/read-int32 bb)
+                 (bb/read-int16 bb)
+                 (bb/read-int32 bb)
+                 (bb/read-int16 bb)
+                 (bb/read-int32 bb)
+                 (bb/read-int16 bb)))]
 
       (assoc this
              :column-count column-count
@@ -602,15 +635,10 @@
           (bb/read-int16 bb)
 
           values
-          (loop [i 0
-                 acc! (transient [])]
-            (if (= i value-count)
-              (persistent! acc!)
-              (let [len (bb/read-int32 bb)
-                    col (when-not (= len -1)
-                          (bb/read-bytes bb len))]
-                (recur (inc i)
-                       (conj! acc! col)))))]
+          (coll/doN [i value-count]
+            (let [len (bb/read-int32 bb)]
+              (when-not (= len -1)
+                (bb/read-bytes bb len))))]
 
       (assoc this :values values))))
 
