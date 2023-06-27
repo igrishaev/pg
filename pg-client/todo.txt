@@ -1,4 +1,5 @@
 
+- Describe message
 - json package
 - remove error.clj package
 - separate pg.oid package
