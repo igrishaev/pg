@@ -265,7 +265,7 @@
             (new Bind portal statement [0] params [0])
 
             message-execute
-            (new Execute portal 999)
+            (new Execute portal 1)
 
             messages
             (connection/read-messages-until this #{ReadyForQuery ErrorResponse})
@@ -274,7 +274,9 @@
             (result/make-result this nil nil)]
 
         (connection/send-message this message-parse)
+        (connection/describe-statement this statement)
         (connection/send-message this message-bind)
+        (connection/describe-portal this portal)
         (connection/send-message this message-execute)
         (connection/send-sync this)
 

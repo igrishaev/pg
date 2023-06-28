@@ -709,8 +709,22 @@ drop table %1$s;
 (deftest test-execute
   (client/with-connection [conn CONFIG]
     (let [result
-          (client/execute conn "select 1 as foo" [])]
-      (is (= 1 result)))))
+          (client/execute conn "select $1::integer as foo" [42])]
+      (is (= [{:foo 42}] result)))))
+
+
+
+(deftest test-execute-row-limit
+  (client/with-connection [conn CONFIG]
+
+    (let [query
+          "with foo as (values (1, 2), (3, 4), (5, 6)) select * from foo"
+
+          result
+          (client/execute conn query [])]
+
+      (is (= 42 result)))))
+
 
 
 ;; test-client-json-write

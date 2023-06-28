@@ -502,6 +502,21 @@
                   (array/arr32 row-count)]))))
 
 
+(defrecord PortalSuspended []
+
+  message/IMessage
+
+  (handle [this result connection]
+    result)
+
+  (from-bb [this bb connection]
+    this))
+
+
+(defmethod message/tag->message \s [_]
+  (new PortalSuspended))
+
+
 (defrecord RowColumn
     [^Integer index
      ^String  name
