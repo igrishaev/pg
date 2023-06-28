@@ -248,6 +248,7 @@
 
         portal))
 
+    #_
     (execute2 [this query params]
 
       (let [statement
@@ -278,7 +279,108 @@
         (connection/send-message this message-execute)
         (connection/send-sync this)
 
-        (prot.result/handle result messages)))
+        (prot.result/handle result messages)
+
+        (connection/send-message this message-execute)
+        (connection/send-sync this)
+
+        (prot.result/handle result messages)
+
+        (connection/send-message this message-execute)
+        (connection/send-sync this)
+
+        (prot.result/handle result messages)
+
+        ))
+
+    (execute2 [this query params]
+
+      (let [statement
+            (name (gensym "stmt"))
+
+            portal1
+            (name (gensym "prtl"))
+
+            portal2
+            (name (gensym "prtl"))
+
+            message-parse
+            (new Parse statement query [])
+
+            message-bind1
+            (new Bind portal1 statement [0] params [0])
+
+            message-bind2
+            (new Bind portal2 statement [0] params [0])
+
+            message-execute1
+            (new Execute portal1 1)
+
+            message-execute2
+            (new Execute portal2 1)
+
+            result
+            (result/make-result this nil nil)
+
+            messages
+            (connection/read-messages-until this #{
+                                                           ReadyForQuery
+                                                           ErrorResponse
+                                                           })
+
+            interact
+            (fn []
+              (let [result
+                    (result/make-result this nil nil)
+
+                    messages
+                    (connection/read-messages-until this #{
+                                                           ReadyForQuery
+                                                           ErrorResponse
+                                                           })]
+
+                (prot.result/handle result messages)))]
+
+        (connection/send-message this message-parse)
+        (connection/describe-statement this statement)
+        (connection/send-sync this)
+
+        (prot.result/handle
+         (result/make-result this nil nil)
+         (connection/read-messages-until this #{ReadyForQuery
+                                                ErrorResponse}))
+
+        (connection/send-message this message-bind1)
+        (connection/describe-portal this portal1)
+        (connection/send-message this message-execute1)
+        (connection/send-sync this)
+
+        (prot.result/handle
+         (result/make-result this nil nil)
+         (connection/read-messages-until this #{ReadyForQuery
+                                                ErrorResponse}))
+
+        #_
+        (interact)
+
+        (connection/send-message this message-bind2)
+        (connection/describe-portal this portal2)
+        (connection/send-message this message-execute2)
+        (connection/send-sync this)
+
+        (prot.result/handle
+         (result/make-result this nil nil)
+         (connection/read-messages-until this #{ReadyForQuery
+                                                ErrorResponse}))
+
+
+        ;; (connection/send-message this message-bind2)
+        ;; (connection/describe-portal this portal2)
+        ;; (connection/send-message this message-execute2)
+        ;; (connection/send-sync this)
+        ;; (prot.result/handle result messages)
+
+        ))
 
     (execute [this portal row-count]
 
