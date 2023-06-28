@@ -207,8 +207,7 @@
     (parse [this query]
 
       (let [statement
-            ""
-            ;; (name (gensym "statement_"))
+            (name (gensym "statement_"))
 
             message
             (new Parse statement query [])
@@ -230,8 +229,7 @@
     (bind [this statement params]
 
       (let [portal
-            ""
-            ;; (name (gensym "portal_"))
+            (name (gensym "portal_"))
 
             message
             (new Bind portal statement [] params [0])
