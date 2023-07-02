@@ -8,6 +8,7 @@
    java.util.HashMap
    java.util.Map)
   (:require
+   [pg.client2.const :as const]
    [pg.client2.debug :as debug]
    [pg.client2.bb :as bb]
    [pg.client2.msg :as msg]
@@ -23,6 +24,8 @@
 
 
 (defn connect [config]
+
+  ;; TODO: conn params
 
   (let [config-full
         (merge config-defaults config)
@@ -59,7 +62,8 @@
 (defn set-secret-key
   [{:as conn :keys [^Map state]}
    ^Integer secret-key]
-  (.put state "secret-key" secret-key))
+  (.put state "secret-key" secret-key)
+  conn)
 
 
 (defn get-secret-key
@@ -73,10 +77,18 @@
 (defn get-tx-status [this])
 
 
-(defn set-parameter [this param value])
+(defn set-parameter
+  [{:as conn :keys [^Map params]}
+   ^String param
+   ^String value]
+  (.put params param value)
+  conn)
 
 
-(defn get-parameter [this param])
+(defn get-parameter
+  [{:keys [^Map params]}
+   ^String param]
+  (.get params param))
 
 
 (defn get-server-encoding [this])
@@ -88,7 +100,12 @@
 (defn get-password [this])
 
 
-(defn get-user [this])
+(defn get-user [conn]
+  (-> conn :config :user))
+
+
+(defn get-database [conn]
+  (-> conn :config :database))
 
 
 (defn sync [this])
@@ -105,8 +122,6 @@
 
     (bb/read-from ch bb-head)
 
-    (bb/rewind bb-head)
-
     (let [tag
           (char (bb/read-byte bb-head))
 
@@ -116,6 +131,10 @@
           bb-body
           (bb/allocate len)
 
+          _
+          (bb/read-from ch bb-body)
+
+          ;; TODO options
           message
           (msg/parse-message tag bb-body nil)]
 
@@ -126,16 +145,27 @@
 
 (defn send-message [{:keys [ch]} message]
   (debug/debug-message message "<- ")
+  ;; TODO: options
   (let [bb (msg/encode-message message {})]
     (bb/write-to ch bb)))
 
 
 (defn authenticate [conn]
-  (let [msg (msg/make-StartupMessage)]
+
+  (let [user
+        (get-user conn)
+
+        database
+        (get-database conn)
+
+        msg (msg/make-StartupMessage
+             const/PROTOCOL_VERSION
+             user
+             database
+             ;; TODO: options
+             nil)]
+
     (send-message conn msg)))
-
-
-(defn initiate [this])
 
 
 (defn query [conn sql]

@@ -65,16 +65,21 @@
   `(.. ~(with-meta bb {:tag `ByteBuffer}) (getInt)))
 
 
-(defn debug [^ByteBuffer bb]
-  (println (vec (.array bb))))
+(defn to-vector [^ByteBuffer bb]
+  (vec (.array bb)))
 
 
 (defn read-from [^SocketChannel ch ^ByteBuffer bb]
   (while (not (zero? (remaining bb)))
-    (.read ch bb)))
+    (.read ch bb))
+  (rewind bb)
+  bb)
 
 
 (defn write-to [^SocketChannel ch ^ByteBuffer bb]
+
+  (rewind bb)
+
   (let [written
         (.write ch (rewind bb))
 

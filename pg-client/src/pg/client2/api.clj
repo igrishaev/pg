@@ -10,11 +10,6 @@
   (res/interact conn #{:ErrorResponse :ReadyForQuery}))
 
 
-(defn authenticate [conn]
-  (conn/authenticate conn)
-  (res/interact conn #{:AuthenticationOk :ErrorResponse}))
-
-
 (defn begin [conn]
   (query conn "BEGIN"))
 
@@ -49,4 +44,39 @@
 
 
 (defn bind [conn statement params]
+  )
+
+
+(defn authenticate [conn]
+  (conn/authenticate conn)
+  (res/interact conn #{:AuthenticationOk :ErrorResponse})
+  conn)
+
+
+(defn initiate [conn]
+  (res/interact conn #{:ReadyForQuery :ErrorResponse})
+  conn)
+
+
+(defn connect [config]
+  (-> config
+      (conn/connect)
+      (authenticate)
+      (initiate)))
+
+
+#_
+(comment
+
+  (def -cfg {:host "localhost"
+             :port 15432
+             :user "ivan"
+             :database "ivan"
+             :password "ivan"})
+
+  (def -conn (connect -cfg))
+
+
+
+
   )

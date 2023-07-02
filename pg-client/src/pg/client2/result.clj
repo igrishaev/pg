@@ -20,6 +20,24 @@
   result)
 
 
+(defn handle-ErrorResponse [conn result message]
+  (throw (ex-info "ErrorResponse"
+                  {:message message})))
+
+
+(defn handle-ParameterStatus
+  [conn result {:keys [param value]}]
+  (conn/set-parameter conn param value)
+  result)
+
+
+(defn handle-BackendKeyData
+  [conn result {:keys [pid secret-key]}]
+  (conn/set-pid conn pid)
+  (conn/set-secret-key conn secret-key)
+  result)
+
+
 (defn handle [conn result {:as message :keys [msg]}]
 
   (case msg
@@ -30,9 +48,19 @@
     :BackendKeyData
     (handle-BackendKeyData conn result message)
 
+    :AuthenticationOk
+    result
+
+    :ErrorResponse
+    (handle-ErrorResponse conn result message)
+
+    :ParameterStatus
+    (handle-ParameterStatus conn result message)
+
     ;; else
 
-    result))
+    (throw (ex-info "Cannot handle a message"
+                    {:message message}))))
 
 
 (defn interact [conn until]
