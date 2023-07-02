@@ -76,6 +76,8 @@
 
   (def -conn (connect -cfg))
 
+  (def -r (query -conn "select 1 as foo; select 2 as bar"))
+
 
 
 

@@ -307,12 +307,12 @@
 (defn encode-Query
   [{:keys [^String query]} opt]
 
-  (let [^String encoding
+  (let [encoding
         (get-client-encoding opt)
 
         out
         (doto (out/create)
-          (out/write-cstring query))]
+          (out/write-cstring query encoding))]
 
     (to-bb \Q out)))
 

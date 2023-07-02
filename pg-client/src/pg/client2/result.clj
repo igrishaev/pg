@@ -38,6 +38,18 @@
   result)
 
 
+(defn handle-RowDescription [conn result message]
+  result)
+
+
+(defn handle-DataRow [conn result message]
+  result)
+
+
+(defn handle-CommandComplete [conn result message]
+  result)
+
+
 (defn handle [conn result {:as message :keys [msg]}]
 
   (case msg
@@ -56,6 +68,15 @@
 
     :ParameterStatus
     (handle-ParameterStatus conn result message)
+
+    :RowDescription
+    (handle-RowDescription conn result message)
+
+    :DataRow
+    (handle-DataRow conn result message)
+
+    :CommandComplete
+    (handle-CommandComplete conn result message)
 
     ;; else
 
