@@ -50,9 +50,15 @@
   result)
 
 
+(defn handle-ParseComplete [conn result message]
+  result)
+
+
 (defn handle [conn result {:as message :keys [msg]}]
 
   (case msg
+
+    ;; TODO: list of noop
 
     :ReadyForQuery
     (handle-ReadyForQuery conn result message)
@@ -60,7 +66,7 @@
     :BackendKeyData
     (handle-BackendKeyData conn result message)
 
-    :AuthenticationOk
+    (:AuthenticationOk)
     result
 
     :ErrorResponse
@@ -77,6 +83,9 @@
 
     :CommandComplete
     (handle-CommandComplete conn result message)
+
+    :ParseComplete
+    (handle-ParseComplete conn result message)
 
     ;; else
 

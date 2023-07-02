@@ -108,10 +108,21 @@
   (-> conn :config :database))
 
 
-(defn sync [this])
+(defn send-message [{:keys [ch]} message]
+  (debug/debug-message message "<- ")
+  ;; TODO: options
+  (let [bb (msg/encode-message message {})]
+    (bb/write-to ch bb)))
 
 
-(defn flush [this])
+(defn sync [conn]
+  (send-message conn (msg/make-Sync))
+  conn)
+
+
+(defn flush [conn]
+  (send-message conn (msg/make-Flush))
+  conn)
 
 
 (defn read-message
@@ -143,13 +154,6 @@
       message)))
 
 
-(defn send-message [{:keys [ch]} message]
-  (debug/debug-message message "<- ")
-  ;; TODO: options
-  (let [bb (msg/encode-message message {})]
-    (bb/write-to ch bb)))
-
-
 (defn authenticate [conn]
 
   (let [user
@@ -176,7 +180,18 @@
 (defn terminate [this])
 
 
-(defn parse [this query])
+;; TODO: pass oids
+(defn parse [conn query]
+
+  (let [statement
+        (name (gensym "statement_"))
+
+        msg
+        (msg/make-Parse statement query [])]
+
+    (send-message conn msg)
+
+    statement))
 
 
 (defn bind [this statement params])
@@ -191,7 +206,7 @@
 (defn close-portal [this portal-name])
 
 
-(defn describe-statement [this statement-name])
+(defn describe-statement [this ^String statement])
 
 
 (defn describe-portal [this portal-name])

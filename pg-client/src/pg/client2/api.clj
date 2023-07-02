@@ -31,13 +31,15 @@
 
 
 (defn prepare [conn sql]
-  (let [stmt (name (gensym "statement_"))
-        msg 42
 
-        #_
-        (msg/parse stmt sql)]
-    (conn/send-message conn msg)
-    (res/interact conn #{:ErrorResponse :ReadyForQuery})))
+  (let [statement
+        (conn/parse conn sql)]
+
+    (conn/sync conn)
+
+    (res/interact conn #{:ErrorResponse :ReadyForQuery})
+
+    statement))
 
 
 (defmacro with-statement [conn sql])
@@ -77,6 +79,8 @@
   (def -conn (connect -cfg))
 
   (def -r (query -conn "select 1 as foo; select 2 as bar"))
+
+  (def -s (prepare -conn "select 42 as kek"))
 
 
 

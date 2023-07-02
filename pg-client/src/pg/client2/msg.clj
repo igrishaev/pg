@@ -61,6 +61,10 @@
      :tag tag}))
 
 
+(defn parse-ParseComplete [bb opt]
+  {:msg :ParseComplete})
+
+
 (defn parse-DataRow [bb opt]
 
   (let [value-count
@@ -178,6 +182,9 @@
   [tag bb opt]
 
   (case tag
+
+    \1
+    (parse-ParseComplete bb opt)
 
     \S
     (parse-ParameterStatus bb opt)
@@ -325,11 +332,60 @@
           (out/write-cstring query encoding)
           (out/write-int16 (count param-oids)))]
 
-    ;; TODO
+    ;; TODO better cycle
     (doseq [oid param-oids]
       (out/write-int32 out oid))
 
     (to-bb \P out)))
+
+
+(defn make-Sync []
+  {:msg :Sync})
+
+
+(defn encode-Sync [_ _]
+
+  (let [out
+        (out/create)]
+
+    (to-bb \S out)))
+
+
+(defn make-Flush []
+  {:msg :Flush})
+
+
+(defn encode-Flush [_ _]
+
+  (let [out
+        (out/create)]
+
+    (to-bb \H out)))
+
+
+(defn make-Describe
+  [^Character source-type
+   ^String source]
+
+  {:msg :Describe
+   :source-type source-type
+   :source source})
+
+
+(defn encode-Describe
+  [{:keys [^Character source-type
+           ^String source]}
+   opt]
+
+  (let [encoding
+        (get-client-encoding opt)
+
+        out
+        (doto (out/create)
+          (out/write-byte source-type)
+          (out/write-cstring source encoding))]
+
+    (to-bb \D out)))
 
 
 (defn make-Query [query]
@@ -365,6 +421,15 @@
 
     :Parse
     (encode-Parse message opt)
+
+    :Sync
+    (encode-Sync message opt)
+
+    :Flush
+    (encode-Flush message opt)
+
+    :Describe
+    (encode-Describe message opt)
 
     ;; else
 
