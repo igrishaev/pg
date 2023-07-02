@@ -1,14 +1,18 @@
 (ns pg.client2.api
   (:require
    [pg.client2.conn :as conn]
-   [pg.client2.msg :as msg]
    [pg.client2.result :as res])  )
 
 
+
 (defn query [conn sql]
-  (let [msg (msg/query query)]
-    (conn/send-message conn msg)
-    (res/interact conn)))
+  (conn/query conn sql)
+  (res/interact conn #{:ErrorResponse :ReadyForQuery}))
+
+
+(defn authenticate [conn]
+  (conn/authenticate conn)
+  (res/interact conn #{:AuthenticationOk :ErrorResponse}))
 
 
 (defn begin [conn]
@@ -33,7 +37,10 @@
 
 (defn prepare [conn sql]
   (let [stmt (name (gensym "statement_"))
-        msg (msg/parse stmt sql)]
+        msg 42
+
+        #_
+        (msg/parse stmt sql)]
     (conn/send-message conn msg)
     (res/interact conn #{:ErrorResponse :ReadyForQuery})))
 
