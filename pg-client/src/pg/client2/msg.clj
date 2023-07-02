@@ -2,6 +2,7 @@
   (:import
    clojure.lang.Keyword
    java.util.Map
+   java.util.List
    java.io.ByteArrayOutputStream)
   (:require
    [pg.client2.out :as out]
@@ -299,6 +300,38 @@
     (to-bb \C out)))
 
 
+(defn make-Parse [^String statement
+                  ^String query
+                  ^List param-oids]
+
+  {:msg :Parse
+   :statement statement
+   :query query
+   :param-oids param-oids})
+
+
+(defn encode-Parse
+  [{:keys [^String statement
+           ^String query
+           ^List param-oids]}
+   opt]
+
+  (let [encoding
+        (get-client-encoding opt)
+
+        out
+        (doto (out/create)
+          (out/write-cstring statement encoding)
+          (out/write-cstring query encoding)
+          (out/write-int16 (count param-oids)))]
+
+    ;; TODO
+    (doseq [oid param-oids]
+      (out/write-int32 out oid))
+
+    (to-bb \P out)))
+
+
 (defn make-Query [query]
   {:msg :Query
    :query query})
@@ -329,6 +362,9 @@
 
     :StartupMessage
     (encode-StartupMessage message opt)
+
+    :Parse
+    (encode-Parse message opt)
 
     ;; else
 

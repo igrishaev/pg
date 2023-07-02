@@ -38,5 +38,12 @@
     (.writeBytes (bytes/int32->bytes value))))
 
 
+(defn write-int16
+  [^ByteArrayOutputStream out
+   ^Integer value]
+  (doto out
+    (.writeBytes (bytes/int16->bytes value))))
+
+
 (defn array ^bytes [^ByteArrayOutputStream out]
   (.toByteArray out))
