@@ -12,7 +12,6 @@
 
 
 ;; Auth SASL
-;; CancelRequest
 
 ;; FunctionCall
 ;; FunctionCallResponse
@@ -422,8 +421,9 @@
 
 
 (defn encode-Terminate [_ _]
-  ;; TODO: skip out
-  (to-bb \X (out/create)))
+  (doto (bb/allocate 5)
+    (bb/write-byte \X)
+    (bb/write-int32 4)))
 
 
 (defn make-CancelRequest [code pid secret-key]
@@ -439,14 +439,11 @@
            secret-key]}
    opt]
 
-  (let [out
-        (doto (out/create)
-          (out/write-int32 code)
-          (out/write-int32 pid)
-          (out/write-int32 secret-key))]
-
-    ;; TODO 16?
-    (to-bb nil nil)))
+  (doto (bb/allocate 16)
+    (bb/write-int32 16)
+    (bb/write-int32 code)
+    (bb/write-int32 pid)
+    (bb/write-int32 secret-key)))
 
 
 (defn make-StartupMessage
@@ -551,11 +548,9 @@
 
 
 (defn encode-Sync [_ _]
-
-  (let [out
-        (out/create)]
-
-    (to-bb \S out)))
+  (doto (bb/allocate 5)
+    (bb/write-byte \S)
+    (bb/write-int32 4)))
 
 
 (defn make-Flush []
@@ -563,11 +558,9 @@
 
 
 (defn encode-Flush [_ _]
-
-  (let [out
-        (out/create)]
-
-    (to-bb \H out)))
+  (doto (bb/allocate 5)
+    (bb/write-byte \H)
+    (bb/write-int32 4)))
 
 
 (defn make-Describe

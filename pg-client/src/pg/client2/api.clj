@@ -103,6 +103,28 @@
          (terminate ~bind)))))
 
 
+(defn clone [{:as conn :keys [config]}]
+  (connect config))
+
+
+(defn cancel-request
+
+  ([{:as conn :keys [config]}]
+
+   (with-connection [new-conn config]
+     (cancel-request new-conn conn)))
+
+  ([conn conn-to-cancel]
+
+   (let [pid
+         (conn/get-pid conn-to-cancel)
+
+         secret-key
+         (conn/get-secret-key conn-to-cancel)]
+
+     (conn/cancel-request conn pid secret-key))))
+
+
 #_
 (comment
 

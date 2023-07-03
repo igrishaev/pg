@@ -235,6 +235,14 @@
   (send-message conn (msg/make-Close \P portal)))
 
 
+(defn cancel-request [conn pid secret-key]
+  (let [msg (msg/make-CancelRequest const/CANCEL_CODE
+                                    pid
+                                    secret-key)]
+    (send-message conn msg)
+    conn))
+
+
 (defn describe-statement [conn ^String statement]
   (let [msg (msg/make-Describe \S statement)]
     (send-message conn msg)))
