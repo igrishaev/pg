@@ -7,7 +7,8 @@
   (:require
    [pg.client2.out :as out]
    [pg.client2.bb :as bb]
-   [pg.client2.coll :as coll]))
+   [pg.client2.coll :as coll]
+   [pg.encode.txt :as txt]))
 
 
 (defmacro get-server-encoding [opt]
@@ -177,6 +178,20 @@
      :errors errors}))
 
 
+(defn parse-ParameterDescription [bb opt]
+
+  (let [param-count
+        (bb/read-int16 bb)
+
+        param-oids
+        (coll/doN [_ param-count]
+          (bb/read-int32 bb))]
+
+    {:msg :ParameterDescription
+     :param-count param-count
+     :param-oids param-oids}))
+
+
 (defn parse-message
 
   [tag bb opt]
@@ -209,6 +224,9 @@
 
     \K
     (parse-BackendKeyData bb opt)
+
+    \t
+    (parse-ParameterDescription bb opt)
 
     ;; else
 
@@ -382,7 +400,7 @@
 
         out
         (doto (out/create)
-          (out/write-byte source-type)
+          (out/write-char source-type)
           (out/write-cstring source encoding))]
 
     (to-bb \D out)))
@@ -404,6 +422,72 @@
           (out/write-cstring query encoding))]
 
     (to-bb \Q out)))
+
+
+(defn make-Bind [^String portal
+                 ^String statement
+                 ^List param-formats
+                 ^List params
+                 ^List column-formats]
+
+  {:msg :Bind
+   :portal         portal
+   :statement      statement
+   :param-formats  param-formats
+   :params         params
+   :column-formats column-formats})
+
+
+(defn encode-Bind
+  [{:keys [^String portal
+           ^String statement
+           ^List param-formats
+           ^List params
+           ^List column-formats]}
+   opt]
+
+  (let [^String encoding
+        (get-client-encoding opt)
+
+        out
+        (doto (out/create)
+          (out/write-cstring portal encoding)
+          (out/write-cstring statement encoding)
+          (out/write-int16 (count param-formats)))]
+
+    ;; todo: write-int16s function
+    ;; todo: better cycle
+    (doseq [f param-formats]
+      (out/write-int16 out f))
+
+    (out/write-int16 (count params))
+
+    (doseq [param params]
+
+      (if (nil? param)
+
+        (out/write-int32 out -1)
+
+        ;; TODO: support binary
+        ;; TODO: pass encode options
+        (let [^String encoded
+              (txt/encode param nil nil)
+
+              buf
+              (.getBytes encoded encoding)
+
+              len
+              (alength buf)]
+
+          (out/write-int32 out len)
+          (out/write-bytes out buf))))
+
+    (out/write-int16 out (count column-formats))
+    ;; TODO: write-int16s
+    (doseq [f column-formats]
+      (out/write-int16 out f))
+
+    (to-bb \B out)))
 
 
 (defn encode-message [{:as message :keys [msg]} opt]
@@ -430,6 +514,9 @@
 
     :Describe
     (encode-Describe message opt)
+
+    :Bind
+    (encode-Bind message opt)
 
     ;; else
 

@@ -206,7 +206,11 @@
 (defn close-portal [this portal-name])
 
 
-(defn describe-statement [this ^String statement])
+(defn describe-statement [conn ^String statement]
+  (let [msg (msg/make-Describe \S statement)]
+    (send-message conn msg)))
 
 
-(defn describe-portal [this portal-name])
+(defn describe-portal [conn ^String portal]
+  (let [msg (msg/make-Describe \P portal)]
+    (send-message conn msg)))

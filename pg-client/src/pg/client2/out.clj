@@ -24,6 +24,13 @@
     (.write value)))
 
 
+(defn write-bytes
+  [^ByteArrayOutputStream out
+   ^bytes value]
+  (doto out
+    (.writeBytes value)))
+
+
 (defn write-char
   [^ByteArrayOutputStream out
    ^Character value]

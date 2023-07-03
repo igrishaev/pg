@@ -32,9 +32,9 @@
 
 (defn prepare [conn sql]
 
-  (let [statement
-        (conn/parse conn sql)]
+  (let [statement (conn/parse conn sql)]
 
+    (conn/describe-statement conn statement)
     (conn/sync conn)
 
     (res/interact conn #{:ErrorResponse :ReadyForQuery})
@@ -80,7 +80,7 @@
 
   (def -r (query -conn "select 1 as foo; select 2 as bar"))
 
-  (def -s (prepare -conn "select 42 as kek"))
+  (def -s (prepare -conn "select $1::integer as kek"))
 
 
 

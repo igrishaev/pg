@@ -54,6 +54,10 @@
   result)
 
 
+(defn handle-ParameterDescription [conn result message]
+  result)
+
+
 (defn handle [conn result {:as message :keys [msg]}]
 
   (case msg
@@ -86,6 +90,9 @@
 
     :ParseComplete
     (handle-ParseComplete conn result message)
+
+    :ParameterDescription
+    (handle-ParameterDescription conn result message)
 
     ;; else
 
