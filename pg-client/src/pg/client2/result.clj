@@ -8,119 +8,119 @@
 
 
 (defn handle-ReadyForQuery
-  [conn result {:keys [tx-status]}]
+  [result conn {:keys [tx-status]}]
   (conn/set-tx-status conn tx-status)
   result)
 
 
 (defn handle-BackendKeyData
-  [conn result {:keys [pid secret-key]}]
+  [result conn {:keys [pid secret-key]}]
   (conn/set-pid conn pid)
   (conn/set-secret-key conn secret-key)
   result)
 
 
-(defn handle-ErrorResponse [conn result message]
+(defn handle-ErrorResponse [result conn message]
   (throw (ex-info "ErrorResponse"
                   {:message message})))
 
 
 (defn handle-ParameterStatus
-  [conn result {:keys [param value]}]
+  [result conn {:keys [param value]}]
   (conn/set-parameter conn param value)
   result)
 
 
 (defn handle-BackendKeyData
-  [conn result {:keys [pid secret-key]}]
+  [result conn {:keys [pid secret-key]}]
   (conn/set-pid conn pid)
   (conn/set-secret-key conn secret-key)
   result)
 
 
-(defn handle-RowDescription [conn result message]
+(defn handle-RowDescription [result conn message]
   result)
 
 
-(defn handle-DataRow [conn result message]
+(defn handle-DataRow [result conn message]
   result)
 
 
-(defn handle-CommandComplete [conn result message]
+(defn handle-CommandComplete [result conn message]
   result)
 
 
-(defn handle-ParseComplete [conn result message]
+(defn handle-ParseComplete [result conn message]
   result)
 
 
-(defn handle-ParameterDescription [conn result message]
+(defn handle-ParameterDescription [result conn message]
   result)
 
 
-(defn handle-BindComplete [conn result message]
+(defn handle-BindComplete [result conn message]
   result)
 
 
-(defn handle-PortalSuspended [conn result message]
+(defn handle-PortalSuspended [result conn message]
   result)
 
 
-(defn handle-NoticeResponse [conn result message]
+(defn handle-NoticeResponse [result conn message]
   result)
 
 
-(defn handle-NoData [conn result message]
+(defn handle-NoData [result conn message]
   result)
 
 
-(defn handle [conn result {:as message :keys [msg]}]
+(defn handle [result conn {:as message :keys [msg]}]
 
   (case msg
 
     ;; TODO: list of noop
 
     :ReadyForQuery
-    (handle-ReadyForQuery conn result message)
+    (handle-ReadyForQuery result conn message)
 
     :NoData
-    (handle-NoData conn result message)
+    (handle-NoData result conn message)
 
     :NoticeResponse
-    (handle-NoticeResponse conn result message)
+    (handle-NoticeResponse result conn message)
 
     :BackendKeyData
-    (handle-BackendKeyData conn result message)
+    (handle-BackendKeyData result conn message)
 
-    (:AuthenticationOk :EmptyQueryResponse)
+    (:AuthenticationOk :EmptyQueryResponse :CloseComplete)
     result
 
     :PortalSuspended
-    (handle-PortalSuspended conn result message)
+    (handle-PortalSuspended result conn message)
 
     :ErrorResponse
-    (handle-ErrorResponse conn result message)
+    (handle-ErrorResponse result conn message)
 
     :ParameterStatus
-    (handle-ParameterStatus conn result message)
+    (handle-ParameterStatus result conn message)
 
     :RowDescription
-    (handle-RowDescription conn result message)
+    (handle-RowDescription result conn message)
 
     :DataRow
-    (handle-DataRow conn result message)
+    (handle-DataRow result conn message)
 
     :CommandComplete
-    (handle-CommandComplete conn result message)
+    (handle-CommandComplete result conn message)
 
     :ParseComplete
-    (handle-ParseComplete conn result message)
+    (handle-ParseComplete result conn message)
 
     :BindComplete
-    (handle-BindComplete conn result message)
+    (handle-BindComplete result conn message)
 
     :ParameterDescription
-    (handle-ParameterDescription conn result message)
+    (handle-ParameterDescription result conn message)
 
     ;; else
 
@@ -136,7 +136,7 @@
           (conn/read-message conn)]
 
       (let [result
-            (handle conn result message)]
+            (handle result conn message)]
 
         (if (contains? until msg)
           result

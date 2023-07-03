@@ -43,9 +43,6 @@
     statement))
 
 
-(defmacro with-statement [conn sql])
-
-
 (defn execute [conn statement params row-count]
 
   (let [portal
@@ -56,6 +53,29 @@
     (conn/sync conn))
 
   (res/interact conn #{:CommandComplete :EmptyQueryResponse :ErrorResponse :PortalSuspended}))
+
+
+(defn close-statement [conn statement]
+  (conn/close-statement conn statement)
+  (conn/sync conn)
+  (res/interact conn #{:CloseComplete :ErrorResponse}))
+
+
+(defn close-portal [conn portal]
+  (conn/close-portal conn portal)
+  (conn/sync conn)
+  (res/interact conn #{:CloseComplete :ErrorResponse}))
+
+
+(defmacro with-statement
+  [[bind conn sql] & body]
+  `(let [conn# ~conn
+         sql# ~sql
+         ~bind (prepare conn# sql#)]
+     (try
+       ~@body
+       (finally
+         (close-statement conn# ~bind)))))
 
 
 (defn authenticate [conn]
@@ -86,6 +106,9 @@
              :password "ivan"})
 
   (def -conn (connect -cfg))
+
+  (with-statement [stmt -conn "select 1 as num"]
+    (execute -conn stmt [] 0))
 
   (def -r (query -conn "select 1 as foo; select 2 as bar"))
 

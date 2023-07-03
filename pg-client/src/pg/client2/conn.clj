@@ -108,11 +108,12 @@
   (-> conn :config :database))
 
 
-(defn send-message [{:keys [ch]} message]
+(defn send-message [{:as conn :keys [ch]} message]
   (debug/debug-message message "<- ")
   ;; TODO: options
   (let [bb (msg/encode-message message {})]
-    (bb/write-to ch bb)))
+    (bb/write-to ch bb))
+  conn)
 
 
 (defn sync [conn]
@@ -214,10 +215,14 @@
     (send-message conn msg)))
 
 
-(defn close-statement [this statement-name])
+(defn close-statement
+  [conn ^String statement]
+  (send-message conn (msg/make-Close \S statement)))
 
 
-(defn close-portal [this portal-name])
+(defn close-portal
+  [conn ^String portal]
+  (send-message conn (msg/make-Close \P portal)))
 
 
 (defn describe-statement [conn ^String statement]

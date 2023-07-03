@@ -11,8 +11,6 @@
    [pg.encode.txt :as txt]))
 
 
-;; Close
-;; CloseComplete
 ;; Teminate
 ;; NegotiateProtocolVersion
 ;; Auth MD5
@@ -68,6 +66,10 @@
 
     {:msg :CommandComplete
      :tag tag}))
+
+
+(defn parse-CloseComplete [bb opt]
+  {:msg :CloseComplete})
 
 
 (defn parse-ParseComplete [bb opt]
@@ -260,6 +262,9 @@
     \2
     (parse-BindComplete bb opt)
 
+    \3
+    (parse-CloseComplete bb opt)
+
     \S
     (parse-ParameterStatus bb opt)
 
@@ -373,13 +378,13 @@
            ^String source]}
    opt]
 
-  (let [^String encoding
+  (let [encoding
         (get-client-encoding opt)
 
         out
         (doto (out/create)
           (out/write-char source-type)
-          (out/write-cstring source))]
+          (out/write-cstring source encoding))]
 
     (to-bb \C out)))
 
