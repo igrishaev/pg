@@ -16,6 +16,20 @@
 ;; NegotiateProtocolVersion
 ;; Auth MD5
 ;; Auth SASL
+;; CancelRequest
+
+;; FunctionCall
+;; FunctionCallResponse
+
+;; SSLRequest
+
+;; CopyData
+;; CopyDone
+;; CopyFail
+;; CopyInResponse
+;; CopyOutResponse
+;; CopyBothResponse
+
 
 
 (defmacro get-server-encoding [opt]
