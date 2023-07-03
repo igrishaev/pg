@@ -12,6 +12,7 @@
 
 
 ;; Teminate
+;; NotificationResponse
 ;; NegotiateProtocolVersion
 ;; Auth MD5
 ;; Auth SASL
