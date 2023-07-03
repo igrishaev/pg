@@ -97,7 +97,8 @@
 (defn get-client-encoding ^String [this])
 
 
-(defn get-password [this])
+(defn get-password [conn]
+  (-> conn :config :password))
 
 
 (defn get-user [conn]
@@ -113,6 +114,18 @@
   ;; TODO: options
   (let [bb (msg/encode-message message {})]
     (bb/write-to ch bb))
+  conn)
+
+
+(defn send-password [conn ^String password]
+  (send-message (msg/make-PasswordMessage password))
+  conn)
+
+
+(defn terminate
+  [{:as conn :keys [^SocketChannel ch]}]
+  (send-message conn (msg/make-Terminate))
+  (.close ch)
   conn)
 
 
@@ -176,9 +189,6 @@
 (defn query [conn sql]
   (let [msg (msg/make-Query sql)]
     (send-message conn msg)))
-
-
-(defn terminate [this])
 
 
 ;; TODO: pass oids

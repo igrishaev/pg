@@ -11,10 +11,6 @@
    [pg.encode.txt :as txt]))
 
 
-;; Teminate
-;; NotificationResponse
-;; NegotiateProtocolVersion
-;; Auth MD5
 ;; Auth SASL
 ;; CancelRequest
 
@@ -45,6 +41,16 @@
    :status 0})
 
 
+(defn parse-AuthenticationMD5Password [bb opt]
+
+  (let [salt
+        (bb/read-bytes bb 4)]
+
+    {:msg :AuthenticationMD5Password
+     :status 5
+     :salt salt}))
+
+
 (defn parse-AuthenticationResponse [bb opt]
 
   (let [status (bb/read-int32 bb)]
@@ -53,6 +59,9 @@
 
       0
       (parse-AuthenticationOk bb opt)
+
+      5
+      (parse-AuthenticationMD5Password bb opt)
 
       ;; else
 
@@ -253,14 +262,61 @@
   {:msg :NoData})
 
 
+(defn parse-NotificationResponse [bb opt]
+
+  (let [encoding
+        (get-server-encoding opt)
+
+        pid
+        (bb/read-int32 bb)
+
+        channel
+        (bb/read-cstring bb encoding)
+
+        message
+        (bb/read-cstring bb encoding)]
+
+    {:msg :NotificationResponse
+     :pid pid
+     :channel channel
+     :message message}))
+
+
+(defn parse-NegotiateProtocolVersion [bb opt]
+
+  (let [encoding
+        (get-server-encoding opt)
+
+        version
+        (bb/read-int32 bb)
+
+        param-count
+        (bb/read-int32 bb)
+
+        params
+        (coll/doN [_ param-count]
+          (bb/read-cstring bb encoding))]
+
+    {:msg :NegotiateProtocolVersion
+     :version version
+     :param-count param-count
+     :params params}))
+
+
 (defn parse-message
 
   [tag bb opt]
 
   (case tag
 
+    \A
+    (parse-NotificationResponse bb opt)
+
     \n
     (parse-NoData bb opt)
+
+    \v
+    (parse-NegotiateProtocolVersion bb opt)
 
     \N
     (parse-NoticeResponse bb opt)
@@ -316,6 +372,7 @@
 
 
 (defn to-bb
+  ;; TODO: two bodies
   [^Character c ^ByteArrayOutputStream out]
 
   (let [buf
@@ -340,6 +397,58 @@
       (bb/write-bytes buf))))
 
 
+
+(defn make-PasswordMessage [password]
+  {:msg :PasswordMessage
+   :password password})
+
+
+(defn encode-PasswordMessage
+  [{:keys [password]}
+   opt]
+
+  (let [encoding
+        (get-client-encoding opt)
+
+        out
+        (doto (out/create)
+          (out/write-cstring password encoding))]
+
+    (to-bb \p out)))
+
+
+(defn make-Terminate []
+  {:msg :Terminate})
+
+
+(defn encode-Terminate [_ _]
+  ;; TODO: skip out
+  (to-bb \X (out/create)))
+
+
+(defn make-CancelRequest [code pid secret-key]
+  {:msg :CancelRequest
+   :code code
+   :pid pid
+   :secret-key secret-key})
+
+
+(defn encode-CancelRequest
+  [{:keys [code
+           pid
+           secret-key]}
+   opt]
+
+  (let [out
+        (doto (out/create)
+          (out/write-int32 code)
+          (out/write-int32 pid)
+          (out/write-int32 secret-key))]
+
+    ;; TODO 16?
+    (to-bb nil nil)))
+
+
 (defn make-StartupMessage
   [^Integer protocol-version
    ^String user
@@ -360,6 +469,7 @@
            ^Map options]}
    opt]
 
+  ;; TODO: encode: check encoding type
   (let [^String encoding
         (get-client-encoding opt)
 
@@ -597,6 +707,9 @@
 
   (case msg
 
+    :Terminate
+    (encode-Terminate message opt)
+
     :Query
     (encode-Query message opt)
 
@@ -606,11 +719,17 @@
     :StartupMessage
     (encode-StartupMessage message opt)
 
+    :PasswordMessage
+    (encode-PasswordMessage message opt)
+
     :Parse
     (encode-Parse message opt)
 
     :Sync
     (encode-Sync message opt)
+
+    :CancelRequest
+    (encode-CancelRequest message opt)
 
     :Flush
     (encode-Flush message opt)

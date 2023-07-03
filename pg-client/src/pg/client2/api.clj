@@ -90,6 +90,19 @@
       (initiate)))
 
 
+(defn terminate [conn]
+  (conn/terminate conn))
+
+
+(defmacro with-connection
+  [[bind config] & body]
+  `(let [~bind (connect ~config)]
+     (try
+       ~@body
+       (finally
+         (terminate ~bind)))))
+
+
 #_
 (comment
 
@@ -98,6 +111,9 @@
              :user "ivan"
              :database "ivan"
              :password "ivan"})
+
+  (with-connection [c -cfg]
+    (query c "select 1"))
 
   (def -conn (connect -cfg))
 

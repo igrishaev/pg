@@ -1,5 +1,6 @@
 (ns pg.client2.result
   (:require
+   [pg.client2.md5 :as md5]
    [pg.client2.conn :as conn]))
 
 
@@ -77,6 +78,33 @@
   result)
 
 
+(defn handle-NotificationResponse
+  [result conn message]
+  result)
+
+
+(defn handle-NegotiateProtocolVersion
+  [result conn message]
+  result)
+
+
+(defn handle-AuthenticationMD5Password
+  [result conn {:keys [salt]}]
+
+  (let [user
+        (conn/get-user conn)
+
+        password
+        (conn/get-password conn)
+
+        hashed
+        (md5/hash-password user password salt)]
+
+    (conn/send-password hashed))
+
+  result)
+
+
 (defn handle [result conn {:as message :keys [msg]}]
 
   (case msg
@@ -92,6 +120,12 @@
     :NoticeResponse
     (handle-NoticeResponse result conn message)
 
+    :AuthenticationMD5Password
+    (handle-AuthenticationMD5Password result conn message)
+
+    :NegotiateProtocolVersion
+    (handle-NegotiateProtocolVersion result conn message)
+
     :BackendKeyData
     (handle-BackendKeyData result conn message)
 
@@ -103,6 +137,9 @@
 
     :ErrorResponse
     (handle-ErrorResponse result conn message)
+
+    :NotificationResponse
+    (handle-NotificationResponse result conn message)
 
     :ParameterStatus
     (handle-ParameterStatus result conn message)
