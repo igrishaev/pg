@@ -11,6 +11,14 @@
    [pg.encode.txt :as txt]))
 
 
+;; Close
+;; CloseComplete
+;; Teminate
+;; NegotiateProtocolVersion
+;; Auth MD5
+;; Auth SASL
+
+
 (defmacro get-server-encoding [opt]
   `(or (get ~opt :server-encoding) "UTF-8"))
 
@@ -190,6 +198,26 @@
   {:msg :EmptyQueryResponse})
 
 
+(defn parse-NoticeResponse [bb opt]
+
+  (let [encoding
+        (get-server-encoding opt)
+
+        fields
+        (loop [acc {}]
+          (let [b (bb/read-byte bb)]
+            (if (zero? b)
+              acc
+              (let [token
+                    (parse-token b)
+                    field
+                    (bb/read-cstring bb encoding)]
+                (recur (assoc acc token field))))))]
+
+    {:msg :NoticeResponse
+     :fields fields}))
+
+
 (defn parse-ParameterDescription [bb opt]
 
   (let [param-count
@@ -204,11 +232,21 @@
      :param-oids param-oids}))
 
 
+(defn parse-NoData [bb opt]
+  {:msg :NoData})
+
+
 (defn parse-message
 
   [tag bb opt]
 
   (case tag
+
+    \n
+    (parse-NoData bb opt)
+
+    \N
+    (parse-NoticeResponse bb opt)
 
     \I
     (parse-EmptyQueryResponse bb opt)

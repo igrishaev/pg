@@ -66,6 +66,14 @@
   result)
 
 
+(defn handle-NoticeResponse [conn result message]
+  result)
+
+
+(defn handle-NoData [conn result message]
+  result)
+
+
 (defn handle [conn result {:as message :keys [msg]}]
 
   (case msg
@@ -74,6 +82,12 @@
 
     :ReadyForQuery
     (handle-ReadyForQuery conn result message)
+
+    :NoData
+    (handle-NoData conn result message)
+
+    :NoticeResponse
+    (handle-NoticeResponse conn result message)
 
     :BackendKeyData
     (handle-BackendKeyData conn result message)
