@@ -21,6 +21,9 @@
 
 
 (defn handle-ErrorResponse [result conn message]
+  ;; TODO
+  result
+  #_
   (throw (ex-info "ErrorResponse"
                   {:message message})))
 

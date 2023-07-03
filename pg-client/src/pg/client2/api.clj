@@ -50,19 +50,15 @@
 
     (conn/describe-portal conn portal)
     (conn/execute conn portal row-count)
+    (conn/close-portal conn portal)
     (conn/sync conn))
 
-  (res/interact conn #{:CommandComplete :EmptyQueryResponse :ErrorResponse :PortalSuspended}))
+  ;; :CommandComplete :EmptyQueryResponse :ErrorResponse :PortalSuspended
+  (res/interact conn #{:CloseComplete :ErrorResponse}))
 
 
 (defn close-statement [conn statement]
   (conn/close-statement conn statement)
-  (conn/sync conn)
-  (res/interact conn #{:CloseComplete :ErrorResponse}))
-
-
-(defn close-portal [conn portal]
-  (conn/close-portal conn portal)
   (conn/sync conn)
   (res/interact conn #{:CloseComplete :ErrorResponse}))
 
