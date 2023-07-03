@@ -178,6 +178,18 @@
      :errors errors}))
 
 
+(defn parse-BindComplete [bb opt]
+  {:msg :BindComplete})
+
+
+(defn parse-PortalSuspended [bb opt]
+  {:msg :PortalSuspended})
+
+
+(defn parse-EmptyQueryResponse [bb opt]
+  {:msg :EmptyQueryResponse})
+
+
 (defn parse-ParameterDescription [bb opt]
 
   (let [param-count
@@ -198,8 +210,17 @@
 
   (case tag
 
+    \I
+    (parse-EmptyQueryResponse bb opt)
+
+    \s
+    (parse-PortalSuspended bb opt)
+
     \1
     (parse-ParseComplete bb opt)
+
+    \2
+    (parse-BindComplete bb opt)
 
     \S
     (parse-ParameterStatus bb opt)
@@ -460,7 +481,7 @@
     (doseq [f param-formats]
       (out/write-int16 out f))
 
-    (out/write-int16 (count params))
+    (out/write-int16 out (count params))
 
     (doseq [param params]
 
@@ -490,6 +511,30 @@
     (to-bb \B out)))
 
 
+(defn make-Execute [^String portal
+                    ^Integer row-count]
+
+  {:msg :Execute
+   :portal portal
+   :row-count row-count})
+
+
+(defn encode-Execute
+  [{:keys [portal
+           row-count]}
+   opt]
+
+  (let [encoding
+        (get-client-encoding opt)
+
+        out
+        (doto (out/create)
+          (out/write-cstring portal encoding)
+          (out/write-int32 row-count))]
+
+    (to-bb \E out)))
+
+
 (defn encode-message [{:as message :keys [msg]} opt]
 
   (case msg
@@ -517,6 +562,9 @@
 
     :Bind
     (encode-Bind message opt)
+
+    :Execute
+    (encode-Execute message opt)
 
     ;; else
 

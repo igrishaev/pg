@@ -194,10 +194,24 @@
     statement))
 
 
-(defn bind [this statement params])
+(defn bind [conn statement params]
+
+  (let [portal
+        (name (gensym "portal_"))
+
+        msg
+        ;; TODO better formats
+        (msg/make-Bind portal statement [0] params [0])]
+
+    (send-message conn msg)
+
+    portal))
 
 
-(defn execute [this portal row-count])
+(defn execute [conn portal row-count]
+  (let [msg
+        (msg/make-Execute portal row-count)]
+    (send-message conn msg)))
 
 
 (defn close-statement [this statement-name])

@@ -32,7 +32,8 @@
 
 (defn prepare [conn sql]
 
-  (let [statement (conn/parse conn sql)]
+  (let [statement
+        (conn/parse conn sql)]
 
     (conn/describe-statement conn statement)
     (conn/sync conn)
@@ -45,8 +46,16 @@
 (defmacro with-statement [conn sql])
 
 
-(defn bind [conn statement params]
-  )
+(defn execute [conn statement params row-count]
+
+  (let [portal
+        (conn/bind conn statement params)]
+
+    (conn/describe-portal conn portal)
+    (conn/execute conn portal row-count)
+    (conn/sync conn))
+
+  (res/interact conn #{:CommandComplete :EmptyQueryResponse :ErrorResponse :PortalSuspended}))
 
 
 (defn authenticate [conn]
@@ -80,9 +89,10 @@
 
   (def -r (query -conn "select 1 as foo; select 2 as bar"))
 
-  (def -s (prepare -conn "select $1::integer as kek"))
+  (def -s (prepare -conn "select $1::integer as kek from generate_series(1, 3)"))
+  (def -s (prepare -conn ""))
 
-
+  (def -p (execute -conn -s [1] 1))
 
 
   )

@@ -58,6 +58,14 @@
   result)
 
 
+(defn handle-BindComplete [conn result message]
+  result)
+
+
+(defn handle-PortalSuspended [conn result message]
+  result)
+
+
 (defn handle [conn result {:as message :keys [msg]}]
 
   (case msg
@@ -70,8 +78,11 @@
     :BackendKeyData
     (handle-BackendKeyData conn result message)
 
-    (:AuthenticationOk)
+    (:AuthenticationOk :EmptyQueryResponse)
     result
+
+    :PortalSuspended
+    (handle-PortalSuspended conn result message)
 
     :ErrorResponse
     (handle-ErrorResponse conn result message)
@@ -90,6 +101,9 @@
 
     :ParseComplete
     (handle-ParseComplete conn result message)
+
+    :BindComplete
+    (handle-BindComplete conn result message)
 
     :ParameterDescription
     (handle-ParameterDescription conn result message)
