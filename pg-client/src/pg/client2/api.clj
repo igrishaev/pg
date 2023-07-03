@@ -4,7 +4,6 @@
    [pg.client2.result :as res])  )
 
 
-
 (defn query [conn sql]
   (conn/query conn sql)
   (res/interact conn #{:ErrorResponse :ReadyForQuery}))
@@ -53,7 +52,6 @@
     (conn/close-portal conn portal)
     (conn/sync conn))
 
-  ;; :CommandComplete :EmptyQueryResponse :ErrorResponse :PortalSuspended
   (res/interact conn #{:CloseComplete :ErrorResponse}))
 
 
