@@ -1,11 +1,15 @@
 (ns pg.client2.result
+  (:import
+   java.util.List
+   java.util.ArrayList)
   (:require
    [pg.client2.md5 :as md5]
    [pg.client2.conn :as conn]))
 
 
-(defn make-result []
-  {})
+(defn make-result [phase]
+  {:phase phase
+   :errors (new ArrayList)})
 
 
 (defn handle-ReadyForQuery
@@ -21,12 +25,12 @@
   result)
 
 
-(defn handle-ErrorResponse [result conn message]
-  ;; TODO
-  result
-  #_
-  (throw (ex-info "ErrorResponse"
-                  {:message message})))
+(defn handle-ErrorResponse
+  [{:as result :keys [^List errors]}
+   conn
+   message]
+  (.add errors message)
+  result)
 
 
 (defn handle-ParameterStatus
@@ -42,39 +46,7 @@
   result)
 
 
-(defn handle-RowDescription [result conn message]
-  result)
-
-
-(defn handle-DataRow [result conn message]
-  result)
-
-
-(defn handle-CommandComplete [result conn message]
-  result)
-
-
-(defn handle-ParseComplete [result conn message]
-  result)
-
-
-(defn handle-ParameterDescription [result conn message]
-  result)
-
-
-(defn handle-BindComplete [result conn message]
-  result)
-
-
-(defn handle-PortalSuspended [result conn message]
-  result)
-
-
 (defn handle-NoticeResponse [result conn message]
-  result)
-
-
-(defn handle-NoData [result conn message]
   result)
 
 
@@ -105,79 +77,116 @@
   result)
 
 
-(defn handle [result conn {:as message :keys [msg]}]
+(defn handle [{:as result :keys [phase]}
+              conn
+              {:as message :keys [msg]}]
 
   (case msg
 
-    ;; TODO: list of noop
-
-    :ReadyForQuery
-    (handle-ReadyForQuery result conn message)
-
-    :NoData
-    (handle-NoData result conn message)
-
-    :NoticeResponse
-    (handle-NoticeResponse result conn message)
-
-    :AuthenticationMD5Password
-    (handle-AuthenticationMD5Password result conn message)
-
-    :NegotiateProtocolVersion
-    (handle-NegotiateProtocolVersion result conn message)
-
-    :BackendKeyData
-    (handle-BackendKeyData result conn message)
-
-    (:AuthenticationOk :EmptyQueryResponse :CloseComplete)
+    (:AuthenticationOk
+     :EmptyQueryResponse
+     :CloseComplete
+     :BindComplete
+     :NoData
+     :ParseComplete
+     :PortalSuspended)
     result
-
-    :PortalSuspended
-    (handle-PortalSuspended result conn message)
 
     :ErrorResponse
     (handle-ErrorResponse result conn message)
 
-    :NotificationResponse
-    (handle-NotificationResponse result conn message)
+    :ReadyForQuery
+    (handle-ReadyForQuery result conn message)
 
     :ParameterStatus
     (handle-ParameterStatus result conn message)
 
-    :RowDescription
-    (handle-RowDescription result conn message)
+    :NoticeResponse
+    (handle-NoticeResponse result conn message)
 
-    :DataRow
-    (handle-DataRow result conn message)
+    :NotificationResponse
+    (handle-NotificationResponse result conn message)
 
-    :CommandComplete
-    (handle-CommandComplete result conn message)
+    :NegotiateProtocolVersion
+    (handle-NegotiateProtocolVersion result conn message)
 
-    :ParseComplete
-    (handle-ParseComplete result conn message)
+    (case [phase msg]
 
-    :BindComplete
-    (handle-BindComplete result conn message)
+      ;;
+      ;; auth
+      ;;
 
-    :ParameterDescription
-    (handle-ParameterDescription result conn message)
+      [:auth :AuthenticationMD5Password]
+      (handle-AuthenticationMD5Password result conn message)
+
+      [:auth :BackendKeyData]
+      (handle-BackendKeyData result conn message)
+
+      ;;
+      ;; prepare
+      ;;
+
+      [:prepare :ParameterDescription]
+      (assoc result :ParameterDescription message)
+
+      [:prepare :RowDescription]
+      (assoc result :RowDescription message)
+
+      ;;
+      ;; execute
+      ;;
+
+      [:execute :RowDescription]
+      (assoc result
+             :RowDescription message
+             :Rows (transient []))
+
+      [:execute :DataRow]
+      (update result :Rows conj! message)
+
+      [:execute :CommandComplete]
+      (assoc result :CommandComplete message)
+
+      ;;
+      ;; query
+      ;;
+
+      ;; else
+
+      (throw (ex-info "Cannot handle a message"
+                      {:phase phase
+                       :message message})))))
+
+
+(defn finalize [{:as result :keys [phase]}]
+
+  (case phase
+
+    :prepare
+    (select-keys result [:statement
+                         :ParameterDescription
+                         :RowDescription])
+
+    :execute
+    (some-> result :Rows persistent!)
 
     ;; else
 
-    (throw (ex-info "Cannot handle a message"
-                    {:message message}))))
+    result))
 
 
-(defn interact [conn until]
+(defn interact [conn until phase]
 
-  (loop [result (make-result)]
+  (finalize
 
-    (let [{:as message :keys [msg]}
-          (conn/read-message conn)]
+   (loop [result (make-result phase)]
 
-      (let [result
-            (handle result conn message)]
+     (let [{:as message :keys [msg]}
+           (conn/read-message conn)]
 
-        (if (contains? until msg)
-          result
-          (recur result))))))
+       (let [result
+             (handle result conn message)]
+
+         (if (contains? until msg)
+           result
+           (recur result)))))))

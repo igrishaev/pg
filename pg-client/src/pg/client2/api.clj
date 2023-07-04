@@ -4,9 +4,15 @@
    [pg.client2.result :as res])  )
 
 
+(def ready-or-error
+  #{:ReadyForQuery :ErrorResponse})
+
+
 (defn query [conn sql]
   (conn/query conn sql)
-  (res/interact conn #{:ErrorResponse :ReadyForQuery}))
+  (res/interact conn
+                ready-or-error
+                :query))
 
 
 (defn begin [conn]
@@ -37,7 +43,9 @@
     (conn/describe-statement conn statement)
     (conn/sync conn)
 
-    (res/interact conn #{:ErrorResponse :ReadyForQuery})
+    (res/interact conn
+                  ready-or-error
+                  :prepare)
 
     statement))
 
@@ -52,13 +60,17 @@
     (conn/close-portal conn portal)
     (conn/sync conn))
 
-  (res/interact conn #{:CloseComplete :ErrorResponse}))
+  (res/interact conn
+                ready-or-error
+                :execute))
 
 
 (defn close-statement [conn statement]
   (conn/close-statement conn statement)
   (conn/sync conn)
-  (res/interact conn #{:CloseComplete :ErrorResponse}))
+  (res/interact conn
+                ready-or-error
+                :close-statement))
 
 
 (defmacro with-statement
@@ -74,20 +86,16 @@
 
 (defn authenticate [conn]
   (conn/authenticate conn)
-  (res/interact conn #{:AuthenticationOk :ErrorResponse})
-  conn)
-
-
-(defn initiate [conn]
-  (res/interact conn #{:ReadyForQuery :ErrorResponse})
+  (res/interact conn
+                ready-or-error
+                :auth)
   conn)
 
 
 (defn connect [config]
   (-> config
       (conn/connect)
-      (authenticate)
-      (initiate)))
+      (authenticate)))
 
 
 (defn terminate [conn]
