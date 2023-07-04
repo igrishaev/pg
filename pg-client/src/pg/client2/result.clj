@@ -1,15 +1,21 @@
 (ns pg.client2.result
   (:import
+   java.util.Map
+   java.util.HashMap
    java.util.List
    java.util.ArrayList)
   (:require
+   [pg.client2.coll :as coll]
+   [pg.decode.txt :as txt]
+   [pg.decode.bin :as bin]
    [pg.client2.md5 :as md5]
    [pg.client2.conn :as conn]))
 
 
 (defn make-result [phase]
   {:phase phase
-   :errors (new ArrayList)})
+   :errors (new ArrayList)
+   :exceptions (new ArrayList)})
 
 
 (defn handle-ReadyForQuery
@@ -77,6 +83,65 @@
   result)
 
 
+(defn handle-Exception
+  [{:as result :keys [^List exceptions]} e]
+  (.add exceptions e)
+  result)
+
+
+(defn execute-RowDescription
+  [result
+   {:as message :keys [columns]}]
+  (assoc result
+         :Keys (mapv :name columns)
+         :RowDescription message
+         :Rows (transient [])))
+
+
+(defn execute-DataRow
+  [result conn DataRow]
+
+  (let [encoding
+        (conn/get-server-encoding conn)
+
+        {:keys [^List Keys
+                RowDescription]}
+        result
+
+        {:keys [^List values]}
+        DataRow
+
+        {:keys [^List columns]}
+        RowDescription
+
+        ;; TODO: fill opt
+        opt
+        {}
+
+        values-decoded
+        (coll/doN [i (count values)]
+
+          (let [col
+                (.get columns i)
+
+                {:keys [type-oid
+                        format]}
+                col
+
+                ^bytes buf
+                (.get values i)]
+
+            (case (int format)
+              0 (let [string (new String buf encoding)]
+                  (txt/decode string type-oid opt))
+              1 (bin/decode buf type-oid opt))))
+
+        Row
+        (zipmap Keys values-decoded)]
+
+    (update result :Rows conj! Row)))
+
+
 (defn handle [{:as result :keys [phase]}
               conn
               {:as message :keys [msg]}]
@@ -137,15 +202,20 @@
       ;;
 
       [:execute :RowDescription]
-      (assoc result
-             :RowDescription message
-             :Rows (transient []))
+      (execute-RowDescription result message)
 
       [:execute :DataRow]
-      (update result :Rows conj! message)
+      (execute-DataRow result conn message)
 
       [:execute :CommandComplete]
       (assoc result :CommandComplete message)
+
+      ;;
+      ;; close statement
+      ;;
+
+      [:close-statement :CommandComplete]
+      result
 
       ;;
       ;; query
@@ -158,7 +228,17 @@
                        :message message})))))
 
 
-(defn finalize [{:as result :keys [phase]}]
+(defn finalize [{:as result :keys [phase
+                                   ^List errors
+                                   ^List exceptions]}]
+
+  (when-not (.isEmpty errors)
+    (let [error (.get errors 0)]
+      (throw (ex-info "ErrorResponse" {:error error}))))
+
+  (when-not (.isEmpty exceptions)
+    (let [e (.get exceptions 0)]
+      (throw e)))
 
   (case phase
 
@@ -185,7 +265,10 @@
            (conn/read-message conn)]
 
        (let [result
-             (handle result conn message)]
+             (try
+               (handle result conn message)
+               (catch Throwable e
+                 (handle-Exception result e)))]
 
          (if (contains? until msg)
            result

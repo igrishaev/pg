@@ -147,7 +147,7 @@
 
   (def -conn (connect -cfg))
 
-  (with-statement [stmt -conn "select 1 as num"]
+  (with-statement [stmt -conn "select 1 as one, 2 as two"]
     (execute -conn stmt [] 0))
 
   (def -r (query -conn "select 1 as foo; select 2 as bar"))

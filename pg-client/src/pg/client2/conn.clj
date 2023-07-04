@@ -91,10 +91,12 @@
   (.get params param))
 
 
-(defn get-server-encoding [this])
+(defn get-server-encoding ^String [conn]
+  (get-in conn [:params "server_encoding"] "UTF-8"))
 
 
-(defn get-client-encoding ^String [this])
+(defn get-client-encoding ^String [conn]
+  (get-in conn [:params "client_encoding"] "UTF-8"))
 
 
 (defn get-password [conn]
