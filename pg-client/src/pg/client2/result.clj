@@ -12,10 +12,11 @@
    [pg.client2.conn :as conn]))
 
 
-(defn make-result [phase]
-  {:phase phase
-   :errors (new ArrayList)
-   :exceptions (new ArrayList)})
+(defn make-result [phase init]
+  (assoc init
+         :phase phase
+         :errors (new ArrayList)
+         :exceptions (new ArrayList)))
 
 
 (defn handle-ReadyForQuery
@@ -255,21 +256,27 @@
     result))
 
 
-(defn interact [conn until phase]
+(defn interact
 
-  (finalize
+  ([conn phase]
+   (interact conn phase nil))
 
-   (loop [result (make-result phase)]
+  ([conn phase init]
 
-     (let [{:as message :keys [msg]}
-           (conn/read-message conn)]
+   (finalize
 
-       (let [result
-             (try
-               (handle result conn message)
-               (catch Throwable e
-                 (handle-Exception result e)))]
+    (loop [result (make-result phase init)]
 
-         (if (contains? until msg)
-           result
-           (recur result)))))))
+      (let [{:as message :keys [msg]}
+            (conn/read-message conn)]
+
+        (let [result
+              (try
+                (handle result conn message)
+                (catch Throwable e
+                  (handle-Exception result e)))]
+
+          (if (or (identical? msg :ReadyForQuery)
+                  (identical? msg :ErrorResponse))
+            result
+            (recur result))))))))

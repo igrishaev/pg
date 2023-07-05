@@ -1,18 +1,15 @@
 (ns pg.client2.api
+  (:import
+   java.util.Map
+   java.util.List)
   (:require
    [pg.client2.conn :as conn]
-   [pg.client2.result :as res])  )
-
-
-(def ready-or-error
-  #{:ReadyForQuery :ErrorResponse})
+   [pg.client2.result :as res]))
 
 
 (defn query [conn sql]
   (conn/query conn sql)
-  (res/interact conn
-                ready-or-error
-                :query))
+  (res/interact conn :query))
 
 
 (defn begin [conn]
@@ -38,19 +35,22 @@
 (defn prepare [conn sql]
 
   (let [statement
-        (conn/parse conn sql)]
+        (conn/parse conn sql)
+
+        init
+        {:statement statement}]
 
     (conn/describe-statement conn statement)
     (conn/sync conn)
-
-    (res/interact conn
-                  ready-or-error
-                  :prepare)
-
-    statement))
+    (res/interact conn :prepare init)))
 
 
-(defn execute [conn statement params row-count]
+(defn execute [conn
+               ^Map statement
+               ^List params
+               ^Integer row-count]
+
+  ;; TODO: statement
 
   (let [portal
         (conn/bind conn statement params)]
@@ -60,17 +60,13 @@
     (conn/close-portal conn portal)
     (conn/sync conn))
 
-  (res/interact conn
-                ready-or-error
-                :execute))
+  (res/interact conn :execute))
 
 
 (defn close-statement [conn statement]
   (conn/close-statement conn statement)
   (conn/sync conn)
-  (res/interact conn
-                ready-or-error
-                :close-statement))
+  (res/interact conn :close-statement))
 
 
 (defmacro with-statement
@@ -86,9 +82,7 @@
 
 (defn authenticate [conn]
   (conn/authenticate conn)
-  (res/interact conn
-                ready-or-error
-                :auth)
+  (res/interact conn :auth)
   conn)
 
 
