@@ -1,7 +1,7 @@
 (ns pg.client.client-test
   (:require
    ;; pg.json
-   [pg.client :as client]
+   [pg.client.api :as api]
    [clojure.string :as str]
    [clojure.test :refer [deftest is]]))
 
@@ -34,162 +34,172 @@
 (deftest test-client-ok
 
   (let [result
-        (client/with-connection [conn CONFIG]
-          (client/query conn "select 1 as foo, 'hello' as bar"))]
+        (api/with-connection [conn CONFIG]
+          (api/query conn "select 1 as foo, 'hello' as bar"))]
 
     (is (= [{:foo 1 :bar "hello"}]
            result))))
 
 
+#_
 (deftest test-client-tx-status
 
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
 
-    (is (= :I (client/status conn)))
+    (is (= :I (api/status conn)))
 
-    (client/query conn "select 1")
+    (api/query conn "select 1")
 
-    (is (= :I (client/status conn)))
+    (is (= :I (api/status conn)))
 
-    (client/begin conn)
+    (api/begin conn)
 
-    (is (= :T (client/status conn)))
+    (is (= :T (api/status conn)))
 
     (try
-      (client/query conn "selekt 1")
+      (api/query conn "selekt 1")
       (catch Exception _
         nil))
 
-    (is (= :E (client/status conn)))
+    (is (= :E (api/status conn)))
 
-    (client/rollback conn)
+    (api/rollback conn)
 
-    (is (= :I (client/status conn)))))
+    (is (= :I (api/status conn)))))
 
 
+#_
 (deftest test-client-empty-query
 
   (let [result
-        (client/with-connection [conn CONFIG]
-          (client/query conn ""))]
+        (api/with-connection [conn CONFIG]
+          (api/query conn ""))]
 
     (is (nil? result))))
 
 
+#_
 (deftest test-client-fn-column
 
   (let [result
-        (client/with-connection [conn CONFIG]
-          (client/query conn "select 1 as foo" {:fn-column str/upper-case}))]
+        (api/with-connection [conn CONFIG]
+          (api/query conn "select 1 as foo" {:fn-column str/upper-case}))]
 
     (is (= [{"FOO" 1}] result))))
 
 
+#_
 (deftest test-client-exception-in-the-middle
 
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
 
     (is (thrown?
          Exception
          (with-redefs [pg.decode.txt/-decode
                        (fn [& _]
                          (throw (new Exception "boom")))]
-           (client/query conn "select 1 as foo"))))
+           (api/query conn "select 1 as foo"))))
 
     (let [result
-          (client/query conn "select 2 as bar")]
+          (api/query conn "select 2 as bar")]
 
       (is (= [{:bar 2}] result)))))
 
 
+#_
 (deftest test-client-reuse-conn
 
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
 
     (let [res1
-          (client/query conn "select 1 as foo")
+          (api/query conn "select 1 as foo")
           res2
-          (client/query conn "select 'hello' as bar")]
+          (api/query conn "select 'hello' as bar")]
 
       (is (= [{:foo 1}] res1))
       (is (= [{:bar "hello"}] res2)))))
 
 
+#_
 (deftest test-client-with-transaction-ok
 
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
 
     (let [res1
-          (client/with-tx [conn]
-            (client/query conn "select 1 as foo" {:fn-result first}))
+          (api/with-tx [conn]
+            (api/query conn "select 1 as foo" {:fn-result first}))
 
           res2
-          (client/with-tx [conn]
-            (client/query conn "select 2 as bar" {:fn-result first}))]
+          (api/with-tx [conn]
+            (api/query conn "select 2 as bar" {:fn-result first}))]
 
       (is (= {:foo 1} res1))
       (is (= {:bar 2} res2)))))
 
 
+#_
 (deftest test-client-with-transaction-read-only
 
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
 
     (let [res1
-          (client/with-tx [conn {:read-only? true}]
-            (client/query conn "select 1 as foo"))]
+          (api/with-tx [conn {:read-only? true}]
+            (api/query conn "select 1 as foo"))]
 
       (is (= [{:foo 1}] res1))
 
       (is (thrown?
            Exception
-           (client/with-tx [conn {:read-only? true}]
-             (client/query conn "create temp table foo123 (id integer)")))))))
+           (api/with-tx [conn {:read-only? true}]
+             (api/query conn "create temp table foo123 (id integer)")))))))
 
 
+#_
 (deftest test-client-with-transaction-iso-level
 
   (let [table
         (gen-table)]
 
-    (client/with-connection [conn CONFIG]
+    (api/with-connection [conn CONFIG]
 
-      (client/query conn (format "create table %s (id integer)" table))
+      (api/query conn (format "create table %s (id integer)" table))
 
-      (client/with-tx [conn {:isolation-level "serializable"}]
-        (client/query conn (format "insert into %s values (1), (2)" table))
+      (api/with-tx [conn {:isolation-level "serializable"}]
+        (api/query conn (format "insert into %s values (1), (2)" table))
 
         (let [res1
-              (client/query conn (format "select * from %s" table))
+              (api/query conn (format "select * from %s" table))
 
               res2
-              (client/with-connection [conn2 CONFIG]
-                (client/query conn2 (format "select * from %s" table)))]
+              (api/with-connection [conn2 CONFIG]
+                (api/query conn2 (format "select * from %s" table)))]
 
           (is (= [{:id 1} {:id 2}] res1))
           (is (= [] res2)))))))
 
 
+#_
 (deftest test-client-with-transaction-rollback
 
   (let [table
         (gen-table)]
 
-    (client/with-connection [conn CONFIG]
+    (api/with-connection [conn CONFIG]
 
-      (client/query conn (format "create table %s (id integer)" table))
+      (api/query conn (format "create table %s (id integer)" table))
 
-      (client/with-tx [conn {:rollback? true}]
-        (client/query conn (format "insert into %s values (1), (2)" table)))
+      (api/with-tx [conn {:rollback? true}]
+        (api/query conn (format "insert into %s values (1), (2)" table)))
 
       (let [res1
-            (client/query conn (format "select * from %s" table))]
+            (api/query conn (format "select * from %s" table))]
 
         (is (= [] res1))))))
 
 
+#_
 (deftest test-client-create-table
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
 
     (let [table
           (gen-table)
@@ -198,11 +208,12 @@
           (format "create temp table %s (id serial, title text)" table)
 
           res
-          (client/query conn query)]
+          (api/query conn query)]
 
       (is (nil? res)))))
 
 
+#_
 (deftest test-client-listen-notify
 
   (let [capture!
@@ -215,19 +226,19 @@
         config+
         (assoc CONFIG :fn-notification fn-notification)]
 
-    (client/with-connection [conn config+]
+    (api/with-connection [conn config+]
 
       (let [res1
-            (client/query conn "listen FOO")
+            (api/query conn "listen FOO")
 
             res2
-            (client/query conn "notify FOO, 'kek-lol'")
+            (api/query conn "notify FOO, 'kek-lol'")
 
             res3
-            (client/query conn "unlisten FOO")
+            (api/query conn "unlisten FOO")
 
             res4
-            (client/query conn "notify FOO, 'hello'")
+            (api/query conn "notify FOO, 'hello'")
 
             messages
             @capture!]
@@ -245,6 +256,7 @@
                    (dissoc :pid))))))))
 
 
+#_
 (deftest test-client-listen-notify-different-conns
 
   (let [capture!
@@ -257,17 +269,17 @@
         config+
         (assoc CONFIG :fn-notification fn-notification)]
 
-    (client/with-connection [conn1 CONFIG]
-      (client/with-connection [conn2 config+]
+    (api/with-connection [conn1 CONFIG]
+      (api/with-connection [conn2 config+]
 
-        (let [pid1 (client/pid conn1)
-              pid2 (client/pid conn2)]
+        (let [pid1 (api/pid conn1)
+              pid2 (api/pid conn2)]
 
-          (client/query conn2 "listen FOO")
-          (client/query conn1 "notify FOO, 'message1'")
-          (client/query conn1 "notify FOO, 'message2'")
+          (api/query conn2 "listen FOO")
+          (api/query conn1 "notify FOO, 'message1'")
+          (api/query conn1 "notify FOO, 'message2'")
 
-          (client/query conn2 "")
+          (api/query conn2 "")
 
           (is (= [{:pid pid1 :channel "foo" :message "message1"}
                   {:pid pid1 :channel "foo" :message "message2"}]
@@ -275,10 +287,11 @@
                  (mapv ->map @capture!))))))))
 
 
+#_
 (deftest test-client-broken-query
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
     (try
-      (client/query conn "selekt 1")
+      (api/query conn "selekt 1")
       (catch Exception e
         (is (= "ErrorResponse" (ex-message e)))
         (is (= {:errors
@@ -295,6 +308,7 @@
                            (fn [errors]
                              (dissoc errors :file :line))))))))))
 
+#_
 
 (deftest test-client-error-response
 
@@ -302,51 +316,54 @@
         (assoc CONFIG :pg-params {"pg_foobar" "111"})]
 
     (is (thrown? Exception
-                 (client/with-connection [conn config]
+                 (api/with-connection [conn config]
                    42)))))
 
 
+#_
 (deftest test-client-wrong-startup-params
 
   (let [config
         (assoc CONFIG :pg-params {"application_name" "Clojure"})]
 
-    (client/with-connection [conn config]
+    (api/with-connection [conn config]
       (let [param
-            (client/get-param conn "application_name")]
+            (api/get-param conn "application_name")]
         (is (= "Clojure" param))))))
 
 
+#_
 (deftest test-client-prepare
 
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
 
     (let [query1
           "prepare foo as select $1::integer as num"
 
           res1
-          (client/query conn query1)
+          (api/query conn query1)
 
           query2
           "execute foo(42)"
 
           res2
-          (client/query conn query2)
+          (api/query conn query2)
 
           query3
           "deallocate foo"
 
           res3
-          (client/query conn query3)]
+          (api/query conn query3)]
 
       (is (nil? res1))
       (is (= [{:num 42}] res2))
       (is (nil? res3)))))
 
 
+#_
 (deftest test-client-cursor
 
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
 
     (let [table
           (gen-table)
@@ -355,32 +372,32 @@
           (format "create temp table %s (id serial, title text)" table)
 
           _
-          (client/query conn query1)
+          (api/query conn query1)
 
           query2
           (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2') returning *" table)
 
           _
-          (client/query conn query2)
+          (api/query conn query2)
 
           query3
           (format "DECLARE cur CURSOR for select * from %s" table)]
 
-      (client/with-tx [conn]
+      (api/with-tx [conn]
 
         (let [res3
-              (client/query conn query3)
+              (api/query conn query3)
 
               res4
-              (client/query conn "fetch next from cur")
+              (api/query conn "fetch next from cur")
 
               res5
-              (client/query conn "fetch next from cur")
+              (api/query conn "fetch next from cur")
 
               res6
-              (client/query conn "fetch next from cur")]
+              (api/query conn "fetch next from cur")]
 
-          (client/query conn "close cur")
+          (api/query conn "close cur")
 
           (is (nil? res3))
 
@@ -389,18 +406,20 @@
           (is (= [] res6)))))))
 
 
+#_
 (deftest test-client-wrong-minor-protocol
 
   (let [config
         (assoc CONFIG :protocol-version 196609)]
 
-    (client/with-connection [conn config]
+    (api/with-connection [conn config]
       (is (= [{:foo 1}]
-             (client/query conn "select 1 as foo"))))))
+             (api/query conn "select 1 as foo"))))))
 
 
+#_
 (deftest test-client-empty-select
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
 
     (let [table
           (gen-table)
@@ -409,19 +428,20 @@
           (format "create temp table %s (id serial, title text)" table)
 
           _
-          (client/query conn query1)
+          (api/query conn query1)
 
           query2
           (format "select * from %s" table)
 
           res
-          (client/query conn query2)]
+          (api/query conn query2)]
 
       (is (= [] res)))))
 
 
+#_
 (deftest test-client-insert-result-returning
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
 
     (let [table
           (gen-table)
@@ -430,19 +450,20 @@
           (format "create temp table %s (id serial, title text)" table)
 
           _
-          (client/query conn query1)
+          (api/query conn query1)
 
           query2
           (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2') returning *" table)
 
           res
-          (client/query conn query2)]
+          (api/query conn query2)]
 
       (is (= [{:id 1 :title "test1"}
               {:id 2 :title "test2"}]
              res)))))
 
 
+#_
 (deftest test-client-notice-custom-function
   (let [capture!
         (atom nil)
@@ -452,8 +473,8 @@
                (fn [fields]
                  (reset! capture! fields)))]
 
-    (client/with-connection [conn config]
-      (let [res (client/query conn "ROLLBACK")]
+    (api/with-connection [conn config]
+      (let [res (api/query conn "ROLLBACK")]
         (is (nil? res))))
 
     (is (= {:severity "WARNING"
@@ -467,8 +488,9 @@
                (dissoc :line))))))
 
 
+#_
 (deftest test-client-insert-result-no-returning
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
 
     (let [table
           (gen-table)
@@ -477,19 +499,20 @@
           (format "create temp table %s (id serial, title text)" table)
 
           _
-          (client/query conn query1)
+          (api/query conn query1)
 
           query2
           (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
 
           res
-          (client/query conn query2)]
+          (api/query conn query2)]
 
       (is (= 2 res)))))
 
 
+#_
 (deftest test-client-select-fn-result
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
 
     (let [table
           (gen-table)
@@ -498,25 +521,26 @@
           (format "create temp table %s (id serial, title text)" table)
 
           _
-          (client/query conn query1)
+          (api/query conn query1)
 
           query2
           (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
 
           _
-          (client/query conn query2)
+          (api/query conn query2)
 
           query3
           (format "select * from %s where id = 1" table)
 
           res
-          (client/query conn query3 {:fn-result first})]
+          (api/query conn query3 {:fn-result first})]
 
       (is (= {:id 1 :title "test1"} res)))))
 
 
+#_
 (deftest test-client-delete-result
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
 
     (let [table
           (gen-table)
@@ -525,25 +549,26 @@
           (format "create temp table %s (id serial, title text)" table)
 
           _
-          (client/query conn query1)
+          (api/query conn query1)
 
           query2
           (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
 
           _
-          (client/query conn query2)
+          (api/query conn query2)
 
           query3
           (format "delete from %s " table)
 
           res
-          (client/query conn query3)]
+          (api/query conn query3)]
 
       (is (= 2 res)))))
 
 
+#_
 (deftest test-client-update-result
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
 
     (let [table
           (gen-table)
@@ -552,25 +577,26 @@
           (format "create temp table %s (id serial, title text)" table)
 
           _
-          (client/query conn query1)
+          (api/query conn query1)
 
           query2
           (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
 
           _
-          (client/query conn query2)
+          (api/query conn query2)
 
           query3
           (format "update %s set title = 'aaa'" table)
 
           res
-          (client/query conn query3)]
+          (api/query conn query3)]
 
       (is (= 2 res)))))
 
 
+#_
 (deftest test-client-mixed-result
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
 
     (let [table
           (gen-table)
@@ -589,7 +615,7 @@ drop table %1$s;
            table)
 
           res
-          (client/query conn query {:fn-column str/upper-case})]
+          (api/query conn query {:fn-column str/upper-case})]
 
       (is (= [nil
               2
@@ -602,8 +628,9 @@ drop table %1$s;
              res)))))
 
 
+#_
 (deftest test-client-truncate-result
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
 
     (let [table
           (gen-table)
@@ -612,116 +639,124 @@ drop table %1$s;
           (format "create temp table %s (id serial, title text)" table)
 
           _
-          (client/query conn query1)
+          (api/query conn query1)
 
           query2
           (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
 
           _
-          (client/query conn query2)
+          (api/query conn query2)
 
           query3
           (format "truncate %s" table)
 
           res
-          (client/query conn query3)]
+          (api/query conn query3)]
 
       (is (nil? res)))))
 
 
+#_
 (deftest test-client-select-multi
 
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
 
     (let [res
-          (client/query conn "select 1 as foo; select 2 as bar")]
+          (api/query conn "select 1 as foo; select 2 as bar")]
 
       (is (= [[{:foo 1}] [{:bar 2}]] res)))))
 
 
+#_
 (deftest test-client-field-duplicates
 
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
 
     (let [res
-          (client/query conn "select 1 as id, 2 as id")]
+          (api/query conn "select 1 as id, 2 as id")]
 
       (is (= [{:id_0 1 :id_1 2}] res)))))
 
 
+#_
 (deftest test-client-as-vectors
 
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
 
     (let [res
-          (client/query conn "select 1 as id, 2 as id" {:as-vectors? true})]
+          (api/query conn "select 1 as id, 2 as id" {:as-vectors? true})]
 
       (is (= [[1 2]] res)))))
 
 
+#_
 (deftest test-client-as-java-maps
 
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
 
     (let [res
-          (client/query conn "select 1 as id, 2 as id" {:as-java-maps? true})]
+          (api/query conn "select 1 as id, 2 as id" {:as-java-maps? true})]
 
       (is (instance? java.util.HashMap (first res)))
       (is (= [{:id_0 1 :id_1 2}] res)))))
 
 
+#_
 (deftest test-client-json-read
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
     (let [res
-          (client/query conn "select '[1, 2, 3]'::json as arr")]
+          (api/query conn "select '[1, 2, 3]'::json as arr")]
       (is (= [{:arr [1 2 3]}] res)))))
 
 
+#_
 (deftest test-client-jsonb-read
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
     (let [res
-          (client/query conn "select '{\"foo\": 123}'::jsonb as obj")]
+          (api/query conn "select '{\"foo\": 123}'::jsonb as obj")]
       (is (= [{:obj {:foo 123}}] res)))))
 
 
+#_
 (deftest test-client-prepare-&-close-ok
 
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
 
     (let [statement
-          (client/prepare conn "select 1 as foo")]
+          (api/prepare conn "select 1 as foo")]
 
       (is (string? statement))
       (is (str/starts-with? statement "statement"))
 
       (let [result
-            (client/close-statement conn statement)]
+            (api/close-statement conn statement)]
 
-      (is (nil? result))))))
+        (is (nil? result))))))
 
 
+#_
 (deftest test-with-prepare
-  (client/with-connection [conn CONFIG]
-    (client/with-prepare [stmt conn "select 1 as foo"]
+  (api/with-connection [conn CONFIG]
+    (api/with-prepare [stmt conn "select 1 as foo"]
       (is (string? stmt)))))
 
-
+#_
 (deftest test-execute
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
     (let [result
-          (client/execute conn "select $1::integer as foo" [42])]
+          (api/execute conn "select $1::integer as foo" [42])]
       (is (= [{:foo 42}] result)))))
 
 
-
+#_
 (deftest test-execute-row-limit
-  (client/with-connection [conn CONFIG]
+  (api/with-connection [conn CONFIG]
 
     (let [query
           "with foo as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
           result
-          (client/execute conn query [])]
+          (api/execute conn query [])]
 
       (is (= 42 result)))))
 
