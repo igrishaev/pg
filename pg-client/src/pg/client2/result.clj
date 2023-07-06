@@ -83,8 +83,16 @@
         hashed
         (md5/hash-password user password salt)]
 
-    (conn/send-password hashed))
+    (conn/send-password conn hashed))
 
+  result)
+
+
+(defn handle-AuthenticationCleartextPassword
+  [result conn message]
+  (let [password
+        (conn/get-password conn)]
+    (conn/send-password conn password))
   result)
 
 
@@ -215,6 +223,9 @@
 
       [:auth :BackendKeyData]
       (handle-BackendKeyData result conn message)
+
+      [:auth :AuthenticationCleartextPassword]
+      (handle-AuthenticationCleartextPassword result conn message)
 
       ;;
       ;; prepare

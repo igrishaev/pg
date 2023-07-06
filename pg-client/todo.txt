@@ -1,4 +1,16 @@
 
+- move client2 files
+- add tests
+- process query result
+- reduce query
+- reduce execute
+- refactor pg-common
+- function call
+- copy support
+
+- channel options
+- ssl
+- conn pool
 - Describe message
 - json package
 - remove error.clj package

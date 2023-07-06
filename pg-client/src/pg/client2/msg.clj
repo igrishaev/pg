@@ -50,6 +50,11 @@
      :salt salt}))
 
 
+(defn parse-AuthenticationCleartextPassword [bb opt]
+  {:msg :AuthenticationCleartextPassword
+   :status 3})
+
+
 (defn parse-AuthenticationResponse [bb opt]
 
   (let [status (bb/read-int32 bb)]
@@ -58,6 +63,9 @@
 
       0
       (parse-AuthenticationOk bb opt)
+
+      3
+      (parse-AuthenticationCleartextPassword bb opt)
 
       5
       (parse-AuthenticationMD5Password bb opt)
