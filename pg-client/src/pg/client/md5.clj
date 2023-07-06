@@ -1,7 +1,7 @@
-(ns pg.client2.md5
+(ns pg.client.md5
   (:require
-   [pg.client2.bytes :as bytes]
-   [pg.client2.codec :as codec]))
+   [pg.client.bytes :as bytes]
+   [pg.client.codec :as codec]))
 
 
 (defn hash-password ^String

@@ -1,4 +1,4 @@
-(ns pg.client2.conn
+(ns pg.client.conn
   (:refer-clojure :exclude [flush sync])
   (:import
    java.io.Closeable
@@ -8,11 +8,11 @@
    java.util.HashMap
    java.util.Map)
   (:require
-   [pg.client2.const :as const]
-   [pg.client2.debug :as debug]
-   [pg.client2.bb :as bb]
-   [pg.client2.msg :as msg]
-   [pg.client2.const :as const]))
+   [pg.client.const :as const]
+   [pg.client.debug :as debug]
+   [pg.client.bb :as bb]
+   [pg.client.msg :as msg]
+   [pg.client.const :as const]))
 
 
 (def config-defaults

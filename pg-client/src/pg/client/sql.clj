@@ -37,8 +37,8 @@
     "READ UNCOMMITTED"
 
     (throw
-     (new Exception
-          (format "Wrong isolation level: %s" level)))))
+     (ex-info (format "Wrong isolation level: %s" level)
+              {:level level}))))
 
 
 (defn set-tx [{:keys [isolation-level

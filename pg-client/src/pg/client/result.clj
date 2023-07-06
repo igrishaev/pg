@@ -1,15 +1,15 @@
-(ns pg.client2.result
+(ns pg.client.result
   (:import
    java.util.Map
    java.util.HashMap
    java.util.List
    java.util.ArrayList)
   (:require
-   [pg.client2.coll :as coll]
+   [pg.client.coll :as coll]
    [pg.decode.txt :as txt]
    [pg.decode.bin :as bin]
-   [pg.client2.md5 :as md5]
-   [pg.client2.conn :as conn]))
+   [pg.client.md5 :as md5]
+   [pg.client.conn :as conn]))
 
 
 (defn make-result [phase init]

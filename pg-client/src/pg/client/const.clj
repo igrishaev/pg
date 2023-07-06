@@ -1,10 +1,13 @@
 (ns pg.client.const)
 
+;; TODO: const
 
-(def PROTOCOL-VERSION 196608)
+(def PROTOCOL_VERSION 196608)
 
-(def SOURCE-PORTAL \P)
-(def SOURCE-STATEMENT \S)
+(def SOURCE_PORTAL \P)
+(def SOURCE_STATEMENT \S)
 
-(def FORMAT-TXT 0)
-(def FORMAT-BIN 1)
+(def FORMAT_TXT 0)
+(def FORMAT_BIN 1)
+
+(def CANCEL_CODE 80877102)

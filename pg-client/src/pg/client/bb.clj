@@ -5,20 +5,16 @@
    java.nio.ByteBuffer))
 
 
+(defmacro allocate [size]
+  `(ByteBuffer/allocate ~size))
+
+
 (defmacro remaining [bb]
   `(.. ~(with-meta bb {:tag `ByteBuffer}) (remaining)))
 
 
 (defmacro rewind [bb]
   `(.. ~(with-meta bb {:tag `ByteBuffer}) (rewind)))
-
-
-(defn read-int16 [^ByteBuffer bb]
-  (.getShort bb))
-
-
-(defmacro allocate [size]
-  `(ByteBuffer/allocate ~size))
 
 
 (defn write-int32 [^ByteBuffer bb value]
@@ -61,20 +57,29 @@
             (recur)))))))
 
 
+(defmacro read-int16 [^ByteBuffer bb]
+  `(.. ~(with-meta bb {:tag `ByteBuffer}) (getShort)))
+
+
 (defmacro read-int32 [^ByteBuffer bb]
   `(.. ~(with-meta bb {:tag `ByteBuffer}) (getInt)))
 
 
-(defn debug [^ByteBuffer bb]
-  (println (vec (.array bb))))
+(defn to-vector [^ByteBuffer bb]
+  (vec (.array bb)))
 
 
 (defn read-from [^SocketChannel ch ^ByteBuffer bb]
   (while (not (zero? (remaining bb)))
-    (.read ch bb)))
+    (.read ch bb))
+  (rewind bb)
+  bb)
 
 
 (defn write-to [^SocketChannel ch ^ByteBuffer bb]
+
+  (rewind bb)
+
   (let [written
         (.write ch (rewind bb))
 

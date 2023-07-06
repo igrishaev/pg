@@ -1,7 +1,7 @@
-(ns pg.client2.out
+(ns pg.client.out
   (:require
-   [pg.client2.bytes :as bytes]
-   [pg.client2.coll :as coll])
+   [pg.client.bytes :as bytes]
+   [pg.client.coll :as coll])
   (:import
    java.util.List
    java.io.ByteArrayOutputStream))

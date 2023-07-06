@@ -1,5 +1,4 @@
 
-- move client2 files
 - add tests
 - process query result
 - reduce query
@@ -8,6 +7,7 @@
 - function call
 - copy support
 
+- Connection defrecord
 - channel options
 - ssl
 - conn pool

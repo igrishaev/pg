@@ -1,13 +1,13 @@
-(ns pg.client2.msg
+(ns pg.client.msg
   (:import
    clojure.lang.Keyword
    java.util.Map
    java.util.List
    java.io.ByteArrayOutputStream)
   (:require
-   [pg.client2.out :as out]
-   [pg.client2.bb :as bb]
-   [pg.client2.coll :as coll]
+   [pg.client.out :as out]
+   [pg.client.bb :as bb]
+   [pg.client.coll :as coll]
    [pg.encode.txt :as txt]))
 
 
