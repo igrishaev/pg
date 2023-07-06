@@ -1,7 +1,10 @@
 (ns pg.client2.out
   (:require
-   [pg.client2.bytes :as bytes])
-  (:import java.io.ByteArrayOutputStream))
+   [pg.client2.bytes :as bytes]
+   [pg.client2.coll :as coll])
+  (:import
+   java.util.List
+   java.io.ByteArrayOutputStream))
 
 
 (defn create []
@@ -50,6 +53,14 @@
    ^Integer value]
   (doto out
     (.writeBytes (bytes/int16->bytes value))))
+
+
+(defn write-int16s
+  [^ByteArrayOutputStream out
+   ^List values]
+  (coll/do-list [value values]
+    (.writeBytes out (bytes/int16->bytes value)))
+  out)
 
 
 (defn array ^bytes [^ByteArrayOutputStream out]

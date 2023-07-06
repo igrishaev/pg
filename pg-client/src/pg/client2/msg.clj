@@ -610,6 +610,7 @@
                  ^String statement
                  ^List param-formats
                  ^List params
+                 ^List param-oids
                  ^List column-formats]
 
   {:msg :Bind
@@ -617,57 +618,68 @@
    :statement      statement
    :param-formats  param-formats
    :params         params
+   :param-oids     param-oids
    :column-formats column-formats})
 
 
 (defn encode-Bind
-  [{:keys [^String portal
+  ;; TODO: support binary
+  ;; TODO: fill opt
+
+  [{:as message
+    :keys [^String portal
            ^String statement
            ^List param-formats
            ^List params
+           ^List param-oids
            ^List column-formats]}
    opt]
 
+  (let [len-params (.size params)
+        len-param-oids (.size param-oids)]
+    (when-not (= len-params len-param-oids)
+      (let [msg
+            (format "Wrong parameters count: %s (must be %s)"
+                    len-params len-param-oids)]
+        (throw (ex-info msg message)))))
+
   (let [^String encoding
         (get-client-encoding opt)
+
+        opt
+        {}
 
         out
         (doto (out/create)
           (out/write-cstring portal encoding)
           (out/write-cstring statement encoding)
-          (out/write-int16 (count param-formats)))]
+          (out/write-int16 (.size param-formats))
+          (out/write-int16s param-formats))]
 
-    ;; todo: write-int16s function
-    ;; todo: better cycle
-    (doseq [f param-formats]
-      (out/write-int16 out f))
+    (out/write-int16 out (.size params))
+    (coll/do-n [i (.size params)]
 
-    (out/write-int16 out (count params))
+      (let [param (.get params i)
+            param-oid (.get param-oids i)]
 
-    (doseq [param params]
+        (if (nil? param)
 
-      (if (nil? param)
+          (out/write-int32 out -1)
 
-        (out/write-int32 out -1)
+          (let [^String encoded
+                (txt/encode param param-oid opt)
 
-        ;; TODO: support binary
-        ;; TODO: pass encode options
-        (let [^String encoded
-              (txt/encode param nil nil)
+                buf
+                (.getBytes encoded encoding)
 
-              buf
-              (.getBytes encoded encoding)
+                len
+                (alength buf)]
 
-              len
-              (alength buf)]
+            (out/write-int32 out len)
+            (out/write-bytes out buf)))))
 
-          (out/write-int32 out len)
-          (out/write-bytes out buf))))
-
-    (out/write-int16 out (count column-formats))
-    ;; TODO: write-int16s
-    (doseq [f column-formats]
-      (out/write-int16 out f))
+    (out/write-int16 out (.size column-formats))
+    (out/write-int16s out column-formats)
 
     (to-bb \B out)))
 

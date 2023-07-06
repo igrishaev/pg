@@ -207,14 +207,14 @@
     statement))
 
 
-(defn bind [conn statement params]
+(defn bind [conn statement params param-oids]
 
   (let [portal
         (name (gensym "portal_"))
 
         msg
         ;; TODO better formats
-        (msg/make-Bind portal statement [0] params [0])]
+        (msg/make-Bind portal statement [0] params param-oids [0])]
 
     (send-message conn msg)
 

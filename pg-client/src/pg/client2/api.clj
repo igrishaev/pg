@@ -3,6 +3,7 @@
    java.util.Map
    java.util.List)
   (:require
+   [pg.client2.sql :as sql]
    [pg.client2.conn :as conn]
    [pg.client2.result :as res]))
 
@@ -24,8 +25,37 @@
   (query conn "ROLLBACK"))
 
 
-(defmacro with-tx [conn]
-  )
+(defmacro with-tx
+
+  [[conn {:as opt :keys [read-only?
+                         isolation-level
+                         rollback?]}]
+   & body]
+
+  `(let [conn# ~conn]
+
+     (begin conn#)
+
+     (let [[e# result#]
+           (try
+             [nil (do
+                    ~(when (or isolation-level read-only?)
+                       `(when-let [query# (sql/set-tx ~opt)]
+                          (query ~conn query#)))
+                    ~@body)]
+             (catch Throwable e#
+               [e# nil]))]
+
+       (if e#
+         (do
+           (rollback conn#)
+           (throw e#))
+
+         (do
+           ~(if rollback?
+              `(rollback conn#)
+              `(commit conn#))
+           result#)))))
 
 
 (defn pid [conn]
@@ -46,14 +76,19 @@
 
 
 (defn execute [conn
-               ^Map statement
+               ^Map Statement
                ^List params
                ^Integer row-count]
 
-  ;; TODO: statement
+  (let [{:keys [statement
+                ParameterDescription]}
+        Statement
 
-  (let [portal
-        (conn/bind conn statement params)]
+        {:keys [param-oids]}
+        ParameterDescription
+
+        portal
+        (conn/bind conn statement params param-oids)]
 
     (conn/describe-portal conn portal)
     (conn/execute conn portal row-count)
@@ -63,8 +98,10 @@
   (res/interact conn :execute))
 
 
-(defn close-statement [conn statement]
-  (conn/close-statement conn statement)
+(defn close-statement [conn ^Map Statement]
+  (let [{:keys [statement]}
+        Statement]
+    (conn/close-statement conn statement))
   (conn/sync conn)
   (res/interact conn :close-statement))
 
@@ -141,13 +178,15 @@
 
   (def -conn (connect -cfg))
 
+  (with-statement [stmt -conn "select $1::integer as one"]
+    stmt)
+
   (with-statement [stmt -conn "select 1 as one, 2 as two"]
     (execute -conn stmt [] 0))
 
   (def -r (query -conn "select 1 as foo; select 2 as bar"))
 
   (def -s (prepare -conn "select $1::integer as kek from generate_series(1, 3)"))
-  (def -s (prepare -conn ""))
 
   (def -p (execute -conn -s [1] 1))
 

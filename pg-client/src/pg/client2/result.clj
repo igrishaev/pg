@@ -14,6 +14,8 @@
 
 (defn make-result [phase init]
   (assoc init
+         :I 0
+         :Query {}
          :phase phase
          :errors (new ArrayList)
          :exceptions (new ArrayList)))
@@ -143,6 +145,30 @@
     (update result :Rows conj! Row)))
 
 
+(defn query-RowDescription
+  [{:as result :keys [I]}
+   RowDescription]
+  (let [I+ (inc I)]
+    (-> result
+        (assoc :I I+)
+        (assoc-in [:Query I+] {:RowDescription RowDescription
+                               :Rows (transient [])}))))
+
+
+(defn query-DataRow
+  [{:as result :keys [I]}
+   DataRow]
+  (update-in result [:Query I :Rows] conj! DataRow))
+
+
+(defn query-CommandComplete
+  [{:as result :keys [I]}
+   CommandComplete]
+  (-> result
+      (assoc-in [:Query I :CommandComplete] CommandComplete)
+      (update-in [:Query I :Rows] persistent!)))
+
+
 (defn handle [{:as result :keys [phase]}
               conn
               {:as message :keys [msg]}]
@@ -222,6 +248,15 @@
       ;; query
       ;;
 
+      [:query :RowDescription]
+      (query-RowDescription result message)
+
+      [:query :DataRow]
+      (query-DataRow result message)
+
+      [:query :CommandComplete]
+      (query-CommandComplete result message)
+
       ;; else
 
       (throw (ex-info "Cannot handle a message"
@@ -250,6 +285,9 @@
 
     :execute
     (some-> result :Rows persistent!)
+
+    :query
+    (:Query result)
 
     ;; else
 
