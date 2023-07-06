@@ -36,7 +36,6 @@
 
 (defn handle-ErrorResponse
   [{:as result :keys [^List errors]}
-   conn
    message]
   (.add errors message)
   result)
@@ -56,15 +55,18 @@
 
 
 (defn handle-NoticeResponse [result conn message]
+  ;; TODO: handle
   result)
 
 
 (defn handle-NotificationResponse
+  ;; TODO: handle
   [result conn message]
   result)
 
 
 (defn handle-NegotiateProtocolVersion
+  ;; TODO: throw
   [result conn message]
   result)
 
@@ -185,7 +187,7 @@
     result
 
     :ErrorResponse
-    (handle-ErrorResponse result conn message)
+    (handle-ErrorResponse result message)
 
     :ReadyForQuery
     (handle-ReadyForQuery result conn message)
