@@ -498,32 +498,31 @@
              res)))))
 
 
-#_
 (deftest test-client-notice-custom-function
   (let [capture!
         (atom nil)
 
         config
         (assoc CONFIG :fn-notice
-               (fn [fields]
-                 (reset! capture! fields)))]
+               (fn [message]
+                 (reset! capture! message)))]
 
     (api/with-connection [conn config]
       (let [res (api/query conn "ROLLBACK")]
         (is (nil? res))))
 
-    (is (= {:severity "WARNING"
-            :verbosity "WARNING"
-            :code "25P01"
-            :message "there is no transaction in progress"
-            :file "xact.c"
-            :function "UserAbortTransactionBlock"}
+    (is (= {:msg :NoticeResponse
+            :fields
+            {:severity "WARNING"
+             :verbosity "WARNING"
+             :code "25P01"
+             :message "there is no transaction in progress"
+             :function "UserAbortTransactionBlock"}}
+           (-> capture!
+               (deref)
+               (update :fields dissoc :line :file))))))
 
-           (-> @capture!
-               (dissoc :line))))))
 
-
-#_
 (deftest test-client-insert-result-no-returning
   (api/with-connection [conn CONFIG]
 

@@ -54,8 +54,8 @@
   result)
 
 
-(defn handle-NoticeResponse [result conn message]
-  ;; TODO: handle
+(defn handle-NoticeResponse [result conn NoticeResponse]
+  (conn/handle-notice conn NoticeResponse)
   result)
 
 
@@ -66,9 +66,9 @@
 
 
 (defn handle-NegotiateProtocolVersion
-  [result conn NegotiateProtocolVersion]
-  (conn/handle-negotiate-protocol-version
-   conn NegotiateProtocolVersion)
+  [result conn {:keys [version params]}]
+  (println (format "NotificationResponse, version: %s, params: %s"
+                   version params))
   result)
 
 

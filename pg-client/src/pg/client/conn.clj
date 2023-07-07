@@ -58,12 +58,10 @@
     (fn-notification NotificationResponse)))
 
 
-(defn handle-negotiate-protocol-version
-  [conn {:keys [version
-                params]}]
-  (println
-   (format "Negotiate protocol version: %s, params: %s"
-           version params)))
+(defn handle-notice [conn NoticeResponse]
+  (when-let [fn-notice
+             (-> conn :config :fn-notice)]
+    (fn-notice NoticeResponse)))
 
 
 (defn set-pid
