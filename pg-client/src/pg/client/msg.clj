@@ -300,6 +300,7 @@
         param-count
         (bb/read-int32 bb)
 
+        ;; TODO: better cycle
         params
         (coll/doN [_ param-count]
           (bb/read-cstring bb encoding))]

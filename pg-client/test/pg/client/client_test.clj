@@ -430,11 +430,30 @@
              (api/query conn "select 1 as foo"))))))
 
 
-;; todo: NegotiateProtocolVersion
-;; TODO: wrong major protocol
+(deftest test-client-wrong-major-protocol
+
+  (let [config
+        (assoc CONFIG :protocol-version 296608)]
+
+    (try
+      (api/with-connection [conn config]
+        (api/query conn "select 1 as foo"))
+      (is false)
+      (catch Exception e
+        (is (= "ErrorResponse" (ex-message e)))
+        (is (= {:error
+                {:msg :ErrorResponse
+                 :errors
+                 {:severity "FATAL"
+                  :verbosity "FATAL"
+                  :code "0A000"
+                  :message "unsupported frontend protocol 4.34464: server supports 3.0 to 3.0"
+                  :function "ProcessStartupPacket"}}}
+               (-> e
+                   (ex-data)
+                   (update-in [:error :errors] dissoc :file :line))))))))
 
 
-#_
 (deftest test-client-empty-select
   (api/with-connection [conn CONFIG]
 
@@ -456,7 +475,6 @@
       (is (= [] res)))))
 
 
-#_
 (deftest test-client-insert-result-returning
   (api/with-connection [conn CONFIG]
 

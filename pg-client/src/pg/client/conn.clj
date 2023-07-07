@@ -58,6 +58,14 @@
     (fn-notification NotificationResponse)))
 
 
+(defn handle-negotiate-protocol-version
+  [conn {:keys [version
+                params]}]
+  (println
+   (format "Negotiate protocol version: %s, params: %s"
+           version params)))
+
+
 (defn set-pid
   [{:as conn :keys [^Map state]}
    ^Integer pid]

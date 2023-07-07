@@ -66,8 +66,9 @@
 
 
 (defn handle-NegotiateProtocolVersion
-  ;; TODO: throw
   [result conn NegotiateProtocolVersion]
+  (conn/handle-negotiate-protocol-version
+   conn NegotiateProtocolVersion)
   result)
 
 
