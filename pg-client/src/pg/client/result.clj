@@ -5,11 +5,44 @@
    java.util.List
    java.util.ArrayList)
   (:require
+   [clojure.string :as str]
    [pg.client.coll :as coll]
    [pg.decode.txt :as txt]
    [pg.decode.bin :as bin]
    [pg.client.md5 :as md5]
    [pg.client.conn :as conn]))
+
+
+(defn subs-safe
+  (^String [^String string from]
+   (let [len (.length string)]
+     (when (<= from len)
+       (.substring string from len))))
+
+  (^String [^String string from to]
+   (let [len (.length string)]
+     (when (<= from to len)
+       (.substring string from to)))))
+
+
+(defn tag->amount [^String tag]
+
+  (when-let [command
+             (subs-safe tag 0 6)]
+
+    (case command
+
+      "INSERT"
+      (-> tag
+          (subs-safe 7)
+          (str/split #" " )
+          (second)
+          (Long/parseLong))
+
+      ("UPDATE" "DELETE")
+      (-> tag (subs-safe 7) Long/parseLong)
+
+      nil)))
 
 
 (defn make-result [phase init]
@@ -332,10 +365,24 @@
 
             {:keys [Rows!
                     CommandComplete]}
-            subres]
+            subres
 
-        (if Rows!
+            {:keys [tag]}
+            CommandComplete
+
+            amount
+            (tag->amount tag)]
+
+        ;; TODO: the same for execute
+        (cond
+
+          amount
+          (recur (inc i) (conj! acc! amount))
+
+          Rows!
           (recur (inc i) (conj! acc! (persistent! Rows!)))
+
+          :else
           (recur (inc i) acc!))))))
 
 

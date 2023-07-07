@@ -544,7 +544,6 @@
       (is (= 2 res)))))
 
 
-#_
 (deftest test-client-select-fn-result
   (api/with-connection [conn CONFIG]
 
