@@ -112,13 +112,12 @@
       (is (= [{:bar "hello"}] res2)))))
 
 
-(deftest test-client-with-tx-pre
+(deftest test-client-with-tx-syntax-issue
   (api/with-connection [conn CONFIG]
     (api/with-tx [conn]
       (is (map? conn)))))
 
 
-#_
 (deftest test-client-with-transaction-ok
 
   (api/with-connection [conn CONFIG]
@@ -164,7 +163,6 @@
                      (update-in [:error :errors] dissoc :line :file)))))))))
 
 
-#_
 (deftest test-client-with-transaction-iso-level
 
   (let [table
@@ -188,7 +186,6 @@
           (is (= [] res2)))))))
 
 
-#_
 (deftest test-client-with-transaction-rollback
 
   (let [table
@@ -207,7 +204,6 @@
         (is (= [] res1))))))
 
 
-#_
 (deftest test-client-create-table
   (api/with-connection [conn CONFIG]
 

@@ -312,17 +312,30 @@
                        :message message})))))
 
 
-(defn finalize-query [{:keys [I ^Map Query]}]
+(defn apply-fn-result [rows fn-result]
+  (if fn-result
+    (mapv fn-result rows)
+    rows))
+
+
+(defn finalize-query [{:keys [I
+                              fn-result
+                              ^Map Query]}]
 
   (loop [i 1
          acc! (transient [])]
 
     (if (> i I)
 
-      (case (count acc!)
-        0 nil
-        1 (-> acc! persistent! first)
-        (-> acc! persistent!))
+      (let [acc
+            (cond-> (persistent! acc!)
+              fn-result
+              (apply-fn-result fn-result))]
+
+        (case (count acc)
+          0 nil
+          1 (first acc)
+          acc))
 
       (let [subres
             (.get Query i)
@@ -336,8 +349,12 @@
           (recur (inc i) acc!))))))
 
 
-(defn finalize-execute [{:keys [Execute]}]
-  (some-> Execute :Rows! persistent!))
+(defn finalize-execute [{:keys [fn-result
+                                Execute]}]
+  (some-> Execute
+          :Rows!
+          persistent!
+          (apply-fn-result fn-result)))
 
 
 (defn finalize-prepare [result]
