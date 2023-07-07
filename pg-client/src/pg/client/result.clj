@@ -207,11 +207,6 @@
       (assoc-in [:Query I :CommandComplete] CommandComplete)))
 
 
-(defn throw-ErrorResponse
-  [ErrorResponse]
-  (throw (ex-info "ErrorResponse" {:error ErrorResponse})))
-
-
 (defn handle [{:as result :keys [phase]}
               conn
               {:as message :keys [msg]}]
@@ -228,13 +223,7 @@
     result
 
     :ErrorResponse
-    (case phase
-
-      :auth
-      (throw-ErrorResponse message)
-
-      ;; else
-      (handle-ErrorResponse result message))
+    (handle-ErrorResponse result message)
 
     :ReadyForQuery
     (handle-ReadyForQuery result conn message)
