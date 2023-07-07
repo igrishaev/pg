@@ -7,6 +7,9 @@
 - function call
 - copy support
 
+- thread safe
+- batch queries
+- sql with no params -> query
 - Connection defrecord
 - channel options
 - ssl
