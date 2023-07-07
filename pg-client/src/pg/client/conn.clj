@@ -15,11 +15,16 @@
    [pg.client.const :as const]))
 
 
+
+(defn fn-notification-default [NotificationResponse]
+  (println NotificationResponse))
+
+
 (def config-defaults
   {:host "127.0.0.1"
    :port 5432
    ;; :fn-notice fn-notice-default
-   ;; :fn-notification fn-notification-default
+   :fn-notification fn-notification-default
    :protocol-version const/PROTOCOL_VERSION})
 
 
@@ -45,6 +50,12 @@
      :ch ch
      :params (new HashMap)
      :state (new HashMap)}))
+
+
+(defn handle-notification [conn NotificationResponse]
+  (when-let [fn-notification
+             (-> conn :config :fn-notification)]
+    (fn-notification NotificationResponse)))
 
 
 (defn set-pid
@@ -136,12 +147,12 @@
   conn)
 
 
-(defn sync [conn]
+(defn send-sync [conn]
   (send-message conn (msg/make-Sync))
   conn)
 
 
-(defn flush [conn]
+(defn send-flush [conn]
   (send-message conn (msg/make-Flush))
   conn)
 
@@ -193,13 +204,13 @@
     (send-message conn msg)))
 
 
-(defn query [conn sql]
+(defn send-query [conn sql]
   (let [msg (msg/make-Query sql)]
     (send-message conn msg)))
 
 
 ;; TODO: pass oids
-(defn parse [conn query]
+(defn send-parse [conn query]
 
   (let [statement
         (name (gensym "statement_"))
@@ -212,7 +223,7 @@
     statement))
 
 
-(defn bind [conn statement params param-oids]
+(defn send-bind [conn statement params param-oids]
 
   (let [portal
         (name (gensym "portal_"))
@@ -226,7 +237,7 @@
     portal))
 
 
-(defn execute [conn portal row-count]
+(defn send-execute [conn portal row-count]
   (let [msg
         (msg/make-Execute portal row-count)]
     (send-message conn msg)))

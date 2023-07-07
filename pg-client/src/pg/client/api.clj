@@ -17,7 +17,7 @@
    (query conn sql nil))
 
   ([conn sql opt]
-   (conn/query conn sql)
+   (conn/send-query conn sql)
    (res/interact conn :query opt)))
 
 
@@ -81,13 +81,13 @@
 (defn prepare [conn sql]
 
   (let [statement
-        (conn/parse conn sql)
+        (conn/send-parse conn sql)
 
         init
         {:statement statement}]
 
     (conn/describe-statement conn statement)
-    (conn/sync conn)
+    (conn/send-sync conn)
     (res/interact conn :prepare init)))
 
 
@@ -104,12 +104,12 @@
         ParameterDescription
 
         portal
-        (conn/bind conn statement params param-oids)]
+        (conn/send-bind conn statement params param-oids)]
 
     (conn/describe-portal conn portal)
-    (conn/execute conn portal row-count)
+    (conn/send-execute conn portal row-count)
     (conn/close-portal conn portal)
-    (conn/sync conn))
+    (conn/send-sync conn))
 
   (res/interact conn :execute))
 
@@ -118,7 +118,7 @@
   (let [{:keys [statement]}
         Statement]
     (conn/close-statement conn statement))
-  (conn/sync conn)
+  (conn/send-sync conn)
   (res/interact conn :close-statement))
 
 

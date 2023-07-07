@@ -60,14 +60,14 @@
 
 
 (defn handle-NotificationResponse
-  ;; TODO: handle
-  [result conn message]
+  [result conn NotificationResponse]
+  (conn/handle-notification conn NotificationResponse)
   result)
 
 
 (defn handle-NegotiateProtocolVersion
   ;; TODO: throw
-  [result conn message]
+  [result conn NegotiateProtocolVersion]
   result)
 
 

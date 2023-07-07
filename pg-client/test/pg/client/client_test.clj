@@ -219,7 +219,6 @@
       (is (nil? res)))))
 
 
-#_
 (deftest test-client-listen-notify
 
   (let [capture!
@@ -234,7 +233,10 @@
 
     (api/with-connection [conn config+]
 
-      (let [res1
+      (let [pid
+            (api/pid conn)
+
+            res1
             (api/query conn "listen FOO")
 
             res2
@@ -247,7 +249,10 @@
             (api/query conn "notify FOO, 'hello'")
 
             messages
-            @capture!]
+            @capture!
+
+            [message]
+            messages]
 
         (is (nil? res1))
         (is (nil? res2))
@@ -256,13 +261,13 @@
 
         (is (= 1 (count messages)))
 
-        (is (= {:channel "foo" :message "kek-lol"}
-               (-> messages
-                   first
-                   (dissoc :pid))))))))
+        (is (= {:msg :NotificationResponse
+                :pid pid
+                :channel "foo"
+                :message "kek-lol"}
+               message))))))
 
 
-#_
 (deftest test-client-listen-notify-different-conns
 
   (let [capture!
@@ -287,35 +292,42 @@
 
           (api/query conn2 "")
 
-          (is (= [{:pid pid1 :channel "foo" :message "message1"}
-                  {:pid pid1 :channel "foo" :message "message2"}]
+          (is (= [{:msg :NotificationResponse,
+                   :pid pid1
+                   :channel "foo"
+                   :message "message1"}
 
-                 (mapv ->map @capture!))))))))
+                  {:msg :NotificationResponse,
+                   :pid pid1
+                   :channel "foo"
+                   :message "message2"}]
+
+               @capture!)))))))
 
 
-#_
 (deftest test-client-broken-query
   (api/with-connection [conn CONFIG]
     (try
       (api/query conn "selekt 1")
+      (is false "must have been an error")
       (catch Exception e
         (is (= "ErrorResponse" (ex-message e)))
-        (is (= {:errors
-                {:severity "ERROR"
-                 :verbosity "ERROR"
-                 :code "42601"
-                 :message "syntax error at or near \"selekt\""
-                 :position "1"
-                 :function "scanner_yyerror"}
-                :details {:query "selekt 1"}}
+        (is (= {:error
+                {:msg :ErrorResponse
+                 :errors
+                 {:severity "ERROR"
+                  :verbosity "ERROR"
+                  :code "42601"
+                  :message "syntax error at or near \"selekt\""
+                  :position "1"
+                  :function "scanner_yyerror"}}}
                (-> e
-                   ex-data
-                   (update :errors
-                           (fn [errors]
-                             (dissoc errors :file :line))))))))))
+                   (ex-data)
+                   (update-in [:error :errors]
+                              dissoc :file :line))))))))
+
 
 #_
-
 (deftest test-client-error-response
 
   (let [config
