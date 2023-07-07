@@ -337,7 +337,6 @@
                    42)))))
 
 
-#_
 (deftest test-client-wrong-startup-params
 
   (let [config
@@ -345,11 +344,10 @@
 
     (api/with-connection [conn config]
       (let [param
-            (api/get-param conn "application_name")]
+            (api/get-parameter conn "application_name")]
         (is (= "Clojure" param))))))
 
 
-#_
 (deftest test-client-prepare
 
   (api/with-connection [conn CONFIG]
@@ -377,7 +375,6 @@
       (is (nil? res3)))))
 
 
-#_
 (deftest test-client-cursor
 
   (api/with-connection [conn CONFIG]
@@ -423,7 +420,6 @@
           (is (= [] res6)))))))
 
 
-#_
 (deftest test-client-wrong-minor-protocol
 
   (let [config
@@ -432,6 +428,10 @@
     (api/with-connection [conn config]
       (is (= [{:foo 1}]
              (api/query conn "select 1 as foo"))))))
+
+
+;; todo: NegotiateProtocolVersion
+;; TODO: wrong major protocol
 
 
 #_

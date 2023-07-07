@@ -416,6 +416,8 @@
                 (catch Throwable e
                   (handle-Exception result e)))]
 
-          (if (identical? msg :ReadyForQuery)
+          (if (or (identical? msg :ReadyForQuery)
+                  (and (identical? phase :auth)
+                       (identical? msg :ErrorResponse)))
             result
             (recur result))))))))

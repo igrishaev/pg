@@ -131,6 +131,10 @@
   (-> conn :config :pg-params))
 
 
+(defn get-protocol-version [conn]
+  (-> conn :config :protocol-version))
+
+
 (defn send-message [{:as conn :keys [ch]} message]
   (debug/debug-message message "<- ")
   ;; TODO: options
@@ -201,8 +205,11 @@
         params
         (get-pg-params conn)
 
+        protocol-version
+        (get-protocol-version conn)
+
         msg (msg/make-StartupMessage
-             const/PROTOCOL_VERSION
+             protocol-version
              user
              database
              params)]

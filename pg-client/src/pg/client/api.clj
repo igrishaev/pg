@@ -21,6 +21,10 @@
    (res/interact conn :query opt)))
 
 
+(defn get-parameter [{:keys [^Map params]} ^String param]
+  (.get params param))
+
+
 (defn begin [conn]
   (query conn "BEGIN"))
 
