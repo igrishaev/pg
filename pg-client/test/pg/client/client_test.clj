@@ -112,6 +112,12 @@
       (is (= [{:bar "hello"}] res2)))))
 
 
+(deftest test-client-with-tx-pre
+  (api/with-connection [conn CONFIG]
+    (api/with-tx [conn]
+      (is (map? conn)))))
+
+
 #_
 (deftest test-client-with-transaction-ok
 

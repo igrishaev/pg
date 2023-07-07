@@ -40,30 +40,38 @@
                          rollback?]}]
    & body]
 
-  `(let [conn# ~conn]
+  (let [bind (gensym "conn")]
 
-     (begin conn#)
+    `(let [~bind ~conn]
 
-     (let [[e# result#]
-           (try
-             [nil (do
-                    ~(when (or isolation-level read-only?)
-                       `(when-let [query# (sql/set-tx ~opt)]
-                          (query ~conn query#)))
-                    ~@body)]
-             (catch Throwable e#
-               [e# nil]))]
+       (begin ~bind)
 
-       (if e#
-         (do
-           (rollback conn#)
-           (throw e#))
+       (let [pair#
+             (try
+               [nil (do
+                      ~(when (or isolation-level read-only?)
+                         `(when-let [query# (sql/set-tx ~opt)]
+                            (query ~bind query#)))
+                      ~@body)]
+               (catch Throwable e#
+                 [e# nil]))
 
-         (do
-           ~(if rollback?
-              `(rollback conn#)
-              `(commit conn#))
-           result#)))))
+             e#
+             (get pair# 0)
+
+             result#
+             (get pair# 1)]
+
+         (if e#
+           (do
+             (rollback ~bind)
+             (throw e#))
+
+           (do
+             ~(if rollback?
+                `(rollback ~bind)
+                `(commit ~bind))
+             result#))))))
 
 
 (defn pid [conn]
