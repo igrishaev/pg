@@ -327,7 +327,6 @@
                               dissoc :file :line))))))))
 
 
-#_
 (deftest test-client-error-response
 
   (let [config

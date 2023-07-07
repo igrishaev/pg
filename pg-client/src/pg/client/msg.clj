@@ -486,6 +486,7 @@
           (out/write-cstring "database" encoding)
           (out/write-cstring database encoding))]
 
+    ;; TODO: better cycle
     (doseq [[^String k ^String v] options]
       (doto out
         (out/write-cstring k encoding)

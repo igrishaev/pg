@@ -127,6 +127,10 @@
   (-> conn :config :database))
 
 
+(defn get-pg-params [conn]
+  (-> conn :config :pg-params))
+
+
 (defn send-message [{:as conn :keys [ch]} message]
   (debug/debug-message message "<- ")
   ;; TODO: options
@@ -194,12 +198,14 @@
         database
         (get-database conn)
 
+        params
+        (get-pg-params conn)
+
         msg (msg/make-StartupMessage
              const/PROTOCOL_VERSION
              user
              database
-             ;; TODO: options
-             nil)]
+             params)]
 
     (send-message conn msg)))
 
