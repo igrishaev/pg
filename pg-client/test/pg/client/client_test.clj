@@ -135,7 +135,6 @@
       (is (= {:bar 2} res2)))))
 
 
-#_
 (deftest test-client-with-transaction-read-only
 
   (api/with-connection [conn CONFIG]
@@ -146,10 +145,23 @@
 
       (is (= [{:foo 1}] res1))
 
-      (is (thrown?
-           Exception
-           (api/with-tx [conn {:read-only? true}]
-             (api/query conn "create temp table foo123 (id integer)")))))))
+      (try
+        (api/with-tx [conn {:read-only? true}]
+          (api/query conn "create temp table foo123 (id integer)"))
+        (is false "Must have been an error")
+        (catch Exception e
+          (is (= "ErrorResponse" (ex-message e)))
+          (is (= {:error
+                  {:msg :ErrorResponse,
+                   :errors
+                   {:severity "ERROR"
+                    :verbosity "ERROR"
+                    :code "25006"
+                    :message "cannot execute CREATE TABLE in a read-only transaction",
+                    :function "PreventCommandIfReadOnly"}}}
+                 (-> e
+                     (ex-data)
+                     (update-in [:error :errors] dissoc :line :file)))))))))
 
 
 #_
