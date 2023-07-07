@@ -102,12 +102,17 @@
   result)
 
 
-(defn make-subresult [{:as RowDescription
-                       :keys [columns]}]
+(defn make-subresult
+  [result
+   {:as RowDescription :keys [columns]}]
 
-  {:RowDescription RowDescription
-   :Rows! (transient [])
-   :Keys (mapv (comp keyword :name) columns)})
+  (let [fn-column
+        (get result :fn-column keyword)]
+
+    {:RowDescription RowDescription
+     :Rows! (transient [])
+     :Keys (coll/for-vec [c columns]
+             (-> c :name fn-column))}))
 
 
 (defn result-add-DataRow [result conn DataRow]
@@ -155,7 +160,9 @@
 
 (defn execute-RowDescription
   [result RowDescription]
-  (assoc result :Execute (make-subresult RowDescription)))
+  (let [subresult
+        (make-subresult result RowDescription)]
+    (assoc result :Execute subresult)))
 
 
 (defn execute-DataRow
@@ -174,7 +181,7 @@
   (let [I+ (inc I)
 
         subresult
-        (make-subresult RowDescription)]
+        (make-subresult result RowDescription)]
 
     (-> result
         (assoc :I I+)

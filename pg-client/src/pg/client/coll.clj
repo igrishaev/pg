@@ -38,6 +38,19 @@
            (recur (inc i#)))))))
 
 
+(defmacro for-vec
+  {:style/indent 1}
+  [[bind items] & body]
+  `(let [items# ~items
+         len# (count items#)]
+     (loop [i# 0
+            result# (transient [])]
+       (if (= i# len#)
+         (persistent! result#)
+         (let [~bind (get items# i#)
+               item# (do ~@body)]
+           (recur (inc i#) (conj! result# item#)))))))
+
 
 ;; TODO: fix/drop this
 (defmacro forvec

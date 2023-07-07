@@ -72,7 +72,6 @@
     (is (nil? result))))
 
 
-#_
 (deftest test-client-fn-column
 
   (let [result
@@ -82,7 +81,6 @@
     (is (= [{"FOO" 1}] result))))
 
 
-#_
 (deftest test-client-exception-in-the-middle
 
   (api/with-connection [conn CONFIG]
@@ -100,13 +98,13 @@
       (is (= [{:bar 2}] result)))))
 
 
-#_
 (deftest test-client-reuse-conn
 
   (api/with-connection [conn CONFIG]
 
     (let [res1
           (api/query conn "select 1 as foo")
+
           res2
           (api/query conn "select 'hello' as bar")]
 

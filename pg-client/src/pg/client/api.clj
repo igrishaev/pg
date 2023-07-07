@@ -12,9 +12,13 @@
   (conn/get-tx-status conn))
 
 
-(defn query [conn sql]
-  (conn/query conn sql)
-  (res/interact conn :query))
+(defn query
+  ([conn sql]
+   (query conn sql nil))
+
+  ([conn sql opt]
+   (conn/query conn sql)
+   (res/interact conn :query opt)))
 
 
 (defn begin [conn]
