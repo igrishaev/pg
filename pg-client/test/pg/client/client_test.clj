@@ -23,25 +23,10 @@
    :database "test"})
 
 
-(defn ->map [Record]
-  (into {} Record))
-
-
 (defn gen-table []
   (format "table_%s" (System/nanoTime)))
 
 
-(deftest test-client-ok
-
-  (let [result
-        (api/with-connection [conn CONFIG]
-          (api/query conn "select 1 as foo, 'hello' as bar"))]
-
-    (is (= [{:foo 1 :bar "hello"}]
-           result))))
-
-
-#_
 (deftest test-client-tx-status
 
   (api/with-connection [conn CONFIG]
@@ -68,7 +53,16 @@
     (is (= :I (api/status conn)))))
 
 
-#_
+(deftest test-client-ok
+
+  (let [result
+        (api/with-connection [conn CONFIG]
+          (api/query conn "select 1 as foo, 'hello' as bar"))]
+
+    (is (= [{:foo 1 :bar "hello"}]
+           result))))
+
+
 (deftest test-client-empty-query
 
   (let [result

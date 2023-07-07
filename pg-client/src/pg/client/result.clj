@@ -102,17 +102,15 @@
   result)
 
 
-(defn execute-RowDescription
-  [result
-   {:as message :keys [columns]}]
-  (assoc result
-         :Keys (mapv :name columns)
-         :RowDescription message
-         :Rows (transient [])))
+(defn make-subresult [{:as RowDescription
+                       :keys [columns]}]
+
+  {:RowDescription RowDescription
+   :Rows! (transient [])
+   :Keys (mapv (comp keyword :name) columns)})
 
 
-(defn execute-DataRow
-  [result conn DataRow]
+(defn result-add-DataRow [result conn DataRow]
 
   (let [encoding
         (conn/get-server-encoding conn)
@@ -152,31 +150,59 @@
         Row
         (zipmap Keys values-decoded)]
 
-    (update result :Rows conj! Row)))
+    (update result :Rows! conj! Row)))
+
+
+(defn execute-RowDescription
+  [result RowDescription]
+  (assoc result :Execute (make-subresult RowDescription)))
+
+
+(defn execute-DataRow
+  [result conn DataRow]
+  (update result
+          :Execute
+          result-add-DataRow
+          conn
+          DataRow))
 
 
 (defn query-RowDescription
   [{:as result :keys [I]}
    RowDescription]
-  (let [I+ (inc I)]
+
+  (let [I+ (inc I)
+
+        subresult
+        (make-subresult RowDescription)]
+
     (-> result
         (assoc :I I+)
-        (assoc-in [:Query I+] {:RowDescription RowDescription
-                               :Rows (transient [])}))))
+        (assoc-in [:Query I+] subresult))))
 
 
 (defn query-DataRow
   [{:as result :keys [I]}
+   conn
    DataRow]
-  (update-in result [:Query I :Rows] conj! DataRow))
+
+  (update-in result
+             [:Query I]
+             result-add-DataRow
+             conn
+             DataRow))
 
 
 (defn query-CommandComplete
   [{:as result :keys [I]}
    CommandComplete]
   (-> result
-      (assoc-in [:Query I :CommandComplete] CommandComplete)
-      (update-in [:Query I :Rows] persistent!)))
+      (assoc-in [:Query I :CommandComplete] CommandComplete)))
+
+
+(defn throw-ErrorResponse
+  [ErrorResponse]
+  (throw (ex-info "ErrorResponse" {:error ErrorResponse})))
 
 
 (defn handle [{:as result :keys [phase]}
@@ -195,7 +221,13 @@
     result
 
     :ErrorResponse
-    (handle-ErrorResponse result message)
+    (case phase
+
+      :auth
+      (throw-ErrorResponse message)
+
+      ;; else
+      (handle-ErrorResponse result message))
 
     :ReadyForQuery
     (handle-ReadyForQuery result conn message)
@@ -212,20 +244,16 @@
     :NegotiateProtocolVersion
     (handle-NegotiateProtocolVersion result conn message)
 
+    :AuthenticationMD5Password
+    (handle-AuthenticationMD5Password result conn message)
+
+    :AuthenticationCleartextPassword
+    (handle-AuthenticationCleartextPassword result conn message)
+
+    :BackendKeyData
+    (handle-BackendKeyData result conn message)
+
     (case [phase msg]
-
-      ;;
-      ;; auth
-      ;;
-
-      [:auth :AuthenticationMD5Password]
-      (handle-AuthenticationMD5Password result conn message)
-
-      [:auth :BackendKeyData]
-      (handle-BackendKeyData result conn message)
-
-      [:auth :AuthenticationCleartextPassword]
-      (handle-AuthenticationCleartextPassword result conn message)
 
       ;;
       ;; prepare
@@ -265,7 +293,7 @@
       (query-RowDescription result message)
 
       [:query :DataRow]
-      (query-DataRow result message)
+      (query-DataRow result conn message)
 
       [:query :CommandComplete]
       (query-CommandComplete result message)
@@ -277,30 +305,67 @@
                        :message message})))))
 
 
-(defn finalize [{:as result :keys [phase
-                                   ^List errors
-                                   ^List exceptions]}]
+(defn finalize-query [{:keys [I ^Map Query]}]
 
+  (loop [i 1
+         acc! (transient [])]
+
+    (if (> i I)
+
+      (case (count acc!)
+        0 nil
+        1 (-> acc! persistent! first)
+        (-> acc! persistent!))
+
+      (let [subres
+            (.get Query i)
+
+            {:keys [Rows!
+                    CommandComplete]}
+            subres]
+
+        (if Rows!
+          (recur (inc i) (conj! acc! (persistent! Rows!)))
+          (recur (inc i) acc!))))))
+
+
+(defn finalize-execute [{:keys [Execute]}]
+  (some-> Execute :Rows! persistent!))
+
+
+(defn finalize-prepare [result]
+  (select-keys result [:statement
+                       :ParameterDescription
+                       :RowDescription]))
+
+
+(defn finalize-errors! [{:keys [^List errors]}]
   (when-not (.isEmpty errors)
     (let [error (.get errors 0)]
-      (throw (ex-info "ErrorResponse" {:error error}))))
+      (throw (ex-info "ErrorResponse" {:error error})))))
 
+
+(defn finalize-exeptions! [{:keys [^List exceptions]}]
   (when-not (.isEmpty exceptions)
     (let [e (.get exceptions 0)]
-      (throw e)))
+      (throw e))))
+
+
+(defn finalize [{:as result :keys [phase]}]
+
+  (finalize-errors! result)
+  (finalize-exeptions! result)
 
   (case phase
 
     :prepare
-    (select-keys result [:statement
-                         :ParameterDescription
-                         :RowDescription])
+    (finalize-prepare result)
 
     :execute
-    (some-> result :Rows persistent!)
+    (finalize-execute result)
 
     :query
-    (:Query result)
+    (finalize-query result)
 
     ;; else
 
@@ -327,7 +392,6 @@
                 (catch Throwable e
                   (handle-Exception result e)))]
 
-          (if (or (identical? msg :ReadyForQuery)
-                  (identical? msg :ErrorResponse))
+          (if (identical? msg :ReadyForQuery)
             result
             (recur result))))))))
