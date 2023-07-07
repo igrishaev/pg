@@ -8,6 +8,10 @@
    [pg.client.result :as res]))
 
 
+(defn status [conn]
+  (conn/get-tx-status conn))
+
+
 (defn query [conn sql]
   (conn/query conn sql)
   (res/interact conn :query))

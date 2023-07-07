@@ -71,10 +71,15 @@
   (.get state "secret-key"))
 
 
-(defn set-tx-status [this tx-status])
+(defn set-tx-status
+  [{:as conn :keys [^Map state]} tx-status]
+  (.put state "tx-status" tx-status)
+  conn)
 
 
-(defn get-tx-status [this])
+(defn get-tx-status
+  [{:as conn :keys [^Map state]}]
+  (.get state "tx-status"))
 
 
 (defn set-parameter
