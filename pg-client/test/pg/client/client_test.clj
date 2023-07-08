@@ -860,33 +860,21 @@ drop table %1$s;
         (is (nil? result))))))
 
 
-#_
-(deftest test-with-prepare
-  (api/with-connection [conn CONFIG]
-    (api/with-prepare [stmt conn "select 1 as foo"]
-      (is (string? stmt)))))
-
-#_
-(deftest test-execute
-  (api/with-connection [conn CONFIG]
-    (let [result
-          (api/execute conn "select $1::integer as foo" [42])]
-      (is (= [{:foo 42}] result)))))
-
-
-#_
 (deftest test-execute-row-limit
   (api/with-connection [conn CONFIG]
 
     (let [query
-          "with foo as (values (1, 2), (3, 4), (5, 6)) select * from foo"
+          "with foo as (values (1, 2), (3, 4), (5, 6)) select * from foo"]
 
-          result
-          (api/execute conn query [])]
+      (api/with-statement [stmt conn query]
 
-      (is (= 42 result)))))
+        (let [result
+              (api/execute conn stmt [] {:rows 1})]
 
+          (is (= [{:column1 1 :column2 2}]
+                 result)))))))
 
 
 ;; test-client-json-write
 ;; test-client-jsonb-write
+;; test reuse statement after closing

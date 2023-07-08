@@ -32,22 +32,19 @@
 
 (defn tag->amount [^String tag]
 
-  (when-let [command
-             (subs-safe tag 0 6)]
+  (case (subs-safe tag 0 6)
 
-    (case command
+    "INSERT"
+    (-> tag
+        (subs-safe 7)
+        (str/split #" " )
+        (second)
+        (Long/parseLong))
 
-      "INSERT"
-      (-> tag
-          (subs-safe 7)
-          (str/split #" " )
-          (second)
-          (Long/parseLong))
+    ("UPDATE" "DELETE")
+    (-> tag (subs-safe 7) Long/parseLong)
 
-      ("UPDATE" "DELETE")
-      (-> tag (subs-safe 7) Long/parseLong)
-
-      nil)))
+    nil))
 
 
 (defn make-result [phase init]
@@ -308,6 +305,11 @@
       (update :I inc)))
 
 
+(defn handle-PortalSuspended
+  [result]
+  (update result :I inc))
+
+
 (defn handle [{:as result :keys [phase]}
               conn
               {:as message :keys [msg]}]
@@ -319,8 +321,7 @@
      :CloseComplete
      :BindComplete
      :NoData
-     :ParseComplete
-     :PortalSuspended)
+     :ParseComplete)
     result
 
     :ErrorResponse
@@ -352,6 +353,9 @@
 
     :CommandComplete
     (handle-CommandComplete result message)
+
+    :PortalSuspended
+    (handle-PortalSuspended result)
 
     :RowDescription
     (handle-RowDescription result message)
@@ -398,7 +402,7 @@
             CommandComplete
 
             amount
-            (tag->amount tag)
+            (some-> tag tag->amount)
 
             subresult
             (cond
