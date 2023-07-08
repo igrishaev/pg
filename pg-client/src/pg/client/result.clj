@@ -1,5 +1,6 @@
 (ns pg.client.result
   (:import
+   clojure.lang.ITransientCollection
    java.util.Map
    java.util.HashMap
    java.util.List
@@ -11,6 +12,10 @@
    [pg.decode.bin :as bin]
    [pg.client.md5 :as md5]
    [pg.client.conn :as conn]))
+
+
+(defn transient? [x]
+  (instance? ITransientCollection x))
 
 
 (defn subs-safe
@@ -235,7 +240,7 @@
         (make-Keys result RowDescription)
 
         Rows-init
-        (get result :reduce-init [])]
+        (get result :reduce-init (transient []))]
 
     (-> result
         (assoc-in [:map-RowDescription I] RowDescription)
@@ -249,7 +254,7 @@
    DataRow]
 
   (let [reduce-fn
-        (get result :reduce-fn conj)
+        (get result :reduce-fn conj!)
 
         encoding
         (conn/get-server-encoding conn)
@@ -399,7 +404,9 @@
             (cond
 
               RowDescription
-              Rows
+              (if (transient? Rows)
+                (persistent! Rows)
+                Rows)
 
               amount
               amount

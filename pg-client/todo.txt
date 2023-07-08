@@ -1,11 +1,11 @@
 
-- add tests
-- process query result
-- reduce query
-- reduce execute
+- complete the tests
 - refactor pg-common
 - function call
 - copy support
+- use java maps
+- check todos
+- unify execute function
 
 - thread safe
 - batch queries
