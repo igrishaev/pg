@@ -815,16 +815,16 @@ drop table %1$s;
       (is (= [[1 2]] res)))))
 
 
-#_
 (deftest test-client-as-java-maps
 
   (api/with-connection [conn CONFIG]
 
     (let [res
-          (api/query conn "select 1 as id, 2 as id" {:as-java-maps? true})]
+          (api/query conn "select 1 as id" {:as-java-maps? true
+                                            :fn-column identity})]
 
       (is (instance? java.util.HashMap (first res)))
-      (is (= [{:id_0 1 :id_1 2}] res)))))
+      (is (= [{"id" 1}] res)))))
 
 
 #_

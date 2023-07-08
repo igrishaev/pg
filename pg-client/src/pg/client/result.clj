@@ -47,9 +47,34 @@
     nil))
 
 
-(defn make-result [phase init]
+(defn zip-java-map ^Map [^List the-keys ^List the-vals]
+  (let [len
+        (.size the-keys)
+        res
+        (new HashMap)]
+    (loop [i 0]
+      (if (= i len)
+        res
+        (let [the-key
+              (.get the-keys i)
+              the-val
+              (.get the-vals i)]
+          (.put res the-key the-val)
+          (recur (inc i)))))))
+
+;; TODO: refactor this
+(defn make-result [phase {:as init :keys [as-java-maps?]}]
   (assoc init
          :I 0
+         :fn-keyval
+         (cond
+
+           as-java-maps?
+           zip-java-map
+
+           :else
+           zipmap)
+
          :phase phase
          :errors (new ArrayList)
          :exceptions (new ArrayList)))
@@ -150,66 +175,6 @@
              (-> c :name fn-column))}))
 
 
-;; TODO: deprecate
-(defn result-add-DataRow [result conn DataRow]
-
-  (let [encoding
-        (conn/get-server-encoding conn)
-
-        {:keys [^List Keys
-                RowDescription]}
-        result
-
-        {:keys [^List values]}
-        DataRow
-
-        {:keys [^List columns]}
-        RowDescription
-
-        ;; TODO: fill opt
-        opt
-        {}
-
-        values-decoded
-        (coll/doN [i (count values)]
-
-          (let [col
-                (.get columns i)
-
-                {:keys [type-oid
-                        format]}
-                col
-
-                ^bytes buf
-                (.get values i)]
-
-            (case (int format)
-              0 (let [string (new String buf encoding)]
-                  (txt/decode string type-oid opt))
-              1 (bin/decode buf type-oid opt))))
-
-        Row
-        (zipmap Keys values-decoded)]
-
-    (update result :Rows! conj! Row)))
-
-
-(defn execute-RowDescription
-  [result RowDescription]
-  (let [subresult
-        (make-subresult result RowDescription)]
-    (assoc result :Execute subresult)))
-
-
-(defn execute-DataRow
-  [result conn DataRow]
-  (update result
-          :Execute
-          result-add-DataRow
-          conn
-          DataRow))
-
-
 (defn make-Keys
   [result
    {:as RowDescription :keys [columns]}]
@@ -246,7 +211,7 @@
 
 
 (defn handle-DataRow
-  [{:as result :keys [I]}
+  [{:as result :keys [I fn-keyval]}
    conn
    DataRow]
 
@@ -292,7 +257,7 @@
               1 (bin/decode buf type-oid opt))))
 
         Row
-        (zipmap Keys values-decoded)]
+        (fn-keyval Keys values-decoded)]
 
     (update-in result [:map-Rows I] reduce-fn Row)))
 
