@@ -4,12 +4,18 @@ services:
 
   postgres:
     image: postgres:14
-    command: -E
+    command: >
+      -E
+      -c ssl=on
+      -c ssl_cert_file=/var/lib/postgresql/server.crt
+      -c ssl_key_file=/var/lib/postgresql/server.key
     restart: always
     hostname: postgres
     ports:
       - "35432:5432"
     volumes:
+      - "./certs/server-cert.pem:/var/lib/postgresql/server.crt:ro"
+      - "./certs/server-key.pem:/var/lib/postgresql/server.key:ro"
       - ./.docker/postgres/data:/var/lib/postgresql/data
       - ./.docker/postgres/initdb.d:/docker-entrypoint-initdb.d
     environment:

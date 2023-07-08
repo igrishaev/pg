@@ -455,6 +455,16 @@
     (bb/write-int32 secret-key)))
 
 
+(defn make-SSLRequest []
+  {:msg :SSLRequest})
+
+
+(defn encode-SSLRequest [_ _]
+  (doto (bb/allocate 8)
+    (bb/write-int32 8)
+    (bb/write-int32 80877103)))
+
+
 (defn make-StartupMessage
   [^Integer protocol-version
    ^String user
@@ -757,6 +767,9 @@
 
     :Execute
     (encode-Execute message opt)
+
+    :SSLRequest
+    (encode-SSLRequest message opt)
 
     ;; else
 

@@ -30,3 +30,6 @@ toc-build:
 
 pg-logs:
 	tail -f '/Users/ivan/Library/Application Support/Postgres/var-14/postgresql.log'
+
+psql-ssl:
+	PGSSLMODE=verify-full PGSSLROOTCERT=certs/server.crt psql -h localhost -p 35432 -U test test
