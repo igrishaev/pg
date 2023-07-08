@@ -98,7 +98,7 @@
 (defn execute
 
   ([conn Statement params]
-   (execute conn Statement params))
+   (execute conn Statement params nil))
 
   ([conn Statement params opt]
 

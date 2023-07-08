@@ -15,22 +15,25 @@
    [pg.client.const :as const]))
 
 
-
 (defn fn-notification-default [NotificationResponse]
-  (println NotificationResponse))
+  (println (format "PG notification: %s" NotificationResponse)))
+
+
+(defn fn-notice-default [NoticeResponse]
+  (println (format "PG notice: %s" NoticeResponse)))
 
 
 (def config-defaults
   {:host "127.0.0.1"
    :port 5432
-   ;; :fn-notice fn-notice-default
+   :fn-notice fn-notice-default
    :fn-notification fn-notification-default
-   :protocol-version const/PROTOCOL_VERSION})
+   :protocol-version const/PROTOCOL_VERSION
+   :binary-encode? false
+   :binary-decode? false})
 
 
 (defn connect [config]
-
-  ;; TODO: conn params
 
   (let [config-full
         (merge config-defaults config)
@@ -244,12 +247,29 @@
 
 (defn send-bind [conn statement params param-oids]
 
-  (let [portal
+  (let [{:keys [config]}
+        conn
+
+        {:keys [binary-encode?
+                binary-decode?]}
+        config
+
+        param-formats
+        (if binary-encode? [1] [0])
+
+        column-formats
+        (if binary-decode? [1] [0])
+
+        portal
         (name (gensym "portal_"))
 
         msg
-        ;; TODO better formats
-        (msg/make-Bind portal statement [0] params param-oids [0])]
+        (msg/make-Bind portal
+                       statement
+                       param-formats
+                       params
+                       param-oids
+                       column-formats)]
 
     (send-message conn msg)
 

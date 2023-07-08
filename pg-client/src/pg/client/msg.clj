@@ -455,14 +455,15 @@
     (bb/write-int32 secret-key)))
 
 
-(defn make-SSLRequest []
-  {:msg :SSLRequest})
+(defn make-SSLRequest [ssl-code]
+  {:msg :SSLRequest
+   :ssl-code ssl-code})
 
 
-(defn encode-SSLRequest [_ _]
+(defn encode-SSLRequest [{:keys [ssl-code]} _]
   (doto (bb/allocate 8)
     (bb/write-int32 8)
-    (bb/write-int32 80877103)))
+    (bb/write-int32 ssl-code)))
 
 
 (defn make-StartupMessage

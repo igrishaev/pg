@@ -619,10 +619,10 @@
     (api/with-statement [stmt conn "select $1::integer as foo"]
 
       (let [res1
-            (api/execute conn stmt [1] 0)
+            (api/execute conn stmt [1])
 
             res2
-            (api/execute conn stmt [2] 0)]
+            (api/execute conn stmt [2])]
 
         (is (= [{:foo 1}] res1))
         (is (= [{:foo 2}] res2))))))
