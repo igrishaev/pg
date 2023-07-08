@@ -67,6 +67,20 @@
   (assoc init
          :I 0
          :fn-keyval
+
+
+         ;; TODO: once
+
+         ;; fn-keyval
+         ;; fn-column
+         ;; fn-result
+         ;; reduce-fn
+         ;; reduce-init
+
+         ;; TODO:
+         ;; fn-reduce
+         ;; acc
+
          (cond
 
            as-java-maps?
