@@ -612,6 +612,38 @@
              (keys res))))))
 
 
+(deftest test-prepare-execute
+
+  (api/with-connection [conn CONFIG]
+
+    (api/with-statement [stmt conn "select $1::integer as foo"]
+
+      (let [res1
+            (api/execute conn stmt [1] 0)
+
+            res2
+            (api/execute conn stmt [2] 0)]
+
+        (is (= [{:foo 1}] res1))
+        (is (= [{:foo 2}] res2))))))
+
+
+(deftest test-prepare-execute-with-options
+
+  (api/with-connection [conn CONFIG]
+
+    (api/with-statement [stmt conn "select $1::integer as foo"]
+
+      (let [res1
+            (api/execute conn stmt [1] {:fn-column str/upper-case})
+
+            res2
+            (api/execute conn stmt [2] {:fn-result first})]
+
+        (is (= [{"FOO" 1}] res1))
+        (is (= {:foo 2} res2))))))
+
+
 (deftest test-client-delete-result
   (api/with-connection [conn CONFIG]
 

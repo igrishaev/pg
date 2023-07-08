@@ -95,27 +95,31 @@
     (res/interact conn :prepare init)))
 
 
-(defn execute [conn
-               ^Map Statement
-               ^List params
-               ^Integer row-count]
+(defn execute
 
-  (let [{:keys [statement
-                ParameterDescription]}
-        Statement
+  ([conn Statement params]
+   (execute conn Statement params))
 
-        {:keys [param-oids]}
-        ParameterDescription
+  ([conn Statement params opt]
 
-        portal
-        (conn/send-bind conn statement params param-oids)]
+   (let [rows
+         (get opt :rows 0)
 
-    (conn/describe-portal conn portal)
-    (conn/send-execute conn portal row-count)
-    (conn/close-portal conn portal)
-    (conn/send-sync conn))
+         {:keys [statement
+                 ParameterDescription]}
+         Statement
 
-  (res/interact conn :execute))
+         {:keys [param-oids]}
+         ParameterDescription
+
+         portal
+         (conn/send-bind conn statement params param-oids)]
+
+     (conn/describe-portal conn portal)
+     (conn/send-execute conn portal rows)
+     (conn/close-portal conn portal)
+     (conn/send-sync conn)
+     (res/interact conn :execute opt))))
 
 
 (defn close-statement [conn ^Map Statement]
