@@ -1,6 +1,7 @@
 (ns pg.client.conn
   (:refer-clojure :exclude [flush sync])
   (:import
+   java.io.Writer
    java.io.Closeable
    java.nio.channels.SocketChannel
    java.net.InetSocketAddress
@@ -33,6 +34,32 @@
    :binary-decode? false})
 
 
+(defrecord Connection
+    [^Map config
+     ^InetSocketAddress addr
+     ^SocketChannel ch
+     ^Map params
+     ^Map state]
+
+  Object
+
+  (toString [_]
+
+    (let [{:keys [host
+                  port
+                  user
+                  database]}
+          config]
+
+      (format "PG connection %s@%s:%s/%s"
+              user host port database))))
+
+
+(defmethod print-method Connection
+  [conn ^Writer w]
+  (.write w (str conn)))
+
+
 (defn connect [config]
 
   (let [config-full
@@ -48,11 +75,12 @@
         ch
         (SocketChannel/open addr)]
 
-    {:config config-full
-     :addr addr
-     :ch ch
-     :params (new HashMap)
-     :state (new HashMap)}))
+    (new Connection
+         config-full
+         addr
+         ch
+         (new HashMap)
+         (new HashMap))))
 
 
 (defn handle-notification [conn NotificationResponse]

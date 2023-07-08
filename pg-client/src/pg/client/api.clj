@@ -26,15 +26,15 @@
 
 
 (defn begin [conn]
-  (query conn "BEGIN"))
+  (query conn "BEGIN" nil))
 
 
 (defn commit [conn]
-  (query conn "COMMIT"))
+  (query conn "COMMIT" nil))
 
 
 (defn rollback [conn]
-  (query conn "ROLLBACK"))
+  (query conn "ROLLBACK" nil))
 
 
 (defmacro with-tx
@@ -55,7 +55,7 @@
                [nil (do
                       ~(when (or isolation-level read-only?)
                          `(when-let [query# (sql/set-tx ~opt)]
-                            (query ~bind query#)))
+                            (query ~bind query# nil)))
                       ~@body)]
                (catch Throwable e#
                  [e# nil]))
