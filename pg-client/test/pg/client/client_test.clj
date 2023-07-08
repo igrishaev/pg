@@ -627,6 +627,19 @@
       (is (= 2 res)))))
 
 
+(deftest test-client-reduce-map
+
+  (api/with-connection [conn CONFIG]
+
+    (let [result
+          (api/query conn "select 1 as one, 2 as two"
+                     {:reduce-init {}
+                      :reduce-fn (fn [acc {:keys [one two]}]
+                                   (assoc acc one two))})]
+
+      (is (= {1 2} result)))))
+
+
 (deftest test-client-update-result
   (api/with-connection [conn CONFIG]
 

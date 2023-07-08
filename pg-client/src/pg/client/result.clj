@@ -222,11 +222,17 @@
 (defn query-RowDescription
   [{:as result :keys [I]}
    RowDescription]
-  (let [Keys (make-Keys result RowDescription)]
+
+  (let [Keys
+        (make-Keys result RowDescription)
+
+        Rows-init
+        (get result :reduce-init [])]
+
     (-> result
         (assoc-in [:map-RowDescription I] RowDescription)
         (assoc-in [:map-Keys I] Keys)
-        (assoc-in [:map-Rows I] []))))
+        (assoc-in [:map-Rows I] Rows-init))))
 
 
 (defn query-DataRow
@@ -234,7 +240,10 @@
    conn
    DataRow]
 
-  (let [encoding
+  (let [reduce-fn
+        (get result :reduce-fn conj)
+
+        encoding
         (conn/get-server-encoding conn)
 
         RowDescription
@@ -275,7 +284,7 @@
         Row
         (zipmap Keys values-decoded)]
 
-    (update-in result [:map-Rows I] conj Row)))
+    (update-in result [:map-Rows I] reduce-fn Row)))
 
 
 (defn query-CommandComplete
