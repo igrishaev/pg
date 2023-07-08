@@ -48,7 +48,6 @@
 (defn make-result [phase init]
   (assoc init
          :I 0
-         :Query {}
          :phase phase
          :errors (new ArrayList)
          :exceptions (new ArrayList)))
@@ -149,6 +148,7 @@
              (-> c :name fn-column))}))
 
 
+;; TODO: deprecate
 (defn result-add-DataRow [result conn DataRow]
 
   (let [encoding
@@ -208,18 +208,25 @@
           DataRow))
 
 
+(defn make-Keys
+  [result
+   {:as RowDescription :keys [columns]}]
+
+  (let [fn-column
+        (get result :fn-column keyword)]
+
+    (coll/for-vec [c columns]
+      (-> c :name fn-column))))
+
+
 (defn query-RowDescription
   [{:as result :keys [I]}
    RowDescription]
-
-  (let [I+ (inc I)
-
-        subresult
-        (make-subresult result RowDescription)]
-
+  (let [Keys (make-Keys result RowDescription)]
     (-> result
-        (assoc :I I+)
-        (assoc-in [:Query I+] subresult))))
+        (assoc-in [:map-RowDescription I] RowDescription)
+        (assoc-in [:map-Keys I] Keys)
+        (assoc-in [:map-Rows I] []))))
 
 
 (defn query-DataRow
@@ -227,18 +234,56 @@
    conn
    DataRow]
 
-  (update-in result
-             [:Query I]
-             result-add-DataRow
-             conn
-             DataRow))
+  (let [encoding
+        (conn/get-server-encoding conn)
+
+        RowDescription
+        (get-in result [:map-RowDescription I])
+
+        Keys
+        (get-in result [:map-Keys I])
+
+        {:keys [^List values]}
+        DataRow
+
+        {:keys [^List columns]}
+        RowDescription
+
+        ;; TODO: fill opt
+        opt
+        {}
+
+        ;; TODO: better cycle
+        values-decoded
+        (coll/doN [i (count values)]
+
+          (let [col
+                (.get columns i)
+
+                {:keys [type-oid
+                        format]}
+                col
+
+                ^bytes buf
+                (.get values i)]
+
+            (case (int format)
+              0 (let [string (new String buf encoding)]
+                  (txt/decode string type-oid opt))
+              1 (bin/decode buf type-oid opt))))
+
+        Row
+        (zipmap Keys values-decoded)]
+
+    (update-in result [:map-Rows I] conj Row)))
 
 
 (defn query-CommandComplete
   [{:as result :keys [I]}
    CommandComplete]
   (-> result
-      (assoc-in [:Query I :CommandComplete] CommandComplete)))
+      (assoc-in [:map-CommandComplete I] CommandComplete)
+      (update :I inc)))
 
 
 (defn handle [{:as result :keys [phase]}
@@ -341,14 +386,13 @@
     rows))
 
 
-(defn finalize-query [{:keys [I
-                              fn-result
-                              ^Map Query]}]
+(defn finalize-query [{:as result
+                       :keys [I fn-result]}]
 
-  (loop [i 1
+  (loop [i 0
          acc! (transient [])]
 
-    (if (> i I)
+    (if (= i I)
 
       (let [acc
             (cond-> (persistent! acc!)
@@ -360,30 +404,34 @@
           1 (first acc)
           acc))
 
-      (let [subres
-            (.get Query i)
+      (let [Rows
+            (get-in result [:map-Rows i])
 
-            {:keys [Rows!
-                    CommandComplete]}
-            subres
+            CommandComplete
+            (get-in result [:map-CommandComplete i])
+
+            RowDescription
+            (get-in result [:map-RowDescription i])
 
             {:keys [tag]}
             CommandComplete
 
             amount
-            (tag->amount tag)]
+            (tag->amount tag)
 
-        ;; TODO: the same for execute
-        (cond
+            subresult
+            (cond
 
-          amount
-          (recur (inc i) (conj! acc! amount))
+              RowDescription
+              Rows
 
-          Rows!
-          (recur (inc i) (conj! acc! (persistent! Rows!)))
+              amount
+              amount
 
-          :else
-          (recur (inc i) acc!))))))
+              :else
+              nil)]
+
+        (recur (inc i) (conj! acc! subresult))))))
 
 
 (defn finalize-execute [{:keys [fn-result

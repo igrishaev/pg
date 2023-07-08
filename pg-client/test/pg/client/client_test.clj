@@ -63,6 +63,17 @@
            result))))
 
 
+(deftest test-client-query-multiple
+
+  (let [result
+        (api/with-connection [conn CONFIG]
+          (api/query conn "select 1 as foo; select 'two' as bar"))]
+
+    (is (= [[{:foo 1}]
+            [{:bar "two"}]]
+           result))))
+
+
 (deftest test-client-empty-query
 
   (let [result
@@ -161,6 +172,24 @@
                  (-> e
                      (ex-data)
                      (update-in [:error :errors] dissoc :line :file)))))))))
+
+
+(deftest test-exeplain-alalyze
+
+  (api/with-connection [conn CONFIG]
+
+    (let [result
+          (api/query conn "explain analyze select 42")
+
+          lines
+          (mapv (keyword "QUERY PLAN") result)
+
+          prefixes
+          (for [line lines]
+            (-> line (str/split #"\s") first))]
+
+      (is (= ["Result" "Planning" "Execution"]
+             prefixes)))))
 
 
 (deftest test-client-with-transaction-iso-level
@@ -571,7 +600,6 @@
       (is (= {:id 1 :title "test1"} res)))))
 
 
-#_
 (deftest test-client-delete-result
   (api/with-connection [conn CONFIG]
 
@@ -599,7 +627,6 @@
       (is (= 2 res)))))
 
 
-#_
 (deftest test-client-update-result
   (api/with-connection [conn CONFIG]
 
@@ -627,7 +654,6 @@
       (is (= 2 res)))))
 
 
-#_
 (deftest test-client-mixed-result
   (api/with-connection [conn CONFIG]
 
@@ -661,7 +687,6 @@ drop table %1$s;
              res)))))
 
 
-#_
 (deftest test-client-truncate-result
   (api/with-connection [conn CONFIG]
 
@@ -689,7 +714,6 @@ drop table %1$s;
       (is (nil? res)))))
 
 
-#_
 (deftest test-client-select-multi
 
   (api/with-connection [conn CONFIG]
