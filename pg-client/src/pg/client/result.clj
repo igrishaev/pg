@@ -219,7 +219,15 @@
       (-> c :name fn-column))))
 
 
-(defn query-RowDescription
+(defn handle-ParameterDescription
+  [{:as result :keys [I]}
+   ParameterDescription]
+  (assoc-in result
+            [:map-ParameterDescription I]
+            ParameterDescription))
+
+
+(defn handle-RowDescription
   [{:as result :keys [I]}
    RowDescription]
 
@@ -235,7 +243,7 @@
         (assoc-in [:map-Rows I] Rows-init))))
 
 
-(defn query-DataRow
+(defn handle-DataRow
   [{:as result :keys [I]}
    conn
    DataRow]
@@ -287,7 +295,7 @@
     (update-in result [:map-Rows I] reduce-fn Row)))
 
 
-(defn query-CommandComplete
+(defn handle-CommandComplete
   [{:as result :keys [I]}
    CommandComplete]
   (-> result
@@ -337,62 +345,21 @@
     :BackendKeyData
     (handle-BackendKeyData result conn message)
 
-    (case [phase msg]
+    :CommandComplete
+    (handle-CommandComplete result message)
 
-      ;;
-      ;; prepare
-      ;;
+    :RowDescription
+    (handle-RowDescription result message)
 
-      [:prepare :ParameterDescription]
-      (assoc result :ParameterDescription message)
+    :DataRow
+    (handle-DataRow result conn message)
 
-      [:prepare :RowDescription]
-      (assoc result :RowDescription message)
+    :ParameterDescription
+    (handle-ParameterDescription result message)
 
-      ;;
-      ;; execute
-      ;;
-
-      [:execute :RowDescription]
-      (execute-RowDescription result message)
-
-      [:execute :DataRow]
-      (execute-DataRow result conn message)
-
-      [:execute :CommandComplete]
-      (assoc result :CommandComplete message)
-
-      ;;
-      ;; close statement
-      ;;
-
-      [:close-statement :CommandComplete]
-      result
-
-      ;;
-      ;; query
-      ;;
-
-      [:query :RowDescription]
-      (query-RowDescription result message)
-
-      [:query :DataRow]
-      (query-DataRow result conn message)
-
-      [:query :CommandComplete]
-      (query-CommandComplete result message)
-
-      ;; else
-
-      (throw (ex-info "Cannot handle a message"
-                      {:phase phase
-                       :message message})))))
-
-
-(defn apply-fn-result [rows fn-result]
-  (if fn-result
-    (mapv fn-result rows)
-    rows))
+    (throw (ex-info "Cannot handle a message"
+                    {:phase phase
+                     :message message}))))
 
 
 (defn finalize-query [{:as result
@@ -404,9 +371,9 @@
     (if (= i I)
 
       (let [acc
-            (cond-> (persistent! acc!)
+            (cond->> (persistent! acc!)
               fn-result
-              (apply-fn-result fn-result))]
+              (mapv fn-result))]
 
         (case (count acc)
           0 nil
@@ -443,18 +410,15 @@
         (recur (inc i) (conj! acc! subresult))))))
 
 
-(defn finalize-execute [{:keys [fn-result
-                                Execute]}]
-  (some-> Execute
-          :Rows!
-          persistent!
-          (apply-fn-result fn-result)))
+(defn finalize-prepare
+  [{:keys [statement
+           map-ParameterDescription
+           map-RowDescription
+           I]}]
 
-
-(defn finalize-prepare [result]
-  (select-keys result [:statement
-                       :ParameterDescription
-                       :RowDescription]))
+  {:statement statement
+   :RowDescription (get map-RowDescription I)
+   :ParameterDescription (get map-ParameterDescription I)})
 
 
 (defn finalize-errors! [{:keys [^List errors]}]
@@ -479,15 +443,9 @@
     :prepare
     (finalize-prepare result)
 
-    :execute
-    (finalize-execute result)
-
-    :query
-    (finalize-query result)
-
     ;; else
 
-    result))
+    (finalize-query result)))
 
 
 (defn interact

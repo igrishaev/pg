@@ -600,6 +600,18 @@
       (is (= {:id 1 :title "test1"} res)))))
 
 
+(deftest test-prepare-result
+
+  (api/with-connection [conn CONFIG]
+
+    (let [res
+          (api/prepare conn "select $1::integer as foo")]
+
+      (is (map? res))
+      (is (= [:statement :RowDescription :ParameterDescription]
+             (keys res))))))
+
+
 (deftest test-client-delete-result
   (api/with-connection [conn CONFIG]
 
