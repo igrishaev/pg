@@ -14,14 +14,25 @@
   (let [data
         {:foo [1 2 3]}
 
-        string
+        encoded
         (encode.txt/encode data oid/json)
 
         decoded
-        (decode.txt/decode string oid/jsonb)]
+        (decode.txt/decode encoded oid/jsonb)]
 
-    (is (string? string))
+    (is (string? encoded))
     (is (= data decoded))))
+
+
+(deftest test-json-txt-string
+
+  (let [init
+        "[1, 2, 3]"
+
+        encoded
+        (encode.txt/encode init oid/json)]
+
+    (is (= init encoded))))
 
 
 (deftest test-json-bin
@@ -29,11 +40,23 @@
   (let [data
         {:foo [1 2 3]}
 
-        string
+        encoded
         (encode.bin/encode data oid/json)
 
         decoded
-        (decode.bin/decode string oid/jsonb)]
+        (decode.bin/decode encoded oid/jsonb)]
 
-    (is (bytes? string))
+    (is (bytes? encoded))
     (is (= data decoded))))
+
+
+(deftest test-json-bin-string
+
+  (let [data
+        "[1, 2, 3]"
+
+        encoded
+        (encode.bin/encode data oid/json)]
+
+    (is (bytes? encoded))
+    (is (= data (new String encoded "UTF-8")))))
