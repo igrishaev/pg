@@ -13,6 +13,7 @@
 - sql with no params -> query
 - channel options
 - ssl
+- conn closable
 - conn pool
 - joda split encode/decode
 - joda rename
@@ -28,3 +29,8 @@
 - json package docs
 - copy support
 - function call
+
+
+min-size
+max-size
+max-lifetime

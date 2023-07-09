@@ -37,6 +37,7 @@
 
 (defrecord Connection
     [^UUID id
+     ^Long created-at
      ^Map config
      ^InetSocketAddress addr
      ^SocketChannel ch
@@ -79,6 +80,7 @@
 
     (new Connection
          (UUID/randomUUID)
+         (System/currentTimeMillis)
          config-full
          addr
          ch

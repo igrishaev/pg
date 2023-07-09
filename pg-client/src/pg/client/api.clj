@@ -21,7 +21,8 @@
    (res/interact conn :query opt)))
 
 
-(defn get-parameter [{:keys [^Map params]} ^String param]
+(defn get-parameter
+  [{:keys [^Map params]} ^String param]
   (.get params param))
 
 
