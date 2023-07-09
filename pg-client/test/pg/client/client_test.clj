@@ -1,6 +1,6 @@
 (ns pg.client.client-test
   (:require
-   ;; pg.json
+   pg.json
    [pg.client.api :as api]
    [clojure.string :as str]
    [clojure.test :refer [deftest is]]))
@@ -827,7 +827,6 @@ drop table %1$s;
       (is (= [{"id" 1}] res)))))
 
 
-#_
 (deftest test-client-json-read
   (api/with-connection [conn CONFIG]
     (let [res
@@ -835,7 +834,6 @@ drop table %1$s;
       (is (= [{:arr [1 2 3]}] res)))))
 
 
-#_
 (deftest test-client-jsonb-read
   (api/with-connection [conn CONFIG]
     (let [res

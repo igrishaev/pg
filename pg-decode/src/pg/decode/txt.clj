@@ -1,4 +1,5 @@
 (ns pg.decode.txt
+  (:refer-clojure :exclude [extend])
   (:import
    java.time.ZoneId
    java.time.LocalDate
@@ -7,6 +8,7 @@
    java.time.format.DateTimeFormatter
    java.util.UUID)
   (:require
+   [clojure.template :refer [do-template]]
    [clojure.xml :as xml]
    [pg.oid :as oid]))
 
@@ -21,65 +23,70 @@
   string)
 
 
-(defmethod -decode oid/uuid
+(defmacro extend
+  {:style/indent 1}
+  [oid's binding & body]
+  `(do-template [oid#]
+                (defmethod -decode oid#
+                  ~binding
+                  ~@body)
+                ~@oid's))
+
+
+(extend [oid/uuid]
   [string _ _]
   (UUID/fromString string))
 
 
-(defmethod -decode oid/text
+(extend [oid/text oid/varchar]
   [string _ _]
   string)
 
 
-(defmethod -decode oid/varchar
-  [string _ _]
-  string)
+(extend [oid/char]
+  [^String string _ _]
+  (.charAt string 0))
 
 
-(defmethod -decode oid/char
-  [string _ _]
-  (first string))
-
-
-(defmethod -decode oid/bool
+(extend [oid/bool]
   [string _ _]
   (case string
     "t" true
     "f" false))
 
 
-(defmethod -decode oid/int2
-  [string _ _]
+(extend [oid/int2]
+  [^String string _ _]
   (Short/parseShort string))
 
 
-(defmethod -decode oid/int4
+(extend [oid/int4]
   [string _ _]
   (Integer/parseInt string))
 
 
-(defmethod -decode oid/int8
+(extend [oid/int8]
   [string _ _]
   (Long/parseLong string))
 
 
-(defmethod -decode oid/float4
+(extend [oid/float4]
   [string _ _]
   (Float/parseFloat string))
 
 
-(defmethod -decode oid/float8
+(extend [oid/float8]
   [string _ _]
   (Double/parseDouble string))
 
 
 #_
-(defmethod -decode oid/xml
+(extend [oid/xml]
   [string _ _]
   ...)
 
 
-(defmethod -decode oid/numeric
+(extend [oid/numeric]
   [string _ _]
   (bigdec string))
 
@@ -90,19 +97,19 @@
       (.withZone (ZoneId/of "UTC"))))
 
 
-(defmethod -decode oid/timestamptz
+(extend [oid/timestamptz]
   [string _ _]
   (->> string
        (.parse dtfz)
        (Instant/from)))
 
 
-(defmethod -decode oid/date
+(extend [oid/date]
   [string _ _]
   (LocalDate/parse string))
 
 
-(defmethod -decode oid/time
+(extend [oid/time]
   [string _ _]
   (LocalTime/parse string))
 

@@ -1,19 +1,11 @@
 (ns pg.json.decode.txt
+  (:refer-clojure :exclude [extend])
   (:require
    [cheshire.core :as json]
    [pg.oid :as oid]
-   [pg.decode.txt :as txt]))
+   [pg.decode.txt :refer [extend]]))
 
 
-(defmethod txt/-decode oid/json
-  [string _ opt]
-  (let [fn-key
-        (-> opt :fn-json-key (or keyword))]
-    (json/parse-string string fn-key)))
-
-
-(defmethod txt/-decode oid/jsonb
-  [string _ opt]
-  (let [fn-key
-        (-> opt :fn-json-key (or keyword))]
-    (json/parse-string string fn-key)))
+(extend [oid/json oid/jsonb]
+  [string _ _]
+  (json/parse-string string keyword))
