@@ -1,4 +1,9 @@
 
+- json package (txt/bin)
+- json package docs
+
+- test binary encode
+- test binary decode
 - complete the tests
 - refactor pg-common
 - function call
@@ -12,7 +17,6 @@
 - channel options
 - ssl
 - conn pool
-- json package
 - separate pg.oid package
 - joda split encode/decode
 - joda rename
@@ -23,6 +27,5 @@
 - adopt gosql
 - errors addSuppressed
 - cursor package
-- json package docs
 - client package docs
 - joda update docs

@@ -1,30 +1,18 @@
 (ns pg.json.encode.txt
-  (:import
-   java.util.Map)
+  (:refer-clojure :exclude [extend])
   (:require
    [cheshire.core :as json]
-   [pg.encode.txt :as txt]
+   [pg.encode.txt :refer [extend]]
    [pg.oid :as oid]))
 
 
-(defmethod txt/-encode [Object oid/json]
+(extend [Object oid/json
+         Object oid/jsonb]
   [obj _ _]
   (json/generate-string obj))
 
 
-(defmethod txt/-encode [Object oid/jsonb]
-  [obj _ _]
-  (json/generate-string obj))
-
-
-(defmethod txt/-encode [String oid/json]
-  [obj _ _]
-  obj)
-
-
-(defmethod txt/-encode [String oid/jsonb]
-  [obj _ _]
-  obj)
-
-
-(txt/set-default Map oid/json)
+(extend [String oid/json
+         String oid/jsonb]
+  [string _ _]
+  string)
