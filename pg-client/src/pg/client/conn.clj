@@ -1,6 +1,7 @@
 (ns pg.client.conn
   (:refer-clojure :exclude [flush sync])
   (:import
+   java.util.UUID
    java.io.Writer
    java.io.Closeable
    java.nio.channels.SocketChannel
@@ -35,7 +36,8 @@
 
 
 (defrecord Connection
-    [^Map config
+    [^UUID id
+     ^Map config
      ^InetSocketAddress addr
      ^SocketChannel ch
      ^Map params
@@ -76,6 +78,7 @@
         (SocketChannel/open addr)]
 
     (new Connection
+         (UUID/randomUUID)
          config-full
          addr
          ch

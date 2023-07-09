@@ -53,7 +53,6 @@
     (is (= :I (api/status conn)))))
 
 
-
 (deftest test-client-conn-str-print
   (api/with-connection [conn CONFIG]
 
@@ -63,6 +62,13 @@
     (is (= "PG connection ivan@127.0.0.1:15432/ivan"
            (with-out-str
              (print conn))))))
+
+
+(deftest test-client-conn-equals
+  (api/with-connection [conn1 CONFIG]
+    (api/with-connection [conn2 CONFIG]
+      (is (= conn1 conn1))
+      (is (not= conn1 conn2)))))
 
 
 (deftest test-client-ok
