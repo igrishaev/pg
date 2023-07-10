@@ -63,6 +63,14 @@
   (.write w (str conn)))
 
 
+(defn get-id [conn]
+  (:id conn))
+
+
+(defn get-created-at [conn]
+  (:created-at conn))
+
+
 (defn connect [config]
 
   (let [config-full

@@ -189,6 +189,14 @@
      (conn/cancel-request conn pid secret-key))))
 
 
+(defn id [conn]
+  (conn/get-id conn))
+
+
+(defn created-at [conn]
+  (conn/get-created-at conn))
+
+
 #_
 (comment
 
