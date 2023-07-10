@@ -1,10 +1,14 @@
 
+;; TODO
 ;; to-string
 ;; print-method
 ;; stats methods
+;; conn id gensym
+;; tests
 
-(ns pg.client.pool
+(ns pg.pool
   (:require
+   [clojure.tools.logging :as log]
    [pg.client.api :as api])
   (:import
    java.io.Closeable
@@ -20,6 +24,8 @@
 (defprotocol IPool
 
   (new-conn [this])
+
+  (term-conn [this conn])
 
   (idle-size [this])
 
@@ -58,7 +64,16 @@
   IPool
 
   (new-conn [this]
-    (api/connect -pg-config))
+    (let [conn (api/connect -pg-config)]
+      (log/debugf "a new connection has been created: %s/%s"
+                  (api/id conn) (api/created-at conn))
+      conn))
+
+  (term-conn [this conn]
+    (log/debugf "connection %s/%s has been terminated"
+                (api/id conn) (api/created-at conn))
+    (api/terminate conn)
+    nil)
 
   (conn-expired? [this conn]
     (> (- (System/currentTimeMillis)
@@ -111,8 +126,9 @@
               (new-conn this)
               (let [conn (poll-conn this)]
                 (if (conn-expired? this conn)
-                  (do (api/terminate conn)
-                      (new-conn this)))
+                  (do
+                    (term-conn this conn)
+                    (new-conn this)))
                 conn))]
 
         (.put -conns-busy (api/id conn) conn)
@@ -131,21 +147,25 @@
                 (idle-full? this))]
 
         (if term?
-          (api/terminate conn)
+          (term-conn this conn)
           (push-conn this conn)))
 
       nil))
 
   (terminate [this]
 
+    (log/debugf "terminating the pool...")
+
     (let [array (new ArrayList)]
       (.drainTo -conns-idle array)
 
       (doseq [conn array]
-        (api/terminate conn)))
+        (term-conn this conn)))
 
     (doseq [conn (vals -conns-busy)]
-      (api/terminate conn))
+      (term-conn this conn))
+
+    (log/debugf "the pool gas been terminated")
 
     nil)
 
@@ -191,10 +211,10 @@
 
 (defn make-pool
 
-  ([pg-config]
+  (^Pool [pg-config]
    (make-pool pg-config nil))
 
-  ([pg-config pool-config]
+  (^Pool [pg-config pool-config]
 
    (let [pool-config+
          (merge pool-defaults pool-config)
@@ -202,16 +222,21 @@
          {:keys [size
                  lifetime
                  timeout]}
-         pool-config+]
+         pool-config+
 
-     (new Pool
-          pg-config
-          size
-          lifetime
-          timeout
-          (new Object)
-          (new ArrayBlockingQueue size)
-          (new HashMap)))))
+         pool
+         (new Pool
+              pg-config
+              size
+              lifetime
+              timeout
+              (new Object)
+              (new ArrayBlockingQueue size)
+              (new HashMap))]
+
+     (log/debugf "a new PG connection pool has been created")
+
+     pool)))
 
 
 (defmacro with-pool [[bind pg-config pool-config]

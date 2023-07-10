@@ -38,7 +38,8 @@
    [com.github.igrishaev/pg-copy-jdbc]
    [com.github.igrishaev/pg-joda-time]
    [com.github.igrishaev/pg-json]
-   [com.github.igrishaev/pg-client]]
+   [com.github.igrishaev/pg-client]
+   [com.github.igrishaev/pg-pool]]
 
   :sub
   ["pg-common"
@@ -48,7 +49,8 @@
    "pg-copy-jdbc"
    "pg-joda-time"
    "pg-json"
-   "pg-client"]
+   "pg-client"
+   "pg-pool"]
 
   :managed-dependencies
   [[com.github.igrishaev/pg-common :version]
@@ -62,11 +64,15 @@
    [joda-time/joda-time "2.12.5"]
    [com.github.seancorfield/next.jdbc "1.2.796"]
    [org.postgresql/postgresql "42.2.18"]
+   [org.clojure/tools.logging "1.2.4"]
+   [ch.qos.logback/logback-classic "1.4.5"]
    [cheshire "5.11.0"]]
 
   :profiles
   {:dev
-   {:dependencies
+   {:source-paths ["env/dev/src"]
+    :resource-paths ["env/dev/resources"]
+    :dependencies
     [[org.clojure/clojure "1.11.1"]]
 
     :global-vars
