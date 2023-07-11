@@ -29,10 +29,18 @@
                 ~@oid's))
 
 
+;;
+;; UUID
+;;
+
 (extend [oid/uuid]
   [string _ _]
   (UUID/fromString string))
 
+
+;;
+;; Text
+;;
 
 (extend [oid/text oid/varchar]
   [string _ _]
@@ -43,6 +51,10 @@
   [^String string _ _]
   (.charAt string 0))
 
+
+;;
+;; Boolean
+;;
 
 (extend [oid/bool]
   [string oid opt]
@@ -57,6 +69,10 @@
        :oid oid
        :opt opt}))))
 
+
+;;
+;; Numbers
+;;
 
 (extend [oid/int2]
   [^String string _ _]
@@ -83,20 +99,14 @@
   (Double/parseDouble string))
 
 
-;; TODO: xml
-
-#_
-(extend [oid/xml]
-  [string _ _]
-  ...)
-
-
 (extend [oid/numeric]
   [string _ _]
   (bigdec string))
 
 
-;; date & time
+;;
+;; Date & time
+;;
 
 (extend [oid/timestamptz]
   [string _ opt]

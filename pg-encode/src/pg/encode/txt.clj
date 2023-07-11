@@ -1,9 +1,12 @@
 (ns pg.encode.txt
   (:refer-clojure :exclude [extend])
   (:require
+   [pg.encode.txt.datetime :as datetime]
    [clojure.template :refer [do-template]]
    [pg.oid :as oid])
   (:import
+   java.util.Date
+   java.time.Instant
    java.util.UUID
    java.util.Locale
    java.util.Formatter
@@ -130,6 +133,43 @@
          UUID oid/varchar]
   [^UUID value oid opt]
   (str value))
+
+
+;;
+;; Date & time
+;;
+
+(extend [Instant nil
+         Instant oid/timestamptz]
+  [value _ opt]
+  (datetime/Instant-timestamptz value opt))
+
+
+(extend [Instant oid/timestamp]
+  [value _ opt]
+  (datetime/Instant-timestamp value opt))
+
+
+(extend [Instant oid/date]
+  [value _ opt]
+  (datetime/Instant-date value opt))
+
+
+(extend [Date nil
+         Date oid/timestamptz]
+  [value _ opt]
+  (datetime/Date-timestamptz value opt))
+
+
+(extend [Date oid/timestamp]
+  [value _ opt]
+  (datetime/Date-timestamp value opt))
+
+
+(extend [Date oid/date]
+  [value _ opt]
+  (datetime/Date-date value opt))
+
 
 
 ;;

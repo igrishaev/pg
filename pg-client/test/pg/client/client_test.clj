@@ -1,4 +1,6 @@
 (ns pg.client.client-test
+  (:import
+   java.time.Instant)
   (:require
    pg.json
    [pg.client.api :as api]
@@ -846,6 +848,33 @@ drop table %1$s;
           (api/query conn "select '{\"foo\": 123}'::jsonb as obj")]
       (is (= [{:obj {:foo 123}}] res)))))
 
+
+(deftest test-client-timestamptz-read
+  (api/with-connection [conn CONFIG]
+    (let [res (api/query conn "select '2022-01-01 23:59:59.123+03'::timestamptz as obj")
+          obj (-> res first :obj)]
+      (is (instance? Instant obj))
+      (is (= "2022-01-01T20:59:59.000000123Z" (str obj))))))
+
+
+(deftest test-client-timestamptz-pass
+  (api/with-connection [conn CONFIG]
+    (api/with-statement [stmt conn "select $1::timestamptz as obj"]
+      (let [inst
+            (Instant/parse "2022-01-01T20:59:59.000000123Z")
+            res
+            (api/execute conn stmt [inst])]
+        (is (= inst (-> res first :obj)))))))
+
+
+;;
+;; Instant timestamp
+;; Instant date
+;; Date timestamp
+;; Date timestamptz
+;; Date date
+;; time, timetz
+;;
 
 #_
 (deftest test-client-prepare-&-close-ok

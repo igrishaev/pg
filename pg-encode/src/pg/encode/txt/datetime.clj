@@ -110,6 +110,9 @@
   (def -d
     (new Date))
 
+  (def -sql
+    (new java.sql.Timestamp (- 1985 1900) 11 31 23 59 59 999))
+
   (ZonedDateTime-timestamptz -ldt nil)
   (ZonedDateTime-timestamp -ldt nil)
   (ZonedDateTime-date -ldt nil)
@@ -123,6 +126,10 @@
   (Date-timestamptz -d nil)
   (Date-timestamp -d nil)
   (Date-date -d nil)
+
+  (Date-date -sql nil)
+
+
 
 
   )
