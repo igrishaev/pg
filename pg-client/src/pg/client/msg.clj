@@ -656,8 +656,8 @@
            ^List column-formats]}
    opt]
 
-  (let [len-params (.size params)
-        len-param-oids (.size param-oids)]
+  (let [len-params (count params)
+        len-param-oids (count param-oids)]
     (when-not (= len-params len-param-oids)
       (let [msg
             (format "Wrong parameters count: %s (must be %s)"
@@ -667,6 +667,7 @@
   (let [^String encoding
         (get-client-encoding opt)
 
+        ;; TODO: pass opts
         opt
         {}
 
@@ -674,11 +675,11 @@
         (doto (out/create)
           (out/write-cstring portal encoding)
           (out/write-cstring statement encoding)
-          (out/write-int16 (.size param-formats))
+          (out/write-int16 (count param-formats))
           (out/write-int16s param-formats))]
 
-    (out/write-int16 out (.size params))
-    (coll/do-n [i (.size params)]
+    (out/write-int16 out (count params))
+    (coll/do-n [i (count params)]
 
       (let [param (.get params i)
             param-oid (.get param-oids i)]

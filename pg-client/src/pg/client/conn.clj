@@ -272,14 +272,13 @@
     (send-message conn msg)))
 
 
-;; TODO: pass oids
-(defn send-parse [conn query]
+(defn send-parse [conn query oids]
 
   (let [statement
         (name (gensym "statement_"))
 
         msg
-        (msg/make-Parse statement query [])]
+        (msg/make-Parse statement query oids)]
 
     (send-message conn msg)
 

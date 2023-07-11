@@ -12,71 +12,9 @@
   (conn/get-tx-status conn))
 
 
-(defn query
-  ([conn sql]
-   (query conn sql nil))
-
-  ([conn sql opt]
-   (conn/send-query conn sql)
-   (res/interact conn :query opt)))
-
-
 (defn get-parameter
   [{:keys [^Map params]} ^String param]
   (.get params param))
-
-
-(defn begin [conn]
-  (query conn "BEGIN" nil))
-
-
-(defn commit [conn]
-  (query conn "COMMIT" nil))
-
-
-(defn rollback [conn]
-  (query conn "ROLLBACK" nil))
-
-
-(defmacro with-tx
-
-  [[conn {:as opt :keys [read-only?
-                         isolation-level
-                         rollback?]}]
-   & body]
-
-  (let [bind (gensym "conn")]
-
-    `(let [~bind ~conn]
-
-       (begin ~bind)
-
-       (let [pair#
-             (try
-               [nil (do
-                      ~(when (or isolation-level read-only?)
-                         `(when-let [query# (sql/set-tx ~opt)]
-                            (query ~bind query# nil)))
-                      ~@body)]
-               (catch Throwable e#
-                 [e# nil]))
-
-             e#
-             (get pair# 0)
-
-             result#
-             (get pair# 1)]
-
-         (if e#
-           (do
-             (rollback ~bind)
-             (throw e#))
-
-           (do
-             ~(if rollback?
-                `(rollback ~bind)
-                `(commit ~bind))
-             result#))))))
 
 
 (defn pid [conn]
@@ -85,8 +23,9 @@
 
 (defn prepare [conn sql]
 
+  ;; TODO: pass oids
   (let [statement
-        (conn/send-parse conn sql)
+        (conn/send-parse conn sql [])
 
         init
         {:statement statement}]
@@ -94,33 +33,6 @@
     (conn/describe-statement conn statement)
     (conn/send-sync conn)
     (res/interact conn :prepare init)))
-
-
-(defn execute
-
-  ([conn Statement params]
-   (execute conn Statement params nil))
-
-  ([conn Statement params opt]
-
-   (let [rows
-         (get opt :rows 0)
-
-         {:keys [statement
-                 ParameterDescription]}
-         Statement
-
-         {:keys [param-oids]}
-         ParameterDescription
-
-         portal
-         (conn/send-bind conn statement params param-oids)]
-
-     (conn/describe-portal conn portal)
-     (conn/send-execute conn portal rows)
-     (conn/close-portal conn portal)
-     (conn/send-sync conn)
-     (res/interact conn :execute opt))))
 
 
 (defn close-statement [conn ^Map Statement]
@@ -195,6 +107,113 @@
 
 (defn created-at [conn]
   (conn/get-created-at conn))
+
+
+(defn execute-statement
+
+  ([conn stmt]
+   (execute-statement conn stmt nil nil))
+
+  ([conn stmt params]
+   (execute-statement conn stmt params nil))
+
+  ([conn stmt params opt]
+
+   (let [rows
+         (get opt :rows 0)
+
+         {:keys [statement
+                 ParameterDescription]}
+         stmt
+
+         {:keys [param-oids]}
+         ParameterDescription
+
+         portal
+         (conn/send-bind conn statement params param-oids)]
+
+     (conn/describe-portal conn portal)
+     (conn/send-execute conn portal rows)
+     (conn/close-portal conn portal)
+     (conn/send-sync conn)
+     (res/interact conn :execute opt))))
+
+
+(defn execute
+
+  ([conn query]
+   (execute conn query nil))
+
+  ([conn query opt]
+
+   (cond
+
+     (string? query)
+     (do
+       (conn/send-query conn query)
+       (res/interact conn :query opt))
+
+     (vector? query)
+     (let [[sql & params] query]
+       (with-statement [stmt conn sql]
+         (execute-statement conn stmt params opt)))
+
+     :else
+     (throw (ex-info "wrong query type"
+                     {:query query :opt opt})))))
+
+
+(defn begin [conn]
+  (execute conn "BEGIN" nil))
+
+
+(defn commit [conn]
+  (execute conn "COMMIT" nil))
+
+
+(defn rollback [conn]
+  (execute conn "ROLLBACK" nil))
+
+
+(defmacro with-tx
+
+  [[conn {:as opt :keys [read-only?
+                         isolation-level
+                         rollback?]}]
+   & body]
+
+  (let [bind (gensym "conn")]
+
+    `(let [~bind ~conn]
+
+       (begin ~bind)
+
+       (let [pair#
+             (try
+               [nil (do
+                      ~(when (or isolation-level read-only?)
+                         `(when-let [query# (sql/set-tx ~opt)]
+                            (execute ~bind query# nil)))
+                      ~@body)]
+               (catch Throwable e#
+                 [e# nil]))
+
+             e#
+             (get pair# 0)
+
+             result#
+             (get pair# 1)]
+
+         (if e#
+           (do
+             (rollback ~bind)
+             (throw e#))
+
+           (do
+             ~(if rollback?
+                `(rollback ~bind)
+                `(commit ~bind))
+             result#))))))
 
 
 #_

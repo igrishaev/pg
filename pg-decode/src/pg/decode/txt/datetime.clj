@@ -1,6 +1,9 @@
 (ns pg.client.decode.txt.datetime
   (:import
-   java.time.ZoneId
+   java.time.LocalDate
+   java.time.LocalDateTime
+   java.time.Instant
+   java.time.ZoneOffset
    java.time.LocalTime
    java.time.OffsetTime
    java.time.format.DateTimeFormatter))

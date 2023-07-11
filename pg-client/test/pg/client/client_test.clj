@@ -35,7 +35,7 @@
 
     (is (= :I (api/status conn)))
 
-    (api/query conn "select 1")
+    (api/execute conn "select 1")
 
     (is (= :I (api/status conn)))
 
@@ -44,7 +44,7 @@
     (is (= :T (api/status conn)))
 
     (try
-      (api/query conn "selekt 1")
+      (api/execute conn "selekt 1")
       (catch Exception _
         nil))
 
@@ -77,7 +77,7 @@
 
   (let [result
         (api/with-connection [conn CONFIG]
-          (api/query conn "select 1 as foo, 'hello' as bar"))]
+          (api/execute conn "select 1 as foo, 'hello' as bar"))]
 
     (is (= [{:foo 1 :bar "hello"}]
            result))))
@@ -87,7 +87,7 @@
 
   (let [result
         (api/with-connection [conn CONFIG]
-          (api/query conn "select 1 as foo; select 'two' as bar"))]
+          (api/execute conn "select 1 as foo; select 'two' as bar"))]
 
     (is (= [[{:foo 1}]
             [{:bar "two"}]]
@@ -98,7 +98,7 @@
 
   (let [result
         (api/with-connection [conn CONFIG]
-          (api/query conn ""))]
+          (api/execute conn ""))]
 
     (is (nil? result))))
 
@@ -107,7 +107,7 @@
 
   (let [result
         (api/with-connection [conn CONFIG]
-          (api/query conn "select 1 as foo" {:fn-column str/upper-case}))]
+          (api/execute conn "select 1 as foo" {:fn-column str/upper-case}))]
 
     (is (= [{"FOO" 1}] result))))
 
@@ -121,10 +121,10 @@
          (with-redefs [pg.decode.txt/-decode
                        (fn [& _]
                          (throw (new Exception "boom")))]
-           (api/query conn "select 1 as foo"))))
+           (api/execute conn "select 1 as foo"))))
 
     (let [result
-          (api/query conn "select 2 as bar")]
+          (api/execute conn "select 2 as bar")]
 
       (is (= [{:bar 2}] result)))))
 
@@ -134,10 +134,10 @@
   (api/with-connection [conn CONFIG]
 
     (let [res1
-          (api/query conn "select 1 as foo")
+          (api/execute conn "select 1 as foo")
 
           res2
-          (api/query conn "select 'hello' as bar")]
+          (api/execute conn "select 'hello' as bar")]
 
       (is (= [{:foo 1}] res1))
       (is (= [{:bar "hello"}] res2)))))
@@ -155,11 +155,11 @@
 
     (let [res1
           (api/with-tx [conn]
-            (api/query conn "select 1 as foo" {:fn-result first}))
+            (api/execute conn "select 1 as foo" {:fn-result first}))
 
           res2
           (api/with-tx [conn]
-            (api/query conn "select 2 as bar" {:fn-result first}))]
+            (api/execute conn "select 2 as bar" {:fn-result first}))]
 
       (is (= {:foo 1} res1))
       (is (= {:bar 2} res2)))))
@@ -171,13 +171,13 @@
 
     (let [res1
           (api/with-tx [conn {:read-only? true}]
-            (api/query conn "select 1 as foo"))]
+            (api/execute conn "select 1 as foo"))]
 
       (is (= [{:foo 1}] res1))
 
       (try
         (api/with-tx [conn {:read-only? true}]
-          (api/query conn "create temp table foo123 (id integer)"))
+          (api/execute conn "create temp table foo123 (id integer)"))
         (is false "Must have been an error")
         (catch Exception e
           (is (= "ErrorResponse" (ex-message e)))
@@ -199,7 +199,7 @@
   (api/with-connection [conn CONFIG]
 
     (let [result
-          (api/query conn "explain analyze select 42")
+          (api/execute conn "explain analyze select 42")
 
           lines
           (mapv (keyword "QUERY PLAN") result)
@@ -219,17 +219,17 @@
 
     (api/with-connection [conn CONFIG]
 
-      (api/query conn (format "create table %s (id integer)" table))
+      (api/execute conn (format "create table %s (id integer)" table))
 
       (api/with-tx [conn {:isolation-level "serializable"}]
-        (api/query conn (format "insert into %s values (1), (2)" table))
+        (api/execute conn (format "insert into %s values (1), (2)" table))
 
         (let [res1
-              (api/query conn (format "select * from %s" table))
+              (api/execute conn (format "select * from %s" table))
 
               res2
               (api/with-connection [conn2 CONFIG]
-                (api/query conn2 (format "select * from %s" table)))]
+                (api/execute conn2 (format "select * from %s" table)))]
 
           (is (= [{:id 1} {:id 2}] res1))
           (is (= [] res2)))))))
@@ -242,13 +242,13 @@
 
     (api/with-connection [conn CONFIG]
 
-      (api/query conn (format "create table %s (id integer)" table))
+      (api/execute conn (format "create table %s (id integer)" table))
 
       (api/with-tx [conn {:rollback? true}]
-        (api/query conn (format "insert into %s values (1), (2)" table)))
+        (api/execute conn (format "insert into %s values (1), (2)" table)))
 
       (let [res1
-            (api/query conn (format "select * from %s" table))]
+            (api/execute conn (format "select * from %s" table))]
 
         (is (= [] res1))))))
 
@@ -263,7 +263,7 @@
           (format "create temp table %s (id serial, title text)" table)
 
           res
-          (api/query conn query)]
+          (api/execute conn query)]
 
       (is (nil? res)))))
 
@@ -286,16 +286,16 @@
             (api/pid conn)
 
             res1
-            (api/query conn "listen FOO")
+            (api/execute conn "listen FOO")
 
             res2
-            (api/query conn "notify FOO, 'kek-lol'")
+            (api/execute conn "notify FOO, 'kek-lol'")
 
             res3
-            (api/query conn "unlisten FOO")
+            (api/execute conn "unlisten FOO")
 
             res4
-            (api/query conn "notify FOO, 'hello'")
+            (api/execute conn "notify FOO, 'hello'")
 
             messages
             @capture!
@@ -335,11 +335,11 @@
         (let [pid1 (api/pid conn1)
               pid2 (api/pid conn2)]
 
-          (api/query conn2 "listen FOO")
-          (api/query conn1 "notify FOO, 'message1'")
-          (api/query conn1 "notify FOO, 'message2'")
+          (api/execute conn2 "listen FOO")
+          (api/execute conn1 "notify FOO, 'message1'")
+          (api/execute conn1 "notify FOO, 'message2'")
 
-          (api/query conn2 "")
+          (api/execute conn2 "")
 
           (is (= [{:msg :NotificationResponse,
                    :pid pid1
@@ -357,7 +357,7 @@
 (deftest test-client-broken-query
   (api/with-connection [conn CONFIG]
     (try
-      (api/query conn "selekt 1")
+      (api/execute conn "selekt 1")
       (is false "must have been an error")
       (catch Exception e
         (is (= "ErrorResponse" (ex-message e)))
@@ -405,19 +405,19 @@
           "prepare foo as select $1::integer as num"
 
           res1
-          (api/query conn query1)
+          (api/execute conn query1)
 
           query2
           "execute foo(42)"
 
           res2
-          (api/query conn query2)
+          (api/execute conn query2)
 
           query3
           "deallocate foo"
 
           res3
-          (api/query conn query3)]
+          (api/execute conn query3)]
 
       (is (nil? res1))
       (is (= [{:num 42}] res2))
@@ -435,13 +435,13 @@
           (format "create temp table %s (id serial, title text)" table)
 
           _
-          (api/query conn query1)
+          (api/execute conn query1)
 
           query2
           (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2') returning *" table)
 
           _
-          (api/query conn query2)
+          (api/execute conn query2)
 
           query3
           (format "DECLARE cur CURSOR for select * from %s" table)]
@@ -449,18 +449,18 @@
       (api/with-tx [conn]
 
         (let [res3
-              (api/query conn query3)
+              (api/execute conn query3)
 
               res4
-              (api/query conn "fetch next from cur")
+              (api/execute conn "fetch next from cur")
 
               res5
-              (api/query conn "fetch next from cur")
+              (api/execute conn "fetch next from cur")
 
               res6
-              (api/query conn "fetch next from cur")]
+              (api/execute conn "fetch next from cur")]
 
-          (api/query conn "close cur")
+          (api/execute conn "close cur")
 
           (is (nil? res3))
 
@@ -476,7 +476,7 @@
 
     (api/with-connection [conn config]
       (is (= [{:foo 1}]
-             (api/query conn "select 1 as foo"))))))
+             (api/execute conn "select 1 as foo"))))))
 
 
 (deftest test-client-wrong-major-protocol
@@ -486,7 +486,7 @@
 
     (try
       (api/with-connection [conn config]
-        (api/query conn "select 1 as foo"))
+        (api/execute conn "select 1 as foo"))
       (is false)
       (catch Exception e
         (is (= "ErrorResponse" (ex-message e)))
@@ -513,13 +513,13 @@
           (format "create temp table %s (id serial, title text)" table)
 
           _
-          (api/query conn query1)
+          (api/execute conn query1)
 
           query2
           (format "select * from %s" table)
 
           res
-          (api/query conn query2)]
+          (api/execute conn query2)]
 
       (is (= [] res)))))
 
@@ -534,13 +534,13 @@
           (format "create temp table %s (id serial, title text)" table)
 
           _
-          (api/query conn query1)
+          (api/execute conn query1)
 
           query2
           (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2') returning *" table)
 
           res
-          (api/query conn query2)]
+          (api/execute conn query2)]
 
       (is (= [{:id 1 :title "test1"}
               {:id 2 :title "test2"}]
@@ -557,7 +557,7 @@
                  (reset! capture! message)))]
 
     (api/with-connection [conn config]
-      (let [res (api/query conn "ROLLBACK")]
+      (let [res (api/execute conn "ROLLBACK")]
         (is (nil? res))))
 
     (is (= {:msg :NoticeResponse
@@ -582,13 +582,13 @@
           (format "create temp table %s (id serial, title text)" table)
 
           _
-          (api/query conn query1)
+          (api/execute conn query1)
 
           query2
           (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
 
           res
-          (api/query conn query2)]
+          (api/execute conn query2)]
 
       (is (= 2 res)))))
 
@@ -603,19 +603,19 @@
           (format "create temp table %s (id serial, title text)" table)
 
           _
-          (api/query conn query1)
+          (api/execute conn query1)
 
           query2
           (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
 
           _
-          (api/query conn query2)
+          (api/execute conn query2)
 
           query3
           (format "select * from %s where id = 1" table)
 
           res
-          (api/query conn query3 {:fn-result first})]
+          (api/execute conn query3 {:fn-result first})]
 
       (is (= {:id 1 :title "test1"} res)))))
 
@@ -639,10 +639,10 @@
     (api/with-statement [stmt conn "select $1::integer as foo"]
 
       (let [res1
-            (api/execute conn stmt [1])
+            (api/execute-statement conn stmt [1])
 
             res2
-            (api/execute conn stmt [2])]
+            (api/execute-statement conn stmt [2])]
 
         (is (= [{:foo 1}] res1))
         (is (= [{:foo 2}] res2))))))
@@ -655,10 +655,10 @@
     (api/with-statement [stmt conn "select $1::integer as foo"]
 
       (let [res1
-            (api/execute conn stmt [1] {:fn-column str/upper-case})
+            (api/execute-statement conn stmt [1] {:fn-column str/upper-case})
 
             res2
-            (api/execute conn stmt [2] {:fn-result first})]
+            (api/execute-statement conn stmt [2] {:fn-result first})]
 
         (is (= [{"FOO" 1}] res1))
         (is (= {:foo 2} res2))))))
@@ -674,19 +674,19 @@
           (format "create temp table %s (id serial, title text)" table)
 
           _
-          (api/query conn query1)
+          (api/execute conn query1)
 
           query2
           (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
 
           _
-          (api/query conn query2)
+          (api/execute conn query2)
 
           query3
           (format "delete from %s " table)
 
           res
-          (api/query conn query3)]
+          (api/execute conn query3)]
 
       (is (= 2 res)))))
 
@@ -696,7 +696,7 @@
   (api/with-connection [conn CONFIG]
 
     (let [result
-          (api/query conn "select 1 as one, 2 as two"
+          (api/execute conn "select 1 as one, 2 as two"
                      {:reduce-init {}
                       :reduce-fn (fn [acc {:keys [one two]}]
                                    (assoc acc one two))})]
@@ -714,19 +714,19 @@
           (format "create temp table %s (id serial, title text)" table)
 
           _
-          (api/query conn query1)
+          (api/execute conn query1)
 
           query2
           (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
 
           _
-          (api/query conn query2)
+          (api/execute conn query2)
 
           query3
           (format "update %s set title = 'aaa'" table)
 
           res
-          (api/query conn query3)]
+          (api/execute conn query3)]
 
       (is (= 2 res)))))
 
@@ -751,7 +751,7 @@ drop table %1$s;
            table)
 
           res
-          (api/query conn query {:fn-column str/upper-case})]
+          (api/execute conn query {:fn-column str/upper-case})]
 
       (is (= [nil
               2
@@ -774,19 +774,19 @@ drop table %1$s;
           (format "create temp table %s (id serial, title text)" table)
 
           _
-          (api/query conn query1)
+          (api/execute conn query1)
 
           query2
           (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
 
           _
-          (api/query conn query2)
+          (api/execute conn query2)
 
           query3
           (format "truncate %s" table)
 
           res
-          (api/query conn query3)]
+          (api/execute conn query3)]
 
       (is (nil? res)))))
 
@@ -796,7 +796,7 @@ drop table %1$s;
   (api/with-connection [conn CONFIG]
 
     (let [res
-          (api/query conn "select 1 as foo; select 2 as bar")]
+          (api/execute conn "select 1 as foo; select 2 as bar")]
 
       (is (= [[{:foo 1}] [{:bar 2}]] res)))))
 
@@ -807,7 +807,7 @@ drop table %1$s;
   (api/with-connection [conn CONFIG]
 
     (let [res
-          (api/query conn "select 1 as id, 2 as id")]
+          (api/execute conn "select 1 as id, 2 as id")]
 
       (is (= [{:id_0 1 :id_1 2}] res)))))
 
@@ -818,7 +818,7 @@ drop table %1$s;
   (api/with-connection [conn CONFIG]
 
     (let [res
-          (api/query conn "select 1 as id, 2 as id" {:as-vectors? true})]
+          (api/execute conn "select 1 as id, 2 as id" {:as-vectors? true})]
 
       (is (= [[1 2]] res)))))
 
@@ -828,8 +828,8 @@ drop table %1$s;
   (api/with-connection [conn CONFIG]
 
     (let [res
-          (api/query conn "select 1 as id" {:as-java-maps? true
-                                            :fn-column identity})]
+          (api/execute conn "select 1 as id" {:as-java-maps? true
+                                              :fn-column identity})]
 
       (is (instance? java.util.HashMap (first res)))
       (is (= [{"id" 1}] res)))))
@@ -838,20 +838,34 @@ drop table %1$s;
 (deftest test-client-json-read
   (api/with-connection [conn CONFIG]
     (let [res
-          (api/query conn "select '[1, 2, 3]'::json as arr")]
+          (api/execute conn "select '[1, 2, 3]'::json as arr")]
       (is (= [{:arr [1 2 3]}] res)))))
 
 
 (deftest test-client-jsonb-read
   (api/with-connection [conn CONFIG]
     (let [res
-          (api/query conn "select '{\"foo\": 123}'::jsonb as obj")]
+          (api/execute conn "select '{\"foo\": 123}'::jsonb as obj")]
       (is (= [{:obj {:foo 123}}] res)))))
+
+
+;; TODO: default text oid
+
+(deftest test-client-execute-sqlvec
+  (api/with-connection [conn CONFIG]
+    (let [res (api/execute conn ["select $1 as foo" "hi"])]
+      (is (= [{:foo "hi"}] res)))))
+
+
+(deftest test-client-execute-sqlvec-no-params
+  (api/with-connection [conn CONFIG]
+    (let [res (api/execute conn ["select 42 as foo"])]
+      (is (= [{:foo 42}] res)))))
 
 
 (deftest test-client-timestamptz-read
   (api/with-connection [conn CONFIG]
-    (let [res (api/query conn "select '2022-01-01 23:59:59.123+03'::timestamptz as obj")
+    (let [res (api/execute conn "select '2022-01-01 23:59:59.123+03'::timestamptz as obj")
           obj (-> res first :obj)]
       (is (instance? Instant obj))
       (is (= "2022-01-01T20:59:59.000000123Z" (str obj))))))
@@ -863,7 +877,7 @@ drop table %1$s;
       (let [inst
             (Instant/parse "2022-01-01T20:59:59.000000123Z")
             res
-            (api/execute conn stmt [inst])]
+            (api/execute-statement conn stmt [inst])]
         (is (= inst (-> res first :obj)))))))
 
 
@@ -902,7 +916,7 @@ drop table %1$s;
       (api/with-statement [stmt conn query]
 
         (let [result
-              (api/execute conn stmt [] {:rows 1})]
+              (api/execute-statement conn stmt [] {:rows 1})]
 
           (is (= [{:column1 1 :column2 2}]
                  result)))))))
