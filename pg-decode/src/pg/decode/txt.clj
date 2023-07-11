@@ -1,13 +1,9 @@
 (ns pg.decode.txt
   (:refer-clojure :exclude [extend])
   (:import
-   java.time.ZoneId
-   java.time.LocalDate
-   java.time.LocalTime
-   java.time.Instant
-   java.time.format.DateTimeFormatter
    java.util.UUID)
   (:require
+   [pg.client.decode.txt.datetime :as datetime]
    [clojure.template :refer [do-template]]
    [clojure.xml :as xml]
    [pg.oid :as oid]))
@@ -49,10 +45,17 @@
 
 
 (extend [oid/bool]
-  [string _ _]
+  [string oid opt]
   (case string
     "t" true
-    "f" false))
+    "f" false
+    ;; else
+    (throw
+     (ex-info
+      (format "cannot parse bool: %s" string)
+      {:string string
+       :oid oid
+       :opt opt}))))
 
 
 (extend [oid/int2]
@@ -80,6 +83,8 @@
   (Double/parseDouble string))
 
 
+;; TODO: xml
+
 #_
 (extend [oid/xml]
   [string _ _]
@@ -91,27 +96,31 @@
   (bigdec string))
 
 
-(def ^DateTimeFormatter dtfz
-  (-> "yyyy-MM-dd HH:mm:ss.nx"
-      (DateTimeFormatter/ofPattern)
-      (.withZone (ZoneId/of "UTC"))))
-
+;; date & time
 
 (extend [oid/timestamptz]
-  [string _ _]
-  (->> string
-       (.parse dtfz)
-       (Instant/from)))
+  [string _ opt]
+  (datetime/parse-timestampz string opt))
+
+
+(extend [oid/timestamp]
+  [string _ opt]
+  (datetime/parse-timestamp string opt))
 
 
 (extend [oid/date]
-  [string _ _]
-  (LocalDate/parse string))
+  [string _ opt]
+  (datetime/parse-date string opt))
+
+
+(extend [oid/timetz]
+  [string _ opt]
+  (datetime/parse-timetz string opt))
 
 
 (extend [oid/time]
-  [string _ _]
-  (LocalTime/parse string))
+  [string _ opt]
+  (datetime/parse-time string opt))
 
 
 ;;
