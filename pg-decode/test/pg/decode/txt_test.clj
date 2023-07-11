@@ -1,12 +1,15 @@
 (ns pg.decode.txt-test
   (:import
+   java.time.OffsetTime
+   java.time.LocalTime
+   java.time.LocalDate
    java.time.ZonedDateTime
    java.util.UUID
    java.math.BigDecimal)
   (:require
    [pg.oid :as oid]
    [pg.decode.txt :refer [decode]]
-   [clojure.test :refer [deftest is]]))
+   [clojure.test :refer [deftest is testing]]))
 
 
 (deftest test-numbers
@@ -87,4 +90,68 @@
 
     (is (instance? ZonedDateTime res))
     (is (= "2023-07-10T19:25:22.000046553Z[UTC]"
-           (str res)))))
+           (str res))))
+
+  (let [string
+        "2022-07-03 00:00:00+03"
+
+        res
+        (decode string oid/timestamptz)]
+
+    (is (instance? ZonedDateTime res))
+    (is (= "2022-07-02T21:00Z[UTC]"
+           (str res))))
+
+  (let [string
+        "2022-07-03"
+
+        res
+        (decode string oid/date)]
+
+    (is (instance? LocalDate res))
+    (is (= "2022-07-03"
+           (str res))))
+
+  (testing "timetz"
+
+    (let [string
+          "10:29:39.853741+03"
+
+          res
+          (decode string oid/timetz)]
+
+      (is (instance? OffsetTime res))
+      (is (= "10:29:39.000853741+03:00"
+             (str res))))
+
+    (let [string
+          "10:29:39+03"
+
+          res
+          (decode string oid/timetz)]
+
+      (is (instance? OffsetTime res))
+      (is (= "10:29:39+03:00"
+             (str res)))))
+
+  (testing "time"
+
+    (let [string
+          "10:29:39"
+
+          res
+          (decode string oid/time)]
+
+      (is (instance? LocalTime res))
+      (is (= "10:29:39"
+             (str res))))
+
+    (let [string
+          "10:29:39.1234"
+
+          res
+          (decode string oid/time)]
+
+      (is (instance? LocalTime res))
+      (is (= "10:29:39.123400"
+             (str res))))))
