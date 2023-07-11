@@ -10,21 +10,21 @@
 
 
 (def ^DateTimeFormatter
-  frmt-tsz-microsec
+  frmt-timestamptz-microsec
   (-> "yyyy-MM-dd HH:mm:ss.nx"
       (DateTimeFormatter/ofPattern)
       (.withZone (ZoneId/of "UTC"))))
 
 
 (def ^DateTimeFormatter
-  frmt-tsz
+  frmt-timestamptz
   (-> "yyyy-MM-dd HH:mm:ssx"
       (DateTimeFormatter/ofPattern)
       (.withZone (ZoneId/of "UTC"))))
 
 
 (def ^DateTimeFormatter
-  frmt-ts
+  frmt-timestamp
   (-> "yyyy-MM-dd HH:mm:ss"
       (DateTimeFormatter/ofPattern)))
 
@@ -49,10 +49,10 @@
         (case (.length string)
 
           22
-          frmt-tsz
+          frmt-timestamptz
 
           29
-          frmt-tsz-microsec
+          frmt-timestamptz-microsec
 
           ;; else
           (throw
@@ -60,17 +60,25 @@
                     {:opt opt
                      :string string})))]
 
+    ;; TODO:
     (->> string
          (.parse formatter)
+         (Instant/from)
+
+         #_
          (ZonedDateTime/from))))
 
 
 (defn parse-timestamp [^String string opt]
-  (->> string
-       (.parse frmt-ts)
-       (LocalDateTime/from)))
+  (let [ldt
+        (->> string
+             (.parse frmt-timestamp)
+             (LocalDateTime/from))]
+
+    (.toInstant ldt ZoneOffset/UTC)))
 
 
+;; TODO: Instant?
 (defn parse-date [^String string opt]
   (LocalDate/parse string))
 
