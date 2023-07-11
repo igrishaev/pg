@@ -1,5 +1,6 @@
 (ns pg.decode.txt-test
   (:import
+   java.time.ZonedDateTime
    java.util.UUID
    java.math.BigDecimal)
   (:require
@@ -76,4 +77,14 @@
            res))))
 
 
-(deftest test-date-time)
+(deftest test-date-time
+
+  (let [string
+        "2023-07-10 22:25:22.046553+03"
+
+        res
+        (decode string oid/timestamptz)]
+
+    (is (instance? ZonedDateTime res))
+    (is (= "2023-07-10T19:25:22.000046553Z[UTC]"
+           (str res)))))
