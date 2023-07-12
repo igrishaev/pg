@@ -1,4 +1,4 @@
-(ns pg.client.decode.txt.datetime
+(ns pg.decode.txt.datetime
   (:import
    java.time.LocalDate
    java.time.LocalDateTime

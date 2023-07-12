@@ -3,7 +3,7 @@
   (:import
    java.util.UUID)
   (:require
-   [pg.client.decode.txt.datetime :as datetime]
+   [pg.decode.txt.datetime :as datetime]
    [clojure.template :refer [do-template]]
    [clojure.xml :as xml]
    [pg.oid :as oid]))

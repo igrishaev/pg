@@ -15,7 +15,6 @@
    :password "ivan"
    :database "ivan"})
 
-
 #_
 (def CONFIG
   {:host "127.0.0.1"

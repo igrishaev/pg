@@ -1,25 +1,24 @@
 
+- fix datetime tests
+- complete the tests
 - check todos
-- timestamp/date => inst
 - test binary encode
 - test binary decode
-- interval support
-- complete the tests
-- separate pg.oid package
-- refactor pg-common
 - unify execute function
-- thread safe
-- batch queries
-- sql with no params -> query
-- channel options
-- ssl
 - conn closable
 - conn pool
+
+- interval support
+- separate pg.oid package
+- refactor pg-common
+- thread safe
+- batch queries
+- channel options
+- ssl
 - joda split encode/decode
 - joda rename
 - joda structure: pg.joda, pg.joda.encode, pg.joda.decode
 - sasl auth in a separate module
-- pubsub pool + namespace
 - adopt honey-sql
 - adopt gosql
 - errors addSuppressed
@@ -29,8 +28,4 @@
 - json package docs
 - copy support
 - function call
-
-
-min-size
-max-size
-max-lifetime
+- pubsub pool + namespace
