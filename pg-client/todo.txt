@@ -18,6 +18,7 @@
 - array support
 - binary encode/decode support
 - separate pg.oid package
+- result: java maps?
 - refactor pg-common
 - thread safe
 - batch queries
