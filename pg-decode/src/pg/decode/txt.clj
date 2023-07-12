@@ -1,6 +1,7 @@
 (ns pg.decode.txt
   (:refer-clojure :exclude [extend])
   (:import
+   java.math.BigDecimal
    java.util.UUID)
   (:require
    [pg.decode.txt.datetime :as datetime]
@@ -100,8 +101,8 @@
 
 
 (extend [oid/numeric]
-  [string _ _]
-  (bigdec string))
+  [^String string _ _]
+  (new BigDecimal string))
 
 
 ;;

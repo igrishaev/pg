@@ -1,5 +1,6 @@
 (ns pg.client.client-test
   (:import
+   java.util.Date
    java.time.Instant)
   (:require
    pg.json
@@ -891,11 +892,61 @@ drop table %1$s;
         (is (= inst (-> res first :obj)))))))
 
 
-;;
-;; Instant timestamp
-;; Instant date
-;; Date timestamp
-;; Date timestamptz
+(deftest test-client-timestamp-read
+  (api/with-connection [conn CONFIG]
+    (let [res (api/execute conn "select '2022-01-01 23:59:59.123+03'::timestamp as obj")
+          obj (-> res first :obj)]
+      (is (instance? Instant obj))
+      (is (= "2022-01-01T23:59:59.000000123Z" (str obj))))))
+
+
+(deftest test-client-timestamp-pass
+  (api/with-connection [conn CONFIG]
+    (api/with-statement [stmt conn "select $1::timestamp as obj"]
+      (let [inst
+            (Instant/parse "2022-01-01T20:59:59.000000123Z")
+            res
+            (api/execute-statement conn stmt [inst])]
+
+        (is (= "2022-01-01T20:59:59Z"
+               (-> res first :obj str)))))))
+
+
+(deftest test-client-instant-date-read
+  (api/with-connection [conn CONFIG]
+    (let [res (api/execute conn "select '2022-01-01 23:59:59.123+03'::date as obj")
+          obj (-> res first :obj)]
+      (is (instance? Instant obj))
+      (is (= "2022-01-01T00:00:00Z" (str obj))))))
+
+
+(deftest test-client-pass-date-timestamptz
+  (api/with-connection [conn CONFIG]
+    (let [date
+          (new Date 85 11 31 23 59 59)
+
+          res
+          (api/execute conn ["select $1::timestamptz as obj" date])
+
+          obj
+          (-> res first :obj)]
+
+      (is (instance? Instant obj))
+      (is (= "1985-12-31T20:59:59Z" (str obj))))))
+
+
+(deftest test-client-date-pass-date
+
+  (api/with-connection [conn CONFIG]
+    (let [date
+          (new Date 85 11 31 23 59 59)
+
+          res
+          (api/execute conn ["select EXTRACT('year' from $1)" date])]
+
+      (is (= [{:extract 1985M}] res)))))
+
+
 ;; Date date
 ;; time, timetz
 ;;

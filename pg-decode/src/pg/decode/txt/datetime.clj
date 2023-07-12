@@ -18,7 +18,7 @@
 
 (def ^DateTimeFormatter
   frmt-timestamp
-  (-> "yyyy-MM-dd HH:mm:ss"
+  (-> "yyyy-MM-dd HH:mm:ss[.n]"
       (DateTimeFormatter/ofPattern)))
 
 
@@ -68,6 +68,8 @@
   (parse-timestampz "2022-07-03 00:00:00+03" nil)
 
   (parse-timestamp "2022-07-03 00:00:00" nil)
+
+  (parse-timestamp "2022-01-01 23:59:59.123" nil)
 
   (parse-date "2023-07-11" nil)
 
