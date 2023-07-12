@@ -8,6 +8,7 @@
 - conn closable
 - conn pool
 
+- Statement closeable
 - test md5 auth
 - sasl auth in a separate module
 - docker: init script (uuid)
