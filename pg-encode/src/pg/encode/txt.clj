@@ -5,10 +5,12 @@
    [clojure.template :refer [do-template]]
    [pg.oid :as oid])
   (:import
+   clojure.lang.BigInt
+   java.math.BigDecimal
+   java.math.BigInteger
    java.util.Date
    java.time.Instant
    java.util.UUID
-   java.util.Locale
    java.util.Formatter
    clojure.lang.Symbol))
 
@@ -35,9 +37,6 @@
                   ~@body)
                 ~@type-oid's))
 
-
-(defmacro format-us [value pattern]
-  `(String/format Locale/US ~pattern (to-array [~value])))
 
 
 ;;
@@ -75,6 +74,8 @@
 
 ;;
 ;; Long, Integer, Short
+;; Double, Float
+;; BigDecimal, BigInteger, BigInt
 ;;
 
 (extend [Long nil
@@ -90,30 +91,31 @@
          Short nil
          Short oid/int8
          Short oid/int4
-         Short oid/int2]
-  [value oid opt]
-  (format-us value "%d"))
+         Short oid/int2
 
-
-;;
-;; Double, Float
-;;
-
-(extend [Double nil
+         Double nil
          Double oid/float8
          Double oid/float4
 
          Float nil
          Float oid/float8
-         Float oid/float4]
-  [value oid opt]
-  (format-us value "%f"))
+         Float oid/float4
+
+         BigDecimal nil
+         BigDecimal oid/numeric
+
+         BigInteger nil
+         BigInteger oid/numeric
+
+         BigInt nil
+         BigInt oid/numeric]
+  [value _ _]
+  (str value))
 
 
 ;;
 ;; Boolean
 ;;
-
 
 (extend [Boolean nil
          Boolean oid/bool]

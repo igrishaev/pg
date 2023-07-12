@@ -1,9 +1,8 @@
 (ns pg.decode.txt-test
   (:import
+   java.time.Instant
    java.time.OffsetTime
    java.time.LocalTime
-   java.time.LocalDate
-   java.time.ZonedDateTime
    java.util.UUID
    java.math.BigDecimal)
   (:require
@@ -82,35 +81,39 @@
 
 (deftest test-date-time
 
-  (let [string
-        "2023-07-10 22:25:22.046553+03"
+  (testing "timestamptz"
 
-        res
-        (decode string oid/timestamptz)]
+    (let [string
+          "2023-07-10 22:25:22.046553+03"
 
-    (is (instance? ZonedDateTime res))
-    (is (= "2023-07-10T19:25:22.000046553Z[UTC]"
-           (str res))))
+          res
+          (decode string oid/timestamptz)]
 
-  (let [string
-        "2022-07-03 00:00:00+03"
+      (is (instance? Instant res))
+      (is (= "2023-07-10T19:25:22.000046553Z"
+             (str res))))
 
-        res
-        (decode string oid/timestamptz)]
+    (let [string
+          "2022-07-03 00:00:00+03"
 
-    (is (instance? ZonedDateTime res))
-    (is (= "2022-07-02T21:00Z[UTC]"
-           (str res))))
+          res
+          (decode string oid/timestamptz)]
 
-  (let [string
-        "2022-07-03"
+      (is (instance? Instant res))
+      (is (= "2022-07-02T21:00:00Z"
+             (str res)))))
 
-        res
-        (decode string oid/date)]
+  (testing "date"
 
-    (is (instance? LocalDate res))
-    (is (= "2022-07-03"
-           (str res))))
+    (let [string
+          "2022-07-03"
+
+          res
+          (decode string oid/date)]
+
+      (is (instance? Instant res))
+      (is (= "2022-07-03T00:00:00Z"
+             (str res)))))
 
   (testing "timetz"
 

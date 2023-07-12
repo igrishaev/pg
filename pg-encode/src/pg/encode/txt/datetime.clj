@@ -96,9 +96,6 @@
   (Instant-date (.toInstant obj) opt))
 
 
-;; sql.Timestamp
-
-
 (comment
 
   (def -ldt
