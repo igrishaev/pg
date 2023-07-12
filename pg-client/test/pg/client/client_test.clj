@@ -801,7 +801,6 @@ drop table %1$s;
       (is (= [[{:foo 1}] [{:bar 2}]] res)))))
 
 
-#_
 (deftest test-client-field-duplicates
 
   (api/with-connection [conn CONFIG]
@@ -809,7 +808,7 @@ drop table %1$s;
     (let [res
           (api/execute conn "select 1 as id, 2 as id")]
 
-      (is (= [{:id_0 1 :id_1 2}] res)))))
+      (is (= [{:id 1 :id_1 2}] res)))))
 
 
 #_
@@ -945,6 +944,14 @@ drop table %1$s;
           (api/execute conn ["select EXTRACT('year' from $1)" date])]
 
       (is (= [{:extract 1985M}] res)))))
+
+
+;; TODO
+#_
+(deftest test-client-conn-with-open
+  (with-open [conn (api/connect CONFIG)]
+    (let [res (api/execute conn ["select 1 as one"])]
+      (is (= [{:one 1}] res)))))
 
 
 ;; Date date

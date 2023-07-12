@@ -1,6 +1,6 @@
 (ns pg.client.conn
-  (:refer-clojure :exclude [flush sync])
   (:import
+   java.io.Closeable
    java.util.UUID
    java.io.Writer
    java.io.Closeable
@@ -43,6 +43,11 @@
      ^SocketChannel ch
      ^Map params
      ^Map state]
+
+  ;; TODO
+  ;; Closeable
+  ;; (close [this]
+  ;;   (terminate this))
 
   Object
 

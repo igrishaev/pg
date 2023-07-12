@@ -1,12 +1,13 @@
 (ns pg.client.api
-  (:import
-   java.util.Map
-   java.util.List)
   (:require
    [pg.oid :as oid]
    [pg.client.sql :as sql]
    [pg.client.conn :as conn]
-   [pg.client.result :as res]))
+   [pg.client.result :as res])
+  (:import
+   java.util.Map
+   java.util.List
+   pg.client.conn.Connection))
 
 
 (defn status [conn]
@@ -64,7 +65,7 @@
   conn)
 
 
-(defn connect [config]
+(defn connect ^Connection [^Map config]
   (-> config
       (conn/connect)
       (authenticate)))

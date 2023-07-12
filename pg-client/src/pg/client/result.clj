@@ -189,6 +189,25 @@
              (-> c :name fn-column))}))
 
 
+(defn unify-Keys ^List [^List Keys]
+  (let [len (count Keys)
+        inc' (fnil inc 0)]
+    (loop [i 0
+           k-n {}
+           res []]
+      (println i k-n res)
+      (if (= i len)
+        res
+        (let [k (.get Keys i)]
+          (if-let [n (get k-n k)]
+            (recur (inc i)
+                   (update k-n k inc')
+                   (conj res (format "%s_%s" k n)))
+            (recur (inc i)
+                   (update k-n k inc')
+                   (conj res k))))))))
+
+
 (defn make-Keys
   [result
    {:as RowDescription :keys [columns]}]
@@ -196,8 +215,10 @@
   (let [fn-column
         (get result :fn-column keyword)]
 
-    (coll/for-vec [c columns]
-      (-> c :name fn-column))))
+    (->> columns
+         (mapv :name)
+         (unify-Keys)
+         (mapv fn-column))))
 
 
 (defn handle-ParameterDescription
@@ -458,6 +479,7 @@
                 (catch Throwable e
                   (handle-Exception result e)))]
 
+          ;; TODO: better
           (if (or (identical? msg :ReadyForQuery)
                   (and (identical? phase :auth)
                        (identical? msg :ErrorResponse)))
