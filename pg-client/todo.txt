@@ -8,7 +8,15 @@
 - conn closable
 - conn pool
 
+- test md5 auth
+- sasl auth in a separate module
+- docker: init script (uuid)
+- docker: hba config for access
+- docker: multiple pg versions
 - interval support
+- range support
+- array support
+- binary encode/decode support
 - separate pg.oid package
 - refactor pg-common
 - thread safe
@@ -18,7 +26,6 @@
 - joda split encode/decode
 - joda rename
 - joda structure: pg.joda, pg.joda.encode, pg.joda.decode
-- sasl auth in a separate module
 - adopt honey-sql
 - adopt gosql
 - errors addSuppressed
