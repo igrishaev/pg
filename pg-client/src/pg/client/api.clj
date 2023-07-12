@@ -3,6 +3,7 @@
    java.util.Map
    java.util.List)
   (:require
+   [pg.oid :as oid]
    [pg.client.sql :as sql]
    [pg.client.conn :as conn]
    [pg.client.result :as res]))
@@ -21,33 +22,36 @@
   (conn/get-pid conn))
 
 
-(defn prepare [conn sql]
+(defn prepare
 
-  ;; TODO: pass oids
-  (let [statement
-        (conn/send-parse conn sql [])
+  ([conn sql]
+   (prepare conn sql []))
 
-        init
-        {:statement statement}]
+  ([conn sql oids]
+   (let [statement
+         (conn/send-parse conn sql oids)
 
-    (conn/describe-statement conn statement)
-    (conn/send-sync conn)
-    (res/interact conn :prepare init)))
+         init
+         {:statement statement}]
+
+     (conn/describe-statement conn statement)
+     (conn/send-sync conn)
+     (res/interact conn :prepare init))))
 
 
-(defn close-statement [conn ^Map Statement]
+(defn close-statement [conn ^Map stmt]
   (let [{:keys [statement]}
-        Statement]
+        stmt]
     (conn/close-statement conn statement))
   (conn/send-sync conn)
   (res/interact conn :close-statement))
 
 
 (defmacro with-statement
-  [[bind conn sql] & body]
+  [[bind conn sql oids] & body]
   `(let [conn# ~conn
          sql# ~sql
-         ~bind (prepare conn# sql#)]
+         ~bind (prepare conn# sql# ~oids)]
      (try
        ~@body
        (finally
@@ -154,8 +158,13 @@
        (res/interact conn :query opt))
 
      (vector? query)
-     (let [[sql & params] query]
-       (with-statement [stmt conn sql]
+     (let [[sql & params]
+           query
+
+           oids
+           (mapv oid/value->oid params)]
+
+       (with-statement [stmt conn sql oids]
          (execute-statement conn stmt params opt)))
 
      :else

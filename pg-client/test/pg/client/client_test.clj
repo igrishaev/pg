@@ -849,7 +849,18 @@ drop table %1$s;
       (is (= [{:obj {:foo 123}}] res)))))
 
 
-;; TODO: default text oid
+(deftest test-client-default-oid-long
+  (api/with-connection [conn CONFIG]
+    (let [res (api/execute conn ["select $1 as foo" 42])]
+      (is (= [{:foo 42}] res)))))
+
+
+(deftest test-client-default-oid-uuid
+  (api/with-connection [conn CONFIG]
+    (let [uid (random-uuid)
+          res (api/execute conn ["select $1 as foo" uid])]
+      (is (= [{:foo uid}] res)))))
+
 
 (deftest test-client-execute-sqlvec
   (api/with-connection [conn CONFIG]

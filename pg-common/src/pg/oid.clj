@@ -1,5 +1,9 @@
 ;; Mostly machine-generated, see `fetch_oids.clj`
 (ns pg.oid
+  (:import
+   java.util.UUID
+   java.util.Date
+   java.time.Instant)
   (:refer-clojure :exclude [char name time]))
 
 
@@ -402,3 +406,20 @@
   (cond
     (int? x) x
     (string? x) (name->int x)))
+
+
+(def Type->oid
+  {Long    int8
+   Integer int4
+   Short   int2
+   Double  float8
+   Float   float4
+   String  text
+   Boolean bool
+   UUID    uuid
+   Date    timestamptz
+   Instant timestamptz})
+
+
+(defn value->oid [value]
+  (get Type->oid (type value)))
