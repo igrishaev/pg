@@ -459,6 +459,12 @@
     (finalize-query result)))
 
 
+(defn enough? [phase {:keys [msg]}]
+  (or (identical? msg :ReadyForQuery)
+      (and (identical? phase :auth)
+           (identical? msg :ErrorResponse))))
+
+
 (defn interact
 
   ([conn phase]
@@ -479,9 +485,6 @@
                 (catch Throwable e
                   (handle-Exception result e)))]
 
-          ;; TODO: better
-          (if (or (identical? msg :ReadyForQuery)
-                  (and (identical? phase :auth)
-                       (identical? msg :ErrorResponse)))
+          (if (enough? phase msg)
             result
             (recur result))))))))
