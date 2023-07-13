@@ -58,7 +58,7 @@
 (defn write-int16s
   [^ByteArrayOutputStream out
    ^List values]
-  (coll/do-list [value values]
+  (coll/do-list [_ value values]
     (.writeBytes out (bytes/int16->bytes value)))
   out)
 

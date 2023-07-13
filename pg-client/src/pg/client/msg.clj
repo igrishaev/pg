@@ -113,7 +113,7 @@
         (bb/read-int16 bb)
 
         values
-        (coll/doN [i value-count]
+        (coll/for-n [i value-count]
           (let [len (bb/read-int32 bb)]
             (when-not (= len -1)
               (bb/read-bytes bb len))))]
@@ -132,7 +132,7 @@
         (bb/read-int16 bb)
 
         columns
-        (coll/doN [i column-count]
+        (coll/for-n [i column-count]
           {:index      i
            :name       (bb/read-cstring bb encoding)
            :table-oid  (bb/read-int32 bb)
@@ -257,7 +257,7 @@
         (bb/read-int16 bb)
 
         param-oids
-        (coll/doN [_ param-count]
+        (coll/for-n [_ param-count]
           (bb/read-int32 bb))]
 
     {:msg :ParameterDescription
@@ -300,9 +300,8 @@
         param-count
         (bb/read-int32 bb)
 
-        ;; TODO: better cycle
         params
-        (coll/doN [_ param-count]
+        (coll/for-n [_ param-count]
           (bb/read-cstring bb encoding))]
 
     {:msg :NegotiateProtocolVersion

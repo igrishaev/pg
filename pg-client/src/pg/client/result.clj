@@ -176,19 +176,6 @@
   result)
 
 
-(defn make-subresult
-  [result
-   {:as RowDescription :keys [columns]}]
-
-  (let [fn-column
-        (get result :fn-column keyword)]
-
-    {:RowDescription RowDescription
-     :Rows! (transient [])
-     :Keys (coll/for-vec [c columns]
-             (-> c :name fn-column))}))
-
-
 (defn unify-Keys ^List [^List Keys]
   (let [len (count Keys)
         inc' (fnil inc 0)]
@@ -272,9 +259,8 @@
         opt
         {}
 
-        ;; TODO: better cycle
         values-decoded
-        (coll/doN [i (count values)]
+        (coll/for-n [i (count values)]
 
           (let [col
                 (.get columns i)
@@ -459,7 +445,7 @@
     (finalize-query result)))
 
 
-(defn enough? [phase {:keys [msg]}]
+(defn enough? [phase msg]
   (or (identical? msg :ReadyForQuery)
       (and (identical? phase :auth)
            (identical? msg :ErrorResponse))))
