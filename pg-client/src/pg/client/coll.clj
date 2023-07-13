@@ -65,3 +65,50 @@
          (let [~bind (get items# i#)
                item# (do ~@body)]
            (recur (inc i#) (conj! result# item#)))))))
+
+
+;;
+;; new
+;;
+
+(defmacro do-n2
+  {:style/indent 1}
+  [[i n] & body]
+  `(let [n# ~n]
+     (loop [i# 0
+            result# (transient [])]
+       (if (= i# n#)
+         (persistent! result#)
+         (let [~i i#
+               item# (do ~@body)]
+           (recur (inc i#) (conj! result# item#)))))))
+
+
+(defmacro do-list2
+  {:style/indent 1}
+  [[[i item] items] & body]
+  `(let [items# ~items
+         len# (count items#)]
+     (loop [i# 0
+            result# (transient [])]
+       (if (= i# len#)
+         (persistent! result#)
+         (let [~item (get items# i#)
+               ~i i#
+               item# (do ~@body)]
+           (recur (inc i#) (conj! result# item#)))))))
+
+
+(defmacro for-list2
+  {:style/indent 1}
+  [[[i item] items] & body]
+  `(let [items# ~items
+         len# (count items#)]
+     (loop [i# 0
+            result# (transient [])]
+       (if (= i# len#)
+         (persistent! result#)
+         (let [~item (get items# i#)
+               ~i i#
+               item# (do ~@body)]
+           (recur (inc i#) (conj! result# item#)))))))
