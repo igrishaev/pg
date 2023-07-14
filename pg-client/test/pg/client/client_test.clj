@@ -13,6 +13,7 @@
    [clojure.test :refer [deftest is]]))
 
 
+#_
 (def CONFIG
   {:host "127.0.0.1"
    :port 15432
@@ -20,7 +21,7 @@
    :password "ivan"
    :database "ivan"})
 
-#_
+
 (def CONFIG
   {:host "127.0.0.1"
    :port 35432

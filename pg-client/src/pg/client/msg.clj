@@ -55,6 +55,24 @@
    :status 3})
 
 
+
+(defn parse-AuthenticationSASL [bb opt]
+
+  (let [encoding
+        (get-server-encoding opt)
+
+        types
+        (loop [acc #{}]
+          (let [item
+                (bb/read-cstring bb)]
+            (if (= item "")
+              acc
+              (recur (conj acc item)))))]
+
+    {:msg :AuthenticationSASL
+     :status 10}))
+
+
 (defn parse-AuthenticationResponse [bb opt]
 
   (let [status (bb/read-int32 bb)]
@@ -69,6 +87,9 @@
 
       5
       (parse-AuthenticationMD5Password bb opt)
+
+      10
+      (parse-AuthenticationSASL bb opt)
 
       ;; else
 
@@ -699,10 +720,35 @@
 
 (defn make-Execute [^String portal
                     ^Integer row-count]
-
   {:msg :Execute
    :portal portal
    :row-count row-count})
+
+
+(defn make-SASLResponse [^bytes payload]
+  {:msg :SASLResponse
+   :payload payload})
+
+
+;; AuthenticationSASLContinue
+
+;; AuthenticationSASLFinal
+
+(defn make-SASLInitialResponse []
+  {:msg :SASLInitialResponse
+   :auth-type :string
+   :payload-init :bytes})
+
+
+(defn encode-SASLResponse
+  [{:keys [^bytes payload]} opt]
+
+  (let [len (+ 4 (alength payload))]
+
+    (doto (bb/allocate len)
+      (bb/write-byte \p)
+      (bb/write-int32 4)
+      (bb/write-bytes payload))))
 
 
 (defn encode-Execute
@@ -763,6 +809,9 @@
 
     :SSLRequest
     (encode-SSLRequest message opt)
+
+    :SASLResponse
+    (encode-SASLResponse message opt)
 
     ;; else
 

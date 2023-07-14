@@ -31,3 +31,11 @@
 {:tag :ParameterStatus, :param "TimeZone", :value "Europe/Moscow"}
 
 (.withZone (ZoneOffset/systemDefault))
+
+
+-      -c ssl=on
+-      -c ssl_cert_file=/var/lib/postgresql/server.crt
+-      -c ssl_key_file=/var/lib/postgresql/server.key
+
+-      - "./certs/server-cert.pem:/var/lib/postgresql/server.crt:ro"
+-      - "./certs/server-key.pem:/var/lib/postgresql/server.key:ro"

@@ -141,6 +141,25 @@
   result)
 
 
+(defn handle-AuthenticationSASL [result conn message]
+
+  (let [msg
+        {}
+
+        #_
+        (msg/make-SASLResponse 123)
+        ]
+
+    (conn/send-message conn msg)
+
+    )
+
+  result
+
+
+)
+
+
 (defn handle-Exception
   [{:as result :keys [^List exceptions]} e]
   (.add exceptions e)
@@ -283,6 +302,9 @@
 
     :AuthenticationCleartextPassword
     (handle-AuthenticationCleartextPassword result conn message)
+
+    :AuthenticationSASL
+    (handle-AuthenticationSASL result conn message)
 
     :BackendKeyData
     (handle-BackendKeyData result conn message)
