@@ -6,6 +6,7 @@
    java.util.ArrayList)
   (:require
    [clojure.string :as str]
+   [pg.client.const :as const]
    [pg.client.func :as func]
    [pg.client.acc :as acc]
    [pg.client.coll :as coll]
@@ -141,7 +142,16 @@
   result)
 
 
-(defn handle-AuthenticationSASL [result conn message]
+(defn handle-AuthenticationSASL
+  [result conn {:keys [sasl-types]}]
+
+  (cond
+
+    (contains? sasl-types const/SCRAM_SHA_256)
+    123
+
+
+    )
 
   (let [msg
         {}

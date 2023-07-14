@@ -55,13 +55,12 @@
    :status 3})
 
 
-
 (defn parse-AuthenticationSASL [bb opt]
 
   (let [encoding
         (get-server-encoding opt)
 
-        types
+        sasl-types
         (loop [acc #{}]
           (let [item
                 (bb/read-cstring bb)]
@@ -70,7 +69,8 @@
               (recur (conj acc item)))))]
 
     {:msg :AuthenticationSASL
-     :status 10}))
+     :status 10
+     :sasl-types sasl-types}))
 
 
 (defn parse-AuthenticationResponse [bb opt]
@@ -731,13 +731,7 @@
 
 
 ;; AuthenticationSASLContinue
-
 ;; AuthenticationSASLFinal
-
-(defn make-SASLInitialResponse []
-  {:msg :SASLInitialResponse
-   :auth-type :string
-   :payload-init :bytes})
 
 
 (defn encode-SASLResponse
@@ -749,6 +743,16 @@
       (bb/write-byte \p)
       (bb/write-int32 4)
       (bb/write-bytes payload))))
+
+
+(defn make-SASLInitialResponse []
+  {:msg :SASLInitialResponse
+   :auth-type :string
+   :payload-init :bytes})
+
+
+(defn encode-SASLInitialResponse [msg opt]
+  )
 
 
 (defn encode-Execute
@@ -812,6 +816,9 @@
 
     :SASLResponse
     (encode-SASLResponse message opt)
+
+    :SASLInitialResponse
+    (encode-SASLInitialResponse message opt)
 
     ;; else
 
