@@ -55,7 +55,7 @@
 
 (defmacro do-map
   {:style/indent 1}
-  [[[k v] mapping] & body]
+  [[k v mapping] & body]
   `(run! (fn [entry#]
            (let [~k (key entry#)
                  ~v (val entry#)]

@@ -498,7 +498,7 @@
           (out/write-cstring "database" encoding)
           (out/write-cstring database encoding))]
 
-    (coll/do-map [[k v] options]
+    (coll/do-map [k v options]
       (doto out
         (out/write-cstring k encoding)
         (out/write-cstring v encoding)))
