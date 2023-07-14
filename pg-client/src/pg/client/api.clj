@@ -1,13 +1,13 @@
 (ns pg.client.api
   (:require
-   [pg.client.func :as func]
-   [pg.oid :as oid]
-   [pg.client.sql :as sql]
    [pg.client.conn :as conn]
-   [pg.client.result :as res])
+   [pg.client.func :as func]
+   [pg.client.result :as res]
+   [pg.client.sql :as sql]
+   [pg.oid :as oid])
   (:import
-   java.util.Map
    java.util.List
+   java.util.Map
    pg.client.conn.Connection))
 
 
@@ -225,32 +225,3 @@
                 `(rollback ~bind)
                 `(commit ~bind))
              result#))))))
-
-
-#_
-(comment
-
-  (def -cfg {:host "localhost"
-             :port 15432
-             :user "ivan"
-             :database "ivan"
-             :password "ivan"})
-
-  (with-connection [c -cfg]
-    (query c "select 1"))
-
-  (def -conn (connect -cfg))
-
-  (with-statement [stmt -conn "select $1::integer as one"]
-    stmt)
-
-  (with-statement [stmt -conn "select 1 as one, 2 as two"]
-    (execute -conn stmt [] 0))
-
-  (def -r (query -conn "select 1 as foo; select 2 as bar"))
-
-  (def -s (prepare -conn "select $1::integer as kek from generate_series(1, 3)"))
-
-  (def -p (execute -conn -s [1] 1))
-
-  )

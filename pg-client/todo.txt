@@ -1,11 +1,11 @@
 
+- pass options
 - complete the tests
 - check todos
 - test binary encode
 - test binary decode
 - add docstrings, arglists
 - unify execute function
-- conn closable
 - conn pool
 
 - Statement closeable
