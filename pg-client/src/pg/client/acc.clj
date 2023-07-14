@@ -20,6 +20,15 @@
                 (doto array-list (.add row)))})
 
 
+(def as-matrix
+  {:fn-unify func/unify-none
+   :fn-keyval func/vals-only
+   :fn-init #(transient [])
+   :fn-reduce (fn [acc! row]
+                (conj! acc! row))
+   :fn-finalize persistent!})
+
+
 (defn as-index-by [f]
   {:fn-init #(transient {})
    :fn-reduce (fn [acc! row]

@@ -38,3 +38,11 @@
             (recur (inc i)
                    (update k-n k inc')
                    (conj res k))))))))
+
+
+(defn unify-none [the-keys]
+  the-keys)
+
+
+(defn vals-only [_ the-vals]
+  the-vals)

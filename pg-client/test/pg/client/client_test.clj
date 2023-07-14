@@ -695,19 +695,6 @@
       (is (= 2 res)))))
 
 
-(deftest test-client-reduce-map
-
-  (api/with-connection [conn CONFIG]
-
-    (let [result
-          (api/execute conn "select 1 as one, 2 as two"
-                     {:reduce-init {}
-                      :reduce-fn (fn [acc {:keys [one two]}]
-                                   (assoc acc one two))})]
-
-      (is (= {1 2} result)))))
-
-
 (deftest test-client-update-result
   (api/with-connection [conn CONFIG]
 
@@ -813,18 +800,6 @@ drop table %1$s;
           (api/execute conn "select 1 as id, 2 as id")]
 
       (is (= [{:id 1 :id_1 2}] res)))))
-
-
-(deftest test-client-as-java-maps
-
-  (api/with-connection [conn CONFIG]
-
-    (let [res
-          (api/execute conn "select 1 as id" {:as-java-maps? true
-                                              :fn-column identity})]
-
-      (is (instance? java.util.HashMap (first res)))
-      (is (= [{"id" 1}] res)))))
 
 
 (deftest test-client-json-read
@@ -1042,6 +1017,22 @@ drop table %1$s;
       (is (= {2 1
               4 3
               6 5}
+             res)))))
+
+
+(deftest test-acc-as-matrix
+
+  (api/with-connection [conn CONFIG]
+
+    (let [query
+          "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
+
+          res
+          (api/execute conn query {:as acc/as-matrix})]
+
+      (is (= [[1 2]
+              [3 4]
+              [5 6]]
              res)))))
 
 

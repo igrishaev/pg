@@ -1,12 +1,12 @@
 
-- pass options
 - complete the tests
-- check todos
 - test binary encode
 - test binary decode
 - add docstrings, arglists
 - unify execute function
-- conn pool
+- pool todos
+- pool tests
+- unify constants
 
 - Statement closeable
 - test md5 auth

@@ -379,30 +379,32 @@
 
 
 (defn to-bb
-  ;; TODO: two bodies
-  [^Character c ^ByteArrayOutputStream out]
 
-  (let [buf
-        (.toByteArray out)
+  ([^ByteArrayOutputStream out]
+   (to-bb nil out))
 
-        buf-len
-        (alength buf)
+  ([^Character c ^ByteArrayOutputStream out]
 
-        bb-len
-        (+ (if (nil? c) 0 1)
-           4
-           buf-len)
+   (let [buf
+         (.toByteArray out)
 
-        bb
-        (bb/allocate bb-len)]
+         buf-len
+         (alength buf)
 
-    (when-not (nil? c)
-      (bb/write-byte bb c))
+         bb-len
+         (+ (if (nil? c) 0 1)
+            4
+            buf-len)
 
-    (doto bb
-      (bb/write-int32 (+ 4 buf-len))
-      (bb/write-bytes buf))))
+         bb
+         (bb/allocate bb-len)]
 
+     (when-not (nil? c)
+       (bb/write-byte bb c))
+
+     (doto bb
+       (bb/write-int32 (+ 4 buf-len))
+       (bb/write-bytes buf)))))
 
 
 (defn make-PasswordMessage [password]
@@ -496,8 +498,7 @@
           (out/write-cstring "database" encoding)
           (out/write-cstring database encoding))]
 
-    ;; TODO: better cycle
-    (doseq [[^String k ^String v] options]
+    (coll/do-map [[k v] options]
       (doto out
         (out/write-cstring k encoding)
         (out/write-cstring v encoding)))
@@ -505,7 +506,7 @@
     (doto out
       (out/write-byte 0))
 
-    (to-bb nil out)))
+    (to-bb out)))
 
 
 (defn make-Close [source-type source]

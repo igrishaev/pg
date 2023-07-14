@@ -51,3 +51,13 @@
                ~i i#
                item# (do ~@body)]
            (recur (inc i#) (conj! result# item#)))))))
+
+
+(defmacro do-map
+  {:style/indent 1}
+  [[[k v] mapping] & body]
+  `(run! (fn [entry#]
+           (let [~k (key entry#)
+                 ~v (val entry#)]
+             ~@body))
+         ~mapping))
