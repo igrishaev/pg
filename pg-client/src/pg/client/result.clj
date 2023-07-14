@@ -87,6 +87,7 @@
 (defn handle-ParameterStatus
   [result conn {:keys [param value]}]
   (conn/set-parameter conn param value)
+  (conn/rebuild-opt conn param value)
   result)
 
 
@@ -205,9 +206,8 @@
         {:keys [^List columns]}
         RowDescription
 
-        ;; TODO: fill opt
         opt
-        {}
+        (conn/get-opt conn)
 
         values-decoded
         (coll/for-n [i (count values)]

@@ -6,6 +6,7 @@
    java.time.Instant)
   (:require
    pg.json
+   [pg.client.conn :as conn]
    [pg.client.api :as api]
    [pg.client.acc :as acc]
    [clojure.string :as str]
@@ -1042,6 +1043,16 @@ drop table %1$s;
               4 3
               6 5}
              res)))))
+
+
+(deftest test-conn-opt
+  (api/with-connection [conn CONFIG]
+    (let [opt (conn/get-opt conn)]
+      (is (= {:date-style "ISO, MDY"
+              :time-zone "Europe/Moscow"
+              :server-encoding "UTF8"
+              :client-encoding "UTF8"}
+             opt)))))
 
 
 ;; test-client-json-write

@@ -485,7 +485,6 @@
            ^Map options]}
    opt]
 
-  ;; TODO: encode: check encoding type
   (let [^String encoding
         (get-client-encoding opt)
 
@@ -556,8 +555,7 @@
           (out/write-cstring query encoding)
           (out/write-int16 (count param-oids)))]
 
-    ;; TODO better cycle
-    (doseq [oid param-oids]
+    (coll/do-list [_ oid param-oids]
       (out/write-int32 out oid))
 
     (to-bb \P out)))
@@ -643,9 +641,6 @@
 
 
 (defn encode-Bind
-  ;; TODO: support binary
-  ;; TODO: fill opt
-
   [{:as message
     :keys [^String portal
            ^String statement
@@ -665,10 +660,6 @@
 
   (let [^String encoding
         (get-client-encoding opt)
-
-        ;; TODO: pass opts
-        opt
-        {}
 
         out
         (doto (out/create)

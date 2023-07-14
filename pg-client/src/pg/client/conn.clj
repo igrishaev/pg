@@ -132,10 +132,9 @@
   (-> conn :config :protocol-version))
 
 
-(defn send-message [{:as conn :keys [ch]} message]
+(defn send-message [{:as conn :keys [opt ch]} message]
   (debug/debug-message message "<- ")
-  ;; TODO: options
-  (let [bb (msg/encode-message message {})]
+  (let [bb (msg/encode-message message opt)]
     (bb/write-to ch bb))
   conn)
 
@@ -163,7 +162,7 @@
 
 
 (defn read-message
-  [{:keys [ch]}]
+  [{:keys [ch opt]}]
 
   (let [bb-head
         (bb/allocate 5)]
@@ -182,9 +181,8 @@
           _
           (bb/read-from ch bb-body)
 
-          ;; TODO options
           message
-          (msg/parse-message tag bb-body nil)]
+          (msg/parse-message tag bb-body opt)]
 
       (debug/debug-message message " ->")
 
@@ -297,6 +295,28 @@
     (send-message conn msg)))
 
 
+(defn rebuild-opt [{:keys [^Map opt]} param value]
+  (case param
+
+    "server_encoding"
+    (.put opt :server-encoding value)
+
+    "client_encoding"
+    (.put opt :client-encoding value)
+
+    "DateStyle"
+    (.put opt :date-style value)
+
+    "TimeZone"
+    (.put opt :time-zone value)
+
+    nil))
+
+
+(defn get-opt [conn]
+  (:opt conn))
+
+
 (defrecord Connection
     [^UUID id
      ^Long created-at
@@ -304,25 +324,26 @@
      ^InetSocketAddress addr
      ^SocketChannel ch
      ^Map params
-     ^Map state]
+     ^Map state
+     ^Map opt]
 
-  Closeable
+    Closeable
 
-  (close [this]
-    (terminate this))
+    (close [this]
+      (terminate this))
 
-  Object
+    Object
 
-  (toString [_]
+    (toString [_]
 
-    (let [{:keys [host
-                  port
-                  user
-                  database]}
-          config]
+      (let [{:keys [host
+                    port
+                    user
+                    database]}
+            config]
 
-      (format "PG connection %s@%s:%s/%s"
-              user host port database))))
+        (format "PG connection %s@%s:%s/%s"
+                user host port database))))
 
 
 (defmethod print-method Connection
@@ -351,5 +372,6 @@
          config-full
          addr
          ch
+         (new HashMap)
          (new HashMap)
          (new HashMap))))
