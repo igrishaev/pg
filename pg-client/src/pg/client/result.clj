@@ -7,6 +7,8 @@
    java.util.ArrayList)
   (:require
    [clojure.string :as str]
+   [pg.client.func :as func]
+   [pg.client.acc :as acc]
    [pg.client.coll :as coll]
    [pg.decode.txt :as txt]
    [pg.decode.bin :as bin]
@@ -47,38 +49,20 @@
     nil))
 
 
-(defn unify-idx ^List [^List Keys]
-  (let [len (count Keys)
-        inc' (fnil inc 0)]
-    (loop [i 0
-           k-n {}
-           res []]
-      (println i k-n res)
-      (if (= i len)
-        res
-        (let [k (.get Keys i)]
-          (if-let [n (get k-n k)]
-            (recur (inc i)
-                   (update k-n k inc')
-                   (conj res (format "%s_%s" k n)))
-            (recur (inc i)
-                   (update k-n k inc')
-                   (conj res k))))))))
-
-
 (def result-defaults
-  {:fn-unify unify-idx
+  {:fn-unify func/unify-idx
    :fn-keyval zipmap
-   :fn-column keyword
-   :fn-result identity
-   :fn-init (fn [] (transient []))
-   :fn-reduce (fn [acc! row] (conj! acc! row))
-   :fn-finalize persistent!})
+   :fn-column keyword})
+
+
+(defn remap-as [this]
+  (let [as (get this :as acc/as-default)]
+    (merge this as)))
 
 
 (defn make-result [phase init]
   (-> result-defaults
-      (merge init)
+      (merge (remap-as init))
       (assoc :I 0
              :phase phase
              :errors (new ArrayList)

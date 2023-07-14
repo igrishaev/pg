@@ -35,70 +35,12 @@
    :binary-decode? false})
 
 
-(defrecord Connection
-    [^UUID id
-     ^Long created-at
-     ^Map config
-     ^InetSocketAddress addr
-     ^SocketChannel ch
-     ^Map params
-     ^Map state]
-
-  ;; TODO
-  ;; Closeable
-  ;; (close [this]
-  ;;   (terminate this))
-
-  Object
-
-  (toString [_]
-
-    (let [{:keys [host
-                  port
-                  user
-                  database]}
-          config]
-
-      (format "PG connection %s@%s:%s/%s"
-              user host port database))))
-
-
-(defmethod print-method Connection
-  [conn ^Writer w]
-  (.write w (str conn)))
-
-
 (defn get-id [conn]
   (:id conn))
 
 
 (defn get-created-at [conn]
   (:created-at conn))
-
-
-(defn connect [config]
-
-  (let [config-full
-        (merge config-defaults config)
-
-        {:keys [^String host
-                ^Integer port]}
-        config-full
-
-        addr
-        (new java.net.InetSocketAddress host port)
-
-        ch
-        (SocketChannel/open addr)]
-
-    (new Connection
-         (UUID/randomUUID)
-         (System/currentTimeMillis)
-         config-full
-         addr
-         ch
-         (new HashMap)
-         (new HashMap))))
 
 
 (defn handle-notification [conn NotificationResponse]
@@ -353,3 +295,61 @@
 (defn describe-portal [conn ^String portal]
   (let [msg (msg/make-Describe \P portal)]
     (send-message conn msg)))
+
+
+(defrecord Connection
+    [^UUID id
+     ^Long created-at
+     ^Map config
+     ^InetSocketAddress addr
+     ^SocketChannel ch
+     ^Map params
+     ^Map state]
+
+  Closeable
+
+  (close [this]
+    (terminate this))
+
+  Object
+
+  (toString [_]
+
+    (let [{:keys [host
+                  port
+                  user
+                  database]}
+          config]
+
+      (format "PG connection %s@%s:%s/%s"
+              user host port database))))
+
+
+(defmethod print-method Connection
+  [conn ^Writer w]
+  (.write w (str conn)))
+
+
+(defn connect [config]
+
+  (let [config-full
+        (merge config-defaults config)
+
+        {:keys [^String host
+                ^Integer port]}
+        config-full
+
+        addr
+        (new java.net.InetSocketAddress host port)
+
+        ch
+        (SocketChannel/open addr)]
+
+    (new Connection
+         (UUID/randomUUID)
+         (System/currentTimeMillis)
+         config-full
+         addr
+         ch
+         (new HashMap)
+         (new HashMap))))

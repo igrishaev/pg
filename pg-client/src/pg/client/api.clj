@@ -1,5 +1,6 @@
 (ns pg.client.api
   (:require
+   [pg.client.func :as func]
    [pg.oid :as oid]
    [pg.client.sql :as sql]
    [pg.client.conn :as conn]

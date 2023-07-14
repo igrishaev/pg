@@ -1,10 +1,13 @@
 (ns pg.client.client-test
   (:import
    java.util.Date
+   java.util.HashMap
+   java.util.ArrayList
    java.time.Instant)
   (:require
    pg.json
    [pg.client.api :as api]
+   [pg.client.acc :as acc]
    [clojure.string :as str]
    [clojure.test :refer [deftest is]]))
 
@@ -811,17 +814,6 @@ drop table %1$s;
       (is (= [{:id 1 :id_1 2}] res)))))
 
 
-#_
-(deftest test-client-as-vectors
-
-  (api/with-connection [conn CONFIG]
-
-    (let [res
-          (api/execute conn "select 1 as id, 2 as id" {:as-vectors? true})]
-
-      (is (= [[1 2]] res)))))
-
-
 (deftest test-client-as-java-maps
 
   (api/with-connection [conn CONFIG]
@@ -946,19 +938,12 @@ drop table %1$s;
       (is (= [{:extract 1985M}] res)))))
 
 
-;; TODO
-#_
 (deftest test-client-conn-with-open
   (with-open [conn (api/connect CONFIG)]
     (let [res (api/execute conn ["select 1 as one"])]
       (is (= [{:one 1}] res)))))
 
 
-;; Date date
-;; time, timetz
-;;
-
-#_
 (deftest test-client-prepare-&-close-ok
 
   (api/with-connection [conn CONFIG]
@@ -966,8 +951,7 @@ drop table %1$s;
     (let [statement
           (api/prepare conn "select 1 as foo")]
 
-      (is (string? statement))
-      (is (str/starts-with? statement "statement"))
+      (is (map? statement))
 
       (let [result
             (api/close-statement conn statement)]
@@ -990,6 +974,78 @@ drop table %1$s;
                  result)))))))
 
 
+(deftest test-acc-as-java
+
+  (api/with-connection [conn CONFIG]
+
+    (let [query
+          "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
+
+          res
+          (api/execute conn query {:as acc/as-java})]
+
+      (is (= [{:b 2 :a 1}
+              {:b 4 :a 3}
+              {:b 6 :a 5}]
+             res))
+
+      (is (instance? ArrayList res))
+      (is (every? (fn [x]
+                    (instance? HashMap x))
+                  res)))))
+
+
+(deftest test-acc-as-index-by
+
+  (api/with-connection [conn CONFIG]
+
+    (let [query
+          "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
+
+          res
+          (api/execute conn query {:as (acc/as-index-by :a)})]
+
+      (is (= {1 {:a 1 :b 2}
+              3 {:a 3 :b 4}
+              5 {:a 5 :b 6}}
+
+           res)))))
+
+
+(deftest test-acc-as-group-by
+
+  (api/with-connection [conn CONFIG]
+
+    (let [query
+          "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
+
+          res
+          (api/execute conn query {:as (acc/as-group-by :a)})]
+
+      (is (= {1 [{:a 1 :b 2}]
+              3 [{:a 3 :b 4}]
+              5 [{:a 5 :b 6}]}
+             res)))))
+
+
+(deftest test-acc-as-kv
+
+  (api/with-connection [conn CONFIG]
+
+    (let [query
+          "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
+
+          res
+          (api/execute conn query {:as (acc/as-kv :b :a)})]
+
+      (is (= {2 1
+              4 3
+              6 5}
+             res)))))
+
+
 ;; test-client-json-write
 ;; test-client-jsonb-write
 ;; test reuse statement after closing
+;; Date date
+;; time, timetz

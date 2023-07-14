@@ -21,7 +21,20 @@
           (recur (inc i)))))))
 
 
-(defn reduce-list
-  [^List acc row]
-  (doto acc
-    (.add acc row)))
+(defn unify-idx ^List [^List Keys]
+  (let [len (count Keys)
+        inc' (fnil inc 0)]
+    (loop [i 0
+           k-n {}
+           res []]
+      (println i k-n res)
+      (if (= i len)
+        res
+        (let [k (.get Keys i)]
+          (if-let [n (get k-n k)]
+            (recur (inc i)
+                   (update k-n k inc')
+                   (conj res (format "%s_%s" k n)))
+            (recur (inc i)
+                   (update k-n k inc')
+                   (conj res k))))))))
