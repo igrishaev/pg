@@ -47,23 +47,16 @@
     nil))
 
 
-(defn zip-java-map ^Map [^List the-keys ^List the-vals]
-  (let [len
-        (.size the-keys)
-        res
-        (new HashMap)]
-    (loop [i 0]
-      (if (= i len)
-        res
-        (let [the-key
-              (.get the-keys i)
-              the-val
-              (.get the-vals i)]
-          (.put res the-key the-val)
-          (recur (inc i)))))))
+(def result-defaults
+  {:fn-keyval zipmap
+   :fn-column keyword
+   :fn-result identity
+   :fn-reduce conj
+   :acc []})
+
 
 ;; TODO: refactor this
-(defn make-result [phase {:as init :keys [as-java-maps?]}]
+(defn make-result [phase init]
   (assoc init
          :I 0
          :fn-keyval
@@ -82,9 +75,6 @@
          ;; acc
 
          (cond
-
-           as-java-maps?
-           zip-java-map
 
            :else
            zipmap)
