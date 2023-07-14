@@ -10,6 +10,7 @@
    [pg.client.codec :as codec]
    [clojure.string :as str])
   (:import
+   java.util.List
    java.util.UUID))
 
 
@@ -38,10 +39,11 @@
 
 
 (defn parse-message [^String message]
-  (let [pairs
-        (str/split message #",")]
-    (into {} (for [pair pairs] ;; TODO: for
-               (str/split pair #"=" 2)))))
+  (let [pairs (str/split message #",")]
+    (->> pairs
+         (mapv (fn [pair]
+                 (str/split pair #"=" 2)))
+         (into {}))))
 
 
 (defn step1-client-first-message
@@ -72,12 +74,8 @@
 
   [state ^String server-first-message]
 
-  (let [pairs
-        (str/split server-first-message #",")
-
-        keyvals
-        (into {} (for [pair pairs] ;; TODO: for
-                   (str/split pair #"=" 2)))
+  (let [keyvals
+        (parse-message server-first-message)
 
         keyvals
         (update keyvals "i" parse-int)
