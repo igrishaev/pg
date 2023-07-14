@@ -47,41 +47,42 @@
     nil))
 
 
+(defn unify-idx ^List [^List Keys]
+  (let [len (count Keys)
+        inc' (fnil inc 0)]
+    (loop [i 0
+           k-n {}
+           res []]
+      (println i k-n res)
+      (if (= i len)
+        res
+        (let [k (.get Keys i)]
+          (if-let [n (get k-n k)]
+            (recur (inc i)
+                   (update k-n k inc')
+                   (conj res (format "%s_%s" k n)))
+            (recur (inc i)
+                   (update k-n k inc')
+                   (conj res k))))))))
+
+
 (def result-defaults
-  {:fn-keyval zipmap
+  {:fn-unify unify-idx
+   :fn-keyval zipmap
    :fn-column keyword
    :fn-result identity
-   :fn-reduce conj
-   :acc []})
+   :fn-init (fn [] (transient []))
+   :fn-reduce (fn [acc! row] (conj! acc! row))
+   :fn-finalize persistent!})
 
 
-;; TODO: refactor this
 (defn make-result [phase init]
-  (assoc init
-         :I 0
-         :fn-keyval
-
-
-         ;; TODO: once
-
-         ;; fn-keyval
-         ;; fn-column
-         ;; fn-result
-         ;; reduce-fn
-         ;; reduce-init
-
-         ;; TODO:
-         ;; fn-reduce
-         ;; acc
-
-         (cond
-
-           :else
-           zipmap)
-
-         :phase phase
-         :errors (new ArrayList)
-         :exceptions (new ArrayList)))
+  (-> result-defaults
+      (merge init)
+      (assoc :I 0
+             :phase phase
+             :errors (new ArrayList)
+             :exceptions (new ArrayList))))
 
 
 (defn handle-ReadyForQuery
@@ -166,27 +167,8 @@
   result)
 
 
-(defn unify-Keys ^List [^List Keys]
-  (let [len (count Keys)
-        inc' (fnil inc 0)]
-    (loop [i 0
-           k-n {}
-           res []]
-      (println i k-n res)
-      (if (= i len)
-        res
-        (let [k (.get Keys i)]
-          (if-let [n (get k-n k)]
-            (recur (inc i)
-                   (update k-n k inc')
-                   (conj res (format "%s_%s" k n)))
-            (recur (inc i)
-                   (update k-n k inc')
-                   (conj res k))))))))
-
-
 (defn make-Keys
-  [result
+  [{:as result :keys [fn-unify]}
    {:as RowDescription :keys [columns]}]
 
   (let [fn-column
@@ -194,7 +176,7 @@
 
     (->> columns
          (mapv :name)
-         (unify-Keys)
+         (fn-unify)
          (mapv fn-column))))
 
 
@@ -207,14 +189,14 @@
 
 
 (defn handle-RowDescription
-  [{:as result :keys [I]}
+  [{:as result :keys [fn-init I]}
    RowDescription]
 
   (let [Keys
         (make-Keys result RowDescription)
 
         Rows-init
-        (get result :reduce-init (transient []))]
+        (fn-init)]
 
     (-> result
         (assoc-in [:map-RowDescription I] RowDescription)
@@ -223,14 +205,13 @@
 
 
 (defn handle-DataRow
-  [{:as result :keys [I fn-keyval]}
+  [{:as result :keys [I
+                      fn-keyval
+                      fn-reduce]}
    conn
    DataRow]
 
-  (let [reduce-fn
-        (get result :reduce-fn conj!)
-
-        encoding
+  (let [encoding
         (conn/get-server-encoding conn)
 
         RowDescription
@@ -270,7 +251,7 @@
         Row
         (fn-keyval Keys values-decoded)]
 
-    (update-in result [:map-Rows I] reduce-fn Row)))
+    (update-in result [:map-Rows I] fn-reduce Row)))
 
 
 (defn handle-CommandComplete
@@ -348,7 +329,9 @@
 
 
 (defn finalize-query [{:as result
-                       :keys [I fn-result]}]
+                       :keys [I
+                              fn-result
+                              fn-finalize]}]
 
   (loop [i 0
          acc! (transient [])]
@@ -384,8 +367,8 @@
             (cond
 
               RowDescription
-              (if (transient? Rows)
-                (persistent! Rows)
+              (if fn-finalize
+                (fn-finalize Rows)
                 Rows)
 
               amount
