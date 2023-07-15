@@ -203,11 +203,12 @@
         protocol-version
         (get-protocol-version conn)
 
-        msg (msg/make-StartupMessage
-             protocol-version
-             user
-             database
-             params)]
+        msg
+        (msg/make-StartupMessage
+         protocol-version
+         user
+         database
+         params)]
 
     (send-message conn msg)))
 
