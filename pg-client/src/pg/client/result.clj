@@ -215,12 +215,6 @@
   (dissoc result :SASL))
 
 
-(defn handle-Exception
-  [result conn e]
-  (conn/terminate conn)
-  (throw e))
-
-
 (defn make-Keys
   [{:as result :keys [fn-unify]}
    {:as RowDescription :keys [columns]}]
@@ -491,14 +485,11 @@
     (loop [result (make-result phase init)]
 
       (let [{:as message :keys [msg]}
-            (conn/read-message conn)]
+            (conn/read-message conn)
 
-        (let [result
-              (try
-                (handle result conn message)
-                (catch Throwable e
-                  (handle-Exception result conn e)))]
-
-          (if (enough? phase msg)
             result
-            (recur result))))))))
+            (handle result conn message)]
+
+        (if (enough? phase msg)
+          result
+          (recur result)))))))

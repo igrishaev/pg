@@ -128,8 +128,7 @@
                          (throw (new Exception "boom")))]
            (api/execute conn "select 1 as foo"))))
 
-
-    ;; TODO
+    ;; TODO: fix exceptions
 
     #_
     (let [result
