@@ -63,7 +63,7 @@
         sasl-types
         (loop [acc #{}]
           (let [item
-                (bb/read-cstring bb)]
+                (bb/read-cstring bb encoding)]
             (if (= item "")
               acc
               (recur (conj acc item)))))]
@@ -745,14 +745,38 @@
       (bb/write-bytes payload))))
 
 
-(defn make-SASLInitialResponse []
+(defn make-SASLInitialResponse [^String sasl-type
+                                ^String response]
   {:msg :SASLInitialResponse
-   :auth-type :string
-   :payload-init :bytes})
+   :sasl-type sasl-type
+   :response response})
 
 
-(defn encode-SASLInitialResponse [msg opt]
-  )
+(defn encode-SASLInitialResponse
+  [{:keys [^String sasl-type
+           ^String response]} opt]
+
+  (let [^String encoding
+        (get-client-encoding opt)
+
+        buf
+        (when response
+          (.getBytes response encoding))
+
+        len
+        (if response
+          (alength buf)
+          -1)
+
+        out
+        (doto (out/create)
+          (out/write-cstring sasl-type encoding)
+          (out/write-int32 len))]
+
+    (when buf
+      (out/write-bytes out buf))
+
+    (to-bb \p out)))
 
 
 (defn encode-Execute

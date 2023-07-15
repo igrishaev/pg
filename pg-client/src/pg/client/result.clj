@@ -5,11 +5,13 @@
    java.util.List
    java.util.ArrayList)
   (:require
+   [pg.client.scram-sha-256 :as scram-sha-256]
    [clojure.string :as str]
    [pg.client.const :as const]
    [pg.client.func :as func]
    [pg.client.acc :as acc]
    [pg.client.coll :as coll]
+   [pg.client.msg :as msg]
    [pg.decode.txt :as txt]
    [pg.decode.bin :as bin]
    [pg.client.md5 :as md5]
@@ -142,32 +144,41 @@
   result)
 
 
+
+(defn handle-SCRAM_SHA_256
+  [result conn AuthenticationSASL]
+
+  (let [user
+        (conn/get-user conn)
+
+        password
+        (conn/get-password conn)
+
+        SASL
+        (scram-sha-256/step1-client-first-message user password)
+
+        {:keys [client-first-message]}
+        SASL
+
+        msg
+        (msg/make-SASLInitialResponse const/SCRAM_SHA_256
+                                      client-first-message)]
+
+    (conn/send-message conn msg)
+    (assoc result :SASL SASL)))
+
+
 (defn handle-AuthenticationSASL
-  [result conn {:keys [sasl-types]}]
+  [result conn {:as AuthenticationSASL
+                :keys [sasl-types]}]
 
   (cond
 
     (contains? sasl-types const/SCRAM_SHA_256)
-    123
+    (handle-SCRAM_SHA_256 result conn AuthenticationSASL)
 
-
-    )
-
-  (let [msg
-        {}
-
-        #_
-        (msg/make-SASLResponse 123)
-        ]
-
-    (conn/send-message conn msg)
-
-    )
-
-  result
-
-
-)
+    :else
+    (throw (ex-info "AAAAA" {}))))
 
 
 (defn handle-Exception
