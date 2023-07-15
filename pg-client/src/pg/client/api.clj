@@ -24,10 +24,10 @@
   (conn/get-pid conn))
 
 
-(defn prepare
+(defn prepare-statement
 
   ([conn sql]
-   (prepare conn sql []))
+   (prepare-statement conn sql []))
 
   ([conn sql oids]
    (let [statement
@@ -53,7 +53,7 @@
   [[bind conn sql oids] & body]
   `(let [conn# ~conn
          sql# ~sql
-         ~bind (prepare conn# sql# ~oids)]
+         ~bind (prepare-statement conn# sql# ~oids)]
      (try
        ~@body
        (finally

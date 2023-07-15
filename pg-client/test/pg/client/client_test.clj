@@ -631,7 +631,7 @@
   (api/with-connection [conn CONFIG]
 
     (let [res
-          (api/prepare conn "select $1::integer as foo")]
+          (api/prepare-statement conn "select $1::integer as foo")]
 
       (is (map? res))
       (is (= [:statement :RowDescription :ParameterDescription]
@@ -927,7 +927,7 @@ drop table %1$s;
   (api/with-connection [conn CONFIG]
 
     (let [statement
-          (api/prepare conn "select 1 as foo")]
+          (api/prepare-statement conn "select 1 as foo")]
 
       (is (map? statement))
 

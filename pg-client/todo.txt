@@ -12,8 +12,6 @@
 - conn component
 
 - Statement closeable
-- test md5 auth
-- sasl auth in a separate module
 - docker: init script (uuid)
 - docker: hba config for access
 - docker: multiple pg versions
