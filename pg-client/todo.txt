@@ -8,6 +8,7 @@
 - pool tests
 - unify constants
 - pool component
+- pool poll timeout
 - conn component
 
 - Statement closeable
