@@ -169,7 +169,7 @@
            query
 
            oids
-           (mapv oid/value->oid params)]
+           (mapv oid/hint params)]
 
        (with-statement [stmt conn sql oids]
          (execute-statement conn stmt params opt)))

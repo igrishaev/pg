@@ -1075,5 +1075,12 @@ drop table %1$s;
              opt)))))
 
 
+(deftest test-two-various-params
+  (api/with-connection [conn CONFIG]
+    (let [res
+          (api/execute conn ["select $1::int8 = $1::int4 as eq" (int 123) 123])]
+      (is (= [{:eq true}] res)))))
+
+
 ;; Date date
 ;; time, timetz

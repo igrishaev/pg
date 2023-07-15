@@ -1,6 +1,11 @@
 ;; Mostly machine-generated, see `fetch_oids.clj`
 (ns pg.oid
   (:import
+   clojure.lang.BigInt
+   java.math.BigInteger
+   java.math.BigDecimal
+   java.util.Map
+   java.util.HashMap
    java.util.UUID
    java.util.Date
    java.time.Instant)
@@ -408,18 +413,26 @@
     (string? x) (name->int x)))
 
 
-(def Type->oid
-  {Long    int8
-   Integer int4
-   Short   int2
-   Double  float8
-   Float   float4
-   String  text
-   Boolean bool
-   UUID    uuid
-   Date    timestamptz
-   Instant timestamptz})
+(def ^:private ^Map -HINTS
+  (doto (new HashMap)
+    (.put Long       int8)
+    (.put Integer    int4)
+    (.put Short      int2)
+    (.put Double     float8)
+    (.put Float      float4)
+    (.put String     text)
+    (.put Boolean    bool)
+    (.put UUID       uuid)
+    (.put Date       timestamptz)
+    (.put Instant    timestamptz)
+    (.put BigDecimal numeric)
+    (.put BigInteger numeric)
+    (.put BigInt     numeric)))
 
 
-(defn value->oid [value]
-  (get Type->oid (type value) 0))
+(defn hint [value]
+  (or (.get -HINTS (type value)) 0))
+
+
+(defn add-hint [Type oid]
+  (.put -HINTS Type oid))
