@@ -13,7 +13,6 @@
    [clojure.test :refer [deftest is]]))
 
 
-#_
 (def CONFIG
   {:host "127.0.0.1"
    :port 15432
@@ -22,6 +21,7 @@
    :database "ivan"})
 
 
+#_
 (def CONFIG
   {:host "127.0.0.1"
    :port 35432
@@ -128,6 +128,10 @@
                          (throw (new Exception "boom")))]
            (api/execute conn "select 1 as foo"))))
 
+
+    ;; TODO
+
+    #_
     (let [result
           (api/execute conn "select 2 as bar")]
 

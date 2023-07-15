@@ -65,6 +65,12 @@
   `(.. ~(with-meta bb {:tag `ByteBuffer}) (getInt)))
 
 
+(defn read-rest ^bytes [^ByteBuffer bb]
+  (let [buf (byte-array (.remaining bb))]
+    (.get bb buf)
+    buf))
+
+
 (defn to-vector [^ByteBuffer bb]
   (vec (.array bb)))
 

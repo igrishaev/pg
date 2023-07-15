@@ -27,7 +27,6 @@
     (loop [i 0
            k-n {}
            res []]
-      (println i k-n res)
       (if (= i len)
         res
         (let [k (.get Keys i)]

@@ -73,6 +73,39 @@
      :sasl-types sasl-types}))
 
 
+(defn parse-AuthenticationSASLContinue [bb opt]
+
+  (let [^String encoding
+        (get-server-encoding opt)
+
+        buf
+        (bb/read-rest bb)
+
+        server-first-message
+        (new String buf encoding)]
+
+    {:msg :AuthenticationSASLContinue
+     :status 11
+     :server-first-message server-first-message}))
+
+
+(defn parse-AuthenticationSASLFinal
+  [bb opt]
+
+  (let [^String encoding
+        (get-server-encoding opt)
+
+        buf
+        (bb/read-rest bb)
+
+        server-final-message
+        (new String buf encoding)]
+
+    {:msg :AuthenticationSASLFinal
+     :status 12
+     :server-final-message server-final-message}))
+
+
 (defn parse-AuthenticationResponse [bb opt]
 
   (let [status (bb/read-int32 bb)]
@@ -90,6 +123,12 @@
 
       10
       (parse-AuthenticationSASL bb opt)
+
+      11
+      (parse-AuthenticationSASLContinue bb opt)
+
+      12
+      (parse-AuthenticationSASLFinal bb opt)
 
       ;; else
 
@@ -390,6 +429,11 @@
 
     \t
     (parse-ParameterDescription bb opt)
+
+
+
+
+
 
     ;; else
 
@@ -725,46 +769,51 @@
    :row-count row-count})
 
 
-(defn make-SASLResponse [^bytes payload]
+(defn make-SASLResponse [^String client-final-message]
   {:msg :SASLResponse
-   :payload payload})
-
-
-;; AuthenticationSASLContinue
-;; AuthenticationSASLFinal
+   :client-final-message client-final-message})
 
 
 (defn encode-SASLResponse
-  [{:keys [^bytes payload]} opt]
-
-  (let [len (+ 4 (alength payload))]
-
-    (doto (bb/allocate len)
-      (bb/write-byte \p)
-      (bb/write-int32 4)
-      (bb/write-bytes payload))))
-
-
-(defn make-SASLInitialResponse [^String sasl-type
-                                ^String response]
-  {:msg :SASLInitialResponse
-   :sasl-type sasl-type
-   :response response})
-
-
-(defn encode-SASLInitialResponse
-  [{:keys [^String sasl-type
-           ^String response]} opt]
+  [{:keys [^String client-final-message]}
+   opt]
 
   (let [^String encoding
         (get-client-encoding opt)
 
         buf
-        (when response
-          (.getBytes response encoding))
+        (.getBytes client-final-message encoding)
+
+        out
+        (doto (out/create)
+          (out/write-bytes buf))]
+
+    (to-bb \p out)))
+
+
+;; AuthenticationSASLFinal
+
+
+(defn make-SASLInitialResponse [^String sasl-type
+                                ^String client-first-message]
+  {:msg :SASLInitialResponse
+   :sasl-type sasl-type
+   :client-first-message client-first-message})
+
+
+(defn encode-SASLInitialResponse
+  [{:keys [^String sasl-type
+           ^String client-first-message]} opt]
+
+  (let [^String encoding
+        (get-client-encoding opt)
+
+        buf
+        (when client-first-message
+          (.getBytes client-first-message encoding))
 
         len
-        (if response
+        (if client-first-message
           (alength buf)
           -1)
 

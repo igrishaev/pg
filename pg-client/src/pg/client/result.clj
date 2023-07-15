@@ -63,8 +63,7 @@
       (merge (remap-as init))
       (assoc :I 0
              :phase phase
-             :errors (new ArrayList)
-             :exceptions (new ArrayList))))
+             :errors (new ArrayList))))
 
 
 (defn handle-ReadyForQuery
@@ -178,13 +177,48 @@
     (handle-SCRAM_SHA_256 result conn AuthenticationSASL)
 
     :else
-    (throw (ex-info "AAAAA" {}))))
+    (let [msg
+          (format "None of the SASL authentication types is supported: %s"
+                  sasl-types)]
+      (throw (ex-info msg {:sasl-types sasl-types})))))
+
+
+(defn handle-AuthenticationSASLContinue
+  [{:as result :keys [SASL]}
+   conn
+   {:keys [server-first-message]}]
+
+  (let [SASL
+        (-> SASL
+            (scram-sha-256/step2-server-first-message server-first-message)
+            (scram-sha-256/step3-client-final-message))
+
+        {:keys [client-final-message]}
+        SASL
+
+        msg
+        (msg/make-SASLResponse client-final-message)]
+
+    (conn/send-message conn msg)
+    (assoc result :SASL SASL)))
+
+
+(defn handle-AuthenticationSASLFinal
+  [{:as result :keys [SASL]}
+   conn
+   {:keys [server-final-message]}]
+
+  (-> SASL
+      (scram-sha-256/step4-server-final-message server-final-message)
+      (scram-sha-256/step5-verify-server-signatures))
+
+  (dissoc result :SASL))
 
 
 (defn handle-Exception
-  [{:as result :keys [^List exceptions]} e]
-  (.add exceptions e)
-  result)
+  [result conn e]
+  (conn/terminate conn)
+  (throw e))
 
 
 (defn make-Keys
@@ -327,6 +361,12 @@
     :AuthenticationSASL
     (handle-AuthenticationSASL result conn message)
 
+    :AuthenticationSASLContinue
+    (handle-AuthenticationSASLContinue result conn message)
+
+    :AuthenticationSASLFinal
+    (handle-AuthenticationSASLFinal result conn message)
+
     :BackendKeyData
     (handle-BackendKeyData result conn message)
 
@@ -419,16 +459,9 @@
       (throw (ex-info "ErrorResponse" {:error error})))))
 
 
-(defn finalize-exeptions! [{:keys [^List exceptions]}]
-  (when-not (.isEmpty exceptions)
-    (let [e (.get exceptions 0)]
-      (throw e))))
-
-
 (defn finalize [{:as result :keys [phase]}]
 
   (finalize-errors! result)
-  (finalize-exeptions! result)
 
   (case phase
 
@@ -464,7 +497,7 @@
               (try
                 (handle result conn message)
                 (catch Throwable e
-                  (handle-Exception result e)))]
+                  (handle-Exception result conn e)))]
 
           (if (enough? phase msg)
             result
