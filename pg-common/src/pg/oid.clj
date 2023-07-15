@@ -422,4 +422,4 @@
 
 
 (defn value->oid [value]
-  (get Type->oid (type value)))
+  (get Type->oid (type value) 0))

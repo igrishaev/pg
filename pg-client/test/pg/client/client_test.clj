@@ -818,6 +818,24 @@ drop table %1$s;
       (is (= [{:obj {:foo 123}}] res)))))
 
 
+(deftest test-client-json-write
+  (api/with-connection [conn CONFIG]
+    (let [res
+          (api/execute conn
+                       ["select $1::json as obj" {:foo 123}]
+                       {:fn-result first})]
+      (is (= {:obj {:foo 123}} res)))))
+
+
+(deftest test-client-jsonb-write
+  (api/with-connection [conn CONFIG]
+    (let [res
+          (api/execute conn
+                       ["select $1::jsonb as obj" [1 2 [true {:foo 1}]]]
+                       {:fn-result first})]
+      (is (= '{:obj (1 2 [true {:foo 1}])} res)))))
+
+
 (deftest test-client-default-oid-long
   (api/with-connection [conn CONFIG]
     (let [res (api/execute conn ["select $1 as foo" 42])]
@@ -934,7 +952,16 @@ drop table %1$s;
       (let [result
             (api/close-statement conn statement)]
 
-        (is (nil? result))))))
+        (is (nil? result))
+
+        (try
+          (api/execute-statement conn statement)
+          (is false)
+          (catch Exception e
+            (is (= "ErrorResponse" (ex-message e)))
+            (is (re-matches
+                 #"prepared statement (.+?) does not exist"
+                 (-> e ex-data :error :errors :message)))))))))
 
 
 (deftest test-execute-row-limit
@@ -1048,8 +1075,5 @@ drop table %1$s;
              opt)))))
 
 
-;; test-client-json-write
-;; test-client-jsonb-write
-;; test reuse statement after closing
 ;; Date date
 ;; time, timetz
