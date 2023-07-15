@@ -67,6 +67,17 @@
   (.get state "pid"))
 
 
+(defn set-closed
+  [{:as conn :keys [^Map state]}]
+  (.put state "closed" true)
+  conn)
+
+
+(defn get-closed
+  [{:as conn :keys [^Map state]}]
+  (.get state "closed"))
+
+
 (defn set-secret-key
   [{:as conn :keys [^Map state]}
    ^Integer secret-key]
@@ -148,6 +159,7 @@
   [{:as conn :keys [^SocketChannel ch]}]
   (send-message conn (msg/make-Terminate))
   (.close ch)
+  (set-closed conn)
   conn)
 
 

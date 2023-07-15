@@ -405,6 +405,12 @@
         (is (= "Clojure" param))))))
 
 
+(deftest test-terminate-closed
+  (api/with-connection [conn CONFIG]
+    (api/terminate conn)
+    (is (api/closed? conn))))
+
+
 (deftest test-client-prepare
 
   (api/with-connection [conn CONFIG]

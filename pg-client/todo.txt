@@ -7,6 +7,8 @@
 - pool todos
 - pool tests
 - unify constants
+- pool component
+- conn component
 
 - Statement closeable
 - test md5 auth

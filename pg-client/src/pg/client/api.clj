@@ -66,6 +66,10 @@
   conn)
 
 
+(defn closed? [conn]
+  (conn/get-closed conn))
+
+
 (defn connect ^Connection [^Map config]
   (-> config
       (conn/connect)
@@ -73,7 +77,8 @@
 
 
 (defn terminate [conn]
-  (conn/terminate conn))
+  (when-not (closed? conn)
+    (conn/terminate conn)))
 
 
 (defmacro with-connection
