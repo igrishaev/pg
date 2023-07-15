@@ -467,7 +467,7 @@
     (finalize-query result)))
 
 
-(defn enough? [phase msg]
+(defn enough? [phase {:keys [msg]}]
   (or (identical? msg :ReadyForQuery)
       (and (identical? phase :auth)
            (identical? msg :ErrorResponse))))
@@ -484,12 +484,12 @@
 
     (loop [result (make-result phase init)]
 
-      (let [{:as message :keys [msg]}
+      (let [message
             (conn/read-message conn)
 
             result
             (handle result conn message)]
 
-        (if (enough? phase msg)
+        (if (enough? phase message)
           result
           (recur result)))))))
