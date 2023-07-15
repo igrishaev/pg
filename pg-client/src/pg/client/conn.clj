@@ -151,7 +151,8 @@
 
 
 (defn send-password [conn ^String password]
-  (send-message (msg/make-PasswordMessage password))
+  (let [msg (msg/make-PasswordMessage password)]
+    (send-message conn msg))
   conn)
 
 

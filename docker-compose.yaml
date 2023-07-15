@@ -11,9 +11,7 @@ services:
     ports:
       - "35432:5432"
     volumes:
-      - ./.docker/postgres/data:/var/lib/postgresql/data
       - ./.docker/postgres/initdb.d:/docker-entrypoint-initdb.d
-      - ./pg_hba.conf:/var/lib/postgresql/pg_hba.conf
     environment:
       - POSTGRES_DB=test
       - POSTGRES_PASSWORD=test

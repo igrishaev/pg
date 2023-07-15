@@ -126,15 +126,7 @@
          (with-redefs [pg.decode.txt/-decode
                        (fn [& _]
                          (throw (new Exception "boom")))]
-           (api/execute conn "select 1 as foo"))))
-
-    ;; TODO: fix exceptions
-
-    #_
-    (let [result
-          (api/execute conn "select 2 as bar")]
-
-      (is (= [{:bar 2}] result)))))
+           (api/execute conn "select 1 as foo"))))))
 
 
 (deftest test-client-reuse-conn
