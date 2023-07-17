@@ -1,7 +1,5 @@
 
 ;; TODO
-;; to-string
-;; print-method
 ;; stats methods
 ;; conn id gensym
 ;; tests
@@ -14,34 +12,25 @@
   Links:
   - https://github.com/psycopg/psycopg2/blob/master/lib/pool.py
   "
-
   (:require
    [clojure.tools.logging :as log]
    [pg.client.api :as api])
   (:import
-
    java.util.ArrayDeque
-
+   java.io.Writer
    java.io.Closeable
-   java.util.ArrayList
    java.util.HashMap
    java.util.List
-   java.util.Map
-   java.util.concurrent.ArrayBlockingQueue
-   java.util.concurrent.BlockingQueue
-   java.util.concurrent.TimeUnit))
+   java.util.Map))
 
 
-
-#_
-{:-conn-free 123
- :-conn-used 123
- }
-
+(defn -connect [{:keys [pg-config]}]
+  (let [conn (api/connect pg-config)]
+    (log/debugf "a new connection created: %s" (api/id conn))
+    conn))
 
 
-(defn -initiate [{:as pool :keys [pg-config
-                                  min-size
+(defn -initiate [{:as pool :keys [min-size
                                   sentinel
                                   ^ArrayDeque conns-free]}]
 
@@ -49,9 +38,11 @@
 
     (loop [i 0]
       (when-not (= i min-size)
-        (let [conn (api/connect pg-config)]
+        (let [conn (-connect pool)]
           (.offer conns-free conn)
-          (recur (inc i)))))))
+          (recur (inc i)))))
+
+    pool))
 
 
 (defn -conn-expired? [{:keys [ms-lifetime]} conn]
@@ -61,8 +52,7 @@
 
 
 (defn -borrow-connection
-  [{:as pool :keys [pg-config
-                    max-size
+  [{:as pool :keys [max-size
                     sentinel
                     ^ArrayDeque conns-free
                     ^Map conns-used]}]
@@ -82,11 +72,12 @@
 
           (do
             (log/debugf "connection %s has been acquired" (api/id conn))
+            (.put conns-used (api/id conn) conn)
             conn))
 
         (if (< (.size conns-used) max-size)
 
-          (let [conn (api/connect pg-config)]
+          (let [conn (-connect pool)]
             (log/debugf "a new connection %s has been created" (api/id conn))
             (.put conns-used (api/id conn) conn)
             conn)
@@ -105,9 +96,11 @@
 
   (locking sentinel
 
-    (let [id (api/id conn)]
+    (let [id
+          (api/id conn)]
 
-      (.remove conns-used id)
+      (when-not (.remove conns-used id)
+        (log/warnf "connection %s does not present in used connections" id))
 
       (cond
 
@@ -138,30 +131,40 @@
           (.offer conns-free conn))))))
 
 
+(defn set-closed [{:as pool :keys [^Map state]}]
+  (.put state "closed" true)
+  pool)
+
+
+(defn closed? [{:as pool :keys [^Map state]}]
+  (.get state "closed"))
+
+
 (defn terminate [{:as pool :keys [sentinel
                                   ^ArrayDeque conns-free
                                   ^Map conns-used]}]
 
   (locking sentinel
 
-    ;; terminate free connections
-    (loop []
-      (when-let [conn (.poll conns-free)]
-        (log/debugf "...")
-        (api/terminate conn)
-        (recur)))
+    (when-not (closed? pool)
 
-    ;; terminate used connections
-    (doseq [conn (vals conns-used)]
-      (log/debugf "...")
-      (api/terminate conn))
+      (log/debug "terminating the pool...")
 
-    ;; set closed?
-    )
+      (loop []
+        (when-let [conn (.poll conns-free)]
+          (log/debugf "terminating connection %s" (api/id conn))
+          (api/terminate conn)
+          (recur)))
 
-  pool)
+      (doseq [conn (vals conns-used)]
+        (log/debugf "terminating connection %s" (api/id conn))
+        (api/terminate conn))
 
+      (set-closed pool)
 
+      (log/debug "pool termination done")
+
+      pool)))
 
 
 (defrecord Pool [^Map pg-config
@@ -170,7 +173,23 @@
                  ^Long ms-lifetime
                  ^Object sentinel
                  ^ArrayDeque conns-free
-                 ^Map conns-used])
+                 ^Map conns-used
+                 ^Map state]
+
+  Object
+
+  (toString [_]
+    (locking sentinel
+      (format "< PG pool, min: %s, max: %s, free: %s, used: %s, lifetime: %s ms >"
+              min-size max-size
+              (.size conns-free)
+              (.size conns-used)
+              ms-lifetime))))
+
+
+(defmethod print-method Pool
+  [conn ^Writer w]
+  (.write w (str conn)))
 
 
 (def pool-defaults
@@ -193,184 +212,28 @@
          {:keys [min-size
                  max-size
                  ms-lifetime]}
-         pool-config+]
+         pool-config+
 
-     (new Pool
-          pg-config
-          min-size
-          max-size
-          ms-lifetime
-          (new Object)
-          (new ArrayDeque)
-          (new HashMap)))))
+         pool
+         (new Pool
+              pg-config
+              min-size
+              max-size
+              ms-lifetime
+              (new Object)
+              (new ArrayDeque)
+              (new HashMap)
+              (new HashMap))]
 
-
-
-
-
-#_
-(defprotocol IPool
-
-  (new-conn [this])
-
-  (term-conn [this conn])
-
-  (idle-size [this])
-
-  (idle-full? [this])
-
-  (idle-empty? [this])
-
-  (busy-size [this])
-
-  (busy-full? [this])
-
-  (busy-empty? [this])
-
-  (poll-conn [this])
-
-  (push-conn [this conn])
-
-  (conn-expired? [this conn])
-
-  (borrow-connection [this])
-
-  (return-connection [this conn e])
-
-  (terminate [this]))
+     (-initiate pool))))
 
 
-#_
-(deftype Pool
-    [^Map -pg-config
-     ^Long -size
-     ^Long -lifetime
-     ^Long -timeout
-     ^Object -sentinel
-     ^BlockingQueue -conns-idle
-     ^Map -conns-busy]
-
-    IPool
-
-    (new-conn [this]
-      (let [conn (api/connect -pg-config)]
-        (log/debugf "a new connection has been created: %s/%s"
-                    (api/id conn) (api/created-at conn))
-        conn))
-
-    (term-conn [this conn]
-      (log/debugf "connection %s/%s has been terminated"
-                  (api/id conn) (api/created-at conn))
-      (api/terminate conn)
-      nil)
-
-    (conn-expired? [this conn]
-      (> (- (System/currentTimeMillis)
-            (api/created-at conn))
-         -lifetime))
-
-    (idle-size [this]
-      (.size -conns-idle))
-
-    (idle-full? [this]
-      (>= (idle-size this) -size))
-
-    (idle-empty? [this]
-      (zero? (idle-size this)))
-
-    (busy-size [this]
-      (.size -conns-busy))
-
-    (busy-full? [this]
-      (>= (busy-size this) -size))
-
-    (busy-empty? [this]
-      (zero? (busy-size this)))
-
-    (poll-conn [this]
-      (loop []
-        (or (.poll -conns-idle
-                   -timeout
-                   TimeUnit/MILLISECONDS)
-            (recur))))
-
-    (push-conn [this conn]
-      (loop []
-        (or (.offer -conns-idle
-                    conn
-                    -timeout
-                    TimeUnit/MILLISECONDS)
-            (recur))))
-
-    (borrow-connection [this]
-
-      (locking -sentinel
-
-        (let [new?
-              (and (idle-empty? this)
-                   (not (busy-full? this)))
-
-              conn
-              (if new?
-                (new-conn this)
-                (let [conn (poll-conn this)]
-                  (if (conn-expired? this conn)
-                    (do
-                      (term-conn this conn)
-                      (new-conn this)))
-                  conn))]
-
-          (.put -conns-busy (api/id conn) conn)
-
-          conn)))
-
-    (return-connection [this conn e]
-
-      (locking -sentinel
-
-        (.remove -conns-busy (api/id conn))
-
-        (let [term?
-              (or e
-                  (conn-expired? this conn)
-                  (idle-full? this))]
-
-          (if term?
-            (term-conn this conn)
-            (push-conn this conn)))
-
-        nil))
-
-    (terminate [this]
-
-      (log/debugf "terminating the pool...")
-
-      (let [array (new ArrayList)]
-        (.drainTo -conns-idle array)
-
-        (doseq [conn array]
-          (term-conn this conn)))
-
-      (doseq [conn (vals -conns-busy)]
-        (term-conn this conn))
-
-      (log/debugf "the pool gas been terminated")
-
-      nil)
-
-    Closeable
-
-    (close [this]
-      (terminate this)))
-
-
-#_
 (defmacro with-connection [[bind pool] & body]
   `(let [pool#
          ~pool
 
          ~bind
-         (borrow-connection pool#)
+         (-borrow-connection pool#)
 
          ^List pair#
          (try
@@ -386,60 +249,23 @@
 
      (if e#
        (do
-         (return-connection pool# ~bind e#)
+         (-return-connection pool# ~bind e#)
          (throw e#))
        (do
-         (return-connection pool# ~bind nil)
+         (-return-connection pool# ~bind nil)
          result#))))
 
 
-#_
-(def pool-defaults
-  {:size 4
-   :lifetime (* 1000 60 60 1)
-   :timeout (* 1000 2)})
-
-
-#_
-(defn make-pool
-
-  (^Pool [pg-config]
-   (make-pool pg-config nil))
-
-  (^Pool [pg-config pool-config]
-
-   (let [pool-config+
-         (merge pool-defaults pool-config)
-
-         {:keys [size
-                 lifetime
-                 timeout]}
-         pool-config+
-
-         pool
-         (new Pool
-              pg-config
-              size
-              lifetime
-              timeout
-              (new Object)
-              (new ArrayBlockingQueue size)
-              (new HashMap))]
-
-     (log/debugf "a new PG connection pool has been created")
-
-     pool)))
-
-
-#_
-(defmacro with-pool [[bind pg-config pool-config]
-                     & body]
+(defmacro with-pool
+  [[bind pg-config pool-config] & body]
 
   `(let [~bind (make-pool ~pg-config ~pool-config)]
      (try
        ~@body
        (finally
          (terminate ~bind)))))
+
+
 
 
 #_
@@ -454,6 +280,7 @@
 
   (with-pool [pool PG_CONFIG]
     (with-connection [conn pool]
-      (api/query conn "select 1 as one")))
+      (api/execute conn "select 1 as one")
+      (println pool)))
 
   )
