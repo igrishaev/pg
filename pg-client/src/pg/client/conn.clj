@@ -1,7 +1,6 @@
 (ns pg.client.conn
   (:import
    java.io.Closeable
-   java.util.UUID
    java.io.Writer
    java.io.Closeable
    java.nio.channels.SocketChannel
@@ -332,7 +331,7 @@
 
 
 (defrecord Connection
-    [^UUID id
+    [^String id
      ^Long created-at
      ^Map config
      ^InetSocketAddress addr
@@ -378,11 +377,17 @@
         (new java.net.InetSocketAddress host port)
 
         ch
-        (SocketChannel/open addr)]
+        (SocketChannel/open addr)
+
+        id
+        (gensym "pg")
+
+        created-at
+        (System/currentTimeMillis)]
 
     (new Connection
-         (UUID/randomUUID)
-         (System/currentTimeMillis)
+         id
+         created-at
          config-full
          addr
          ch

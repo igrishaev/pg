@@ -1,7 +1,6 @@
 
 ;; TODO
 ;; stats methods
-;; conn id gensym
 ;; tests
 
 (ns pg.pool
