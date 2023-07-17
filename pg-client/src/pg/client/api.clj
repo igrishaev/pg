@@ -1,5 +1,6 @@
 (ns pg.client.api
   (:require
+   [pg.client.const :as const]
    [pg.client.conn :as conn]
    [pg.client.func :as func]
    [pg.client.result :as res]
@@ -13,6 +14,18 @@
 
 (defn status [conn]
   (conn/get-tx-status conn))
+
+
+(defn idle? [conn]
+  (= (status conn) const/TX_IDLE))
+
+
+(defn in-transaction? [conn]
+  (= (status conn) const/TX_TRANSACTION))
+
+
+(defn tx-error? [conn]
+  (= (status conn) const/TX_ERROR))
 
 
 (defn get-parameter
