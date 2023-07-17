@@ -4,6 +4,7 @@
 - test binary decode
 - add docstrings, arglists
 - unify execute function
+- refactor pool
 - pool todos
 - pool tests
 - unify constants
