@@ -1,8 +1,3 @@
-
-;; TODO
-;; stats methods
-;; tests
-
 (ns pg.pool
 
   "
@@ -77,7 +72,6 @@
         (if (< (.size conns-used) max-size)
 
           (let [conn (-connect pool)]
-            (log/debugf "a new connection %s has been created" (api/id conn))
             (.put conns-used (api/id conn) conn)
             conn)
 
@@ -130,13 +124,26 @@
           (.offer conns-free conn))))))
 
 
-(defn set-closed [{:as pool :keys [^Map state]}]
+(defn -set-closed [{:as pool :keys [^Map state]}]
   (.put state "closed" true)
   pool)
 
 
 (defn closed? [{:as pool :keys [^Map state]}]
   (.get state "closed"))
+
+
+(defn stats [{:as pool :keys [min-size
+                              max-size
+                              sentinel
+                              ^ArrayDeque conns-free
+                              ^Map conns-used]}]
+  (locking sentinel
+
+    {:min-size min-size
+     :max-size max-size
+     :free (.size conns-free)
+     :used (.size conns-used)}))
 
 
 (defn terminate [{:as pool :keys [sentinel
@@ -159,7 +166,7 @@
         (log/debugf "terminating connection %s" (api/id conn))
         (api/terminate conn))
 
-      (set-closed pool)
+      (-set-closed pool)
 
       (log/debug "pool termination done")
 

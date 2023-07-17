@@ -9,6 +9,7 @@
 - unify constants
 - pool component
 - conn component
+- pg.client.api => pg.client
 
 - Statement closeable
 - docker: init script (uuid)
