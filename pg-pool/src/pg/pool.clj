@@ -24,19 +24,7 @@
     conn))
 
 
-(defn -initiate [{:as pool :keys [min-size
-                                  sentinel
-                                  ^ArrayDeque conns-free]}]
 
-  (locking sentinel
-
-    (loop [i 0]
-      (when-not (= i min-size)
-        (let [conn (-connect pool)]
-          (.offer conns-free conn)
-          (recur (inc i)))))
-
-    pool))
 
 
 (defn -conn-expired? [{:keys [ms-lifetime]} conn]
@@ -124,13 +112,32 @@
           (.offer conns-free conn))))))
 
 
-(defn -set-closed [{:as pool :keys [^Map state]}]
-  (.put state "closed" true)
+(defn -set-started [{:as pool :keys [^Map state]} flag]
+  (.put state "started" flag)
   pool)
 
 
-(defn closed? [{:as pool :keys [^Map state]}]
-  (.get state "closed"))
+(defn started? [{:as pool :keys [^Map state]}]
+  (.get state "started"))
+
+
+(defn initiate [{:as pool :keys [min-size
+                                 sentinel
+                                 ^ArrayDeque conns-free]}]
+
+  (locking sentinel
+
+    (when-not (started? pool)
+
+      (loop [i 0]
+        (when-not (= i min-size)
+          (let [conn (-connect pool)]
+            (.offer conns-free conn)
+            (recur (inc i))))))
+
+    (-set-started pool true)
+
+    pool))
 
 
 (defn stats [{:as pool :keys [min-size
@@ -152,7 +159,7 @@
 
   (locking sentinel
 
-    (when-not (closed? pool)
+    (when (started? pool)
 
       (log/debug "terminating the pool...")
 
@@ -166,9 +173,9 @@
         (log/debugf "terminating connection %s" (api/id conn))
         (api/terminate conn))
 
-      (-set-closed pool)
-
       (log/debug "pool termination done")
+
+      (-set-started pool false)
 
       pool)))
 
@@ -190,7 +197,12 @@
               min-size max-size
               (.size conns-free)
               (.size conns-used)
-              ms-lifetime))))
+              ms-lifetime)))
+
+  Closeable
+
+  (close [this]
+    (terminate this)))
 
 
 (defmethod print-method Pool
@@ -204,34 +216,35 @@
    :ms-lifetime (* 1000 60 60 1)})
 
 
+(defn -init-pool [pg-config pool-config]
+
+  (let [pool-config+
+        (merge pool-defaults
+               pool-config)
+
+        {:keys [min-size
+                max-size
+                ms-lifetime]}
+        pool-config+]
+
+    (new Pool
+         pg-config
+         min-size
+         max-size
+         ms-lifetime
+         (new Object)
+         (new ArrayDeque)
+         (new HashMap)
+         (new HashMap))))
+
+
 (defn make-pool
 
   ([pg-config]
    (make-pool pg-config nil))
 
   ([pg-config pool-config]
-
-   (let [pool-config+
-         (merge pool-defaults
-                pool-config)
-
-         {:keys [min-size
-                 max-size
-                 ms-lifetime]}
-         pool-config+
-
-         pool
-         (new Pool
-              pg-config
-              min-size
-              max-size
-              ms-lifetime
-              (new Object)
-              (new ArrayDeque)
-              (new HashMap)
-              (new HashMap))]
-
-     (-initiate pool))))
+   (initiate (-init-pool pg-config pool-config))))
 
 
 (defmacro with-connection [[bind pool] & body]
@@ -271,6 +284,16 @@
        (finally
          (terminate ~bind)))))
 
+
+(defn component
+  ([pg-config]
+   (component pg-config nil))
+
+  ([pg-config pool-config]
+
+   (with-meta (-init-pool pg-config pool-config)
+     {'com.stuartsierra.component/start initiate
+      'com.stuartsierra.component/stop terminate})))
 
 
 

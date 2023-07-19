@@ -209,3 +209,7 @@
 
       (is (= @id1 @id2))
       (is (not= @id2 @id3)))))
+
+
+;; test component
+;; test closeable

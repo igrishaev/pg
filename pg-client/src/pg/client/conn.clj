@@ -2,7 +2,6 @@
   (:import
    java.io.Closeable
    java.io.Writer
-   java.io.Closeable
    java.nio.channels.SocketChannel
    java.net.InetSocketAddress
    java.nio.ByteBuffer
