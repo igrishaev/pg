@@ -1,7 +1,8 @@
 (ns pg.pool
-
   "
-  A simple, naive connection pool.
+  A simple, non-blocking connection pool.
+  It would throw an exception when being exhausted
+  (out of free connections).
 
   Links:
   - https://github.com/psycopg/psycopg2/blob/master/lib/pool.py
@@ -10,9 +11,9 @@
    [clojure.tools.logging :as log]
    [pg.client.api :as api])
   (:import
-   java.util.ArrayDeque
-   java.io.Writer
    java.io.Closeable
+   java.io.Writer
+   java.util.ArrayDeque
    java.util.HashMap
    java.util.List
    java.util.Map))
@@ -22,9 +23,6 @@
   (let [conn (api/connect pg-config)]
     (log/debugf "a new connection created: %s" (api/id conn))
     conn))
-
-
-
 
 
 (defn -conn-expired? [{:keys [ms-lifetime]} conn]
