@@ -173,9 +173,9 @@
 
       (log/debug "pool termination done")
 
-      (-set-started pool false)
+      (-set-started pool false))
 
-      pool)))
+    pool))
 
 
 (defrecord Pool [^Map pg-config

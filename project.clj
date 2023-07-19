@@ -61,11 +61,13 @@
    [com.github.igrishaev/pg-joda-time :version]
    [com.github.igrishaev/pg-json :version]
    [com.github.igrishaev/pg-client :version]
+
    [joda-time/joda-time "2.12.5"]
    [com.github.seancorfield/next.jdbc "1.2.796"]
    [org.postgresql/postgresql "42.2.18"]
    [org.clojure/tools.logging "1.2.4"]
    [ch.qos.logback/logback-classic "1.4.5"]
+   [com.stuartsierra/component "1.1.0"]
    [cheshire "5.11.0"]]
 
   :profiles

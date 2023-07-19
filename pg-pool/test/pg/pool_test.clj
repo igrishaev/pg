@@ -1,5 +1,6 @@
 (ns pg.pool-test
   (:require
+   [com.stuartsierra.component :as component]
    [clojure.test :refer [is deftest]]
    [pg.pool :as pool]
    [pg.client.api :as api]))
@@ -211,7 +212,70 @@
       (is (not= @id2 @id3)))))
 
 
-;; test component
+(deftest test-pool-component
+
+  (let [c
+        (pool/component PG_CONFIG)
+
+        _
+        (is (not (pool/started? c)))
+
+        stats1
+        (pool/stats c)
+
+        c-started
+        (component/start c)
+
+        _
+        (is (pool/started? c-started))
+
+        stats2
+        (pool/stats c-started)]
+
+    (is (= {:min-size 2 :max-size 8 :free 0 :used 0}
+           stats1))
+
+    (is (= {:min-size 2 :max-size 8 :free 2 :used 0}
+           stats2))
+
+    (pool/with-connection [conn c-started]
+      (let [res (api/execute conn "select 1 as one")]
+        (is (= [{:one 1}] res))))
+
+    (let [c-stopped
+          (component/stop c-started)
+
+          stats3
+          (pool/stats c-stopped)]
+
+      (is (not (pool/started? c-stopped)))
+
+      (is (= {:min-size 2 :max-size 8 :free 0 :used 0}
+             stats3)))))
+
+
+(deftest test-pool-component-redundant-start
+
+  (let [c-started
+        (-> (pool/component PG_CONFIG)
+            (component/start)
+            (component/start)
+            (component/start))]
+
+    (pool/with-connection [conn c-started]
+      (let [res (api/execute conn "select 1 as one")]
+        (is (= [{:one 1}] res))))
+
+    (let [c-stopped
+          (-> c-started
+              (component/stop)
+              (component/stop)
+              (component/stop))]
+
+      (is (not (pool/started? c-stopped))))))
+
+
 ;; test closeable
 ;; test if conn is closed
 ;; test reuse closed conn
+;; test reuse closed pool
