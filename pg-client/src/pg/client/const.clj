@@ -12,9 +12,9 @@
 
 (def CANCEL_CODE 80877102)
 
-(def TX_ERROR \E)
-(def TX_TRANSACTION \T)
-(def TX_IDLE \I)
+(def TX_ERROR :E)
+(def TX_TRANSACTION :T)
+(def TX_IDLE :I)
 
 (def SSL_CODE 80877103)
 

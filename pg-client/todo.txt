@@ -1,13 +1,11 @@
 
+- pool component
 - complete the tests
 - test binary encode
 - test binary decode
 - add docstrings, arglists
 - unify execute function
-- pool todos
-- pool tests
 - unify constants
-- pool component
 - conn component
 - pg.client.api => pg.client
 

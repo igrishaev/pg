@@ -24,4 +24,5 @@
   :profiles
   {:test
    {:dependencies
-    [[ch.qos.logback/logback-classic]]}})
+    [[ch.qos.logback/logback-classic]
+     [com.github.igrishaev/pg-json]]}})

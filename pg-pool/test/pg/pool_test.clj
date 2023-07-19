@@ -144,5 +144,68 @@
       (is (not= @id1 @id3)))))
 
 
-;; test error state
-;; test transaction state
+(deftest test-pool-in-transaction-state
+  (pool/with-pool [pool PG_CONFIG {:min-size 1
+                                   :max-size 1}]
+
+    (let [id1
+          (promise)
+
+          id2
+          (promise)
+
+          id3
+          (promise)
+
+          id4
+          (promise)]
+
+      (pool/with-connection [conn pool]
+        (deliver id1 (api/id conn)))
+
+      (pool/with-connection [conn pool]
+        (deliver id2 (api/id conn)))
+
+      (pool/with-connection [conn pool]
+        (api/begin conn)
+        (deliver id3 (api/id conn))
+        (is (api/in-transaction? conn)))
+
+      (pool/with-connection [conn pool]
+        (is (api/idle? conn))
+        (deliver id4 (api/id conn)))
+
+      (is (= @id1 @id2 @id3 @id4)))))
+
+
+(deftest test-pool-in-error-state
+  (pool/with-pool [pool PG_CONFIG {:min-size 1
+                                   :max-size 1}]
+
+    (let [id1
+          (promise)
+
+          id2
+          (promise)
+
+          id3
+          (promise)]
+
+      (pool/with-connection [conn pool]
+        (deliver id1 (api/id conn)))
+
+      (pool/with-connection [conn pool]
+        (api/begin conn)
+        (try
+          (api/execute conn "selekt 42")
+          (is false)
+          (catch Exception e
+            (is (api/tx-error? conn))))
+        (deliver id2 (api/id conn)))
+
+      (pool/with-connection [conn pool]
+        (is (api/idle? conn))
+        (deliver id3 (api/id conn)))
+
+      (is (= @id1 @id2))
+      (is (not= @id2 @id3)))))

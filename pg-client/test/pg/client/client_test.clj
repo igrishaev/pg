@@ -40,6 +40,8 @@
 
     (is (= :I (api/status conn)))
 
+    (is (api/idle? conn))
+
     (api/execute conn "select 1")
 
     (is (= :I (api/status conn)))
@@ -48,12 +50,16 @@
 
     (is (= :T (api/status conn)))
 
+    (is (api/in-transaction? conn))
+
     (try
       (api/execute conn "selekt 1")
       (catch Exception _
         nil))
 
     (is (= :E (api/status conn)))
+
+    (is (api/tx-error? conn))
 
     (api/rollback conn)
 
