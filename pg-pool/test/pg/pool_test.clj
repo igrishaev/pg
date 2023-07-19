@@ -213,3 +213,5 @@
 
 ;; test component
 ;; test closeable
+;; test if conn is closed
+;; test reuse closed conn
