@@ -1,12 +1,11 @@
 
-- complete pool tests
 - complete the tests
 - test binary encode
 - test binary decode
 - add docstrings, arglists
 - unify execute function
 - unify constants
-- conn component
+- conn component?
 - pg.client.api => pg.client
 
 - encode/decode rename extend

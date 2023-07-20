@@ -1088,6 +1088,13 @@ drop table %1$s;
       (is (= [{:eq true}] res)))))
 
 
+(deftest test-empty-select
+  (api/with-connection [conn CONFIG]
+    (let [res (api/execute conn "select")]
+      (is (= [] res)))))
+
+
 ;; Date date
 ;; time, timetz
-;; empty select
+
+;; test reuse closed conn

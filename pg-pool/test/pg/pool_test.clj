@@ -341,6 +341,3 @@
     (pool/with-connection [conn pool]
       (let [res (api/execute conn "select 1 as one")]
         (is (= [{:one 1}] res))))))
-
-
-;; test reuse closed conn

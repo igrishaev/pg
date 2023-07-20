@@ -143,7 +143,6 @@
   result)
 
 
-
 (defn handle-SCRAM_SHA_256
   [result conn AuthenticationSASL]
 
@@ -257,48 +256,50 @@
                       fn-keyval
                       fn-reduce]}
    conn
-   DataRow]
+   {:keys [^List values
+           value-count]}]
 
-  (let [encoding
-        (conn/get-server-encoding conn)
+  (if (zero? value-count)
+    result
 
-        RowDescription
-        (get-in result [:map-RowDescription I])
+    (let [encoding
+          (conn/get-server-encoding conn)
 
-        Keys
-        (get-in result [:map-Keys I])
+          RowDescription
+          (get-in result [:map-RowDescription I])
 
-        {:keys [^List values]}
-        DataRow
+          Keys
+          (get-in result [:map-Keys I])
 
-        {:keys [^List columns]}
-        RowDescription
+          {:keys [^List columns]}
+          RowDescription
 
-        opt
-        (conn/get-opt conn)
+          opt
+          (conn/get-opt conn)
 
-        values-decoded
-        (coll/for-n [i (count values)]
+          values-decoded
+          (coll/for-n [i (count values)]
 
-          (let [col
-                (.get columns i)
+            (let [col
+                  (.get columns i)
 
-                {:keys [type-oid
-                        format]}
-                col
+                  {:keys [type-oid
+                          format]}
+                  col
 
-                ^bytes buf
-                (.get values i)]
+                  ^bytes buf
+                  (.get values i)]
 
-            (case (int format)
-              0 (let [string (new String buf encoding)]
-                  (txt/decode string type-oid opt))
-              1 (bin/decode buf type-oid opt))))
+              (case (int format)
+                0 (let [string (new String buf encoding)]
+                    (txt/decode string type-oid opt))
+                1 (bin/decode buf type-oid opt))))
 
-        Row
-        (fn-keyval Keys values-decoded)]
 
-    (update-in result [:map-Rows I] fn-reduce Row)))
+          Row
+          (fn-keyval Keys values-decoded)]
+
+      (update-in result [:map-Rows I] fn-reduce Row))))
 
 
 (defn handle-CommandComplete
