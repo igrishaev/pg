@@ -99,6 +99,9 @@
           (api/rollback conn)
           (api/terminate conn))
 
+        (api/closed? conn)
+        (log/debugf "connection %s has been already closed" id)
+
         :else
         (do
 
@@ -107,7 +110,9 @@
             (api/rollback conn))
 
           (log/debugf "connection %s has been released" id)
-          (.offer conns-free conn))))))
+          (.offer conns-free conn))))
+
+    pool))
 
 
 (defn -set-started [{:as pool :keys [^Map state]} flag]
@@ -214,7 +219,7 @@
    :ms-lifetime (* 1000 60 60 1)})
 
 
-(defn -init-pool [pg-config pool-config]
+(defn -init-pool ^Pool [pg-config pool-config]
 
   (let [pool-config+
         (merge pool-defaults
@@ -238,10 +243,10 @@
 
 (defn make-pool
 
-  ([pg-config]
+  (^Pool [pg-config]
    (make-pool pg-config nil))
 
-  ([pg-config pool-config]
+  (^Pool [pg-config pool-config]
    (initiate (-init-pool pg-config pool-config))))
 
 
@@ -284,10 +289,10 @@
 
 
 (defn component
-  ([pg-config]
+  (^Pool [pg-config]
    (component pg-config nil))
 
-  ([pg-config pool-config]
+  (^Pool [pg-config pool-config]
 
    (with-meta (-init-pool pg-config pool-config)
      {'com.stuartsierra.component/start initiate

@@ -275,7 +275,55 @@
       (is (not (pool/started? c-stopped))))))
 
 
-;; test closeable
-;; test if conn is closed
+(deftest test-pool-with-open
+  (with-open [pool (pool/make-pool PG_CONFIG)]
+    (pool/with-connection [conn pool]
+      (let [res (api/execute conn "select 1 as one")]
+        (is (= [{:one 1}] res))))))
+
+
+(deftest test-pool-conn-terminated
+
+  (let [id1
+        (promise)
+
+        id2
+        (promise)
+
+        id3
+        (promise)
+
+        id4
+        (promise)
+
+        id5
+        (promise)
+
+        pool-config
+        {:min-size 0 :max-size 1}]
+
+    (with-open [pool (pool/make-pool PG_CONFIG pool-config)]
+
+      (pool/with-connection [conn pool]
+        (deliver id1 (api/id conn)))
+
+      (pool/with-connection [conn pool]
+        (api/terminate conn)
+        (deliver id2 (api/id conn)))
+
+      (pool/with-connection [conn pool]
+        (deliver id3 (api/id conn))
+        (let [res (api/execute conn "select 1 as one")]
+          (is (= [{:one 1}] res))))
+
+      (pool/with-connection [conn pool]
+        (deliver id4 (api/id conn)))
+
+      (is (= @id1 @id2))
+      (is (not= @id2 @id3))
+      (is (= @id3 @id4)))))
+
+
+
 ;; test reuse closed conn
 ;; test reuse closed pool
