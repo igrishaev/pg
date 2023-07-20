@@ -31,13 +31,13 @@
     (> ms-diff ms-lifetime)))
 
 
-(defn -set-started [{:as pool :keys [^Map state]} flag]
-  (.put state "started" flag)
+(defn -set-closed [{:as pool :keys [^Map state]} flag]
+  (.put state "closed" flag)
   pool)
 
 
-(defn started? [{:as pool :keys [^Map state]}]
-  (.get state "started"))
+(defn closed? [{:as pool :keys [^Map state]}]
+  (.get state "closed"))
 
 
 (defn -borrow-connection
@@ -48,8 +48,8 @@
 
   (locking sentinel
 
-    (when-not (started? pool)
-      (throw (ex-info "the pool has not been started" {})))
+    (when (closed? pool)
+      (throw (ex-info "the pool has been closed" {})))
 
     (loop []
 
@@ -133,15 +133,13 @@
 
   (locking sentinel
 
-    (when-not (started? pool)
+    (loop [i 0]
+      (when-not (= i min-size)
+        (let [conn (-connect pool)]
+          (.offer conns-free conn)
+          (recur (inc i)))))
 
-      (loop [i 0]
-        (when-not (= i min-size)
-          (let [conn (-connect pool)]
-            (.offer conns-free conn)
-            (recur (inc i))))))
-
-    (-set-started pool true)
+    (-set-closed pool false)
 
     pool))
 
@@ -165,7 +163,7 @@
 
   (locking sentinel
 
-    (when (started? pool)
+    (when-not (closed? pool)
 
       (log/debug "terminating the pool...")
 
@@ -181,7 +179,7 @@
 
       (log/debug "pool termination done")
 
-      (-set-started pool false))
+      (-set-closed pool true))
 
     pool))
 

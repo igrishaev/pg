@@ -218,7 +218,7 @@
         (pool/component PG_CONFIG)
 
         _
-        (is (not (pool/started? c)))
+        (is (not (pool/closed? c)))
 
         stats1
         (pool/stats c)
@@ -227,7 +227,7 @@
         (component/start c)
 
         _
-        (is (pool/started? c-started))
+        (is (not (pool/closed? c-started)))
 
         stats2
         (pool/stats c-started)]
@@ -248,7 +248,7 @@
           stats3
           (pool/stats c-stopped)]
 
-      (is (not (pool/started? c-stopped)))
+      (is (pool/closed? c-stopped))
 
       (is (= {:min-size 2 :max-size 8 :free 0 :used 0}
              stats3)))))
@@ -272,7 +272,7 @@
               (component/stop)
               (component/stop))]
 
-      (is (not (pool/started? c-stopped))))))
+      (is (pool/closed? c-stopped)))))
 
 
 (deftest test-pool-with-open
@@ -334,9 +334,13 @@
         42)
       (is false)
       (catch Exception e
-        (is (= "the pool has not been started" (ex-message e)))))))
+        (is (= "the pool has been closed" (ex-message e)))))
+
+    (pool/initiate pool)
+
+    (pool/with-connection [conn pool]
+      (let [res (api/execute conn "select 1 as one")]
+        (is (= [{:one 1}] res))))))
 
 
-;; pool refactor closed? state
 ;; test reuse closed conn
-;; test reuse closed pool
