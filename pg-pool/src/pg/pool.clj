@@ -31,6 +31,15 @@
     (> ms-diff ms-lifetime)))
 
 
+(defn -set-started [{:as pool :keys [^Map state]} flag]
+  (.put state "started" flag)
+  pool)
+
+
+(defn started? [{:as pool :keys [^Map state]}]
+  (.get state "started"))
+
+
 (defn -borrow-connection
   [{:as pool :keys [max-size
                     sentinel
@@ -38,6 +47,9 @@
                     ^Map conns-used]}]
 
   (locking sentinel
+
+    (when-not (started? pool)
+      (throw (ex-info "the pool has not been started" {})))
 
     (loop []
 
@@ -113,15 +125,6 @@
           (.offer conns-free conn))))
 
     pool))
-
-
-(defn -set-started [{:as pool :keys [^Map state]} flag]
-  (.put state "started" flag)
-  pool)
-
-
-(defn started? [{:as pool :keys [^Map state]}]
-  (.get state "started"))
 
 
 (defn initiate [{:as pool :keys [min-size

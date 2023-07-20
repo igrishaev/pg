@@ -1090,3 +1090,4 @@ drop table %1$s;
 
 ;; Date date
 ;; time, timetz
+;; empty select

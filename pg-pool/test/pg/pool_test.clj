@@ -324,6 +324,19 @@
       (is (= @id3 @id4)))))
 
 
+(deftest test-pool-termination
 
+  (pool/with-pool [pool PG_CONFIG]
+    (pool/terminate pool)
+
+    (try
+      (pool/with-connection [conn pool]
+        42)
+      (is false)
+      (catch Exception e
+        (is (= "the pool has not been started" (ex-message e)))))))
+
+
+;; pool refactor closed? state
 ;; test reuse closed conn
 ;; test reuse closed pool

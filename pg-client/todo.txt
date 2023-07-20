@@ -1,5 +1,5 @@
 
-- pool component
+- complete pool tests
 - complete the tests
 - test binary encode
 - test binary decode
@@ -9,6 +9,7 @@
 - conn component
 - pg.client.api => pg.client
 
+- encode/decode rename extend
 - Statement closeable
 - docker: init script (uuid)
 - docker: hba config for access
