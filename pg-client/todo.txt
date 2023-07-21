@@ -1,14 +1,14 @@
 
+- unify execute function
 - encode/decode datetime tests
 - test binary encode
 - test binary decode
-- complete the tests
 - add docstrings, arglists
-- unify execute function
 - unify constants
 - conn component?
 - pg.client.api => pg.client
-
+- pass pg config with envs?
+- multiple pg docker tests
 - Statement closeable
 - docker: init script (uuid)
 - docker: hba config for access
