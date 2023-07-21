@@ -11,6 +11,7 @@
    java.time.Instant
    java.time.LocalTime
    java.time.OffsetTime
+   java.time.ZonedDateTime
    java.util.Date
    java.util.Formatter
    java.util.UUID))
@@ -184,6 +185,32 @@
          OffsetTime oid/timetz]
   [value _ opt]
   (datetime/OffsetTime-time value opt))
+
+
+(expand [ZonedDateTime nil
+         ZonedDateTime oid/timestamptz]
+  [value _ opt]
+  (datetime/ZonedDateTime-timestamptz value opt))
+
+
+(expand [ZonedDateTime oid/time]
+  [value _ opt]
+  (datetime/ZonedDateTime-time value opt))
+
+
+(expand [ZonedDateTime oid/timetz]
+  [value _ opt]
+  (datetime/ZonedDateTime-timetz value opt))
+
+
+(expand [ZonedDateTime oid/timestamp]
+  [value _ opt]
+  (datetime/ZonedDateTime-timestamp value opt))
+
+
+(expand [ZonedDateTime oid/date]
+  [value _ opt]
+  (datetime/ZonedDateTime-date value opt))
 
 
 ;;

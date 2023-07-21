@@ -10,15 +10,13 @@
    java.util.Date))
 
 
-;; TODO
 (def ^DateTimeFormatter
   frmt-timestamptz
-  (-> "yyyy-MM-dd HH:mm:ss.nx"
+  (-> "yyyy-MM-dd HH:mm:ss.SSSSSSx"
       (DateTimeFormatter/ofPattern)
       (.withZone (ZoneId/of "UTC"))))
 
 
-;; TODO
 (def ^DateTimeFormatter
   frmt-date
   (-> "yyyy-MM-dd"
@@ -26,24 +24,22 @@
       (.withZone (ZoneId/of "UTC"))))
 
 
-;; TODO
 (def ^DateTimeFormatter
   frmt-timestamp
-  (-> "yyyy-MM-dd HH:mm:ss"
+  (-> "yyyy-MM-dd HH:mm:ss.SSSSSS"
       (DateTimeFormatter/ofPattern)
       (.withZone (ZoneId/of "UTC"))))
 
-;; TODO
+
 (def ^DateTimeFormatter
   frmt-timetz
-  (-> "HH:mm:ss.nx"
+  (-> "HH:mm:ss.SSSSSSx"
       (DateTimeFormatter/ofPattern)))
 
 
-;; TODO
 (def ^DateTimeFormatter
   frmt-time
-  (-> "HH:mm:ss.n"
+  (-> "HH:mm:ss.SSSSSS"
       (DateTimeFormatter/ofPattern)))
 
 
@@ -104,12 +100,17 @@
 
 (defn LocalTime-time
   [^LocalTime obj opt]
-  (str obj))
+  (.format obj frmt-time))
+
+
+(defn OffsetTime-timetz
+  [^OffsetTime obj opt]
+  (.format obj frmt-timetz))
 
 
 (defn OffsetTime-time
   [^OffsetTime obj opt]
-  (str obj))
+  (.format obj frmt-time))
 
 
 (comment

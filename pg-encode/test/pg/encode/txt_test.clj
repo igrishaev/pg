@@ -55,7 +55,7 @@
 
   (let [date (new Date 85 11 31 23 59 59)
         res (encode date)]
-    (is (= "1985-12-31 20:59:59.0+00" res)))
+    (is (= "1985-12-31 20:59:59.000000+00" res)))
 
   ;; TODO
   ;; Instant

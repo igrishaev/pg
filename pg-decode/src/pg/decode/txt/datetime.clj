@@ -11,19 +11,22 @@
    java.time.temporal.ChronoField))
 
 
-;; TODO
 (def ^DateTimeFormatter
   frmt-timestamptz
-  (-> "yyyy-MM-dd HH:mm:ss[.n]x"
-      (DateTimeFormatter/ofPattern)
+  (-> (new DateTimeFormatterBuilder)
+      (.appendPattern "yyyy-MM-dd HH:mm:ss")
+      (.appendFraction ChronoField/MICRO_OF_SECOND 0 6 true)
+      (.appendPattern "x")
+      (.toFormatter)
       (.withZone ZoneOffset/UTC)))
 
 
-;; TODO
 (def ^DateTimeFormatter
   frmt-timestamp
-  (-> "yyyy-MM-dd HH:mm:ss[.n]"
-      (DateTimeFormatter/ofPattern)))
+  (-> (new DateTimeFormatterBuilder)
+      (.appendPattern "yyyy-MM-dd HH:mm:ss")
+      (.appendFraction ChronoField/MICRO_OF_SECOND 0 6 true)
+      (.toFormatter)))
 
 
 (def ^DateTimeFormatter
@@ -36,14 +39,12 @@
       (.withZone ZoneOffset/UTC)))
 
 
-;; TODO
 (defn parse-timestampz ^Instant [^String string opt]
   (->> string
        (.parse frmt-timestamptz)
        (Instant/from)))
 
 
-;; TODO
 (defn parse-timestamp ^Instant [^String string opt]
   (let [ldt
         (->> string
@@ -52,7 +53,6 @@
     (.toInstant ldt ZoneOffset/UTC)))
 
 
-;; TODO
 (defn parse-date ^Instant [^String string opt]
   (-> string
       (LocalDate/parse)
@@ -60,12 +60,10 @@
       (.toInstant)))
 
 
-;; TODO
 (defn parse-timetz [^String string opt]
   (OffsetTime/parse string frmt-timetz))
 
 
-;; TODO
 (defn parse-time [^String string opt]
   (LocalTime/parse string))
 

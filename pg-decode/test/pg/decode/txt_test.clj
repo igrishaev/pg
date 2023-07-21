@@ -90,7 +90,7 @@
           (decode string oid/timestamptz)]
 
       (is (instance? Instant res))
-      (is (= "2023-07-10T19:25:22.000046553Z"
+      (is (= "2023-07-10T19:25:22.046553Z"
              (str res))))
 
     (let [string
@@ -124,7 +124,7 @@
           (decode string oid/timetz)]
 
       (is (instance? OffsetTime res))
-      (is (= "10:29:39.000853741+03:00"
+      (is (= "10:29:39.853741+03:00"
              (str res))))
 
     (let [string

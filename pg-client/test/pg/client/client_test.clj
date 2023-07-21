@@ -874,14 +874,14 @@ drop table %1$s;
     (let [res (api/execute conn "select '2022-01-01 23:59:59.123+03'::timestamptz as obj")
           obj (-> res first :obj)]
       (is (instance? Instant obj))
-      (is (= "2022-01-01T20:59:59.000000123Z" (str obj))))))
+      (is (= "2022-01-01T20:59:59.123Z" (str obj))))))
 
 
 (deftest test-client-timestamptz-pass
   (api/with-connection [conn CONFIG]
     (api/with-statement [stmt conn "select $1::timestamptz as obj"]
       (let [inst
-            (Instant/parse "2022-01-01T20:59:59.000000123Z")
+            (Instant/parse "2022-01-01T20:59:59.123456Z")
             res
             (api/execute-statement conn stmt [inst])]
         (is (= inst (-> res first :obj)))))))
@@ -892,7 +892,7 @@ drop table %1$s;
     (let [res (api/execute conn "select '2022-01-01 23:59:59.123+03'::timestamp as obj")
           obj (-> res first :obj)]
       (is (instance? Instant obj))
-      (is (= "2022-01-01T23:59:59.000000123Z" (str obj))))))
+      (is (= "2022-01-01T23:59:59.123Z" (str obj))))))
 
 
 (deftest test-client-timestamp-pass
