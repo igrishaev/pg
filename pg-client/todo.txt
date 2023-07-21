@@ -1,5 +1,4 @@
 
-- encode/decode rename extend
 - test binary encode
 - test binary decode
 - complete the tests
