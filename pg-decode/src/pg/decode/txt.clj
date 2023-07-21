@@ -1,5 +1,4 @@
 (ns pg.decode.txt
-  (:refer-clojure :exclude [extend])
   (:import
    java.math.BigDecimal
    java.util.UUID)
@@ -20,7 +19,7 @@
   string)
 
 
-(defmacro extend
+(defmacro expand
   {:style/indent 1}
   [oid's binding & body]
   `(do-template [oid#]
@@ -34,7 +33,7 @@
 ;; UUID
 ;;
 
-(extend [oid/uuid]
+(expand [oid/uuid]
   [string _ _]
   (UUID/fromString string))
 
@@ -43,12 +42,12 @@
 ;; Text
 ;;
 
-(extend [oid/text oid/varchar]
+(expand [oid/text oid/varchar]
   [string _ _]
   string)
 
 
-(extend [oid/char]
+(expand [oid/char]
   [^String string _ _]
   (.charAt string 0))
 
@@ -57,7 +56,7 @@
 ;; Boolean
 ;;
 
-(extend [oid/bool]
+(expand [oid/bool]
   [string oid opt]
   (case string
     "t" true
@@ -75,32 +74,32 @@
 ;; Numbers
 ;;
 
-(extend [oid/int2]
+(expand [oid/int2]
   [^String string _ _]
   (Short/parseShort string))
 
 
-(extend [oid/int4]
+(expand [oid/int4]
   [string _ _]
   (Integer/parseInt string))
 
 
-(extend [oid/int8]
+(expand [oid/int8]
   [string _ _]
   (Long/parseLong string))
 
 
-(extend [oid/float4]
+(expand [oid/float4]
   [string _ _]
   (Float/parseFloat string))
 
 
-(extend [oid/float8]
+(expand [oid/float8]
   [string _ _]
   (Double/parseDouble string))
 
 
-(extend [oid/numeric]
+(expand [oid/numeric]
   [^String string _ _]
   (new BigDecimal string))
 
@@ -109,27 +108,27 @@
 ;; Date & time
 ;;
 
-(extend [oid/timestamptz]
+(expand [oid/timestamptz]
   [string _ opt]
   (datetime/parse-timestampz string opt))
 
 
-(extend [oid/timestamp]
+(expand [oid/timestamp]
   [string _ opt]
   (datetime/parse-timestamp string opt))
 
 
-(extend [oid/date]
+(expand [oid/date]
   [string _ opt]
   (datetime/parse-date string opt))
 
 
-(extend [oid/timetz]
+(expand [oid/timetz]
   [string _ opt]
   (datetime/parse-timetz string opt))
 
 
-(extend [oid/time]
+(expand [oid/time]
   [string _ opt]
   (datetime/parse-time string opt))
 

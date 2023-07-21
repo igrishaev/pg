@@ -1,8 +1,7 @@
 (ns pg.json.encode.bin
-  (:refer-clojure :exclude [extend])
   (:require
    [cheshire.core :as json]
-   [pg.encode.bin :refer [extend]]
+   [pg.encode.bin :refer [expand]]
    [pg.oid :as oid]))
 
 
@@ -10,7 +9,7 @@
   (get opt :client-encoding "UTF-8"))
 
 
-(extend [Object oid/json
+(expand [Object oid/json
          Object oid/jsonb]
   [obj _ opt]
 
@@ -22,7 +21,7 @@
         (.getBytes encoding))))
 
 
-(extend [String oid/json
+(expand [String oid/json
          String oid/jsonb]
   [^String string _ opt]
 

@@ -1,14 +1,16 @@
 
-- complete the tests
+- encode/decode rename extend
 - test binary encode
 - test binary decode
+- complete the tests
 - add docstrings, arglists
 - unify execute function
 - unify constants
 - conn component?
 - pg.client.api => pg.client
 
-- encode/decode rename extend
+- date encode/decode: check milliseconds & better tests
+
 - Statement closeable
 - docker: init script (uuid)
 - docker: hba config for access

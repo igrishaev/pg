@@ -1,5 +1,4 @@
 (ns pg.joda-time.encode.bin
-  (:refer-clojure :exclude [extend])
   (:import
    java.util.TimeZone
    org.joda.time.Days
@@ -9,7 +8,7 @@
   (:require
    [pg.const :as c]
    [pg.bytes.array :as array]
-   [pg.encode.bin :refer [extend]]
+   [pg.encode.bin :refer [expand]]
    [pg.oid :as oid]))
 
 
@@ -21,7 +20,7 @@
 ;; LocalDate
 ;;
 
-(extend [LocalDate nil
+(expand [LocalDate nil
          LocalDate oid/date]
   [^LocalDate value _ _]
   (let [days
@@ -35,7 +34,7 @@
 ;; LocalTime
 ;;
 
-(extend [LocalTime nil
+(expand [LocalTime nil
          LocalTime oid/time]
   [^LocalTime value _ _]
   (array/arr64 (.getMillisOfDay value)))
@@ -45,7 +44,7 @@
 ;; DateTime
 ;;
 
-(extend [DateTime nil
+(expand [DateTime nil
          DateTime oid/timestamp]
   [^DateTime value _ _]
   (let [millis

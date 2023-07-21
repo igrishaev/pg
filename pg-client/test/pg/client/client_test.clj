@@ -1,16 +1,18 @@
 (ns pg.client.client-test
   (:import
-   java.util.Date
-   java.util.HashMap
+   java.time.Instant
+   java.time.LocalTime
+   java.time.OffsetTime
    java.util.ArrayList
-   java.time.Instant)
+   java.util.Date
+   java.util.HashMap)
   (:require
-   pg.json
-   [pg.client.conn :as conn]
-   [pg.client.api :as api]
-   [pg.client.acc :as acc]
    [clojure.string :as str]
-   [clojure.test :refer [deftest is]]))
+   [clojure.test :refer [deftest is]]
+   [pg.client.acc :as acc]
+   [pg.client.api :as api]
+   [pg.client.conn :as conn]
+   pg.json))
 
 
 (def CONFIG
@@ -940,6 +942,60 @@ drop table %1$s;
       (is (= [{:extract 1985M}] res)))))
 
 
+(deftest test-client-read-time
+
+  (api/with-connection [conn CONFIG]
+    (let [res
+          (api/execute conn "select now()::time as time")
+
+          time
+          (-> res first :time)]
+
+      (is (instance? LocalTime time)))))
+
+
+(deftest test-client-pass-time
+
+  (api/with-connection [conn CONFIG]
+    (let [time1
+          (LocalTime/now)
+
+          res
+          (api/execute conn ["select $1::time as time" time1])
+
+          time2
+          (-> res first :time)]
+
+      (is (= time1 time2)))))
+
+
+(deftest test-client-read-timetz
+
+  (api/with-connection [conn CONFIG]
+    (let [res
+          (api/execute conn "select now()::timetz as timetz")
+
+          timetz
+          (-> res first :timetz)]
+
+      (is (instance? OffsetTime timetz)))))
+
+
+(deftest test-client-pass-timetz
+
+  (api/with-connection [conn CONFIG]
+    (let [time1
+          (OffsetTime/now)
+
+          res
+          (api/execute conn ["select $1::timetz as timetz" time1])
+
+          time2
+          (-> res first :timetz)]
+
+      (is (= time1 time2)))))
+
+
 (deftest test-client-conn-with-open
   (with-open [conn (api/connect CONFIG)]
     (let [res (api/execute conn ["select 1 as one"])]
@@ -1092,9 +1148,3 @@ drop table %1$s;
   (api/with-connection [conn CONFIG]
     (let [res (api/execute conn "select")]
       (is (= [] res)))))
-
-
-;; Date date
-;; time, timetz
-
-;; test reuse closed conn

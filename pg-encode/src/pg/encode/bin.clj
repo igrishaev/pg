@@ -1,5 +1,4 @@
 (ns pg.encode.bin
-  (:refer-clojure :exclude [extend])
   (:import
    clojure.lang.Symbol
    java.time.Duration
@@ -22,7 +21,7 @@
     [(type value) oid]))
 
 
-(defmacro extend
+(defmacro expand
   {:style/indent 1}
   [type-oid's binding & body]
   `(do-template [Type# oid#]
@@ -48,7 +47,7 @@
 ;; Symbol
 ;;
 
-(extend [Symbol nil
+(expand [Symbol nil
          Symbol oid/text
          Symbol oid/varchar]
   [value oid opt]
@@ -59,7 +58,7 @@
 ;; String
 ;;
 
-(extend [String nil
+(expand [String nil
          String oid/text
          String oid/varchar]
   [^String value oid opt]
@@ -70,7 +69,7 @@
 ;; Character
 ;;
 
-(extend [Character nil
+(expand [Character nil
          Character oid/text
          Character oid/varchar]
   [^Character value oid opt]
@@ -81,16 +80,16 @@
 ;; Long
 ;;
 
-(extend [Long nil
+(expand [Long nil
          Long oid/int8]
   [value oid opt]
   (array/arr64 value))
 
-(extend [Long oid/int4]
+(expand [Long oid/int4]
   [value oid opt]
   (array/arr32 (int value)))
 
-(extend [Long oid/int2]
+(expand [Long oid/int2]
   [value oid opt]
   (array/arr16 (short value)))
 
@@ -99,18 +98,18 @@
 ;; Integer
 ;;
 
-(extend [Integer oid/int8]
+(expand [Integer oid/int8]
   [value oid opt]
   (array/arr64 (long value)))
 
 
-(extend [Integer nil
+(expand [Integer nil
          Integer oid/int4]
   [value oid opt]
   (array/arr32 value))
 
 
-(extend [Integer oid/int2]
+(expand [Integer oid/int2]
   [value oid opt]
   (array/arr16 (short value)))
 
@@ -119,15 +118,15 @@
 ;; Short
 ;;
 
-(extend [Short oid/int8]
+(expand [Short oid/int8]
   [value oid opt]
   (array/arr64 (long value)))
 
-(extend [Short oid/int4]
+(expand [Short oid/int4]
   [value oid opt]
   (array/arr32 (int value)))
 
-(extend [Short nil
+(expand [Short nil
          Short oid/int2]
   [value oid opt]
   (array/arr16 value))
@@ -137,7 +136,7 @@
 ;; Bool
 ;;
 
-(extend [Boolean nil
+(expand [Boolean nil
          Boolean oid/bool]
   [value oid opt]
   (case value
@@ -149,13 +148,13 @@
 ;; Float
 ;;
 
-(extend [Float nil
+(expand [Float nil
          Float oid/float4]
   [value oid opt]
   (-> (Float/floatToIntBits value)
       (array/arr32)))
 
-(extend [Float oid/float8]
+(expand [Float oid/float8]
   [value oid opt]
   (-> (Double/doubleToLongBits (double value))
       (array/arr64)))
@@ -165,13 +164,13 @@
 ;; Double
 ;;
 
-(extend [Double nil
+(expand [Double nil
          Double oid/float8]
   [value oid opt]
   (-> (Double/doubleToLongBits value)
       (array/arr64)))
 
-(extend [Double oid/float4]
+(expand [Double oid/float4]
   [value oid opt]
   (-> (Float/floatToIntBits (float value))
       (array/arr32)))
@@ -181,7 +180,7 @@
 ;; UUID
 ;;
 
-(extend [UUID nil
+(expand [UUID nil
          UUID oid/uuid]
   [^UUID value oid opt]
   (let [most-bits
@@ -195,11 +194,11 @@
          (into (array/arr64 most-bits))
          (into (array/arr64 least-bits))))))
 
-(extend [String oid/uuid]
+(expand [String oid/uuid]
   [value oid opt]
   (-encode (UUID/fromString value) oid opt))
 
-(extend [UUID oid/text]
+(expand [UUID oid/text]
   [value oid opt]
   (-encode (str value) oid opt))
 
@@ -208,7 +207,7 @@
 ;; Instant
 ;;
 
-(extend [Instant nil
+(expand [Instant nil
          Instant oid/timestamp]
   [^Instant value oid opt]
 
@@ -227,7 +226,7 @@
          (+ (quot nanos 1000))
          (+ (* offset-millis 1000))))))
 
-(extend [Instant oid/date]
+(expand [Instant oid/date]
   [^Date value oid opt]
   (let [local-date
         (LocalDate/ofInstant value (ZoneId/systemDefault))]
@@ -238,14 +237,14 @@
 ;; Date
 ;;
 
-(extend [Date oid/date]
+(expand [Date oid/date]
   [^Date value oid opt]
   (let [local-date
         (LocalDate/ofInstant (.toInstant value)
                              (ZoneId/systemDefault))]
     (-encode local-date oid opt)))
 
-(extend [Date nil
+(expand [Date nil
          Date oid/timestamp]
   [^Date value oid opt]
   (let [millis
@@ -266,7 +265,7 @@
 ;; LocalDate
 ;;
 
-(extend [LocalDate nil
+(expand [LocalDate nil
          LocalDate oid/date]
   [^LocalDate value oid opt]
   (array/arr32

@@ -1,7 +1,7 @@
 (defproject com.github.igrishaev/pg-joda-time "0.1.1-SNAPSHOT"
 
   :description
-  "Extend encoding & decoding with Joda Time"
+  "Expand encoding & decoding with Joda Time"
 
   :plugins
   [[lein-parent "0.3.8"]]

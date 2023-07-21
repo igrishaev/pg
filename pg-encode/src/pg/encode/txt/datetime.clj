@@ -1,13 +1,16 @@
 (ns pg.encode.txt.datetime
   (:import
-   java.util.Date
-   java.time.ZoneId
-   java.time.ZonedDateTime
-   java.time.ZoneOffset
    java.time.Instant
-   java.time.format.DateTimeFormatter))
+   java.time.LocalTime
+   java.time.OffsetTime
+   java.time.ZoneId
+   java.time.ZoneOffset
+   java.time.ZonedDateTime
+   java.time.format.DateTimeFormatter
+   java.util.Date))
 
 
+;; TODO
 (def ^DateTimeFormatter
   frmt-timestamptz
   (-> "yyyy-MM-dd HH:mm:ss.nx"
@@ -15,6 +18,7 @@
       (.withZone (ZoneId/of "UTC"))))
 
 
+;; TODO
 (def ^DateTimeFormatter
   frmt-date
   (-> "yyyy-MM-dd"
@@ -22,19 +26,21 @@
       (.withZone (ZoneId/of "UTC"))))
 
 
+;; TODO
 (def ^DateTimeFormatter
   frmt-timestamp
   (-> "yyyy-MM-dd HH:mm:ss"
       (DateTimeFormatter/ofPattern)
       (.withZone (ZoneId/of "UTC"))))
 
-
+;; TODO
 (def ^DateTimeFormatter
   frmt-timetz
   (-> "HH:mm:ss.nx"
       (DateTimeFormatter/ofPattern)))
 
 
+;; TODO
 (def ^DateTimeFormatter
   frmt-time
   (-> "HH:mm:ss.n"
@@ -94,6 +100,16 @@
 (defn Date-date
   [^Date obj opt]
   (Instant-date (.toInstant obj) opt))
+
+
+(defn LocalTime-time
+  [^LocalTime obj opt]
+  (str obj))
+
+
+(defn OffsetTime-time
+  [^OffsetTime obj opt]
+  (str obj))
 
 
 (comment

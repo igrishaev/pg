@@ -1,18 +1,19 @@
 (ns pg.encode.txt
-  (:refer-clojure :exclude [extend])
   (:require
-   [pg.encode.txt.datetime :as datetime]
    [clojure.template :refer [do-template]]
+   [pg.encode.txt.datetime :as datetime]
    [pg.oid :as oid])
   (:import
    clojure.lang.BigInt
+   clojure.lang.Symbol
    java.math.BigDecimal
    java.math.BigInteger
-   java.util.Date
    java.time.Instant
-   java.util.UUID
+   java.time.LocalTime
+   java.time.OffsetTime
+   java.util.Date
    java.util.Formatter
-   clojure.lang.Symbol))
+   java.util.UUID))
 
 
 (defmulti -encode
@@ -28,7 +29,7 @@
                    :opt opt})))
 
 
-(defmacro extend
+(defmacro expand
   {:style/indent 1}
   [type-oid's binding & body]
   `(do-template [Type# oid#]
@@ -43,7 +44,7 @@
 ;; Symbol
 ;;
 
-(extend [Symbol nil
+(expand [Symbol nil
          Symbol oid/text
          Symbol oid/varchar]
   [value oid opt]
@@ -54,7 +55,7 @@
 ;; String
 ;;
 
-(extend [String nil
+(expand [String nil
          String oid/text
          String oid/varchar]
   [^String value oid opt]
@@ -65,7 +66,7 @@
 ;; Character
 ;;
 
-(extend [Character nil
+(expand [Character nil
          Character oid/text
          Character oid/varchar]
   [^Character value oid opt]
@@ -78,7 +79,7 @@
 ;; BigDecimal, BigInteger, BigInt
 ;;
 
-(extend [Long nil
+(expand [Long nil
          Long oid/int8
          Long oid/int4
          Long oid/int2
@@ -117,7 +118,7 @@
 ;; Boolean
 ;;
 
-(extend [Boolean nil
+(expand [Boolean nil
          Boolean oid/bool]
   [^Boolean value oid opt]
   (case value
@@ -129,7 +130,7 @@
 ;; UUID
 ;;
 
-(extend [UUID nil
+(expand [UUID nil
          UUID oid/uuid
          UUID oid/text
          UUID oid/varchar]
@@ -141,37 +142,48 @@
 ;; Date & time
 ;;
 
-(extend [Instant nil
+(expand [Instant nil
          Instant oid/timestamptz]
   [value _ opt]
   (datetime/Instant-timestamptz value opt))
 
 
-(extend [Instant oid/timestamp]
+(expand [Instant oid/timestamp]
   [value _ opt]
   (datetime/Instant-timestamp value opt))
 
 
-(extend [Instant oid/date]
+(expand [Instant oid/date]
   [value _ opt]
   (datetime/Instant-date value opt))
 
 
-(extend [Date nil
+(expand [Date nil
          Date oid/timestamptz]
   [value _ opt]
   (datetime/Date-timestamptz value opt))
 
 
-(extend [Date oid/timestamp]
+(expand [Date oid/timestamp]
   [value _ opt]
   (datetime/Date-timestamp value opt))
 
 
-(extend [Date oid/date]
+(expand [Date oid/date]
   [value _ opt]
   (datetime/Date-date value opt))
 
+
+(expand [LocalTime nil
+         LocalTime oid/time]
+  [value _ opt]
+  (datetime/LocalTime-time value opt))
+
+
+(expand [OffsetTime nil
+         OffsetTime oid/timetz]
+  [value _ opt]
+  (datetime/OffsetTime-time value opt))
 
 
 ;;

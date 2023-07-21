@@ -1,5 +1,4 @@
 (ns pg.decode.bin
-  (:refer-clojure :exclude [extend])
   (:require
    [clojure.template :refer [do-template]]
    [pg.oid :as oid]))
@@ -15,7 +14,7 @@
   buf)
 
 
-(defmacro extend
+(defmacro expand
   {:style/indent 1}
   [oid's binding & body]
   `(do-template [oid#]
