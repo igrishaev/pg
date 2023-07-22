@@ -1,9 +1,10 @@
 
-- pg.client.api => pg.client
+- refactor pg.client.acc ns
+- unify constants
+- refactor pg-common
 - test binary encode
 - test binary decode
 - add docstrings, arglists
-- unify constants
 - conn component?
 - pass pg config with envs?
 - multiple pg docker tests
@@ -17,7 +18,6 @@
 - binary encode/decode support
 - separate pg.oid package
 - result: java maps?
-- refactor pg-common
 - thread safe
 - batch queries
 - channel options

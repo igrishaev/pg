@@ -3,7 +3,7 @@
    [com.stuartsierra.component :as component]
    [clojure.test :refer [is deftest]]
    [pg.pool :as pool]
-   [pg.client.api :as api]))
+   [pg.client :as pg]))
 
 
 (def PG_CONFIG
@@ -17,7 +17,7 @@
 (deftest test-pool-it-works
   (pool/with-pool [pool PG_CONFIG]
     (pool/with-connection [conn pool]
-      (let [res (api/execute conn "select 1 as one")]
+      (let [res (pg/execute conn "select 1 as one")]
         (is (= [{:one 1}] res))))))
 
 
@@ -43,9 +43,9 @@
           (future
             (pool/with-connection [conn pool]
               (deliver t1-start true)
-              (deliver t1-conn-id (api/id conn))
+              (deliver t1-conn-id (pg/id conn))
               (Thread/sleep 1000)
-              (api/execute conn "select 1 as one"))
+              (pg/execute conn "select 1 as one"))
             (deliver t1-stop true))
 
           f2
@@ -53,7 +53,7 @@
             (pool/with-connection [conn pool]
               (deliver t2-start true)
               (Thread/sleep 2000)
-              (api/execute conn "select 2 as two"))
+              (pg/execute conn "select 2 as two"))
             (deliver t2-stop true))]
 
       @t1-start
@@ -64,7 +64,7 @@
 
       (try
         (pool/with-connection [conn pool]
-          (api/execute conn "select 42"))
+          (pg/execute conn "select 42"))
         (is false)
         (catch Exception e
           (is (= "pool is exhausted: 2 connections in use"
@@ -77,8 +77,8 @@
 
       (let [res
             (pool/with-connection [conn pool]
-              (is (= @t1-conn-id (api/id conn)))
-              (api/execute conn "select 3 as three"))]
+              (is (= @t1-conn-id (pg/id conn)))
+              (pg/execute conn "select 3 as three"))]
         (is (= [{:three 3}] res)))
 
       @t2-stop
@@ -105,7 +105,7 @@
       (is (= {:min-size 2 :max-size 2 :free 0 :used 1}
            (pool/stats pool)))
 
-      (api/execute conn "select 1 as one"))
+      (pg/execute conn "select 1 as one"))
 
     (is (= {:min-size 2 :max-size 2 :free 1 :used 0}
            (pool/stats pool)))))
@@ -125,22 +125,22 @@
           (promise)]
 
       (pool/with-connection [conn pool]
-        (deliver id1 (api/id conn)))
+        (deliver id1 (pg/id conn)))
 
       (pool/with-connection [conn pool]
-        (deliver id2 (api/id conn)))
+        (deliver id2 (pg/id conn)))
 
       (is (= @id1 @id2))
 
       (try
         (pool/with-connection [conn pool]
-          (is (= @id2 (api/id conn)))
+          (is (= @id2 (pg/id conn)))
           (/ 0 0))
         (catch Exception e
           (is e)))
 
       (pool/with-connection [conn pool]
-        (deliver id3 (api/id conn)))
+        (deliver id3 (pg/id conn)))
 
       (is (not= @id1 @id3)))))
 
@@ -162,19 +162,19 @@
           (promise)]
 
       (pool/with-connection [conn pool]
-        (deliver id1 (api/id conn)))
+        (deliver id1 (pg/id conn)))
 
       (pool/with-connection [conn pool]
-        (deliver id2 (api/id conn)))
+        (deliver id2 (pg/id conn)))
 
       (pool/with-connection [conn pool]
-        (api/begin conn)
-        (deliver id3 (api/id conn))
-        (is (api/in-transaction? conn)))
+        (pg/begin conn)
+        (deliver id3 (pg/id conn))
+        (is (pg/in-transaction? conn)))
 
       (pool/with-connection [conn pool]
-        (is (api/idle? conn))
-        (deliver id4 (api/id conn)))
+        (is (pg/idle? conn))
+        (deliver id4 (pg/id conn)))
 
       (is (= @id1 @id2 @id3 @id4)))))
 
@@ -193,20 +193,20 @@
           (promise)]
 
       (pool/with-connection [conn pool]
-        (deliver id1 (api/id conn)))
+        (deliver id1 (pg/id conn)))
 
       (pool/with-connection [conn pool]
-        (api/begin conn)
+        (pg/begin conn)
         (try
-          (api/execute conn "selekt 42")
+          (pg/execute conn "selekt 42")
           (is false)
           (catch Exception e
-            (is (api/tx-error? conn))))
-        (deliver id2 (api/id conn)))
+            (is (pg/tx-error? conn))))
+        (deliver id2 (pg/id conn)))
 
       (pool/with-connection [conn pool]
-        (is (api/idle? conn))
-        (deliver id3 (api/id conn)))
+        (is (pg/idle? conn))
+        (deliver id3 (pg/id conn)))
 
       (is (= @id1 @id2))
       (is (not= @id2 @id3)))))
@@ -239,7 +239,7 @@
            stats2))
 
     (pool/with-connection [conn c-started]
-      (let [res (api/execute conn "select 1 as one")]
+      (let [res (pg/execute conn "select 1 as one")]
         (is (= [{:one 1}] res))))
 
     (let [c-stopped
@@ -263,7 +263,7 @@
             (component/start))]
 
     (pool/with-connection [conn c-started]
-      (let [res (api/execute conn "select 1 as one")]
+      (let [res (pg/execute conn "select 1 as one")]
         (is (= [{:one 1}] res))))
 
     (let [c-stopped
@@ -278,7 +278,7 @@
 (deftest test-pool-with-open
   (with-open [pool (pool/make-pool PG_CONFIG)]
     (pool/with-connection [conn pool]
-      (let [res (api/execute conn "select 1 as one")]
+      (let [res (pg/execute conn "select 1 as one")]
         (is (= [{:one 1}] res))))))
 
 
@@ -305,19 +305,19 @@
     (with-open [pool (pool/make-pool PG_CONFIG pool-config)]
 
       (pool/with-connection [conn pool]
-        (deliver id1 (api/id conn)))
+        (deliver id1 (pg/id conn)))
 
       (pool/with-connection [conn pool]
-        (api/terminate conn)
-        (deliver id2 (api/id conn)))
+        (pg/terminate conn)
+        (deliver id2 (pg/id conn)))
 
       (pool/with-connection [conn pool]
-        (deliver id3 (api/id conn))
-        (let [res (api/execute conn "select 1 as one")]
+        (deliver id3 (pg/id conn))
+        (let [res (pg/execute conn "select 1 as one")]
           (is (= [{:one 1}] res))))
 
       (pool/with-connection [conn pool]
-        (deliver id4 (api/id conn)))
+        (deliver id4 (pg/id conn)))
 
       (is (= @id1 @id2))
       (is (not= @id2 @id3))
@@ -339,5 +339,5 @@
     (pool/initiate pool)
 
     (pool/with-connection [conn pool]
-      (let [res (api/execute conn "select 1 as one")]
+      (let [res (pg/execute conn "select 1 as one")]
         (is (= [{:one 1}] res))))))

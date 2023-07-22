@@ -1,4 +1,4 @@
-(ns pg.client.api
+(ns pg.client
   (:require
    [pg.client.const :as const]
    [pg.client.conn :as conn]
