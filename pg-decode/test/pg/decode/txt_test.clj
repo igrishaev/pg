@@ -3,6 +3,8 @@
    java.time.Instant
    java.time.OffsetTime
    java.time.LocalTime
+   java.time.LocalDate
+   java.time.LocalDateTime
    java.util.UUID
    java.math.BigDecimal)
   (:require
@@ -94,6 +96,16 @@
              (str res))))
 
     (let [string
+          "2023-07-10 22:25:22.046553"
+
+          res
+          (decode string oid/timestamp)]
+
+      (is (instance? LocalDateTime res))
+      (is (= "2023-07-10T22:25:22.046553"
+             (str res))))
+
+    (let [string
           "2022-07-03 00:00:00+03"
 
           res
@@ -111,8 +123,8 @@
           res
           (decode string oid/date)]
 
-      (is (instance? Instant res))
-      (is (= "2022-07-03T00:00:00Z"
+      (is (instance? LocalDate res))
+      (is (= "2022-07-03"
              (str res)))))
 
   (testing "timetz"

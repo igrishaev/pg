@@ -2,7 +2,9 @@
   (:import
    java.time.Instant
    java.time.LocalTime
+   java.time.LocalDateTime
    java.time.OffsetTime
+   java.time.LocalDate
    java.util.ArrayList
    java.util.Date
    java.util.HashMap)
@@ -891,8 +893,8 @@ drop table %1$s;
   (api/with-connection [conn CONFIG]
     (let [res (api/execute conn "select '2022-01-01 23:59:59.123+03'::timestamp as obj")
           obj (-> res first :obj)]
-      (is (instance? Instant obj))
-      (is (= "2022-01-01T23:59:59.123Z" (str obj))))))
+      (is (instance? LocalDateTime obj))
+      (is (= "2022-01-01T23:59:59.123" (str obj))))))
 
 
 (deftest test-client-timestamp-pass
@@ -903,7 +905,7 @@ drop table %1$s;
             res
             (api/execute-statement conn stmt [inst])]
 
-        (is (= "2022-01-01T20:59:59Z"
+        (is (= "2022-01-01T20:59:59"
                (-> res first :obj str)))))))
 
 
@@ -911,8 +913,8 @@ drop table %1$s;
   (api/with-connection [conn CONFIG]
     (let [res (api/execute conn "select '2022-01-01 23:59:59.123+03'::date as obj")
           obj (-> res first :obj)]
-      (is (instance? Instant obj))
-      (is (= "2022-01-01T00:00:00Z" (str obj))))))
+      (is (instance? LocalDate obj))
+      (is (= "2022-01-01" (str obj))))))
 
 
 (deftest test-client-pass-date-timestamptz

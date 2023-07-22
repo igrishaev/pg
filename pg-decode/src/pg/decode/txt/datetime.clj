@@ -39,25 +39,27 @@
       (.withZone ZoneOffset/UTC)))
 
 
+(def ^DateTimeFormatter
+  frmt-date
+  (-> (new DateTimeFormatterBuilder)
+      (.appendPattern "yyyy-MM-dd")
+      (.toFormatter)))
+
+
 (defn parse-timestampz ^Instant [^String string opt]
   (->> string
        (.parse frmt-timestamptz)
        (Instant/from)))
 
 
-(defn parse-timestamp ^Instant [^String string opt]
-  (let [ldt
-        (->> string
-             (.parse frmt-timestamp)
-             (LocalDateTime/from))]
-    (.toInstant ldt ZoneOffset/UTC)))
+(defn parse-timestamp ^LocalDateTime [^String string opt]
+  (->> string
+       (.parse frmt-timestamp)
+       (LocalDateTime/from)))
 
 
-(defn parse-date ^Instant [^String string opt]
-  (-> string
-      (LocalDate/parse)
-      (.atStartOfDay ZoneOffset/UTC)
-      (.toInstant)))
+(defn parse-date ^LocalDate [^String string opt]
+  (LocalDate/parse string frmt-date))
 
 
 (defn parse-timetz [^String string opt]
