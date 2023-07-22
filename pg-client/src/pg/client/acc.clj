@@ -8,8 +8,7 @@
 
 (def as-default
   {:fn-init #(transient [])
-   :fn-reduce (fn [acc! row]
-                (conj! acc! row))
+   :fn-reduce conj!
    :fn-finalize persistent!})
 
 
@@ -24,8 +23,7 @@
   {:fn-unify func/unify-none
    :fn-keyval func/vals-only
    :fn-init #(transient [])
-   :fn-reduce (fn [acc! row]
-                (conj! acc! row))
+   :fn-reduce conj!
    :fn-finalize persistent!})
 
 
