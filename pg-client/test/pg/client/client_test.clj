@@ -122,7 +122,7 @@
 
   (let [result
         (api/with-connection [conn CONFIG]
-          (api/execute conn "select 1 as foo" {:fn-column str/upper-case}))]
+          (api/execute conn "select 1 as foo" nil {:fn-column str/upper-case}))]
 
     (is (= [{"FOO" 1}] result))))
 
@@ -165,11 +165,11 @@
 
     (let [res1
           (api/with-tx [conn]
-            (api/execute conn "select 1 as foo" {:fn-result first}))
+            (api/execute conn "select 1 as foo" nil {:fn-result first}))
 
           res2
           (api/with-tx [conn]
-            (api/execute conn "select 2 as bar" {:fn-result first}))]
+            (api/execute conn "select 2 as bar" nil {:fn-result first}))]
 
       (is (= {:foo 1} res1))
       (is (= {:bar 2} res2)))))
@@ -631,7 +631,7 @@
           (format "select * from %s where id = 1" table)
 
           res
-          (api/execute conn query3 {:fn-result first})]
+          (api/execute conn query3 nil {:fn-result first})]
 
       (is (= {:id 1 :title "test1"} res)))))
 
@@ -754,7 +754,7 @@ drop table %1$s;
            table)
 
           res
-          (api/execute conn query {:fn-column str/upper-case})]
+          (api/execute conn query nil {:fn-column str/upper-case})]
 
       (is (= [nil
               2
@@ -832,42 +832,47 @@ drop table %1$s;
   (api/with-connection [conn CONFIG]
     (let [res
           (api/execute conn
-                       ["select $1::json as obj" {:foo 123}]
+                       "select $1::json as obj"
+                       [{:foo 123}]
                        {:fn-result first})]
       (is (= {:obj {:foo 123}} res)))))
 
 
 (deftest test-client-jsonb-write
   (api/with-connection [conn CONFIG]
-    (let [res
+    (let [json
+          [1 2 [true {:foo 1}]]
+
+          res
           (api/execute conn
-                       ["select $1::jsonb as obj" [1 2 [true {:foo 1}]]]
+                       "select $1::jsonb as obj"
+                       [json]
                        {:fn-result first})]
       (is (= '{:obj (1 2 [true {:foo 1}])} res)))))
 
 
 (deftest test-client-default-oid-long
   (api/with-connection [conn CONFIG]
-    (let [res (api/execute conn ["select $1 as foo" 42])]
+    (let [res (api/execute conn "select $1 as foo" [42])]
       (is (= [{:foo 42}] res)))))
 
 
 (deftest test-client-default-oid-uuid
   (api/with-connection [conn CONFIG]
     (let [uid (random-uuid)
-          res (api/execute conn ["select $1 as foo" uid])]
+          res (api/execute conn "select $1 as foo" [uid])]
       (is (= [{:foo uid}] res)))))
 
 
 (deftest test-client-execute-sqlvec
   (api/with-connection [conn CONFIG]
-    (let [res (api/execute conn ["select $1 as foo" "hi"])]
+    (let [res (api/execute conn "select $1 as foo" ["hi"])]
       (is (= [{:foo "hi"}] res)))))
 
 
 (deftest test-client-execute-sqlvec-no-params
   (api/with-connection [conn CONFIG]
-    (let [res (api/execute conn ["select 42 as foo"])]
+    (let [res (api/execute conn "select 42 as foo")]
       (is (= [{:foo 42}] res)))))
 
 
@@ -923,7 +928,7 @@ drop table %1$s;
           (new Date 85 11 31 23 59 59)
 
           res
-          (api/execute conn ["select $1::timestamptz as obj" date])
+          (api/execute conn "select $1::timestamptz as obj" [date])
 
           obj
           (-> res first :obj)]
@@ -939,7 +944,7 @@ drop table %1$s;
           (new Date 85 11 31 23 59 59)
 
           res
-          (api/execute conn ["select EXTRACT('year' from $1)" date])]
+          (api/execute conn "select EXTRACT('year' from $1)" [date])]
 
       (is (= [{:extract 1985M}] res)))))
 
@@ -963,7 +968,7 @@ drop table %1$s;
           (LocalTime/now)
 
           res
-          (api/execute conn ["select $1::time as time" time1])
+          (api/execute conn "select $1::time as time" [time1])
 
           time2
           (-> res first :time)]
@@ -990,7 +995,7 @@ drop table %1$s;
           (OffsetTime/now)
 
           res
-          (api/execute conn ["select $1::timetz as timetz" time1])
+          (api/execute conn "select $1::timetz as timetz" [time1])
 
           time2
           (-> res first :timetz)]
@@ -1000,7 +1005,7 @@ drop table %1$s;
 
 (deftest test-client-conn-with-open
   (with-open [conn (api/connect CONFIG)]
-    (let [res (api/execute conn ["select 1 as one"])]
+    (let [res (api/execute conn "select 1 as one")]
       (is (= [{:one 1}] res)))))
 
 
@@ -1051,7 +1056,7 @@ drop table %1$s;
           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
           res
-          (api/execute conn query {:as acc/as-java})]
+          (api/execute conn query nil {:as acc/as-java})]
 
       (is (= [{:b 2 :a 1}
               {:b 4 :a 3}
@@ -1072,7 +1077,7 @@ drop table %1$s;
           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
           res
-          (api/execute conn query {:as (acc/as-index-by :a)})]
+          (api/execute conn query nil {:as (acc/as-index-by :a)})]
 
       (is (= {1 {:a 1 :b 2}
               3 {:a 3 :b 4}
@@ -1089,7 +1094,7 @@ drop table %1$s;
           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
           res
-          (api/execute conn query {:as (acc/as-group-by :a)})]
+          (api/execute conn query nil {:as (acc/as-group-by :a)})]
 
       (is (= {1 [{:a 1 :b 2}]
               3 [{:a 3 :b 4}]
@@ -1105,7 +1110,7 @@ drop table %1$s;
           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
           res
-          (api/execute conn query {:as (acc/as-kv :b :a)})]
+          (api/execute conn query nil {:as (acc/as-kv :b :a)})]
 
       (is (= {2 1
               4 3
@@ -1121,7 +1126,7 @@ drop table %1$s;
           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
           res
-          (api/execute conn query {:as acc/as-matrix})]
+          (api/execute conn query nil {:as acc/as-matrix})]
 
       (is (= [[1 2]
               [3 4]
@@ -1142,7 +1147,7 @@ drop table %1$s;
 (deftest test-two-various-params
   (api/with-connection [conn CONFIG]
     (let [res
-          (api/execute conn ["select $1::int8 = $1::int4 as eq" (int 123) 123])]
+          (api/execute conn "select $1::int8 = $1::int4 as eq" [(int 123) 123])]
       (is (= [{:eq true}] res)))))
 
 

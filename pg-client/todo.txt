@@ -1,6 +1,6 @@
 
-- unify execute function
 - encode/decode datetime tests
+- move oid/hint into encode
 - test binary encode
 - test binary decode
 - add docstrings, arglists

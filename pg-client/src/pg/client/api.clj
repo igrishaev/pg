@@ -165,43 +165,37 @@
 
 (defn execute
 
-  ([conn query]
-   (execute conn query nil))
+  ([conn sql]
+   (execute conn sql nil nil))
 
-  ([conn query opt]
+  ([conn sql params]
+   (execute conn sql params nil))
 
-   (cond
+  ([conn sql params opt]
 
-     (string? query)
+   (if (nil? params)
+
      (do
-       (conn/send-query conn query)
+       (conn/send-query conn sql)
        (res/interact conn :query opt))
 
-     (vector? query)
-     (let [[sql & params]
-           query
-
-           oids
+     (let [oids
            (mapv oid/hint params)]
 
        (with-statement [stmt conn sql oids]
-         (execute-statement conn stmt params opt)))
-
-     :else
-     (throw (ex-info "wrong query type"
-                     {:query query :opt opt})))))
+         (execute-statement conn stmt params opt))))))
 
 
 (defn begin [conn]
-  (execute conn "BEGIN" nil))
+  (execute conn "BEGIN" nil nil))
 
 
 (defn commit [conn]
-  (execute conn "COMMIT" nil))
+  (execute conn "COMMIT" nil nil))
 
 
 (defn rollback [conn]
-  (execute conn "ROLLBACK" nil))
+  (execute conn "ROLLBACK" nil nil))
 
 
 (defmacro with-tx
