@@ -1,12 +1,10 @@
 
-- encode/decode datetime tests
-- move oid/hint into encode
+- pg.client.api => pg.client
 - test binary encode
 - test binary decode
 - add docstrings, arglists
 - unify constants
 - conn component?
-- pg.client.api => pg.client
 - pass pg config with envs?
 - multiple pg docker tests
 - Statement closeable

@@ -5,7 +5,8 @@
    [pg.client.func :as func]
    [pg.client.result :as res]
    [pg.client.sql :as sql]
-   [pg.oid :as oid])
+   [pg.oid :as oid]
+   [pg.encode.hint :as hint])
   (:import
    java.util.List
    java.util.Map
@@ -180,7 +181,7 @@
        (res/interact conn :query opt))
 
      (let [oids
-           (mapv oid/hint params)]
+           (mapv hint/hint params)]
 
        (with-statement [stmt conn sql oids]
          (execute-statement conn stmt params opt))))))
