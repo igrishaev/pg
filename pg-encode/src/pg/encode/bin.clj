@@ -12,7 +12,7 @@
   (:require
    [clojure.template :refer [do-template]]
    [pg.bytes.array :as array]
-   [pg.const :as c]
+   [pg.const :as const]
    [pg.oid :as oid]))
 
 
@@ -213,7 +213,7 @@
 
   (let [seconds
         (- (.getEpochSecond value)
-           (.toSeconds c/PG_EPOCH_DIFF))
+           (.toSeconds const/PG_EPOCH_DIFF))
 
         offset-millis
         (.getRawOffset (TimeZone/getDefault))
@@ -249,7 +249,7 @@
   [^Date value oid opt]
   (let [millis
         (- (.getTime value)
-           (.toMillis c/PG_EPOCH_DIFF))
+           (.toMillis const/PG_EPOCH_DIFF))
 
         offset-minutes
         (.getTimezoneOffset value)
@@ -270,7 +270,7 @@
   [^LocalDate value oid opt]
   (array/arr32
    (- (.toEpochDay value)
-      (.toDays c/PG_EPOCH_DIFF))))
+      (.toDays const/PG_EPOCH_DIFF))))
 
 
 ;;

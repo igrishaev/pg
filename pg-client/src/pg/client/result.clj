@@ -7,7 +7,7 @@
   (:require
    [pg.client.scram-sha-256 :as scram-sha-256]
    [clojure.string :as str]
-   [pg.client.const :as const]
+   [pg.const :as const]
    [pg.client.func :as func]
    [pg.client.acc :as acc]
    [pg.client.coll :as coll]

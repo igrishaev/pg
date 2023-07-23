@@ -1,6 +1,6 @@
 (ns pg.client
   (:require
-   [pg.client.const :as const]
+   [pg.const :as const]
    [pg.client.conn :as conn]
    [pg.client.func :as func]
    [pg.client.result :as res]

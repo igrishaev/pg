@@ -1,6 +1,6 @@
 
+- unify bb, out and bytes
 - refactor pg.client.acc ns
-- unify constants
 - refactor pg-common
 - test binary encode
 - test binary decode

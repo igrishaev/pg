@@ -8,11 +8,11 @@
    java.util.HashMap
    java.util.Map)
   (:require
-   [pg.client.const :as const]
+   [pg.const :as const]
    [pg.client.debug :as debug]
    [pg.client.bb :as bb]
    [pg.client.msg :as msg]
-   [pg.client.const :as const]))
+   [pg.const :as const]))
 
 
 (defn fn-notification-default [NotificationResponse]
