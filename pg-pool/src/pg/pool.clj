@@ -9,7 +9,7 @@
   "
   (:require
    [clojure.tools.logging :as log]
-   [pg.client.api :as api])
+   [pg.client :as pg])
   (:import
    java.io.Closeable
    java.io.Writer
@@ -20,14 +20,14 @@
 
 
 (defn -connect [{:keys [pg-config]}]
-  (let [conn (api/connect pg-config)]
-    (log/debugf "a new connection created: %s" (api/id conn))
+  (let [conn (pg/connect pg-config)]
+    (log/debugf "a new connection created: %s" (pg/id conn))
     conn))
 
 
 (defn -conn-expired? [{:keys [ms-lifetime]} conn]
   (let [ms-diff (- (System/currentTimeMillis)
-                   (api/created-at conn))]
+                   (pg/created-at conn))]
     (> ms-diff ms-lifetime)))
 
 
@@ -58,19 +58,19 @@
         (if (-conn-expired? pool conn)
 
           (do
-            (log/debugf "connection %s has expired, terminating" (api/id conn))
-            (api/terminate conn)
+            (log/debugf "connection %s has expired, terminating" (pg/id conn))
+            (pg/terminate conn)
             (recur))
 
           (do
-            (log/debugf "connection %s has been acquired" (api/id conn))
-            (.put conns-used (api/id conn) conn)
+            (log/debugf "connection %s has been acquired" (pg/id conn))
+            (.put conns-used (pg/id conn) conn)
             conn))
 
         (if (< (.size conns-used) max-size)
 
           (let [conn (-connect pool)]
-            (.put conns-used (api/id conn) conn)
+            (.put conns-used (pg/id conn) conn)
             conn)
 
           (let [msg
@@ -88,7 +88,7 @@
   (locking sentinel
 
     (let [id
-          (api/id conn)]
+          (pg/id conn)]
 
       (when-not (.remove conns-used id)
         (log/warnf "connection %s does not present in used connections" id))
@@ -98,28 +98,28 @@
         e
         (do
           (log/debugf "terminating connection %s due to an exception" id)
-          (api/terminate conn))
+          (pg/terminate conn))
 
         (-conn-expired? pool conn)
         (do
           (log/debugf "connection %s has expired, terminating" id)
-          (api/terminate conn))
+          (pg/terminate conn))
 
-        (api/tx-error? conn)
+        (pg/tx-error? conn)
         (do
           (log/debugf "connection %s is in error state, rolling back and terminating" id)
-          (api/rollback conn)
-          (api/terminate conn))
+          (pg/rollback conn)
+          (pg/terminate conn))
 
-        (api/closed? conn)
+        (pg/closed? conn)
         (log/debugf "connection %s has been already closed" id)
 
         :else
         (do
 
-          (when (api/in-transaction? conn)
+          (when (pg/in-transaction? conn)
             (log/debugf "connection %s is in transaction, rolling back" id)
-            (api/rollback conn))
+            (pg/rollback conn))
 
           (log/debugf "connection %s has been released" id)
           (.offer conns-free conn))))
@@ -169,13 +169,13 @@
 
       (loop []
         (when-let [conn (.poll conns-free)]
-          (log/debugf "terminating connection %s" (api/id conn))
-          (api/terminate conn)
+          (log/debugf "terminating connection %s" (pg/id conn))
+          (pg/terminate conn)
           (recur)))
 
       (doseq [conn (vals conns-used)]
-        (log/debugf "terminating connection %s" (api/id conn))
-        (api/terminate conn))
+        (log/debugf "terminating connection %s" (pg/id conn))
+        (pg/terminate conn))
 
       (log/debug "pool termination done")
 
@@ -313,7 +313,7 @@
 
   (with-pool [pool PG_CONFIG]
     (with-connection [conn pool]
-      (api/execute conn "select 1 as one")
+      (pg/execute conn "select 1 as one")
       (println pool)))
 
   )

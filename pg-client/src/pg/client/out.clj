@@ -1,6 +1,6 @@
 (ns pg.client.out
   (:require
-   [pg.client.bytes :as bytes]
+   [pg.bytes :as bytes]
    [pg.client.coll :as coll])
   (:import
    java.util.List

@@ -6,8 +6,8 @@
   https://gist.github.com/jkatz/e0a1f52f66fa03b732945f6eb94d9c21
   "
   (:require
-   [pg.client.bytes :as bytes]
-   [pg.client.codec :as codec]
+   [pg.bytes :as bytes]
+   [pg.codec :as codec]
    [clojure.string :as str])
   (:import
    java.util.List

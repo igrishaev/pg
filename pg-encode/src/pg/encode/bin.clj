@@ -11,7 +11,7 @@
    java.util.UUID)
   (:require
    [clojure.template :refer [do-template]]
-   [pg.bytes.array :as array]
+   [pg.bytes :as bytes]
    [pg.const :as const]
    [pg.oid :as oid]))
 
@@ -83,15 +83,15 @@
 (expand [Long nil
          Long oid/int8]
   [value oid opt]
-  (array/arr64 value))
+  (bytes/int64->bytes value))
 
 (expand [Long oid/int4]
   [value oid opt]
-  (array/arr32 (int value)))
+  (bytes/int32->bytes (int value)))
 
 (expand [Long oid/int2]
   [value oid opt]
-  (array/arr16 (short value)))
+  (bytes/int16->bytes (short value)))
 
 
 ;;
@@ -100,18 +100,18 @@
 
 (expand [Integer oid/int8]
   [value oid opt]
-  (array/arr64 (long value)))
+  (bytes/int64->bytes (long value)))
 
 
 (expand [Integer nil
          Integer oid/int4]
   [value oid opt]
-  (array/arr32 value))
+  (bytes/int32->bytes value))
 
 
 (expand [Integer oid/int2]
   [value oid opt]
-  (array/arr16 (short value)))
+  (bytes/int16->bytes (short value)))
 
 
 ;;
@@ -120,16 +120,16 @@
 
 (expand [Short oid/int8]
   [value oid opt]
-  (array/arr64 (long value)))
+  (bytes/int64->bytes (long value)))
 
 (expand [Short oid/int4]
   [value oid opt]
-  (array/arr32 (int value)))
+  (bytes/int32->bytes (int value)))
 
 (expand [Short nil
          Short oid/int2]
   [value oid opt]
-  (array/arr16 value))
+  (bytes/int16->bytes value))
 
 
 ;;
@@ -152,12 +152,12 @@
          Float oid/float4]
   [value oid opt]
   (-> (Float/floatToIntBits value)
-      (array/arr32)))
+      (bytes/int32->bytes)))
 
 (expand [Float oid/float8]
   [value oid opt]
   (-> (Double/doubleToLongBits (double value))
-      (array/arr64)))
+      (bytes/int64->bytes)))
 
 
 ;;
@@ -168,12 +168,12 @@
          Double oid/float8]
   [value oid opt]
   (-> (Double/doubleToLongBits value)
-      (array/arr64)))
+      (bytes/int64->bytes)))
 
 (expand [Double oid/float4]
   [value oid opt]
   (-> (Float/floatToIntBits (float value))
-      (array/arr32)))
+      (bytes/int32->bytes)))
 
 
 ;;
@@ -191,8 +191,8 @@
 
     (byte-array
      (-> []
-         (into (array/arr64 most-bits))
-         (into (array/arr64 least-bits))))))
+         (into (bytes/int64->bytes most-bits))
+         (into (bytes/int64->bytes least-bits))))))
 
 (expand [String oid/uuid]
   [value oid opt]
@@ -221,7 +221,7 @@
         nanos
         (.getNano value)]
 
-    (array/arr64
+    (bytes/int64->bytes
      (-> (* seconds 1000 1000)
          (+ (quot nanos 1000))
          (+ (* offset-millis 1000))))))
@@ -258,7 +258,7 @@
         (- (* millis 1000)
            (* offset-minutes 60 1000 1000))]
 
-    (array/arr64 nanos)))
+    (bytes/int64->bytes nanos)))
 
 
 ;;
@@ -268,7 +268,7 @@
 (expand [LocalDate nil
          LocalDate oid/date]
   [^LocalDate value oid opt]
-  (array/arr32
+  (bytes/int32->bytes
    (- (.toEpochDay value)
       (.toDays const/PG_EPOCH_DIFF))))
 

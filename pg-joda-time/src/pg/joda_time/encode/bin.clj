@@ -7,7 +7,7 @@
    org.joda.time.LocalTime)
   (:require
    [pg.const :as const]
-   [pg.bytes.array :as array]
+   [pg.bytes :as bytes]
    [pg.encode.bin :refer [expand]]
    [pg.oid :as oid]))
 
@@ -27,7 +27,7 @@
         (-> (Days/daysBetween LD_EPOCH value)
             (.getDays)
             (- (.toDays const/PG_EPOCH_DIFF)))]
-    (array/arr32 days)))
+    (bytes/int32->bytes days)))
 
 
 ;;
@@ -37,7 +37,7 @@
 (expand [LocalTime nil
          LocalTime oid/time]
   [^LocalTime value _ _]
-  (array/arr64 (.getMillisOfDay value)))
+  (bytes/int64->bytes (.getMillisOfDay value)))
 
 
 ;;
@@ -54,6 +54,6 @@
         offset-millis
         (.getRawOffset (TimeZone/getDefault))]
 
-    (array/arr64
+    (bytes/int64->bytes
      (-> (* millis 1000)
          (+ (* offset-millis 1000))))))

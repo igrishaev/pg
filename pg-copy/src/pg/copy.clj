@@ -5,7 +5,7 @@
    java.io.OutputStream)
   (:require
    [clojure.java.io :as io]
-   [pg.bytes.array :as array]
+   [pg.bytes :as bytes]
    [pg.encode.bin :as bin]
    [pg.oid :as oid]))
 
@@ -19,15 +19,15 @@
 
 
 (def ^{:tag 'bytes} zero32
-  (array/arr32 0))
+  (bytes/int32->bytes 0))
 
 
 (def ^{:tag 'bytes} -one32
-  (array/arr32 -1))
+  (bytes/int32->bytes -1))
 
 
 (def ^{:tag 'bytes} -one16
-  (array/arr16 -1))
+  (bytes/int16->bytes -1))
 
 
 ;;
@@ -75,13 +75,13 @@
      (.write out zero32)
      (.write out zero32)
      (doseq [row data]
-       (.write out (array/arr16 (count row)))
+       (.write out (bytes/int16->bytes (count row)))
        (doseq [[i item] (enumerate row)]
          (if (nil? item)
            (.write out -one32)
            (let [oid (get idx->oid i)
                  buf (bin/encode item oid opt)]
-             (.write out (array/arr32 (alength buf)))
+             (.write out (bytes/int32->bytes (alength buf)))
              (.write out buf)))))
      (.write out -one16)
      (.close out))))

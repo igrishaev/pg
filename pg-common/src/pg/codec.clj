@@ -1,4 +1,4 @@
-(ns pg.client.codec
+(ns pg.codec
   (:import
    java.text.Normalizer
    java.text.Normalizer$Form

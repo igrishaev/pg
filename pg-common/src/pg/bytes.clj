@@ -1,4 +1,4 @@
-(ns pg.client.bytes
+(ns pg.bytes
   (:refer-clojure :exclude [concat empty? ==])
   (:import
    java.util.Arrays
