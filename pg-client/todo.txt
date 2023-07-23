@@ -1,7 +1,7 @@
 
-- refactor pg.client.acc ns
 - test binary encode
 - test binary decode
+- binary encode/decode support
 - add docstrings, arglists
 - conn component?
 - pass pg config with envs?
@@ -13,7 +13,7 @@
 - interval support
 - range support
 - array support
-- binary encode/decode support
+- refactor pg.client.acc ns
 - separate pg.oid package
 - result: java maps?
 - thread safe
@@ -23,6 +23,7 @@
 - joda split encode/decode
 - joda rename
 - joda structure: pg.joda, pg.joda.encode, pg.joda.decode
+- joda tests
 - adopt honey-sql
 - adopt gosql
 - errors addSuppressed
