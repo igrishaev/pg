@@ -1,6 +1,10 @@
 
 - test binary decode
-- binary encode/decode support
+- binary decode primary types
+- joda split encode/decode
+- joda rename
+- joda structure: pg.joda, pg.joda.encode, pg.joda.decode
+- joda tests
 - add docstrings, arglists
 - conn component?
 - pass pg config with envs?
@@ -17,10 +21,6 @@
 - batch queries
 - channel options
 - ssl
-- joda split encode/decode
-- joda rename
-- joda structure: pg.joda, pg.joda.encode, pg.joda.decode
-- joda tests
 - adopt honey-sql
 - adopt gosql
 - errors addSuppressed
