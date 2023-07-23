@@ -1161,3 +1161,13 @@ drop table %1$s;
   (pg/with-connection [conn (assoc CONFIG :binary-encode? true)]
     (let [res (pg/execute conn "select $1::integer as num" [42])]
       (is (= [{:num 42}] res)))))
+
+
+(deftest test-decode-binary-simple
+  (pg/with-connection [conn (assoc CONFIG :binary-decode? true)]
+    (let [res (pg/execute conn "select $1::integer as num" [42])]
+      (is (= [{:num 42}] res)))))
+
+
+;; decode text unsupported
+;; decode bin unsupported

@@ -5,6 +5,16 @@
    java.nio.ByteBuffer))
 
 
+(defn bytes->int16 ^Short [^bytes buf]
+  (-> (ByteBuffer/wrap buf)
+      (.getShort)))
+
+
+(defn bytes->int32 ^Integer [^bytes buf]
+  (-> (ByteBuffer/wrap buf)
+      (.getInt)))
+
+
 (defn int16->bytes ^bytes [^Short value]
   (-> (ByteBuffer/allocate 2)
       (.putShort value)
