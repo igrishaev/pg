@@ -1,5 +1,4 @@
 
-- test binary encode
 - test binary decode
 - binary encode/decode support
 - add docstrings, arglists

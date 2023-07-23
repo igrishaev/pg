@@ -8,10 +8,9 @@
    [pg.out :as out]
    [pg.bb :as bb]
    [pg.client.coll :as coll]
-   [pg.encode.txt :as txt]))
+   [pg.encode.txt :as txt]
+   [pg.encode.bin :as bin]))
 
-
-;; Auth SASL
 
 ;; FunctionCall
 ;; FunctionCallResponse
@@ -24,7 +23,6 @@
 ;; CopyInResponse
 ;; CopyOutResponse
 ;; CopyBothResponse
-
 
 
 (defmacro get-server-encoding [opt]
@@ -735,20 +733,27 @@
           (out/write-int16s param-formats))]
 
     (out/write-int16 out (count params))
+
     (coll/do-n [i (count params)]
 
       (let [param (.get params i)
-            param-oid (.get param-oids i)]
+            param-oid (.get param-oids i)
+            param-format (.get param-formats i)]
 
         (if (nil? param)
 
           (out/write-int32 out -1)
 
-          (let [^String encoded
-                (txt/encode param param-oid opt)
+          (let [^bytes buf
+                (case (int param-format)
 
-                buf
-                (.getBytes encoded encoding)
+                  0
+                  (let [^String encoded
+                        (txt/encode param param-oid opt)]
+                    (.getBytes encoded encoding))
+
+                  1
+                  (bin/encode param param-oid opt))
 
                 len
                 (alength buf)]

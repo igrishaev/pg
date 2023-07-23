@@ -8,6 +8,7 @@
    java.util.HashMap
    java.util.Map)
   (:require
+   [pg.client.coll :as coll]
    [pg.const :as const]
    [pg.client.debug :as debug]
    [pg.bb :as bb]
@@ -251,11 +252,18 @@
                 binary-decode?]}
         config
 
+        params-len
+        (count params)
+
         param-formats
-        (if binary-encode? [1] [0])
+        (if binary-encode?
+          (coll/for-n [_ params-len] 1)
+          (coll/for-n [_ params-len] 0))
 
         column-formats
-        (if binary-decode? [1] [0])
+        (if binary-decode?
+          [1]
+          [0])
 
         portal
         (name (gensym "portal_"))

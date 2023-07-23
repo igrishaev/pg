@@ -1155,3 +1155,9 @@ drop table %1$s;
   (pg/with-connection [conn CONFIG]
     (let [res (pg/execute conn "select")]
       (is (= [] res)))))
+
+
+(deftest test-encode-binary-simple
+  (pg/with-connection [conn (assoc CONFIG :binary-encode? true)]
+    (let [res (pg/execute conn "select $1::integer as num" [42])]
+      (is (= [{:num 42}] res)))))
