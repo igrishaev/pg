@@ -6,7 +6,6 @@
 - conn component?
 - pass pg config with envs?
 - multiple pg docker tests
-- Statement closeable
 - docker: init script (uuid)
 - docker: hba config for access
 - docker: multiple pg versions
@@ -14,9 +13,8 @@
 - range support
 - array support
 - refactor pg.client.acc ns
-- separate pg.oid package
 - result: java maps?
-- thread safe
+- thread safe?
 - batch queries
 - channel options
 - ssl
