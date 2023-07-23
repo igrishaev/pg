@@ -5,8 +5,8 @@
    java.util.List
    java.io.ByteArrayOutputStream)
   (:require
-   [pg.client.out :as out]
-   [pg.client.bb :as bb]
+   [pg.out :as out]
+   [pg.bb :as bb]
    [pg.client.coll :as coll]
    [pg.encode.txt :as txt]))
 

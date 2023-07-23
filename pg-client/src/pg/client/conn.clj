@@ -10,7 +10,7 @@
   (:require
    [pg.const :as const]
    [pg.client.debug :as debug]
-   [pg.client.bb :as bb]
+   [pg.bb :as bb]
    [pg.client.msg :as msg]
    [pg.const :as const]))
 

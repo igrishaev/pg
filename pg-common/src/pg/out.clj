@@ -1,7 +1,6 @@
-(ns pg.client.out
+(ns pg.out
   (:require
-   [pg.bytes :as bytes]
-   [pg.client.coll :as coll])
+   [pg.bytes :as bytes])
   (:import
    java.util.List
    java.io.ByteArrayOutputStream))
@@ -58,8 +57,12 @@
 (defn write-int16s
   [^ByteArrayOutputStream out
    ^List values]
-  (coll/do-list [_ value values]
-    (.writeBytes out (bytes/int16->bytes value)))
+  (let [len (count values)]
+    (loop [i 0]
+      (when (< i len)
+        (let [value (.get values i)]
+          (.writeBytes out (bytes/int16->bytes value))
+          (recur (inc i))))))
   out)
 
 

@@ -1,7 +1,5 @@
 
-- unify bb, out and bytes
 - refactor pg.client.acc ns
-- refactor pg-common
 - test binary encode
 - test binary decode
 - add docstrings, arglists

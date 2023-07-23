@@ -1,4 +1,4 @@
-(ns pg.client.bb
+(ns pg.bb
   (:import
    java.nio.channels.SocketChannel
    java.io.ByteArrayOutputStream
