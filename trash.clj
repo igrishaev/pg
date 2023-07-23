@@ -39,3 +39,43 @@
 
 -      - "./certs/server-cert.pem:/var/lib/postgresql/server.crt:ro"
 -      - "./certs/server-key.pem:/var/lib/postgresql/server.key:ro"
+
+
+(defn batch [conn]
+
+  (let [q1 "select $1::integer as one"
+        q2 "select $1::text as msg"
+
+        s1 (conn/send-parse conn q1 nil)
+        s2 (conn/send-parse conn q2 nil)
+
+        p1 (conn/send-bind conn s1 [1] [oid/int4])
+        p2 (conn/send-bind conn s2 ["hello"] [oid/text])]
+
+    (conn/describe-statement conn s1)
+    (conn/describe-portal conn p1)
+    (conn/send-execute conn p1 0)
+
+    (conn/describe-statement conn s2)
+    (conn/describe-portal conn p2)
+    (conn/send-execute conn p2 0)
+
+    (conn/send-sync conn)
+
+    (res/interact conn :execute nil)))
+
+
+
+(deftest test-foo
+
+  (pg/with-connection [conn CONFIG]
+
+    (let [res (pg/batch conn)]
+      (is (= 1 res))
+      )
+
+    ;; (pg/begin conn)
+
+    ;; (pg/commit conn)
+)
+  )
