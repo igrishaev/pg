@@ -40,13 +40,6 @@
 (use-fixtures :each fix-multi-version)
 
 
-#_
-(def CONFIG-BIN
-  (assoc CONFIG
-         :binary-encode? true
-         :binary-decode? true))
-
-
 (defn gen-table []
   (format "table_%s" (System/nanoTime)))
 
