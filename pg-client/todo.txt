@@ -1,16 +1,16 @@
 
 - binary encode datetime separate ns
+- binary tests
+- multiple pg docker tests
+
 - joda split encode/decode
 - joda rename
 - joda structure: pg.joda, pg.joda.encode, pg.joda.decode
 - joda tests
+
 - add docstrings, arglists
 - conn component?
 - pass pg config with envs?
-- multiple pg docker tests
-- docker: init script (uuid)
-- docker: hba config for access
-- docker: multiple pg versions
 - interval support
 - range support
 - array support
