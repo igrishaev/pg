@@ -184,7 +184,7 @@
 (expand [OffsetTime nil
          OffsetTime oid/timetz]
   [value _ opt]
-  (datetime/OffsetTime-time value opt))
+  (datetime/OffsetTime-timetz value opt))
 
 
 (expand [ZonedDateTime nil

@@ -19,15 +19,15 @@
 
 
 
-#_
 (def CONFIG
   {:host "127.0.0.1"
-   :port 10110 ;; 10120 10130 10140 10150 10160
+   :port 10140 ;; 10110 10120 10130 10140 10150 10160
    :user "test"
    :password "test"
    :database "test"})
 
 
+#_
 (def CONFIG
   {:host "127.0.0.1"
    :port 15432
