@@ -1,41 +1,46 @@
 (ns pg.client-test
   (:import
    java.time.Instant
-   java.time.LocalTime
-   java.time.LocalDateTime
-   java.time.OffsetTime
-   java.time.OffsetDateTime
    java.time.LocalDate
+   java.time.LocalDateTime
+   java.time.LocalTime
+   java.time.OffsetDateTime
+   java.time.OffsetTime
    java.util.ArrayList
    java.util.Date
    java.util.HashMap)
   (:require
    [clojure.string :as str]
-   [clojure.test :refer [deftest is]]
-   [pg.client.acc :as acc]
+   [clojure.test :refer [deftest is use-fixtures testing]]
    [pg.client :as pg]
+   [pg.client.acc :as acc]
    [pg.client.conn :as conn]
    pg.json))
 
 
+(def PORTS
+  [10110 10120 10130 10140 10150 10160])
 
-(def CONFIG
+
+(def ^:dynamic *CONFIG*
   {:host "127.0.0.1"
-   :port 10140 ;; 10110 10120 10130 10140 10150 10160
+   :port -999
    :user "test"
    :password "test"
    :database "test"})
 
 
+(defn fix-multi-version [t]
+  (doseq [port PORTS]
+    (binding [*CONFIG* (assoc *CONFIG* :port port)]
+      (testing (format "PORT %s" port)
+        (t)))))
+
+
+(use-fixtures :each fix-multi-version)
+
+
 #_
-(def CONFIG
-  {:host "127.0.0.1"
-   :port 15432
-   :user "ivan"
-   :password "ivan"
-   :database "ivan"})
-
-
 (def CONFIG-BIN
   (assoc CONFIG
          :binary-encode? true
@@ -48,7 +53,7 @@
 
 (deftest test-client-tx-status
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (is (= :I (pg/status conn)))
 
@@ -79,7 +84,7 @@
 
 
 (deftest test-client-conn-str-print
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (is (= "PG connection ivan@127.0.0.1:15432/ivan"
            (str conn)))
@@ -90,8 +95,8 @@
 
 
 (deftest test-client-conn-equals
-  (pg/with-connection [conn1 CONFIG]
-    (pg/with-connection [conn2 CONFIG]
+  (pg/with-connection [conn1 *CONFIG*]
+    (pg/with-connection [conn2 *CONFIG*]
       (is (= conn1 conn1))
       (is (not= conn1 conn2)))))
 
@@ -99,7 +104,7 @@
 (deftest test-client-ok
 
   (let [result
-        (pg/with-connection [conn CONFIG]
+        (pg/with-connection [conn *CONFIG*]
           (pg/execute conn "select 1 as foo, 'hello' as bar"))]
 
     (is (= [{:foo 1 :bar "hello"}]
@@ -109,7 +114,7 @@
 (deftest test-client-query-multiple
 
   (let [result
-        (pg/with-connection [conn CONFIG]
+        (pg/with-connection [conn *CONFIG*]
           (pg/execute conn "select 1 as foo; select 'two' as bar"))]
 
     (is (= [[{:foo 1}]
@@ -120,7 +125,7 @@
 (deftest test-client-empty-query
 
   (let [result
-        (pg/with-connection [conn CONFIG]
+        (pg/with-connection [conn *CONFIG*]
           (pg/execute conn ""))]
 
     (is (nil? result))))
@@ -129,7 +134,7 @@
 (deftest test-client-fn-column
 
   (let [result
-        (pg/with-connection [conn CONFIG]
+        (pg/with-connection [conn *CONFIG*]
           (pg/execute conn "select 1 as foo" nil {:fn-column str/upper-case}))]
 
     (is (= [{"FOO" 1}] result))))
@@ -137,7 +142,7 @@
 
 (deftest test-client-exception-in-the-middle
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (is (thrown?
          Exception
@@ -149,7 +154,7 @@
 
 (deftest test-client-reuse-conn
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [res1
           (pg/execute conn "select 1 as foo")
@@ -162,14 +167,14 @@
 
 
 (deftest test-client-with-tx-syntax-issue
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (pg/with-tx [conn]
       (is (map? conn)))))
 
 
 (deftest test-client-with-transaction-ok
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [res1
           (pg/with-tx [conn]
@@ -185,7 +190,7 @@
 
 (deftest test-client-with-transaction-read-only
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [res1
           (pg/with-tx [conn {:read-only? true}]
@@ -214,7 +219,7 @@
 
 (deftest test-exeplain-alalyze
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [result
           (pg/execute conn "explain analyze select 42")
@@ -235,7 +240,7 @@
   (let [table
         (gen-table)]
 
-    (pg/with-connection [conn CONFIG]
+    (pg/with-connection [conn *CONFIG*]
 
       (pg/execute conn (format "create table %s (id integer)" table))
 
@@ -246,7 +251,7 @@
               (pg/execute conn (format "select * from %s" table))
 
               res2
-              (pg/with-connection [conn2 CONFIG]
+              (pg/with-connection [conn2 *CONFIG*]
                 (pg/execute conn2 (format "select * from %s" table)))]
 
           (is (= [{:id 1} {:id 2}] res1))
@@ -258,7 +263,7 @@
   (let [table
         (gen-table)]
 
-    (pg/with-connection [conn CONFIG]
+    (pg/with-connection [conn *CONFIG*]
 
       (pg/execute conn (format "create table %s (id integer)" table))
 
@@ -272,7 +277,7 @@
 
 
 (deftest test-client-create-table
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [table
           (gen-table)
@@ -296,7 +301,7 @@
           (swap! capture! conj Message))
 
         config+
-        (assoc CONFIG :fn-notification fn-notification)]
+        (assoc *CONFIG* :fn-notification fn-notification)]
 
     (pg/with-connection [conn config+]
 
@@ -345,9 +350,9 @@
           (swap! capture! conj Message))
 
         config+
-        (assoc CONFIG :fn-notification fn-notification)]
+        (assoc *CONFIG* :fn-notification fn-notification)]
 
-    (pg/with-connection [conn1 CONFIG]
+    (pg/with-connection [conn1 *CONFIG*]
       (pg/with-connection [conn2 config+]
 
         (let [pid1 (pg/pid conn1)
@@ -373,7 +378,7 @@
 
 
 (deftest test-client-broken-query
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (try
       (pg/execute conn "selekt 1")
       (is false "must have been an error")
@@ -397,7 +402,7 @@
 (deftest test-client-error-response
 
   (let [config
-        (assoc CONFIG :pg-params {"pg_foobar" "111"})]
+        (assoc *CONFIG* :pg-params {"pg_foobar" "111"})]
 
     (is (thrown? Exception
                  (pg/with-connection [conn config]
@@ -407,7 +412,7 @@
 (deftest test-client-wrong-startup-params
 
   (let [config
-        (assoc CONFIG :pg-params {"application_name" "Clojure"})]
+        (assoc *CONFIG* :pg-params {"application_name" "Clojure"})]
 
     (pg/with-connection [conn config]
       (let [param
@@ -416,14 +421,14 @@
 
 
 (deftest test-terminate-closed
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (pg/terminate conn)
     (is (pg/closed? conn))))
 
 
 (deftest test-client-prepare
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [query1
           "prepare foo as select $1::integer as num"
@@ -450,7 +455,7 @@
 
 (deftest test-client-cursor
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [table
           (gen-table)
@@ -496,7 +501,7 @@
 (deftest test-client-wrong-minor-protocol
 
   (let [config
-        (assoc CONFIG :protocol-version 196609)]
+        (assoc *CONFIG* :protocol-version 196609)]
 
     (pg/with-connection [conn config]
       (is (= [{:foo 1}]
@@ -506,7 +511,7 @@
 (deftest test-client-wrong-major-protocol
 
   (let [config
-        (assoc CONFIG :protocol-version 296608)]
+        (assoc *CONFIG* :protocol-version 296608)]
 
     (try
       (pg/with-connection [conn config]
@@ -528,7 +533,7 @@
 
 
 (deftest test-client-empty-select
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [table
           (gen-table)
@@ -549,7 +554,7 @@
 
 
 (deftest test-client-insert-result-returning
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [table
           (gen-table)
@@ -576,7 +581,7 @@
         (atom nil)
 
         config
-        (assoc CONFIG :fn-notice
+        (assoc *CONFIG* :fn-notice
                (fn [message]
                  (reset! capture! message)))]
 
@@ -597,7 +602,7 @@
 
 
 (deftest test-client-insert-result-no-returning
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [table
           (gen-table)
@@ -618,7 +623,7 @@
 
 
 (deftest test-client-select-fn-result
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [table
           (gen-table)
@@ -646,7 +651,7 @@
 
 (deftest test-prepare-result
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [res
           (pg/prepare-statement conn "select $1::integer as foo")]
@@ -658,7 +663,7 @@
 
 (deftest test-prepare-execute
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (pg/with-statement [stmt conn "select $1::integer as foo"]
 
@@ -674,7 +679,7 @@
 
 (deftest test-prepare-execute-with-options
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (pg/with-statement [stmt conn "select $1::integer as foo"]
 
@@ -689,7 +694,7 @@
 
 
 (deftest test-client-delete-result
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [table
           (gen-table)
@@ -716,7 +721,7 @@
 
 
 (deftest test-client-update-result
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [table
           (gen-table)
@@ -743,7 +748,7 @@
 
 
 (deftest test-client-mixed-result
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [table
           (gen-table)
@@ -776,7 +781,7 @@ drop table %1$s;
 
 
 (deftest test-client-truncate-result
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [table
           (gen-table)
@@ -804,7 +809,7 @@ drop table %1$s;
 
 (deftest test-client-select-multi
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [res
           (pg/execute conn "select 1 as foo; select 2 as bar")]
@@ -814,7 +819,7 @@ drop table %1$s;
 
 (deftest test-client-field-duplicates
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [res
           (pg/execute conn "select 1 as id, 2 as id")]
@@ -823,21 +828,21 @@ drop table %1$s;
 
 
 (deftest test-client-json-read
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [res
           (pg/execute conn "select '[1, 2, 3]'::json as arr")]
       (is (= [{:arr [1 2 3]}] res)))))
 
 
 (deftest test-client-jsonb-read
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [res
           (pg/execute conn "select '{\"foo\": 123}'::jsonb as obj")]
       (is (= [{:obj {:foo 123}}] res)))))
 
 
 (deftest test-client-json-write
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [res
           (pg/execute conn
                       "select $1::json as obj"
@@ -847,7 +852,7 @@ drop table %1$s;
 
 
 (deftest test-client-jsonb-write
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [json
           [1 2 [true {:foo 1}]]
 
@@ -860,32 +865,32 @@ drop table %1$s;
 
 
 (deftest test-client-default-oid-long
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [res (pg/execute conn "select $1 as foo" [42])]
       (is (= [{:foo 42}] res)))))
 
 
 (deftest test-client-default-oid-uuid
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [uid (random-uuid)
           res (pg/execute conn "select $1 as foo" [uid])]
       (is (= [{:foo uid}] res)))))
 
 
 (deftest test-client-execute-sqlvec
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [res (pg/execute conn "select $1 as foo" ["hi"])]
       (is (= [{:foo "hi"}] res)))))
 
 
 (deftest test-client-execute-sqlvec-no-params
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [res (pg/execute conn "select 42 as foo")]
       (is (= [{:foo 42}] res)))))
 
 
 (deftest test-client-timestamptz-read
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [res (pg/execute conn "select '2022-01-01 23:59:59.123+03'::timestamptz as obj")
           obj (-> res first :obj)]
       (is (instance? Instant obj))
@@ -893,7 +898,7 @@ drop table %1$s;
 
 
 (deftest test-client-timestamptz-pass
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (pg/with-statement [stmt conn "select $1::timestamptz as obj"]
       (let [inst
             (Instant/parse "2022-01-01T20:59:59.123456Z")
@@ -903,7 +908,7 @@ drop table %1$s;
 
 
 (deftest test-client-timestamp-read
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [res (pg/execute conn "select '2022-01-01 23:59:59.123+03'::timestamp as obj")
           obj (-> res first :obj)]
       (is (instance? LocalDateTime obj))
@@ -911,7 +916,7 @@ drop table %1$s;
 
 
 (deftest test-client-timestamp-pass
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (pg/with-statement [stmt conn "select $1::timestamp as obj"]
       (let [inst
             (Instant/parse "2022-01-01T20:59:59.000000123Z")
@@ -923,7 +928,7 @@ drop table %1$s;
 
 
 (deftest test-client-instant-date-read
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [res (pg/execute conn "select '2022-01-01 23:59:59.123+03'::date as obj")
           obj (-> res first :obj)]
       (is (instance? LocalDate obj))
@@ -931,7 +936,7 @@ drop table %1$s;
 
 
 (deftest test-client-pass-date-timestamptz
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [date
           (new Date 85 11 31 23 59 59)
 
@@ -947,7 +952,7 @@ drop table %1$s;
 
 (deftest test-client-date-pass-date
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [date
           (new Date 85 11 31 23 59 59)
 
@@ -959,7 +964,7 @@ drop table %1$s;
 
 (deftest test-client-read-time
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [res
           (pg/execute conn "select now()::time as time")
 
@@ -971,7 +976,7 @@ drop table %1$s;
 
 (deftest test-client-pass-time
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [time1
           (LocalTime/now)
 
@@ -986,7 +991,7 @@ drop table %1$s;
 
 (deftest test-client-read-timetz
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [res
           (pg/execute conn "select now()::timetz as timetz")
 
@@ -998,7 +1003,7 @@ drop table %1$s;
 
 (deftest test-client-pass-timetz
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [time1
           (OffsetTime/now)
 
@@ -1012,14 +1017,14 @@ drop table %1$s;
 
 
 (deftest test-client-conn-with-open
-  (with-open [conn (pg/connect CONFIG)]
+  (with-open [conn (pg/connect *CONFIG*)]
     (let [res (pg/execute conn "select 1 as one")]
       (is (= [{:one 1}] res)))))
 
 
 (deftest test-client-prepare-&-close-ok
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [statement
           (pg/prepare-statement conn "select 1 as foo")]
@@ -1042,7 +1047,7 @@ drop table %1$s;
 
 
 (deftest test-execute-row-limit
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [query
           "with foo as (values (1, 2), (3, 4), (5, 6)) select * from foo"]
@@ -1058,7 +1063,7 @@ drop table %1$s;
 
 (deftest test-acc-as-java
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [query
           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
@@ -1079,7 +1084,7 @@ drop table %1$s;
 
 (deftest test-acc-as-index-by
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [query
           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
@@ -1096,7 +1101,7 @@ drop table %1$s;
 
 (deftest test-acc-as-group-by
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [query
           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
@@ -1112,7 +1117,7 @@ drop table %1$s;
 
 (deftest test-acc-as-kv
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [query
           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
@@ -1128,7 +1133,7 @@ drop table %1$s;
 
 (deftest test-acc-as-matrix
 
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
 
     (let [query
           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
@@ -1143,7 +1148,7 @@ drop table %1$s;
 
 
 (deftest test-conn-opt
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [opt (conn/get-opt conn)]
       (is (= {:date-style "ISO, MDY"
               :time-zone "Europe/Moscow"
@@ -1153,57 +1158,57 @@ drop table %1$s;
 
 
 (deftest test-two-various-params
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [res
           (pg/execute conn "select $1::int8 = $1::int4 as eq" [(int 123) 123])]
       (is (= [{:eq true}] res)))))
 
 
 (deftest test-empty-select
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [res (pg/execute conn "select")]
       (is (= [] res)))))
 
 
 (deftest test-encode-binary-simple
-  (pg/with-connection [conn (assoc CONFIG :binary-encode? true)]
+  (pg/with-connection [conn (assoc *CONFIG* :binary-encode? true)]
     (let [res (pg/execute conn "select $1::integer as num" [42])]
       (is (= [{:num 42}] res)))))
 
 
 (deftest test-decode-binary-simple
-  (pg/with-connection [conn (assoc CONFIG :binary-decode? true)]
+  (pg/with-connection [conn (assoc *CONFIG* :binary-decode? true)]
     (let [res (pg/execute conn "select $1::integer as num" [42])]
       (is (= [{:num 42}] res)))))
 
 
 (deftest test-decode-binary-unsupported
-  (pg/with-connection [conn (assoc CONFIG :binary-decode? true)]
+  (pg/with-connection [conn (assoc *CONFIG* :binary-decode? true)]
     (let [res (pg/execute conn "select '1 year 1 second'::interval as interval" [])]
       (is (= [{:interval [0 0 0 0 0 15 66 64 0 0 0 0 0 0 0 12]}]
              (update-in res [0 :interval] vec))))))
 
 
 (deftest test-decode-text-unsupported
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [res (pg/execute conn "select '1 year 1 second'::interval as interval")]
       (is (= [{:interval "1 year 00:00:01"}] res)))))
 
 
 (deftest test-decode-binary-text
-  (pg/with-connection [conn (assoc CONFIG :binary-decode? true)]
+  (pg/with-connection [conn (assoc *CONFIG* :binary-decode? true)]
     (let [res (pg/execute conn "select 'hello'::text as text" [])]
       (is (= [{:text "hello"}] res)))))
 
 
 (deftest test-decode-binary-varchar
-  (pg/with-connection [conn (assoc CONFIG :binary-decode? true)]
+  (pg/with-connection [conn (assoc *CONFIG* :binary-decode? true)]
     (let [res (pg/execute conn "select 'hello'::varchar as text" [])]
       (is (= [{:text "hello"}] res)))))
 
 
 (deftest test-decode-binary-bpchar
-  (pg/with-connection [conn (assoc CONFIG
+  (pg/with-connection [conn (assoc *CONFIG*
                                    :binary-encode? true
                                    :binary-decode? true)]
     (let [res (pg/execute conn "select $1::char as char" ["ё"])]
@@ -1211,19 +1216,21 @@ drop table %1$s;
 
 
 (deftest test-decode-oid
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [res (pg/execute conn "select $1::oid as oid" [42])]
       (is (= [{:oid 42}] res)))))
 
 
 (deftest test-decode-oid-binary
-  (pg/with-connection [conn CONFIG-BIN]
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
     (let [res (pg/execute conn "select $1::oid as oid" [42])]
       (is (= [{:oid 42}] res)))))
 
 
 (deftest test-uuid-text
-  (pg/with-connection [conn CONFIG]
+  (pg/with-connection [conn *CONFIG*]
     (let [uuid
           (random-uuid)
           res
@@ -1232,7 +1239,9 @@ drop table %1$s;
 
 
 (deftest test-uuid-bin
-  (pg/with-connection [conn CONFIG-BIN]
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
     (let [uuid
           (random-uuid)
           res
@@ -1241,7 +1250,9 @@ drop table %1$s;
 
 
 (deftest test-time-bin-read
-  (pg/with-connection [conn CONFIG-BIN]
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
     (let [res
           (pg/execute conn "select '12:01:59.123456789+03'::time as time;" [])
           time
@@ -1251,7 +1262,9 @@ drop table %1$s;
 
 
 (deftest test-timetz-bin-read
-  (pg/with-connection [conn CONFIG-BIN]
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
     (let [res
           (pg/execute conn "select '12:01:59.123456789+03'::timetz as timetz;" [])
           timetz
@@ -1261,7 +1274,9 @@ drop table %1$s;
 
 
 (deftest test-timestamp-bin-read
-  (pg/with-connection [conn CONFIG-BIN]
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
     (let [res
           (pg/execute conn "select '2022-01-01 12:01:59.123456789+03'::timestamp as ts;" [])
           ts
@@ -1271,7 +1286,9 @@ drop table %1$s;
 
 
 (deftest test-timestamptz-bin-read
-  (pg/with-connection [conn CONFIG-BIN]
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
     (let [res
           (pg/execute conn "select '2022-01-01 12:01:59.123456789+03'::timestamptz as tstz;" [])
           tstz
@@ -1281,7 +1298,9 @@ drop table %1$s;
 
 
 (deftest test-date-bin-read
-  (pg/with-connection [conn CONFIG-BIN]
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
     (let [res
           (pg/execute conn "select '2022-01-01 12:01:59.123456789+03'::date as date;" [])
           date
