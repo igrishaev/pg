@@ -79,7 +79,7 @@
   (Short/parseShort string))
 
 
-(expand [oid/int4]
+(expand [oid/int4 oid/oid]
   [string _ _]
   (Integer/parseInt string))
 

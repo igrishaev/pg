@@ -9,6 +9,10 @@
   `(ByteBuffer/allocate ~size))
 
 
+(defmacro wrap ^ByteBuffer [^bytes buf]
+  `(ByteBuffer/wrap ~buf))
+
+
 (defmacro remaining [bb]
   `(.. ~(with-meta bb {:tag `ByteBuffer}) (remaining)))
 
@@ -63,6 +67,10 @@
 
 (defmacro read-int32 [^ByteBuffer bb]
   `(.. ~(with-meta bb {:tag `ByteBuffer}) (getInt)))
+
+
+(defmacro read-int64 [^ByteBuffer bb]
+  `(.. ~(with-meta bb {:tag `ByteBuffer}) (getLong)))
 
 
 (defn read-rest ^bytes [^ByteBuffer bb]

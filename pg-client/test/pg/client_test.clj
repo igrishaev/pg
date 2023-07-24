@@ -25,6 +25,12 @@
    :database "ivan"})
 
 
+(def CONFIG-BIN
+  (assoc CONFIG
+         :binary-encode? true
+         :binary-decode? true))
+
+
 #_
 (def CONFIG
   {:host "127.0.0.1"
@@ -1169,5 +1175,85 @@ drop table %1$s;
       (is (= [{:num 42}] res)))))
 
 
-;; decode text unsupported
-;; decode bin unsupported
+(deftest test-decode-binary-unsupported
+  (pg/with-connection [conn (assoc CONFIG :binary-decode? true)]
+    (let [res (pg/execute conn "select '1 year 1 second'::interval as interval" [])]
+      (is (= [{:interval [0 0 0 0 0 15 66 64 0 0 0 0 0 0 0 12]}]
+             (update-in res [0 :interval] vec))))))
+
+
+(deftest test-decode-text-unsupported
+  (pg/with-connection [conn CONFIG]
+    (let [res (pg/execute conn "select '1 year 1 second'::interval as interval")]
+      (is (= [{:interval "1 year 00:00:01"}] res)))))
+
+
+(deftest test-decode-binary-text
+  (pg/with-connection [conn (assoc CONFIG :binary-decode? true)]
+    (let [res (pg/execute conn "select 'hello'::text as text" [])]
+      (is (= [{:text "hello"}] res)))))
+
+
+(deftest test-decode-binary-varchar
+  (pg/with-connection [conn (assoc CONFIG :binary-decode? true)]
+    (let [res (pg/execute conn "select 'hello'::varchar as text" [])]
+      (is (= [{:text "hello"}] res)))))
+
+
+(deftest test-decode-binary-bpchar
+  (pg/with-connection [conn (assoc CONFIG
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [res (pg/execute conn "select $1::char as char" ["ё"])]
+      (is (= [{:char \ё}] res)))))
+
+
+(deftest test-decode-oid
+  (pg/with-connection [conn CONFIG]
+    (let [res (pg/execute conn "select $1::oid as oid" [42])]
+      (is (= [{:oid 42}] res)))))
+
+
+(deftest test-decode-oid-binary
+  (pg/with-connection [conn CONFIG-BIN]
+    (let [res (pg/execute conn "select $1::oid as oid" [42])]
+      (is (= [{:oid 42}] res)))))
+
+
+(deftest test-uuid-text
+  (pg/with-connection [conn CONFIG]
+    (let [uuid
+          (random-uuid)
+          res
+          (pg/execute conn "select $1 as uuid" [uuid])]
+      (is (= [{:uuid uuid}] res)))))
+
+
+(deftest test-uuid-bin
+  (pg/with-connection [conn CONFIG-BIN]
+    (let [uuid
+          (random-uuid)
+          res
+          (pg/execute conn "select $1 as uuid" [uuid])]
+      (is (= [{:uuid uuid}] res)))))
+
+
+(deftest test-time-bin-read
+  (pg/with-connection [conn CONFIG-BIN]
+    (let [res
+          (pg/execute conn "select '12:01:59.123456789+03'::time as time;" [])
+          time
+          (-> res first :time)]
+      (is (instance? LocalTime time))
+      (is (= "12:01:59.123457" (str time))))))
+
+
+;; bin read timetz
+;; bin read timestamptz
+;; bin read timestamp
+;; bin read date
+
+;; bin pass timetz
+;; bin pass timestamptz
+;; bin pass timestamp
+;; bin pass date

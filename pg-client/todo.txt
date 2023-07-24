@@ -1,11 +1,10 @@
 
-- test binary decode
-- binary decode primary types
 - joda split encode/decode
 - joda rename
 - joda structure: pg.joda, pg.joda.encode, pg.joda.decode
 - joda tests
 - add docstrings, arglists
+- binary decode datetime
 - conn component?
 - pass pg config with envs?
 - multiple pg docker tests

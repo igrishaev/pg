@@ -13,6 +13,10 @@
                         (.toInstant ZoneOffset/UTC))))
 
 
+(def MICROS 1000000)
+
+(def MILLIS 1000)
+
 (def PROTOCOL_VERSION 196608)
 
 (def SOURCE_PORTAL \P)

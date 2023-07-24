@@ -15,6 +15,21 @@
       (.getInt)))
 
 
+(defn bytes->int64 ^Long [^bytes buf]
+  (-> (ByteBuffer/wrap buf)
+      (.getLong)))
+
+
+(defn bytes->float4 ^Float [^bytes buf]
+  (-> (ByteBuffer/wrap buf)
+      (.getFloat)))
+
+
+(defn bytes->float8 ^Double [^bytes buf]
+  (-> (ByteBuffer/wrap buf)
+      (.getDouble)))
+
+
 (defn int16->bytes ^bytes [^Short value]
   (-> (ByteBuffer/allocate 2)
       (.putShort value)
