@@ -2,14 +2,83 @@ version: "3.6"
 
 services:
 
-  postgres:
+  pg11:
+    image: postgres:11
+    command: >
+      -E
+    hostname: postgres
+    ports:
+      - "10110:5432"
+    volumes:
+      - ./.docker/postgres/initdb.d:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_DB=test
+      - POSTGRES_PASSWORD=test
+      - POSTGRES_USER=test
+
+  pg12:
+    image: postgres:12
+    command: >
+      -E
+    hostname: postgres
+    ports:
+      - "10120:5432"
+    volumes:
+      - ./.docker/postgres/initdb.d:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_DB=test
+      - POSTGRES_PASSWORD=test
+      - POSTGRES_USER=test
+
+  pg13:
+    image: postgres:13
+    command: >
+      -E
+    hostname: postgres
+    ports:
+      - "10130:5432"
+    volumes:
+      - ./.docker/postgres/initdb.d:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_DB=test
+      - POSTGRES_PASSWORD=test
+      - POSTGRES_USER=test
+
+  pg14:
     image: postgres:14
     command: >
       -E
-    restart: always
     hostname: postgres
     ports:
-      - "35432:5432"
+      - "10140:5432"
+    volumes:
+      - ./.docker/postgres/initdb.d:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_DB=test
+      - POSTGRES_PASSWORD=test
+      - POSTGRES_USER=test
+
+  pg15:
+    image: postgres:15
+    command: >
+      -E
+    hostname: postgres
+    ports:
+      - "10150:5432"
+    volumes:
+      - ./.docker/postgres/initdb.d:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_DB=test
+      - POSTGRES_PASSWORD=test
+      - POSTGRES_USER=test
+
+  pg16:
+    image: postgres:16beta2
+    command: >
+      -E
+    hostname: postgres
+    ports:
+      - "10160:5432"
     volumes:
       - ./.docker/postgres/initdb.d:/docker-entrypoint-initdb.d
     environment:

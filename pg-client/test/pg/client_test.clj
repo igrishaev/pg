@@ -18,6 +18,16 @@
    pg.json))
 
 
+
+#_
+(def CONFIG
+  {:host "127.0.0.1"
+   :port 10110 ;; 10120 10130 10140 10150 10160
+   :user "test"
+   :password "test"
+   :database "test"})
+
+
 (def CONFIG
   {:host "127.0.0.1"
    :port 15432
@@ -30,15 +40,6 @@
   (assoc CONFIG
          :binary-encode? true
          :binary-decode? true))
-
-
-#_
-(def CONFIG
-  {:host "127.0.0.1"
-   :port 35432
-   :user "test"
-   :password "test"
-   :database "test"})
 
 
 (defn gen-table []
