@@ -4,6 +4,7 @@
    java.time.LocalTime
    java.time.LocalDateTime
    java.time.OffsetTime
+   java.time.OffsetDateTime
    java.time.LocalDate
    java.util.ArrayList
    java.util.Date
@@ -1248,10 +1249,44 @@ drop table %1$s;
       (is (= "12:01:59.123457" (str time))))))
 
 
-;; bin read timetz
-;; bin read timestamptz
-;; bin read timestamp
-;; bin read date
+(deftest test-timetz-bin-read
+  (pg/with-connection [conn CONFIG-BIN]
+    (let [res
+          (pg/execute conn "select '12:01:59.123456789+03'::timetz as timetz;" [])
+          timetz
+          (-> res first :timetz)]
+      (is (instance? OffsetTime timetz))
+      (is (= "12:01:59.123457+03:00" (str timetz))))))
+
+
+(deftest test-timestamp-bin-read
+  (pg/with-connection [conn CONFIG-BIN]
+    (let [res
+          (pg/execute conn "select '2022-01-01 12:01:59.123456789+03'::timestamp as ts;" [])
+          ts
+          (-> res first :ts)]
+      (is (instance? LocalDateTime ts))
+      (is (= "2022-01-01T12:01:59.123457" (str ts))))))
+
+
+(deftest test-timestamptz-bin-read
+  (pg/with-connection [conn CONFIG-BIN]
+    (let [res
+          (pg/execute conn "select '2022-01-01 12:01:59.123456789+03'::timestamptz as tstz;" [])
+          tstz
+          (-> res first :tstz)]
+      (is (instance? OffsetDateTime tstz))
+      (is (= "2022-01-01T09:01:59.123457Z" (str tstz))))))
+
+
+(deftest test-date-bin-read
+  (pg/with-connection [conn CONFIG-BIN]
+    (let [res
+          (pg/execute conn "select '2022-01-01 12:01:59.123456789+03'::date as date;" [])
+          date
+          (-> res first :date)]
+      (is (instance? LocalDate date))
+      (is (= "2022-01-01" (str date))))))
 
 ;; bin pass timetz
 ;; bin pass timestamptz

@@ -141,3 +141,23 @@
 (expand [oid/time]
   [^bytes buf _ opt]
   (datetime/parse-time buf opt))
+
+
+(expand [oid/timetz]
+  [^bytes buf _ opt]
+  (datetime/parse-timetz buf opt))
+
+
+(expand [oid/timestamp]
+  [^bytes buf _ opt]
+  (datetime/parse-timestamp buf opt))
+
+
+(expand [oid/timestamptz]
+  [^bytes buf _ opt]
+  (datetime/parse-timestamptz buf opt))
+
+
+(expand [oid/date]
+  [^bytes buf _ opt]
+  (datetime/parse-date buf opt))
