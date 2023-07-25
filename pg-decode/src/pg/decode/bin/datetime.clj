@@ -15,7 +15,7 @@
    java.time.temporal.ChronoField))
 
 
-(defn parse-timestamptz [^bytes buf opt]
+(defn parse-timestamptz ^OffsetDateTime [^bytes buf opt]
 
   (let [bb
         (bb/wrap buf)
@@ -37,7 +37,7 @@
     (OffsetDateTime/ofInstant instant ZoneOffset/UTC)))
 
 
-(defn parse-timestamp [^bytes buf opt]
+(defn parse-timestamp ^LocalDateTime [^bytes buf opt]
 
   (let [bb
         (bb/wrap buf)
@@ -58,7 +58,7 @@
                                  ZoneOffset/UTC)))
 
 
-(defn parse-date [^bytes buf opt]
+(defn parse-date ^LocalDate [^bytes buf opt]
 
   (let [bb
         (bb/wrap buf)
@@ -70,7 +70,7 @@
      (+ days (.toDays const/PG_EPOCH_DIFF)))))
 
 
-(defn parse-timetz [^bytes buf opt]
+(defn parse-timetz ^OffsetTime [^bytes buf opt]
 
   (let [bb
         (bb/wrap buf)
@@ -86,7 +86,7 @@
      (ZoneOffset/ofTotalSeconds (- offset)))))
 
 
-(defn parse-time [^bytes buf opt]
+(defn parse-time ^LocalTime [^bytes buf opt]
 
   (let [bb
         (bb/wrap buf)

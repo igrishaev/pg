@@ -1,9 +1,9 @@
 (ns pg.decode.txt.datetime
   (:import
-   java.time.Instant
    java.time.LocalDate
    java.time.LocalDateTime
    java.time.LocalTime
+   java.time.OffsetDateTime
    java.time.OffsetTime
    java.time.ZoneOffset
    java.time.format.DateTimeFormatter
@@ -46,16 +46,12 @@
       (.toFormatter)))
 
 
-(defn parse-timestampz ^Instant [^String string opt]
-  (->> string
-       (.parse frmt-timestamptz)
-       (Instant/from)))
+(defn parse-timestampz ^OffsetDateTime [^String string opt]
+  (OffsetDateTime/parse string frmt-timestamptz))
 
 
 (defn parse-timestamp ^LocalDateTime [^String string opt]
-  (->> string
-       (.parse frmt-timestamp)
-       (LocalDateTime/from)))
+  (LocalDateTime/parse string frmt-timestamp))
 
 
 (defn parse-date ^LocalDate [^String string opt]
