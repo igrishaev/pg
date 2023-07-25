@@ -10,6 +10,15 @@
    java.util.Date))
 
 
+;; TODO
+;; LocalDateTime-date
+;; LocalDateTime-timestamp
+;; LocalDateTime-timestamptz
+;; OffsetDateTime-date
+;; OffsetDateTime-timestamp
+;; OffsetDateTime-timestamptz
+
+
 (def ^DateTimeFormatter
   frmt-timestamptz
   (-> "yyyy-MM-dd HH:mm:ss.SSSSSSx"

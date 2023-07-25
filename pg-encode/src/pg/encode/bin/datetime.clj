@@ -17,6 +17,20 @@
    java.util.TimeZone))
 
 
+;; TODO
+;; Instant-timestamptz
+;; Date-timestamptz
+;; ZonedDateTime-date
+;; ZonedDateTime-timestamp
+;; ZonedDateTime-timestamptz
+;; LocalDateTime-date
+;; LocalDateTime-timestamp
+;; LocalDateTime-timestamptz
+;; OffsetDateTime-date
+;; OffsetDateTime-timestamp
+;; OffsetDateTime-timestamptz
+
+
 (defn Instant-timestamp ^bytes [^Instant value opt]
   (let [seconds
         (- (.getEpochSecond value)
