@@ -25,6 +25,10 @@
   (.putInt bb value))
 
 
+(defn write-int64 [^ByteBuffer bb value]
+  (.putLong bb value))
+
+
 (defn write-byte [^ByteBuffer bb value]
   (.put bb (byte value)))
 
@@ -77,6 +81,10 @@
   (let [buf (byte-array (.remaining bb))]
     (.get bb buf)
     buf))
+
+
+(defn array [^ByteBuffer bb]
+  (.array bb))
 
 
 (defn to-vector [^ByteBuffer bb]

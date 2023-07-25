@@ -3,6 +3,7 @@
    clojure.lang.Symbol
    java.time.Duration
    java.time.Instant
+   java.time.OffsetTime
    java.time.LocalDate
    java.time.ZoneId
    java.time.ZoneOffset
@@ -10,6 +11,7 @@
    java.util.TimeZone
    java.util.UUID)
   (:require
+   [pg.encode.bin.datetime :as datetime]
    [clojure.template :refer [do-template]]
    [pg.bytes :as bytes]
    [pg.const :as const]
@@ -209,28 +211,13 @@
 
 (expand [Instant nil
          Instant oid/timestamp]
-  [^Instant value oid opt]
+  [value _ opt]
+  (datetime/Instant-timestamp value opt))
 
-  (let [seconds
-        (- (.getEpochSecond value)
-           (.toSeconds const/PG_EPOCH_DIFF))
-
-        offset-millis
-        (.getRawOffset (TimeZone/getDefault))
-
-        nanos
-        (.getNano value)]
-
-    (bytes/int64->bytes
-     (-> (* seconds 1000 1000)
-         (+ (quot nanos 1000))
-         (+ (* offset-millis 1000))))))
 
 (expand [Instant oid/date]
-  [^Date value oid opt]
-  (let [local-date
-        (LocalDate/ofInstant value (ZoneId/systemDefault))]
-    (-encode local-date oid opt)))
+  [value _ opt]
+  (datetime/Instant-date value opt))
 
 
 ;;
@@ -238,27 +225,14 @@
 ;;
 
 (expand [Date oid/date]
-  [^Date value oid opt]
-  (let [local-date
-        (LocalDate/ofInstant (.toInstant value)
-                             (ZoneId/systemDefault))]
-    (-encode local-date oid opt)))
+  [value oid opt]
+  (datetime/Date-date value opt))
+
 
 (expand [Date nil
          Date oid/timestamp]
-  [^Date value oid opt]
-  (let [millis
-        (- (.getTime value)
-           (.toMillis const/PG_EPOCH_DIFF))
-
-        offset-minutes
-        (.getTimezoneOffset value)
-
-        nanos
-        (- (* millis 1000)
-           (* offset-minutes 60 1000 1000))]
-
-    (bytes/int64->bytes nanos)))
+  [value _ opt]
+  (datetime/Date-timestamp value opt))
 
 
 ;;
@@ -267,10 +241,18 @@
 
 (expand [LocalDate nil
          LocalDate oid/date]
-  [^LocalDate value oid opt]
-  (bytes/int32->bytes
-   (- (.toEpochDay value)
-      (.toDays const/PG_EPOCH_DIFF))))
+  [^LocalDate value _ opt]
+  (datetime/LocalDate-date value opt))
+
+
+;;
+;; OffsetTime
+;;
+
+(expand [OffsetTime nil
+         OffsetTime oid/timetz]
+  [value _ opt]
+  (datetime/OffsetTime-timetz value opt))
 
 
 ;;

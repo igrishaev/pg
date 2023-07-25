@@ -1301,6 +1301,25 @@ drop table %1$s;
       (is (instance? LocalDate date))
       (is (= "2022-01-01" (str date))))))
 
+
+(deftest test-pass-zoned-time-bin
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [x1
+          (OffsetTime/now)
+
+          res
+          (pg/execute conn "select $1 as x;" [x1])
+
+          x2
+          (-> res first :x)]
+
+      (is (instance? OffsetTime x2))
+      (is (= x1 x2)))))
+
+
+
 ;; bin pass timetz
 ;; bin pass timestamptz
 ;; bin pass timestamp
