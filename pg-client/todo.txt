@@ -1,8 +1,9 @@
 
-- binary encode datetime separate ns
+- ensure time without time zone
 - binary tests
 - multiple pg docker tests
 
+- func cebab kebab
 - query and execute functions
 
 - joda split encode/decode
