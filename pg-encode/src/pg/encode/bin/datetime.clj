@@ -18,7 +18,6 @@
 
 
 ;; TODO
-;; Date-timestamptz
 ;; ZonedDateTime-date
 ;; ZonedDateTime-timestamp
 ;; ZonedDateTime-timestamptz
@@ -92,18 +91,11 @@
 
 
 (defn Date-timestamp ^bytes [^Date value opt]
-  (let [millis
-        (- (.getTime value)
-           (.toMillis const/PG_EPOCH_DIFF))
+  (Instant-timestamp (.toInstant value) opt))
 
-        offset-minutes
-        (.getTimezoneOffset value)
 
-        nanos
-        (- (* millis 1000)
-           (* offset-minutes 60 const/MICROS))]
-
-    (bytes/int64->bytes nanos)))
+(defn Date-timestamptz ^bytes [^Date value opt]
+  (Instant-timestamptz (.toInstant value) opt))
 
 
 (defn OffsetTime-timetz ^bytes [^OffsetTime value opt]

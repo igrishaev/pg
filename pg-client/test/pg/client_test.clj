@@ -1369,8 +1369,40 @@ drop table %1$s;
              x2)))))
 
 
-;; bin pass Instant
+(deftest test-pass-date-timestamp-bin
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [x1
+          (new Date 123123123123123)
+          ;; 5871-08-14T03:32:03.123-00:00
+
+          res
+          (pg/execute conn "select $1::timestamp as x" [x1])
+
+          x2
+          (-> res first :x)]
+
+      (is (= "5871-08-14T03:32:03.123" (str x2))))))
+
+
+(deftest test-pass-date-timestamptz-bin
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [x1
+          (new Date 123123123123123)
+          ;; 5871-08-14T03:32:03.123-00:00
+
+          res
+          (pg/execute conn "select $1::timestamptz as x" [x1])
+
+          x2
+          (-> res first :x)]
+
+      (is (= "5871-08-14T03:32:03.123Z" (str x2))))))
+
+
 ;; bin pass ZonedDateTime
 ;; bin pass LocalDateTime
 ;; bin pass OffsetDateTime
-;; bin pass Date

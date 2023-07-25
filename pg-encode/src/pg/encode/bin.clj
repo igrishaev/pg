@@ -236,7 +236,12 @@
 
 
 (expand [Date nil
-         Date oid/timestamp]
+         Date oid/timestamptz]
+  [value _ opt]
+  (datetime/Date-timestamptz value opt))
+
+
+(expand [Date oid/timestamp]
   [value _ opt]
   (datetime/Date-timestamp value opt))
 
