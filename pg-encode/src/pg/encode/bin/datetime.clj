@@ -8,6 +8,7 @@
    java.time.temporal.ChronoField
    java.time.Duration
    java.time.Instant
+   java.time.LocalTime
    java.time.OffsetTime
    java.time.LocalDate
    java.time.ZoneId
@@ -86,4 +87,14 @@
     (-> (bb/allocate 12)
         (bb/write-int64 micros)
         (bb/write-int32 offset)
+        (bb/array))))
+
+
+(defn LocalTime-time ^bytes [^LocalTime value opt]
+
+  (let [micros
+        (.getLong value ChronoField/MICRO_OF_DAY)]
+
+    (-> (bb/allocate 8)
+        (bb/write-int64 micros)
         (bb/array))))

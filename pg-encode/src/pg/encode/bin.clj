@@ -3,6 +3,7 @@
    clojure.lang.Symbol
    java.time.Duration
    java.time.Instant
+   java.time.LocalTime
    java.time.OffsetTime
    java.time.LocalDate
    java.time.ZoneId
@@ -253,6 +254,16 @@
          OffsetTime oid/timetz]
   [value _ opt]
   (datetime/OffsetTime-timetz value opt))
+
+
+;;
+;; LocalTime
+;;
+
+(expand [LocalTime nil
+         LocalTime oid/time]
+  [value _ opt]
+  (datetime/LocalTime-time value opt))
 
 
 ;;
