@@ -13,8 +13,6 @@
    [clojure.test :refer [deftest is testing]]))
 
 
-;; TODO: complete the tests
-
 (deftest test-uuid
 
   (let [buf
@@ -52,18 +50,33 @@
 
   (testing "date"
 
-    )
+    (let [buf ;; 2022-01-01 12:01:59.123456789+03
+          (byte-array [0 0 31 100])
+
+          res
+          (bin/decode buf oid/date)]
+
+      (is (= "2022-01-01" (str res)))
+      (is (instance? LocalDate res))))
 
   (testing "timetz"
 
-    )
+    (let [buf ;; 12:01:59.123456789+03
+          (byte-array [0 0 0 10 22 5 94 1 -1 -1 -43 -48])
+
+          res
+          (bin/decode buf oid/timetz)]
+
+      (is (= "12:01:59.123457+03:00" (str res)))
+      (is (instance? OffsetTime res))))
 
   (testing "time"
 
-    )
+    (let [buf ;; 12:01:59.123456789+03
+          (byte-array [0 0 0 10 22 5 94 1])
 
+          res
+          (bin/decode buf oid/time)]
 
-
-
-
-  )
+      (is (= "12:01:59.123457" (str res)))
+      (is (instance? LocalTime res)))))
