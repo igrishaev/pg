@@ -1,4 +1,5 @@
 
+- datetime parse to Instant
 - ensure time without time zone
 - binary tests
 - multiple pg docker tests
