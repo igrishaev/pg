@@ -116,20 +116,16 @@
 
 
 (defn LocalDateTime-date [^LocalDateTime obj opt]
-  (-> obj
-      (.atZone (ZoneOffset/systemDefault))
-      (.format frmt-date)))
+  (.format obj frmt-date))
 
 
 (defn LocalDateTime-timestamp [^LocalDateTime obj opt]
-  (-> obj
-      (.atZone (ZoneOffset/systemDefault))
-      (.format frmt-timestamp)))
+  (.format obj frmt-timestamp))
 
 
 (defn LocalDateTime-timestamptz [^LocalDateTime obj opt]
   (-> obj
-      (.atZone (ZoneOffset/systemDefault))
+      (.atZone (ZoneOffset/UTC))
       (.format frmt-timestamptz)))
 
 
