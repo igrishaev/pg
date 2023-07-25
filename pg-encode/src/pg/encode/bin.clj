@@ -211,7 +211,12 @@
 ;;
 
 (expand [Instant nil
-         Instant oid/timestamp]
+         Instant oid/timestamptz]
+  [value _ opt]
+  (datetime/Instant-timestamptz value opt))
+
+
+(expand [Instant oid/timestamp]
   [value _ opt]
   (datetime/Instant-timestamp value opt))
 

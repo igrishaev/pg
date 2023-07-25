@@ -18,7 +18,6 @@
 
 
 ;; TODO
-;; Instant-timestamptz
 ;; Date-timestamptz
 ;; ZonedDateTime-date
 ;; ZonedDateTime-timestamp
@@ -46,6 +45,23 @@
      (-> (* seconds const/MICROS)
          (+ (quot nanos 1000))
          (+ (* offset-millis 1000))))))
+
+
+(defn Instant-timestamptz ^bytes [^Instant value opt]
+
+  (let [secs
+        (.getLong value ChronoField/INSTANT_SECONDS)
+
+        micros
+        (.getLong value ChronoField/MICRO_OF_SECOND)
+
+        result
+        (-> secs
+            (- (.toSeconds const/PG_EPOCH_DIFF))
+            (* const/MICROS)
+            (+ micros))]
+
+    (bytes/int64->bytes result)))
 
 
 (defn LocalDate-date ^bytes [^LocalDate value opt]

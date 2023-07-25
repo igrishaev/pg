@@ -1336,6 +1336,39 @@ drop table %1$s;
       (is (= x1 x2)))))
 
 
+(deftest test-pass-instant-timestamptz-bin
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [x1
+          (Instant/now)
+
+          res
+          (pg/execute conn "select $1 as x;" [x1])
+
+          ^OffsetDateTime x2
+          (-> res first :x)]
+
+      (is (= x1 (.toInstant x2))))))
+
+
+(deftest test-pass-instant-timestamp-bin
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [x1
+          (Instant/parse "2023-07-25T12:36:15.981981Z")
+
+          res
+          (pg/execute conn "select $1::timestamp as x" [x1])
+
+          x2
+          (-> res first :x)]
+
+      (is (= (LocalDateTime/parse "2023-07-25T12:36:15.981981")
+             x2)))))
+
+
 ;; bin pass Instant
 ;; bin pass ZonedDateTime
 ;; bin pass LocalDateTime
