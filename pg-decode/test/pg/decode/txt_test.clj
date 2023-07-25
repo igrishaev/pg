@@ -1,9 +1,9 @@
 (ns pg.decode.txt-test
   (:import
-   java.time.Instant
    java.time.OffsetTime
    java.time.LocalTime
    java.time.LocalDate
+   java.time.OffsetDateTime
    java.time.LocalDateTime
    java.util.UUID
    java.math.BigDecimal)
@@ -91,8 +91,8 @@
           res
           (decode string oid/timestamptz)]
 
-      (is (instance? Instant res))
-      (is (= "2023-07-10T19:25:22.046553Z"
+      (is (instance? OffsetDateTime res))
+      (is (= "2023-07-10T22:25:22.046553+03:00"
              (str res))))
 
     (let [string
@@ -111,8 +111,8 @@
           res
           (decode string oid/timestamptz)]
 
-      (is (instance? Instant res))
-      (is (= "2022-07-02T21:00:00Z"
+      (is (instance? OffsetDateTime res))
+      (is (= "2022-07-03T00:00+03:00"
              (str res)))))
 
   (testing "date"
