@@ -9,6 +9,8 @@
    java.math.BigDecimal
    java.math.BigInteger
    java.time.Instant
+   java.time.OffsetDateTime
+   java.time.LocalDateTime
    java.time.LocalTime
    java.time.OffsetTime
    java.time.ZonedDateTime
@@ -211,6 +213,38 @@
 (expand [ZonedDateTime oid/date]
   [value _ opt]
   (datetime/ZonedDateTime-date value opt))
+
+
+(expand [LocalDateTime oid/date]
+  [value _ opt]
+  (datetime/LocalDateTime-date value opt))
+
+
+(expand [LocalDateTime nil
+         LocalDateTime oid/timestamp]
+  [value _ opt]
+  (datetime/LocalDateTime-timestamp value opt))
+
+
+(expand [LocalDateTime oid/timestamptz]
+  [value _ opt]
+  (datetime/LocalDateTime-timestamptz value opt))
+
+
+(expand [OffsetDateTime oid/date]
+  [value _ opt]
+  (datetime/OffsetDateTime-date value opt))
+
+
+(expand [OffsetDateTime oid/timestamp]
+  [value _ opt]
+  (datetime/OffsetDateTime-timestamp value opt))
+
+
+(expand [OffsetDateTime nil
+         OffsetDateTime oid/timestamptz]
+  [value _ opt]
+  (datetime/OffsetDateTime-timestamptz value opt))
 
 
 ;;

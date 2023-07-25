@@ -6,17 +6,10 @@
    java.time.ZoneId
    java.time.ZoneOffset
    java.time.ZonedDateTime
+   java.time.OffsetDateTime
+   java.time.LocalDateTime
    java.time.format.DateTimeFormatter
    java.util.Date))
-
-
-;; TODO
-;; LocalDateTime-date
-;; LocalDateTime-timestamp
-;; LocalDateTime-timestamptz
-;; OffsetDateTime-date
-;; OffsetDateTime-timestamp
-;; OffsetDateTime-timestamptz
 
 
 (def ^DateTimeFormatter
@@ -122,6 +115,37 @@
   (.format obj frmt-time))
 
 
+(defn LocalDateTime-date [^LocalDateTime obj opt]
+  (-> obj
+      (.atZone (ZoneOffset/systemDefault))
+      (.format frmt-date)))
+
+
+(defn LocalDateTime-timestamp [^LocalDateTime obj opt]
+  (-> obj
+      (.atZone (ZoneOffset/systemDefault))
+      (.format frmt-timestamp)))
+
+
+(defn LocalDateTime-timestamptz [^LocalDateTime obj opt]
+  (-> obj
+      (.atZone (ZoneOffset/systemDefault))
+      (.format frmt-timestamptz)))
+
+
+(defn OffsetDateTime-date [^OffsetDateTime obj opt]
+  (.format obj frmt-date))
+
+
+(defn OffsetDateTime-timestamp [^OffsetDateTime obj opt]
+  (.format obj frmt-timestamp))
+
+
+(defn OffsetDateTime-timestamptz [^OffsetDateTime obj opt]
+  (.format obj frmt-timestamptz))
+
+
+
 (comment
 
   (def -ldt
@@ -136,11 +160,19 @@
   (def -sql
     (new java.sql.Timestamp (- 1985 1900) 11 31 23 59 59 999))
 
+  (OffsetDateTime-date (OffsetDateTime/now) nil)
+  (OffsetDateTime-timestamp (OffsetDateTime/now) nil)
+  (OffsetDateTime-timestamptz (OffsetDateTime/now) nil)
+
   (ZonedDateTime-timestamptz -ldt nil)
   (ZonedDateTime-timestamp -ldt nil)
   (ZonedDateTime-date -ldt nil)
   (ZonedDateTime-time -ldt nil)
   (ZonedDateTime-timetz -ldt nil)
+
+  (LocalDateTime-date (LocalDateTime/now) nil)
+  (LocalDateTime-timestamp (LocalDateTime/now) nil)
+  (LocalDateTime-timestamptz (LocalDateTime/now) nil)
 
   (Instant-timestamptz -inst nil)
   (Instant-timestamp -inst nil)
