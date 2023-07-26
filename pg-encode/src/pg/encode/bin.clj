@@ -148,6 +148,19 @@
 
 
 ;;
+;; Byte
+;;
+
+TODO
+#_
+(expand [Byte nil
+         Byte oid/int2
+         Byte oid/int4
+         Byte oid/int8]
+  [value oid opt]
+  (byte-array [value]))
+
+;;
 ;; Float
 ;;
 

@@ -1,6 +1,7 @@
 (ns pg.encode.txt.datetime
   (:import
    java.time.Instant
+   java.time.LocalDate
    java.time.LocalTime
    java.time.OffsetTime
    java.time.ZoneId
@@ -105,6 +106,13 @@
   (.format obj frmt-time))
 
 
+(defn LocalTime-timetz
+  [^LocalTime obj opt]
+  (-> obj
+      (.atOffset ZoneOffset/UTC)
+      (.format frmt-timetz)))
+
+
 (defn OffsetTime-timetz
   [^OffsetTime obj opt]
   (.format obj frmt-timetz))
@@ -112,7 +120,28 @@
 
 (defn OffsetTime-time
   [^OffsetTime obj opt]
-  (.format obj frmt-time))
+  (-> obj
+      (.withOffsetSameInstant ZoneOffset/UTC)
+      (.format frmt-time)))
+
+
+(defn LocalDate-date
+  [^LocalDate obj opt]
+  (.format obj frmt-date))
+
+
+(defn LocalDate-timestamp
+  [^LocalDate obj opt]
+  (-> obj
+      (.atStartOfDay)
+      (.format frmt-timestamp)))
+
+
+(defn LocalDate-timestamptz
+  [^LocalDate obj opt]
+  (-> obj
+      (.atStartOfDay ZoneOffset/UTC)
+      (.format frmt-timestamptz)))
 
 
 (defn LocalDateTime-date [^LocalDateTime obj opt]
@@ -125,7 +154,7 @@
 
 (defn LocalDateTime-timestamptz [^LocalDateTime obj opt]
   (-> obj
-      (.atZone (ZoneOffset/UTC))
+      (.atZone ZoneOffset/UTC)
       (.format frmt-timestamptz)))
 
 

@@ -55,6 +55,17 @@
     (is (= \t res))))
 
 
+(deftest test-oid-name
+
+  (let [res (decode "test" oid/name)]
+    (is (instance? String res))
+    (is (= "test" res)))
+
+  (let [res (decode "42" oid/oid)]
+    (is (instance? Integer res))
+    (is (= 42 res))))
+
+
 (deftest test-bool
 
   (let [res (decode "f" oid/bool)]

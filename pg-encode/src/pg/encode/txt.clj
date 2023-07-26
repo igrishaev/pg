@@ -9,6 +9,7 @@
    java.math.BigDecimal
    java.math.BigInteger
    java.time.Instant
+   java.time.LocalDate
    java.time.OffsetDateTime
    java.time.LocalDateTime
    java.time.LocalTime
@@ -130,6 +131,28 @@
 
 
 ;;
+;; OID
+;;
+
+(expand [Short      oid/oid
+         Integer    oid/oid
+         Long       oid/oid
+         BigInt     oid/oid
+         BigDecimal oid/oid]
+  [value oid opt]
+  (str value))
+
+
+;;
+;; Name
+;;
+
+(expand [String oid/name]
+  [value oid opt]
+  value)
+
+
+;;
 ;; UUID
 ;;
 
@@ -183,10 +206,20 @@
   (datetime/LocalTime-time value opt))
 
 
+(expand [LocalTime oid/timetz]
+  [value _ opt]
+  (datetime/LocalTime-timetz value opt))
+
+
 (expand [OffsetTime nil
          OffsetTime oid/timetz]
   [value _ opt]
   (datetime/OffsetTime-timetz value opt))
+
+
+(expand [OffsetTime oid/time]
+  [value _ opt]
+  (datetime/OffsetTime-time value opt))
 
 
 (expand [ZonedDateTime nil
@@ -245,6 +278,22 @@
          OffsetDateTime oid/timestamptz]
   [value _ opt]
   (datetime/OffsetDateTime-timestamptz value opt))
+
+
+(expand [LocalDate nil
+         LocalDate oid/date]
+  [value _ opt]
+  (datetime/LocalDate-date value opt))
+
+
+(expand [LocalDate oid/timestamp]
+  [value _ opt]
+  (datetime/LocalDate-timestamp value opt))
+
+
+(expand [LocalDate oid/timestamptz]
+  [value _ opt]
+  (datetime/LocalDate-timestamptz value opt))
 
 
 ;;

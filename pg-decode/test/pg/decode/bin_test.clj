@@ -80,3 +80,25 @@
 
       (is (= "12:01:59.123457" (str res)))
       (is (instance? LocalTime res)))))
+
+
+
+(deftest test-oid-name
+
+  (let [buf
+        (byte-array [0 0 0 1])
+
+        res
+        (bin/decode buf oid/oid)]
+
+    (is (= 1 res))
+    (is (instance? Integer res)))
+
+  (let [buf
+        (byte-array [43 43 43 43])
+
+        res
+        (bin/decode buf oid/name)]
+
+    (is (= "++++" res))
+    (is (instance? String res))))
