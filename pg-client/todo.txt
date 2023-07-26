@@ -16,6 +16,7 @@
 - add docstrings, arglists
 - conn component?
 - pass pg config with envs?
+- benchmarks
 - interval support
 - range support
 - array support
