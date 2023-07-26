@@ -18,6 +18,9 @@
 
 
 ;; TODO
+
+;; LocalDate-timestamp
+;; LocalDate-timestamptz
 ;; ZonedDateTime-date
 ;; ZonedDateTime-timestamp
 ;; ZonedDateTime-timestamptz
@@ -27,6 +30,8 @@
 ;; OffsetDateTime-date
 ;; OffsetDateTime-timestamp
 ;; OffsetDateTime-timestamptz
+;; OffsetTime-time
+;; LocalTime-timetz
 
 
 (defn Instant-timestamp ^bytes [^Instant value opt]

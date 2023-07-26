@@ -96,6 +96,18 @@
   [value oid opt]
   (bytes/int16->bytes (short value)))
 
+(expand [Long oid/float4]
+  [value oid opt]
+  (-> value
+      (Float/floatToIntBits)
+      (bytes/int32->bytes)))
+
+(expand [Long oid/float8]
+  [value oid opt]
+  (-> value
+      (Double/doubleToLongBits)
+      (bytes/int64->bytes)))
+
 
 ;;
 ;; Integer
@@ -105,16 +117,26 @@
   [value oid opt]
   (bytes/int64->bytes (long value)))
 
-
 (expand [Integer nil
          Integer oid/int4]
   [value oid opt]
   (bytes/int32->bytes value))
 
-
 (expand [Integer oid/int2]
   [value oid opt]
   (bytes/int16->bytes (short value)))
+
+(expand [Integer oid/float4]
+  [value oid opt]
+  (-> value
+      (Float/floatToIntBits)
+      (bytes/int32->bytes)))
+
+(expand [Integer oid/float8]
+  [value oid opt]
+  (-> value
+      (Double/doubleToLongBits)
+      (bytes/int64->bytes)))
 
 
 ;;
@@ -134,6 +156,18 @@
   [value oid opt]
   (bytes/int16->bytes value))
 
+(expand [Short oid/float4]
+  [value oid opt]
+  (-> value
+      (Float/floatToIntBits)
+      (bytes/int32->bytes)))
+
+(expand [Short oid/float8]
+  [value oid opt]
+  (-> value
+      (Double/doubleToLongBits)
+      (bytes/int64->bytes)))
+
 
 ;;
 ;; Bool
@@ -151,14 +185,21 @@
 ;; Byte
 ;;
 
-TODO
-#_
 (expand [Byte nil
-         Byte oid/int2
-         Byte oid/int4
-         Byte oid/int8]
+         Byte oid/int2]
   [value oid opt]
-  (byte-array [value]))
+  (bytes/int16->bytes (short value)))
+
+
+(expand [Byte oid/int4]
+  [value oid opt]
+  (bytes/int32->bytes (int value)))
+
+
+(expand [Byte oid/int8]
+  [value oid opt]
+  (bytes/int64->bytes (long value)))
+
 
 ;;
 ;; Float
@@ -172,7 +213,8 @@ TODO
 
 (expand [Float oid/float8]
   [value oid opt]
-  (-> (Double/doubleToLongBits (double value))
+  (-> value
+      (Double/doubleToLongBits)
       (bytes/int64->bytes)))
 
 
