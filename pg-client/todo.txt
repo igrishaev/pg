@@ -7,6 +7,9 @@
 - func cebab kebab
 - query and execute functions
 
+- parse bin/numeric
+- enc/dec txt/bin oid name
+
 - joda split encode/decode
 - joda rename
 - joda structure: pg.joda, pg.joda.encode, pg.joda.decode
