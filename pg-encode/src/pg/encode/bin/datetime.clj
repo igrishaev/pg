@@ -87,9 +87,9 @@
 
 
 (defn Instant-date ^bytes [^Instant value opt]
-  (let [local-date
-        (LocalDate/ofInstant value ZoneOffset/UTC)]
-    (LocalDate-date local-date opt)))
+  (-> value
+      (LocalDate/ofInstant ZoneOffset/UTC)
+      (LocalDate-date opt)))
 
 
 (defn OffsetDateTime-date ^bytes [^OffsetDateTime value opt]
@@ -99,18 +99,9 @@
 
 
 (defn Date-date ^bytes [^Date value opt]
-  (let [millis
-        (- (.getTime value)
-           (.toMillis const/PG_EPOCH_DIFF))
-
-        offset-minutes
-        (.getTimezoneOffset value)
-
-        nanos
-        (- (* millis 1000)
-           (* offset-minutes 60 const/MICROS))]
-
-    (bytes/int64->bytes nanos)))
+  (-> value
+      (.toInstant)
+      (Instant-date opt)))
 
 
 (defn Date-timestamp ^bytes [^Date value opt]

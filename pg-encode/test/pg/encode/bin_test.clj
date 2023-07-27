@@ -72,7 +72,25 @@
     (is (bytes/== (byte-array [63, -16, 0, 0, 0, 0, 0, 0]) res)))
 
   (let [res (encode (long 1) oid/float8)]
-    (is (bytes/== (byte-array [63, -16, 0, 0, 0, 0, 0, 0]) res))))
+    (is (bytes/== (byte-array [63, -16, 0, 0, 0, 0, 0, 0]) res)))
+
+  (let [res (encode (long 1) oid/float8)]
+    (is (bytes/== (byte-array [63, -16, 0, 0, 0, 0, 0, 0]) res)))
+
+  ;; bigint
+
+  #_
+  (let [res (encode (bigint 123) nil)]
+    (is (bytes/== (byte-array []) res)))
+
+
+
+  ;; bigint
+  ;; bigdec
+  ;; numeric
+
+
+  )
 
 
 (deftest test-datetime
@@ -188,15 +206,28 @@
         val2 (decode buf oid/date)]
     (is (= (LocalDate/parse "2023-07-27") val2)))
 
+  ;; Date
 
-  )
+  (let [val1 (-> "2023-07-25T01:00:00.123456Z"
+                 (Instant/parse)
+                 (.toEpochMilli)
+                 (Date.))
+        buf (encode val1 oid/date)
+        val2 (decode buf oid/date)]
+    (is (= (LocalDate/parse "2023-07-25") val2)))
 
+  (let [val1 (-> "2023-07-25T01:00:00.123456Z"
+                 (Instant/parse)
+                 (.toEpochMilli)
+                 (Date.))
+        buf (encode val1 oid/timestamp)
+        val2 (decode buf oid/timestamp)]
+    (is (= (LocalDateTime/parse "2023-07-25T01:00:00.123") val2)))
 
-   ;; java.util.Date
-
-
-;; TODO
-
-;; biging
-;; bigdec
-;; numeric
+  (let [val1 (-> "2023-07-25T01:00:00.123456Z"
+                 (Instant/parse)
+                 (.toEpochMilli)
+                 (Date.))
+        buf (encode val1 oid/timestamptz)
+        val2 (decode buf oid/timestamptz)]
+    (is (= (OffsetDateTime/parse "2023-07-25T01:00:00.123Z") val2))))
