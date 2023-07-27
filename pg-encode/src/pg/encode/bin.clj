@@ -1,9 +1,10 @@
 (ns pg.encode.bin
   (:import
    clojure.lang.Symbol
-   java.time.Duration
+   java.time.OffsetDateTime
    java.time.Instant
    java.time.LocalTime
+   java.time.ZonedDateTime
    java.time.OffsetTime
    java.time.LocalDate
    java.time.ZoneId
@@ -302,13 +303,63 @@
 
 
 ;;
+;; OffsetDateTime
+;;
+
+(expand [OffsetDateTime nil
+         OffsetDateTime oid/timestamptz]
+  [value _ opt]
+  (datetime/OffsetDateTime-timestamptz value opt))
+
+
+(expand [OffsetDateTime oid/timestamp]
+  [value _ opt]
+  (datetime/OffsetDateTime-timestamp value opt))
+
+
+(expand [OffsetDateTime oid/date]
+  [value _ opt]
+  (datetime/OffsetDateTime-date value opt))
+
+
+;;
 ;; LocalDate
 ;;
 
 (expand [LocalDate nil
          LocalDate oid/date]
-  [^LocalDate value _ opt]
+  [value _ opt]
   (datetime/LocalDate-date value opt))
+
+
+(expand [LocalDate oid/timestamp]
+  [value _ opt]
+  (datetime/LocalDate-timestamp value opt))
+
+
+(expand [LocalDate oid/timestamptz]
+  [value _ opt]
+  (datetime/LocalDate-timestamptz value opt))
+
+
+;;
+;; ZonedDateTime
+;;
+
+(expand [ZonedDateTime nil
+         ZonedDateTime oid/timestamptz]
+  [value _ opt]
+  (datetime/ZonedDateTime-timestamptz value opt))
+
+
+(expand [ZonedDateTime oid/timestamp]
+  [value _ opt]
+  (datetime/ZonedDateTime-timestamp value opt))
+
+
+(expand [ZonedDateTime oid/date]
+  [value _ opt]
+  (datetime/ZonedDateTime-date value opt))
 
 
 ;;
@@ -321,6 +372,11 @@
   (datetime/OffsetTime-timetz value opt))
 
 
+(expand [OffsetTime oid/time]
+  [value _ opt]
+  (datetime/OffsetTime-time value opt))
+
+
 ;;
 ;; LocalTime
 ;;
@@ -329,6 +385,11 @@
          LocalTime oid/time]
   [value _ opt]
   (datetime/LocalTime-time value opt))
+
+
+(expand [LocalTime oid/timetz]
+  [value _ opt]
+  (datetime/LocalTime-timetz value opt))
 
 
 ;;
