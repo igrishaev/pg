@@ -7,6 +7,7 @@
    java.time.ZonedDateTime
    java.time.OffsetTime
    java.time.LocalDate
+   java.time.LocalDateTime
    java.time.ZoneId
    java.time.ZoneOffset
    java.util.Date
@@ -375,6 +376,26 @@
 (expand [OffsetTime oid/time]
   [value _ opt]
   (datetime/OffsetTime-time value opt))
+
+
+;;
+;; LocalDateTime
+;;
+
+(expand [LocalDateTime nil
+         LocalDateTime oid/timestamptz]
+  [value _ opt]
+  (datetime/LocalDateTime-timestamptz value opt))
+
+
+(expand [LocalDateTime oid/timestamp]
+  [value _ opt]
+  (datetime/LocalDateTime-timestamp value opt))
+
+
+(expand [LocalDateTime oid/date]
+  [value _ opt]
+  (datetime/LocalDateTime-date value opt))
 
 
 ;;

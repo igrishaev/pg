@@ -9,6 +9,7 @@
    java.time.OffsetDateTime
    java.time.Duration
    java.time.Instant
+   java.time.LocalDateTime
    java.time.ZonedDateTime
    java.time.LocalTime
    java.time.OffsetTime
@@ -17,24 +18,6 @@
    java.time.ZoneOffset
    java.util.Date
    java.util.TimeZone))
-
-
-;; TODO
-
-;; LocalDate-timestamp
-;; LocalDate-timestamptz
-;; ZonedDateTime-date
-;; ZonedDateTime-timestamp
-;; ZonedDateTime-timestamptz
-;; LocalDateTime-date
-;; LocalDateTime-timestamp
-;; LocalDateTime-timestamptz
-;; OffsetTime-time
-;; LocalTime-timetz
-
-;; OffsetDateTime-date
-;; OffsetDateTime-timestamp
-;; OffsetDateTime-timestamptz
 
 
 (defn Instant-timestamp ^bytes [^Instant value opt]
@@ -187,4 +170,22 @@
 (defn ZonedDateTime-date ^bytes [^ZonedDateTime value opt]
   (-> value
       (.toOffsetDateTime)
+      (OffsetDateTime-date opt)))
+
+
+(defn LocalDateTime-timestamptz ^bytes [^LocalDateTime value opt]
+  (-> value
+      (.atOffset ZoneOffset/UTC)
+      (OffsetDateTime-timestamptz opt)))
+
+
+(defn LocalDateTime-timestamp ^bytes [^LocalDateTime value opt]
+  (-> value
+      (.atOffset ZoneOffset/UTC)
+      (OffsetDateTime-timestamp opt)))
+
+
+(defn LocalDateTime-date ^bytes [^LocalDateTime value opt]
+  (-> value
+      (.atOffset ZoneOffset/UTC)
       (OffsetDateTime-date opt)))

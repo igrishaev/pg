@@ -1,7 +1,7 @@
 (ns pg.encode.bin-test
   (:import
    java.util.Date
-   ;; java.time.Instant
+   java.time.Instant
    java.time.LocalDate
    java.time.LocalTime
    java.time.OffsetTime
@@ -154,14 +154,45 @@
         val2 (decode buf oid/date)]
     (is (= (LocalDate/parse "2023-07-26") val2)))
 
+  ;; Instant
+
+  (let [val1 (Instant/parse "2023-07-27T01:25:55.297834Z")
+        buf (encode val1 oid/timestamptz)
+        val2 (decode buf oid/timestamptz)]
+    (is (= (OffsetDateTime/parse "2023-07-27T01:25:55.297834Z") val2)))
+
+  (let [val1 (Instant/parse "2023-07-27T01:25:55.297834Z")
+        buf (encode val1 oid/timestamp)
+        val2 (decode buf oid/timestamp)]
+    (is (= (LocalDateTime/parse "2023-07-27T01:25:55.297834") val2)))
+
+  (let [val1 (Instant/parse "2023-07-27T01:25:55.297834Z")
+        buf (encode val1 oid/date)
+        val2 (decode buf oid/date)]
+    (is (= (LocalDate/parse "2023-07-27") val2)))
+
+  ;; LocalDateTime
+
+  (let [val1 (LocalDateTime/parse "2023-07-27T01:31:21.025913")
+        buf (encode val1 oid/timestamptz)
+        val2 (decode buf oid/timestamptz)]
+    (is (= (OffsetDateTime/parse "2023-07-27T01:31:21.025913Z") val2)))
+
+  (let [val1 (LocalDateTime/parse "2023-07-27T01:31:21.025913")
+        buf (encode val1 oid/timestamp)
+        val2 (decode buf oid/timestamp)]
+    (is (= (LocalDateTime/parse "2023-07-27T01:31:21.025913") val2)))
+
+  (let [val1 (LocalDateTime/parse "2023-07-27T01:31:21.025913")
+        buf (encode val1 oid/date)
+        val2 (decode buf oid/date)]
+    (is (= (LocalDate/parse "2023-07-27") val2)))
 
 
   )
 
 
    ;; java.util.Date
-   ;; java.time.Instant
-   ;; java.time.LocalDateTime
 
 
 ;; TODO
