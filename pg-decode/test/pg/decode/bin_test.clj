@@ -1,5 +1,6 @@
 (ns pg.decode.bin-test
   (:import
+   java.math.BigDecimal
    java.time.OffsetTime
    java.time.OffsetDateTime
    java.time.LocalTime
@@ -82,7 +83,6 @@
       (is (instance? LocalTime res)))))
 
 
-
 (deftest test-oid-name
 
   (let [buf
@@ -102,3 +102,24 @@
 
     (is (= "++++" res))
     (is (instance? String res))))
+
+
+(deftest test-numeric
+
+  (let [buf
+        (byte-array [0 2 0 0 0 0 0 3 0 123 17 -48])
+
+        res
+        (bin/decode buf oid/numeric)]
+
+    (is (instance? BigDecimal res))
+    (is (= 123.456M res)))
+
+  (let [buf
+        (byte-array [0 2 0 0 64 0 0 3 0 123 17 -48])
+
+        res
+        (bin/decode buf oid/numeric)]
+
+    (is (instance? BigDecimal res))
+    (is (= -123.456M res))))

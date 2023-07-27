@@ -1403,6 +1403,14 @@ drop table %1$s;
       (is (= "5871-08-14T03:32:03.123Z" (str x2))))))
 
 
-;; bin pass ZonedDateTime
-;; bin pass LocalDateTime
-;; bin pass OffsetDateTime
+(deftest test-read-numeric-binary
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? false
+                                   :binary-decode? true)]
+    (let [res
+          (pg/execute conn "select -123.456::numeric as x" [])
+
+          x2
+          (-> res first :x)]
+
+      (is (= "5871-08-14T03:32:03.123Z" (str x2))))))

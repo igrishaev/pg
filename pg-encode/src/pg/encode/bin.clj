@@ -1,5 +1,6 @@
 (ns pg.encode.bin
   (:import
+   java.math.BigDecimal
    clojure.lang.Symbol
    java.time.OffsetDateTime
    java.time.Instant
@@ -17,6 +18,7 @@
    [pg.encode.bin.datetime :as datetime]
    [clojure.template :refer [do-template]]
    [pg.bytes :as bytes]
+   [pg.out :as out]
    [pg.const :as const]
    [pg.oid :as oid]))
 

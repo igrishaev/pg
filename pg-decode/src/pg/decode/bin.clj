@@ -1,12 +1,14 @@
 (ns pg.decode.bin
   (:import
+   java.math.BigDecimal
    java.util.UUID)
   (:require
    [clojure.template :refer [do-template]]
    [pg.bytes :as bytes]
    [pg.bb :as bb]
    [pg.oid :as oid]
-   [pg.decode.bin.datetime :as datetime]))
+   [pg.decode.bin.datetime :as datetime]
+   [pg.decode.bin.numeric :as numeric]))
 
 
 (defn get-server-encoding ^String [opt]
@@ -92,6 +94,15 @@
         (get-server-encoding opt)]
     (first (new String buf encoding))))
 
+
+;;
+;; BigDecimal
+;;
+
+
+(expand [oid/numeric]
+  [buf _ opt]
+  (numeric/BigDecimal-numeric buf opt))
 
 ;;
 ;; UUID

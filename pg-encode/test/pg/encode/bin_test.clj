@@ -77,12 +77,14 @@
   (let [res (encode (long 1) oid/float8)]
     (is (bytes/== (byte-array [63, -16, 0, 0, 0, 0, 0, 0]) res)))
 
+
+  ;; TODO
+
   ;; bigint
 
   #_
   (let [res (encode (bigint 123) nil)]
     (is (bytes/== (byte-array []) res)))
-
 
 
   ;; bigint
