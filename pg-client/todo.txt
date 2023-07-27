@@ -1,7 +1,7 @@
 
 - binary tests bigdec bigint etc
-- multiple pg docker tests
 - fix pool tests
+- fix client tests
 - func cebab kebab
 - query and execute functions
 

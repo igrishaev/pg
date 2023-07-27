@@ -81,3 +81,5 @@
   )
 
 https://github.com/pgjdbc/r2dbc-postgresql/blob/main/src/main/java/io/r2dbc/postgresql/codec/NumericDecodeUtils.java
+
+https://stackoverflow.com/questions/38532361/converting-joda-time-instant-to-java-time-instant
