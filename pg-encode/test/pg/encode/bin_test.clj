@@ -95,6 +95,17 @@
   )
 
 
+(deftest test-numeric
+
+  (let [x1 (bigdec "12345.678") #_(bigdec "123.456")
+        buf (encode x1 oid/numeric)
+        x2 (decode buf oid/numeric)]
+    (is (= x1 x2))
+    )
+
+  )
+
+
 (deftest test-datetime
 
   ;; OffsetTime

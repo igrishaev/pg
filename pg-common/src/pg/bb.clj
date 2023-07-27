@@ -21,6 +21,10 @@
   `(.. ~(with-meta bb {:tag `ByteBuffer}) (rewind)))
 
 
+(defn write-int16 [^ByteBuffer bb value]
+  (.putShort bb value))
+
+
 (defn write-int32 [^ByteBuffer bb value]
   (.putInt bb value))
 

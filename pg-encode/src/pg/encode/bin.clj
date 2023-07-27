@@ -15,6 +15,7 @@
    java.util.TimeZone
    java.util.UUID)
   (:require
+   [pg.encode.bin.numeric :as numeric]
    [pg.encode.bin.datetime :as datetime]
    [clojure.template :refer [do-template]]
    [pg.bytes :as bytes]
@@ -203,6 +204,15 @@
 (expand [Byte oid/int8]
   [value oid opt]
   (bytes/int64->bytes (long value)))
+
+
+;;
+;; BigDecimal
+;;
+
+(expand [BigDecimal oid/numeric]
+  [value _ opt]
+  (numeric/BigDecimal-numeric value opt))
 
 
 ;;

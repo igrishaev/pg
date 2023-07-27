@@ -2,8 +2,7 @@
 
 (ns pg.decode.bin.numeric
   (:require
-   [pg.bb :as bb]
-   [pg.const :as const])
+   [pg.bb :as bb])
   (:import
    java.util.ArrayList
    java.math.RoundingMode
