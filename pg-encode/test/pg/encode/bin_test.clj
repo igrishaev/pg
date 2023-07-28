@@ -97,13 +97,21 @@
 
 (deftest test-numeric
 
-  (let [x1 (bigdec "12345.678") #_(bigdec "123.456")
-        buf (encode x1 oid/numeric)
-        x2 (decode buf oid/numeric)]
-    (is (= x1 x2))
-    )
+  (doseq [value ["12345.6789"
+                 "12345678.9"
+                 "1.23456789"
+                 "0.123456789"
+                 "0.000000000000000000000123456789"
+                 "123123123123123.000000000000000000000009"
+                 "-0.00000000000000000000000100500"
+                 "-23523423623423236212463460.00000000000000000000000100500333"
+                 "342e10"
+                 "-123e-8"]]
 
-  )
+    (let [x1 (bigdec value)
+          buf (encode x1 oid/numeric)
+          x2 (decode buf oid/numeric)]
+      (is (= x1 x2)))))
 
 
 (deftest test-datetime

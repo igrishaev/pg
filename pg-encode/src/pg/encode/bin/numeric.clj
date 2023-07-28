@@ -19,27 +19,33 @@
   (let [scale
         (.scale value)
 
-        [hi lo]
+        [^String hi ^String lo]
         (-> value
             (.toPlainString)
             (str/split #"\."))
 
+        negative?
+        (-> hi (.charAt 0) (=  \-))
+
+        hi
+        (if negative?
+          (subs hi 1)
+          hi)
+
+        sign
+        (if negative? 1 0)
+
         weight
         (quot (count hi) 4)
 
-        pad
-        (rem (+ (count hi) (count lo)) 4)
+        pad-left
+        (- 4 (rem (count hi) 4))
 
-        pad
-        (if (zero? pad)
-          pad
-          (- 4 pad))
-
-        sign
-        (if (neg? value) 1 0)
+        pad-right
+        (- 4 (rem (+ pad-left (count hi) (count lo)) 4))
 
         digits-str
-        (str (.repeat "0" pad) hi lo)
+        (str (.repeat "0" pad-left) hi lo (.repeat "0" pad-right))
 
         digits-num
         (/ (count digits-str) 4)
@@ -62,8 +68,6 @@
 
         bb
         (bb/allocate bb-len)]
-
-    (println weight digits-str)
 
     (bb/write-int16 bb digits-num)
     (bb/write-int16 bb weight)
