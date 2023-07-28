@@ -7,6 +7,8 @@
    java.util.List
    java.util.ArrayList
    java.math.RoundingMode
+   clojure.lang.BigInt
+   java.math.BigInteger
    java.math.BigDecimal))
 
 
@@ -81,3 +83,9 @@
           (recur (inc i)))))
 
     (bb/array bb)))
+
+
+(defn BigInt-numeric [value opt]
+  (-> value
+      (bigdec)
+      (BigDecimal-numeric opt)))

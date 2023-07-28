@@ -1,27 +1,29 @@
 (ns pg.encode.bin
   (:import
-   java.math.BigDecimal
+   clojure.lang.BigInt
    clojure.lang.Symbol
-   java.time.OffsetDateTime
+   java.math.BigInteger
+   java.math.BigDecimal
    java.time.Instant
-   java.time.LocalTime
-   java.time.ZonedDateTime
-   java.time.OffsetTime
    java.time.LocalDate
    java.time.LocalDateTime
+   java.time.LocalTime
+   java.time.OffsetDateTime
+   java.time.OffsetTime
    java.time.ZoneId
    java.time.ZoneOffset
+   java.time.ZonedDateTime
    java.util.Date
    java.util.TimeZone
    java.util.UUID)
   (:require
-   [pg.encode.bin.numeric :as numeric]
-   [pg.encode.bin.datetime :as datetime]
    [clojure.template :refer [do-template]]
    [pg.bytes :as bytes]
-   [pg.out :as out]
    [pg.const :as const]
-   [pg.oid :as oid]))
+   [pg.encode.bin.datetime :as datetime]
+   [pg.encode.bin.numeric :as numeric]
+   [pg.oid :as oid]
+   [pg.out :as out]))
 
 
 (defmulti -encode
@@ -207,12 +209,90 @@
 
 
 ;;
+;; BigInteger
+;;
+
+(expand [BigInteger nil
+         BigInteger oid/numeric
+         BigInteger oid/int2
+         BigInteger oid/int4
+         BigInteger oid/int8]
+  [^BigInteger value oid opt]
+  (-encode (new BigDecimal value)
+           oid
+           opt))
+
+
+;;
 ;; BigDecimal
 ;;
 
-(expand [BigDecimal oid/numeric]
+(expand [BigDecimal nil
+         BigDecimal oid/numeric]
   [value _ opt]
   (numeric/BigDecimal-numeric value opt))
+
+
+(expand [BigDecimal oid/int2]
+  [^BigDecimal value _ opt]
+  (-> value
+      (.shortValueExact)
+      (bytes/int16->bytes)))
+
+
+(expand [BigDecimal oid/int4]
+  [^BigDecimal value _ opt]
+  (-> value
+      (.intValueExact)
+      (bytes/int32->bytes)))
+
+
+(expand [BigDecimal oid/int8]
+  [^BigDecimal value _ opt]
+  (-> value
+      (.longValueExact)
+      (bytes/int64->bytes)))
+
+
+(expand [BigDecimal oid/float4]
+  [^BigDecimal value _ opt]
+  (-> value
+      (.floatValue)
+      (Float/floatToIntBits)
+      (bytes/int32->bytes)))
+
+
+(expand [BigDecimal oid/float8]
+  [^BigDecimal value _ opt]
+  (-> value
+      (.longValue)
+      (Double/doubleToLongBits)
+      (bytes/int64->bytes)))
+
+
+;;
+;; BigInt
+;;
+
+(expand [BigInt nil
+         BigInt oid/numeric]
+  [value _ opt]
+  (numeric/BigInt-numeric value opt))
+
+
+(expand [BigInt oid/int2]
+  [value _ opt]
+  (bytes/int16->bytes (short value)))
+
+
+(expand [BigInt oid/int4]
+  [value _ opt]
+  (bytes/int32->bytes (int value)))
+
+
+(expand [BigInt oid/int8]
+  [value _ opt]
+  (bytes/int64->bytes (long value)))
 
 
 ;;

@@ -1,5 +1,4 @@
 
-- binary tests bigdec bigint etc
 - fix pool tests
 - fix client tests
 - func cebab kebab

@@ -9,9 +9,8 @@
    java.time.ZonedDateTime
    java.time.OffsetDateTime
    java.time.LocalDateTime
-   ;; java.math.BigDecimal
-   ;; java.math.BigInteger
-   )
+   java.math.BigDecimal
+   java.math.BigInteger)
   (:require
    [pg.decode.bin :refer [decode]]
    [pg.bytes :as bytes]
@@ -77,25 +76,35 @@
   (let [res (encode (long 1) oid/float8)]
     (is (bytes/== (byte-array [63, -16, 0, 0, 0, 0, 0, 0]) res)))
 
-
-  ;; TODO
-
   ;; bigint
 
-  #_
-  (let [res (encode (bigint 123) nil)]
-    (is (bytes/== (byte-array []) res)))
+  (let [res (encode (bigint 1) oid/numeric)]
+    (is (bytes/== (byte-array [0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0]) res)))
 
+  (let [res (encode (bigint 1) oid/int2)]
+    (is (bytes/== (byte-array [0 1]) res)))
 
-  ;; bigint
-  ;; bigdec
-  ;; numeric
+  (let [res (encode (bigint 1) oid/int4)]
+    (is (bytes/== (byte-array [0 0 0 1]) res)))
 
+  (let [res (encode (bigint 1) oid/int8)]
+    (is (bytes/== (byte-array [0 0 0 0 0 0 0 1]) res)))
 
-  )
+  ;; biginteger
 
+  (let [res (encode (new BigInteger "1") oid/numeric)]
+    (is (bytes/== (byte-array [0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0]) res)))
 
-(deftest test-numeric
+  (let [res (encode (new BigInteger "1") oid/int2)]
+    (is (bytes/== (byte-array [0 1]) res)))
+
+  (let [res (encode (new BigInteger "1") oid/int4)]
+    (is (bytes/== (byte-array [0 0 0 1]) res)))
+
+  (let [res (encode (new BigInteger "1") oid/int8)]
+    (is (bytes/== (byte-array [0 0 0 0 0 0 0 1]) res))))
+
+(deftest test-big-decimal
 
   (doseq [value ["0"
                  "1"
@@ -116,7 +125,27 @@
     (let [x1 (bigdec value)
           buf (encode x1 oid/numeric)
           x2 (decode buf oid/numeric)]
-      (is (= x1 x2)))))
+      (is (= x1 x2))))
+
+  (let [x1 (bigdec "1")
+        buf (encode x1 oid/int2)]
+    (is (bytes/== (byte-array [0 1]) buf)))
+
+  (let [x1 (bigdec "1")
+        buf (encode x1 oid/int4)]
+    (is (bytes/== (byte-array [0 0 0 1]) buf)))
+
+  (let [x1 (bigdec "1")
+        buf (encode x1 oid/int8)]
+    (is (bytes/== (byte-array [0 0 0 0 0 0 0 1]) buf)))
+
+  (let [x1 (bigdec "1.1")
+        buf (encode x1 oid/float4)]
+    (is (bytes/== (byte-array [63, -116, -52, -51]) buf)))
+
+  (let [x1 (bigdec "1.1")
+        buf (encode x1 oid/float8)]
+    (is (bytes/== (byte-array [63, -16, 0, 0, 0, 0, 0, 0]) buf))))
 
 
 (deftest test-datetime

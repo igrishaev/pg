@@ -10,9 +10,9 @@
    java.math.BigInteger
    java.time.Instant
    java.time.LocalDate
-   java.time.OffsetDateTime
    java.time.LocalDateTime
    java.time.LocalTime
+   java.time.OffsetDateTime
    java.time.OffsetTime
    java.time.ZonedDateTime
    java.util.Date
@@ -108,12 +108,23 @@
 
          BigDecimal nil
          BigDecimal oid/numeric
+         BigDecimal oid/int2
+         BigDecimal oid/int4
+         BigDecimal oid/int8
+         BigDecimal oid/float4
+         BigDecimal oid/float8
 
          BigInteger nil
          BigInteger oid/numeric
+         BigInteger oid/int2
+         BigInteger oid/int4
+         BigInteger oid/int8
 
          BigInt nil
-         BigInt oid/numeric]
+         BigInt oid/numeric
+         BigInt oid/int2
+         BigInt oid/int4
+         BigInt oid/int8]
   [value _ _]
   (str value))
 
