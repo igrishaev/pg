@@ -1,12 +1,10 @@
 
+- OffsetDateTime current zone (txt/bin)
 - fix pool tests
 - fix client tests
 - func cebab kebab
 - query and execute functions
 
-- joda split encode/decode
-- joda rename
-- joda structure: pg.joda, pg.joda.encode, pg.joda.decode
 - joda tests
 
 - add docstrings, arglists
