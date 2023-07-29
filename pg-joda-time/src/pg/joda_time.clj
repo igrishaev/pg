@@ -1,3 +1,4 @@
 (ns pg.joda-time
   (:require
-   pg.joda-time.encode.bin))
+   pg.joda-time.encode
+   pg.joda-time.decode))

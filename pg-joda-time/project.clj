@@ -8,6 +8,7 @@
 
   :dependencies
   [[com.github.igrishaev/pg-encode]
+   [com.github.igrishaev/pg-decode]
    [joda-time/joda-time]]
 
   :parent-project
@@ -19,4 +20,9 @@
              :plugins
              :repositories
              :url
-             [:profiles :dev]]})
+             [:profiles :dev]]}
+
+  :profiles
+  {:test
+   {:dependencies
+    [[clj-time]]}})
