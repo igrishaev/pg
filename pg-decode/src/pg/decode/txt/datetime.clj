@@ -64,25 +64,3 @@
 
 (defn parse-time [^String string opt]
   (LocalTime/parse string))
-
-
-
-(comment
-
-  (parse-timestampz "2023-07-10 22:25:22.046553+03" nil)
-
-  (parse-timestampz "2022-07-03 00:00:00+03" nil)
-
-  (parse-timestamp "2022-07-03 00:00:00" nil)
-
-  (parse-timestamp "2022-01-01 23:59:59.123" nil)
-
-  (parse-date "2023-07-11" nil)
-
-  (parse-timetz "10:29:39.853741+03" nil)
-
-  (parse-timetz "10:29:39+03" nil)
-
-  (parse-time "10:29:39" nil)
-
-  )

@@ -8,6 +8,8 @@
    org.joda.time.DateTime)
   (:require
    [pg.oid :as oid]
+   [pg.decode.txt.datetime :as txt.datetime]
+   [pg.decode.bin.datetime :as bin.datetime]
    [pg.decode.bin :as bin]
    [pg.decode.txt :as txt]))
 
@@ -24,38 +26,29 @@
 
 (bin/expand [oid/timestamptz]
   [value oid opt]
-
-  (let [^OffsetDateTime decoded
-        (bin/-decode value oid opt)]
-
-    (-> decoded
-        (.toInstant)
-        (Instant->DateTime))))
+  (-> value
+      (bin.datetime/parse-timestamptz opt)
+      (.toInstant)
+      (Instant->DateTime)))
 
 
 (bin/expand [oid/timestamp]
   [value oid opt]
-
-  (let [^LocalDateTime decoded
-        (bin/-decode value oid opt)]
-
-    (-> decoded
-        (.atOffset ZoneOffset/UTC)
-        (.toInstant)
-        (Instant->DateTime))))
+  (-> value
+      (bin.datetime/parse-timestamp opt)
+      (.atOffset ZoneOffset/UTC)
+      (.toInstant)
+      (Instant->DateTime)))
 
 
 (bin/expand [oid/date]
   [value oid opt]
-
-  (let [^LocalDate decoded
-        (bin/-decode value oid opt)]
-
-    (-> decoded
-        (.atStartOfDay ZoneOffset/UTC)
-        (.toOffsetDateTime)
-        (.toInstant)
-        (Instant->DateTime))))
+  (-> value
+      (bin.datetime/parse-date opt)
+      (.atStartOfDay ZoneOffset/UTC)
+      (.toOffsetDateTime)
+      (.toInstant)
+      (Instant->DateTime)))
 
 
 ;;
@@ -64,36 +57,26 @@
 
 (txt/expand [oid/timestamptz]
   [value oid opt]
-
-  (let [^OffsetDateTime decoded
-        (txt/-decode value oid opt)]
-
-    ;; TODO
-    (-> decoded
-        (.toInstant)
-        (Instant->DateTime))))
+  (-> value
+      (txt.datetime/parse-timestampz opt)
+      (.toInstant)
+      (Instant->DateTime)))
 
 
 (txt/expand [oid/timestamp]
   [value oid opt]
-
-  (let [^LocalDateTime decoded
-        (txt/-decode value oid opt)]
-
-    (-> decoded
-        (.atOffset ZoneOffset/UTC)
-        (.toInstant)
-        (Instant->DateTime))))
+  (-> value
+      (txt.datetime/parse-timestamp opt)
+      (.atOffset ZoneOffset/UTC)
+      (.toInstant)
+      (Instant->DateTime)))
 
 
 (txt/expand [oid/date]
   [value oid opt]
-
-  (let [^LocalDate decoded
-        (txt/-decode value oid opt)]
-
-    (-> decoded
-        (.atStartOfDay ZoneOffset/UTC)
-        (.toOffsetDateTime)
-        (.toInstant)
-        (Instant->DateTime))))
+  (-> value
+      (txt.datetime/parse-date opt)
+      (.atStartOfDay ZoneOffset/UTC)
+      (.toOffsetDateTime)
+      (.toInstant)
+      (Instant->DateTime)))

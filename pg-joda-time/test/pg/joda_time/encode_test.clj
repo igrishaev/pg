@@ -12,7 +12,15 @@
    [clojure.test :refer [deftest is testing]]))
 
 
-(deftest test-encode-txt
+(deftest test-txt
+
+  ;; txt enc/dec timestamptz
+  ;; txt enc/dec timestamp
+  ;; txt enc/dec date
+
+  ;; bin enc/dec timestamptz
+  ;; bin enc/dec timestamp
+  ;; bin enc/dec date
 
   (let [x1 (t/now)
         string (encode.txt/encode x1 oid/timestamptz)
