@@ -1,7 +1,6 @@
 
 - func cebab kebab
 - fix pool tests
-- fix client tests
 - query and execute functions
 
 - add docstrings, arglists

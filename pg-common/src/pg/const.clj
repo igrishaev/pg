@@ -34,3 +34,7 @@
 (def SSL_CODE 80877103)
 
 (def SCRAM_SHA_256 "SCRAM-SHA-256")
+
+(def NUMERIC_POS (int 0x0000))
+(def NUMERIC_NEG (int 0x4000))
+(def NUMERIC_NAN (int 0xC000))

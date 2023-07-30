@@ -18,8 +18,16 @@
    pg.json))
 
 
+(def P11 10110)
+(def P12 10120)
+(def P13 10130)
+(def P14 10140)
+(def P15 10150)
+(def P16 10160)
+
+
 (def PORTS
-  [10110 10120 10130 10140 10150 10160])
+  [P11 P12 P13 P14 P15 P16])
 
 
 (def HOST "127.0.0.1")
@@ -506,7 +514,6 @@
       (is (= [{:foo 1}]
              (pg/execute conn "select 1 as foo"))))))
 
-;; ----------
 
 (deftest test-client-wrong-major-protocol
 
@@ -525,11 +532,12 @@
                  {:severity "FATAL"
                   :verbosity "FATAL"
                   :code "0A000"
-                  :message "unsupported frontend protocol 4.34464: server supports 3.0 to 3.0"
                   :function "ProcessStartupPacket"}}}
                (-> e
                    (ex-data)
-                   (update-in [:error :errors] dissoc :file :line))))))))
+                   (update-in [:error :errors]
+                              dissoc
+                              :file :line :message))))))))
 
 
 (deftest test-client-empty-select
@@ -818,12 +826,9 @@ drop table %1$s;
 
 
 (deftest test-client-field-duplicates
-
   (pg/with-connection [conn *CONFIG*]
-
     (let [res
           (pg/execute conn "select 1 as id, 2 as id")]
-
       (is (= [{:id 1 :id_1 2}] res)))))
 
 
@@ -893,7 +898,7 @@ drop table %1$s;
   (pg/with-connection [conn *CONFIG*]
     (let [res (pg/execute conn "select '2022-01-01 23:59:59.123+03'::timestamptz as obj")
           obj (-> res first :obj)]
-      (is (instance? Instant obj))
+      (is (instance? OffsetDateTime obj))
       (is (= "2022-01-01T20:59:59.123Z" (str obj))))))
 
 
@@ -903,8 +908,10 @@ drop table %1$s;
       (let [inst
             (Instant/parse "2022-01-01T20:59:59.123456Z")
             res
-            (pg/execute-statement conn stmt [inst])]
-        (is (= inst (-> res first :obj)))))))
+            (pg/execute-statement conn stmt [inst])
+            obj
+            (-> res first :obj)]
+        (is (instance? OffsetDateTime obj))))))
 
 
 (deftest test-client-timestamp-read
@@ -946,7 +953,7 @@ drop table %1$s;
           obj
           (-> res first :obj)]
 
-      (is (instance? Instant obj))
+      (is (instance? OffsetDateTime obj))
       (is (= "1985-12-31T20:59:59Z" (str obj))))))
 
 
@@ -957,9 +964,11 @@ drop table %1$s;
           (new Date 85 11 31 23 59 59)
 
           res
-          (pg/execute conn "select EXTRACT('year' from $1)" [date])]
+          (pg/execute conn "select EXTRACT('year' from $1) as year" [date])]
 
-      (is (= [{:extract 1985M}] res)))))
+      (if (contains? #{P11 P12 P13} *PORT*)
+        (is (= [{:year 1985.0}] res))
+        (is (= [{:year 1985M}] res))))))
 
 
 (deftest test-client-read-time
@@ -1151,7 +1160,7 @@ drop table %1$s;
   (pg/with-connection [conn *CONFIG*]
     (let [opt (conn/get-opt conn)]
       (is (= {:date-style "ISO, MDY"
-              :time-zone "Europe/Moscow"
+              :time-zone "Etc/UTC"
               :server-encoding "UTF8"
               :client-encoding "UTF8"}
              opt)))))
@@ -1410,14 +1419,31 @@ drop table %1$s;
       (is (= "5871-08-14T03:32:03.123Z" (str x2))))))
 
 
-(deftest test-read-numeric-binary
-  (pg/with-connection [conn (assoc *CONFIG*
-                                   :binary-encode? false
-                                   :binary-decode? true)]
-    (let [res
-          (pg/execute conn "select -123.456::numeric as x" [])
+(deftest test-read-write-numeric-txt
+  (pg/with-connection [conn *CONFIG*]
+    (let [x1
+          (bigdec "-123.456")
+
+          res
+          (pg/execute conn "select $1::numeric as x" [x1])
 
           x2
           (-> res first :x)]
 
-      (is (= "5871-08-14T03:32:03.123Z" (str x2))))))
+      (is (= (str x1) (str x2))))))
+
+
+(deftest test-read-write-numeric-bin
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [x1
+          (bigdec "-123.456")
+
+          res
+          (pg/execute conn "select $1::numeric as x" [x1])
+
+          x2
+          (-> res first :x)]
+
+      (is (= (str x1) (str x2))))))

@@ -1,6 +1,7 @@
 (ns pg.encode.bin.numeric
   (:require
    [clojure.string :as str]
+   [pg.const :as const]
    [pg.bb :as bb]
    [pg.const :as const])
   (:import
@@ -35,7 +36,9 @@
           hi)
 
         sign
-        (if negative? 1 0)
+        (if negative?
+          const/NUMERIC_NEG
+          const/NUMERIC_POS)
 
         weight
         (quot (count hi) 4)
