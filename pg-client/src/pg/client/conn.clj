@@ -362,7 +362,7 @@
                     database]}
             config]
 
-        (format "PG connection %s@%s:%s/%s"
+        (format "<PG connection %s@%s:%s/%s>"
                 user host port database))))
 
 

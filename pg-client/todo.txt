@@ -1,11 +1,8 @@
 
-- OffsetDateTime current zone (txt/bin)
+- func cebab kebab
 - fix pool tests
 - fix client tests
-- func cebab kebab
 - query and execute functions
-
-- joda tests
 
 - add docstrings, arglists
 - conn component?

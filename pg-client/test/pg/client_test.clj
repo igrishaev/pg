@@ -22,17 +22,23 @@
   [10110 10120 10130 10140 10150 10160])
 
 
+(def HOST "127.0.0.1")
+(def ^:dynamic *PORT* nil)
+(def USER "test")
+(def PASS "test")
+(def DATABASE "test")
+
 (def ^:dynamic *CONFIG*
-  {:host "127.0.0.1"
-   :port -999
-   :user "test"
-   :password "test"
-   :database "test"})
+  {:host HOST
+   :user USER
+   :password PASS
+   :database DATABASE})
 
 
 (defn fix-multi-version [t]
   (doseq [port PORTS]
-    (binding [*CONFIG* (assoc *CONFIG* :port port)]
+    (binding [*PORT* port
+              *CONFIG* (assoc *CONFIG* :port port)]
       (testing (format "PORT %s" port)
         (t)))))
 
@@ -79,12 +85,12 @@
 (deftest test-client-conn-str-print
   (pg/with-connection [conn *CONFIG*]
 
-    (is (= "PG connection ivan@127.0.0.1:15432/ivan"
-           (str conn)))
+    (let [repr
+          (format "<PG connection %s@%s:%s/%s>" USER HOST *PORT* DATABASE)]
 
-    (is (= "PG connection ivan@127.0.0.1:15432/ivan"
-           (with-out-str
-             (print conn))))))
+      (is (= repr (str conn)))
+      (is (= repr (with-out-str
+                    (print conn)))))))
 
 
 (deftest test-client-conn-equals
@@ -500,6 +506,7 @@
       (is (= [{:foo 1}]
              (pg/execute conn "select 1 as foo"))))))
 
+;; ----------
 
 (deftest test-client-wrong-major-protocol
 

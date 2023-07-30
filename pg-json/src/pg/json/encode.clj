@@ -1,4 +1,4 @@
-n(ns pg.json.encode
+(ns pg.json.encode
   (:require
    [cheshire.core :as json]
    [pg.oid :as oid]
