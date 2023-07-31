@@ -1,5 +1,4 @@
 
-- func cebab kebab
 - query and execute functions
 - unify encode/decode
 - add docstrings, arglists

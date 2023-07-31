@@ -1,8 +1,15 @@
 (ns pg.client.func
+  (:require
+   [clojure.string :as str])
   (:import
+   clojure.lang.Keyword
    java.util.Map
    java.util.List
    java.util.HashMap))
+
+
+(defn ->kebab-keyword ^Keyword [^String column]
+  (-> column (str/replace #"_" "-") keyword))
 
 
 (defn zipmap-java ^Map [^List the-keys ^List the-vals]

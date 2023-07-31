@@ -12,11 +12,12 @@
   (:require
    [clojure.string :as str]
    [clojure.test :refer [deftest is use-fixtures testing]]
+   [pg.client.func :as func]
    [pg.integration :as pgi :refer [*CONFIG*]]
    [pg.client :as pg]
    [pg.client.acc :as acc]
    [pg.client.conn :as conn]
-   pg.json))
+   [pg.json]))
 
 
 (use-fixtures :each pgi/fix-multi-version)
@@ -114,6 +115,13 @@
           (pg/execute conn "select 1 as foo" nil {:fn-column str/upper-case}))]
 
     (is (= [{"FOO" 1}] result))))
+
+
+(deftest test-client-fn-column-kebab
+  (let [result
+        (pg/with-connection [conn *CONFIG*]
+          (pg/execute conn "select 1 as \"user/foo-bar\"" nil {:fn-column func/->kebab-keyword}))]
+    (is (= [{:user/foo-bar 1}] result))))
 
 
 (deftest test-client-exception-in-the-middle
