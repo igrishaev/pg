@@ -4,12 +4,12 @@
 - unify encode/decode
 - add docstrings, arglists
 - conn component?
+- refactor pg.client.acc ns
 
 - benchmarks
 - interval support
 - range support
 - array support
-- refactor pg.client.acc ns
 - result: java maps?
 - thread safe?
 - batch queries
