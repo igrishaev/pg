@@ -1,4 +1,4 @@
-(ns pg.client.acc
+(ns pg.client.as
   (:require
    [pg.client.func :as func])
   (:import
@@ -6,20 +6,25 @@
    java.util.HashMap))
 
 
-(def as-default
+(def default
   {:fn-init #(transient [])
    :fn-reduce conj!
    :fn-finalize persistent!})
 
 
-(def as-java
+(def java
   {:fn-keyval func/zipmap-java
    :fn-init #(new ArrayList)
    :fn-reduce (fn [^ArrayList array-list row]
                 (doto array-list (.add row)))})
 
 
-(def as-matrix
+(def kebab-keys
+  (assoc default
+         :fn-column func/kebab-keyword))
+
+
+(def matrix
   {:fn-unify func/unify-none
    :fn-keyval func/vals-only
    :fn-init #(transient [])
@@ -27,21 +32,21 @@
    :fn-finalize persistent!})
 
 
-(defn as-index-by [f]
+(defn index-by [f]
   {:fn-init #(transient {})
    :fn-reduce (fn [acc! row]
                 (assoc! acc! (f row) row))
    :fn-finalize persistent!})
 
 
-(defn as-group-by [f]
+(defn group-by [f]
   {:fn-init hash-map
    :fn-reduce (let [-conj (fnil conj [])]
                 (fn [acc row]
                   (update acc (f row) -conj row)))})
 
 
-(defn as-kv [fk fv]
+(defn kv [fk fv]
   {:fn-init #(transient {})
    :fn-reduce (fn [acc! row]
                 (assoc! acc! (fk row) (fv row)))

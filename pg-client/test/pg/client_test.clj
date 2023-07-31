@@ -15,7 +15,7 @@
    [pg.client.func :as func]
    [pg.integration :as pgi :refer [*CONFIG*]]
    [pg.client :as pg]
-   [pg.client.acc :as acc]
+   [pg.client.as :as as]
    [pg.client.conn :as conn]
    [pg.json]))
 
@@ -120,7 +120,7 @@
 (deftest test-client-fn-column-kebab
   (let [result
         (pg/with-connection [conn *CONFIG*]
-          (pg/execute conn "select 1 as \"user/foo-bar\"" nil {:fn-column func/->kebab-keyword}))]
+          (pg/execute conn "select 1 as \"user/foo-bar\"" nil {:fn-column func/kebab-keyword}))]
     (is (= [{:user/foo-bar 1}] result))))
 
 
@@ -1055,7 +1055,7 @@ drop table %1$s;
           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
           res
-          (pg/execute conn query nil {:as acc/as-java})]
+          (pg/execute conn query nil {:as as/java})]
 
       (is (= [{:b 2 :a 1}
               {:b 4 :a 3}
@@ -1076,7 +1076,7 @@ drop table %1$s;
           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
           res
-          (pg/execute conn query nil {:as (acc/as-index-by :a)})]
+          (pg/execute conn query nil {:as (as/index-by :a)})]
 
       (is (= {1 {:a 1 :b 2}
               3 {:a 3 :b 4}
@@ -1093,7 +1093,7 @@ drop table %1$s;
           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
           res
-          (pg/execute conn query nil {:as (acc/as-group-by :a)})]
+          (pg/execute conn query nil {:as (as/group-by :a)})]
 
       (is (= {1 [{:a 1 :b 2}]
               3 [{:a 3 :b 4}]
@@ -1109,7 +1109,7 @@ drop table %1$s;
           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
           res
-          (pg/execute conn query nil {:as (acc/as-kv :b :a)})]
+          (pg/execute conn query nil {:as (as/kv :b :a)})]
 
       (is (= {2 1
               4 3
@@ -1125,7 +1125,7 @@ drop table %1$s;
           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
           res
-          (pg/execute conn query nil {:as acc/as-matrix})]
+          (pg/execute conn query nil {:as as/matrix})]
 
       (is (= [[1 2]
               [3 4]

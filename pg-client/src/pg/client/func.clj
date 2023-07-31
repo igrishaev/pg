@@ -8,7 +8,7 @@
    java.util.HashMap))
 
 
-(defn ->kebab-keyword ^Keyword [^String column]
+(defn kebab-keyword ^Keyword [^String column]
   (-> column (str/replace #"_" "-") keyword))
 
 

@@ -9,7 +9,7 @@
    [clojure.string :as str]
    [pg.const :as const]
    [pg.client.func :as func]
-   [pg.client.acc :as acc]
+   [pg.client.as :as as]
    [pg.client.coll :as coll]
    [pg.client.msg :as msg]
    [pg.decode.txt :as txt]
@@ -54,7 +54,7 @@
 
 
 (defn remap-as [this]
-  (let [as (get this :as acc/as-default)]
+  (let [as (get this :as as/default)]
     (merge this as)))
 
 

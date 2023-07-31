@@ -1,9 +1,8 @@
 
-- query and execute functions
-- unify encode/decode
-- add docstrings, arglists
 - conn component?
-- refactor pg.client.acc ns
+- unify encode/decode
+- query and execute functions
+- add docstrings, arglists
 
 - benchmarks
 - interval support
