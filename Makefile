@@ -1,5 +1,5 @@
 
-all: sub-install sub-test
+all: sub-clean sub-install sub-test
 
 sub-clean:
 	lein sub clean
