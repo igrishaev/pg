@@ -12,46 +12,14 @@
   (:require
    [clojure.string :as str]
    [clojure.test :refer [deftest is use-fixtures testing]]
+   [pg.integration :as pgi :refer [*CONFIG*]]
    [pg.client :as pg]
    [pg.client.acc :as acc]
    [pg.client.conn :as conn]
    pg.json))
 
 
-(def P11 10110)
-(def P12 10120)
-(def P13 10130)
-(def P14 10140)
-(def P15 10150)
-(def P16 10160)
-
-
-(def PORTS
-  [P11 P12 P13 P14 P15 P16])
-
-
-(def HOST "127.0.0.1")
-(def ^:dynamic *PORT* nil)
-(def USER "test")
-(def PASS "test")
-(def DATABASE "test")
-
-(def ^:dynamic *CONFIG*
-  {:host HOST
-   :user USER
-   :password PASS
-   :database DATABASE})
-
-
-(defn fix-multi-version [t]
-  (doseq [port PORTS]
-    (binding [*PORT* port
-              *CONFIG* (assoc *CONFIG* :port port)]
-      (testing (format "PORT %s" port)
-        (t)))))
-
-
-(use-fixtures :each fix-multi-version)
+(use-fixtures :each pgi/fix-multi-version)
 
 
 (defn gen-table []
@@ -94,7 +62,8 @@
   (pg/with-connection [conn *CONFIG*]
 
     (let [repr
-          (format "<PG connection %s@%s:%s/%s>" USER HOST *PORT* DATABASE)]
+          (format "<PG connection %s@%s:%s/%s>"
+                  pgi/USER pgi/HOST pgi/*PORT* pgi/DATABASE)]
 
       (is (= repr (str conn)))
       (is (= repr (with-out-str
@@ -966,7 +935,7 @@ drop table %1$s;
           res
           (pg/execute conn "select EXTRACT('year' from $1) as year" [date])]
 
-      (if (contains? #{P11 P12 P13} *PORT*)
+      (if (or (pgi/is11?) (pgi/is12?) (pgi/is13?))
         (is (= [{:year 1985.0}] res))
         (is (= [{:year 1985M}] res))))))
 

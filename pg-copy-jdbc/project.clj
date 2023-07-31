@@ -25,4 +25,5 @@
   {:test
    {:dependencies
     [[com.github.igrishaev/pg-joda-time]
-     [com.github.seancorfield/next.jdbc]]}})
+     [com.github.seancorfield/next.jdbc]
+     [com.github.igrishaev/pg-integration]]}})

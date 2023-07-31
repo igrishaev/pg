@@ -32,14 +32,7 @@
    [exoscale/lein-replace "0.1.1"]]
 
   :dependencies
-  [[com.github.igrishaev/pg-common]
-   [com.github.igrishaev/pg-encode]
-   [com.github.igrishaev/pg-copy]
-   [com.github.igrishaev/pg-copy-jdbc]
-   [com.github.igrishaev/pg-joda-time]
-   [com.github.igrishaev/pg-json]
-   [com.github.igrishaev/pg-client]
-   [com.github.igrishaev/pg-pool]]
+  []
 
   :sub
   ["pg-common"
@@ -50,7 +43,8 @@
    "pg-joda-time"
    "pg-json"
    "pg-client"
-   "pg-pool"]
+   "pg-pool"
+   "pg-integration"]
 
   :managed-dependencies
   [[com.github.igrishaev/pg-common :version]
@@ -61,6 +55,7 @@
    [com.github.igrishaev/pg-joda-time :version]
    [com.github.igrishaev/pg-json :version]
    [com.github.igrishaev/pg-client :version]
+   [com.github.igrishaev/pg-integration :version]
 
    [joda-time/joda-time "2.12.5"]
    [clj-time "0.15.2"]
@@ -73,8 +68,8 @@
 
   :profiles
   {:dev
-   {:source-paths ["env/dev/src"]
-    :resource-paths ["env/dev/resources"]
+   {:source-paths ["./env/dev/src"]
+    :resource-paths ["./env/dev/resources"]
     :dependencies
     [[org.clojure/clojure "1.11.1"]]
 

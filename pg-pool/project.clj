@@ -25,5 +25,6 @@
   {:test
    {:dependencies
     [[com.github.igrishaev/pg-json]
+     [com.github.igrishaev/pg-integration]
      [ch.qos.logback/logback-classic]
      [com.stuartsierra/component]]}})

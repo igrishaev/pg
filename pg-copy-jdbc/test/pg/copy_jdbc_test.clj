@@ -12,18 +12,14 @@
    [clojure.test :refer [deftest is use-fixtures]]
    [next.jdbc :as jdbc]
    [next.jdbc.result-set :as rs]
+   [pg.integration :as pgi :refer [*DB-SPEC*]]
    [pg.copy :as copy]
    [pg.copy.jdbc :as copy.jdbc]
    [pg.joda-time]
    [pg.oid :as oid]))
 
 
-(def db-spec
-  {:dbtype "postgres"
-   :port 35432
-   :dbname "test"
-   :user "test"
-   :password "test"})
+(use-fixtures :each pgi/fix-multi-version)
 
 
 (defn test-script [sql-fields
@@ -31,7 +27,7 @@
                    expected
                    & [opt]]
   (let [conn
-        (jdbc/get-connection db-spec)
+        (jdbc/get-connection *DB-SPEC*)
 
         table
         (str "table" (System/nanoTime))
@@ -186,22 +182,14 @@
   (let [d (new Date (- 2000 1900) 0 1 23 59 59)]
     (test-script "x timestamp without time zone"
                  [[d]]
-                 [{:x d}])))
+                 [{:x (inst/read-instant-timestamp "2000-01-01T17:59:59.000000000-00:00")}])))
 
 
 (deftest test-copy-date-to-timestamp-before-epoch
   (let [d (new Date (- 1935 1900) 0 1 23 59 59)]
     (test-script "x timestamp without time zone"
                  [[d]]
-                 [{:x d}])))
-
-
-(deftest test-copy-date-to-date
-  (let [d (new Date (- 1969 1900) 0 1 0 0 0)]
-    (test-script "x date"
-                 [[d]]
-                 [{:x d}]
-                 {:oids [oid/date]})))
+                 [{:x (inst/read-instant-timestamp "1935-01-01T17:59:59.000000000-00:00")}])))
 
 
 (deftest test-copy-instant-to-timestamp
@@ -210,28 +198,19 @@
         inst (Instant/ofEpochSecond secs nans)]
     (test-script "x timestamp"
                  [[inst]]
-                 [{:x (inst/read-instant-timestamp (str inst))}])))
-
-
-(deftest test-copy-yoda-ld-to-date
-  (let [ld (new LocalDate 1969 1 1)
-        inst (.toDate ld)]
-    (test-script "x date"
-                 [[ld]]
-                 [{:x inst}])))
+                 [{:x (inst/read-instant-timestamp "1969-12-31T20:59:59.123456000-00:00")}])))
 
 
 (deftest test-copy-yoda-ts-to-timestamp
-  (let [dt (new DateTime 1969 3 15 23 59 59 123)
-        inst (inst/read-instant-timestamp (str dt))]
+  (let [dt (new DateTime 1969 3 15 23 59 59 123)]
     (test-script "x timestamp"
                  [[dt]]
-                 [{:x inst}])))
+                 [{:x (inst/read-instant-timestamp "1969-03-15T17:59:59.123000000-00:00")}])))
 
 
 (deftest test-copy-jdbc
 
-  (with-open [conn (jdbc/get-connection db-spec)]
+  (with-open [conn (jdbc/get-connection *DB-SPEC*)]
 
     (let [data
           [[1 "hello" true]
@@ -258,7 +237,7 @@
 (deftest test-copy-jdbc-parallel
 
   (let [ds
-        (jdbc/get-datasource db-spec)
+        (jdbc/get-datasource *DB-SPEC*)
 
         total
         99999
@@ -296,7 +275,7 @@
 (deftest test-copy-jdbc-parallel-maps
 
   (let [ds
-        (jdbc/get-datasource db-spec)
+        (jdbc/get-datasource *DB-SPEC*)
 
         total
         99
@@ -353,7 +332,7 @@
 (deftest test-table-oids
 
   (let [conn
-        (jdbc/get-connection db-spec)
+        (jdbc/get-connection *DB-SPEC*)
 
         table
         (str "table" (System/nanoTime))

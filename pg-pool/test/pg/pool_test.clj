@@ -1,28 +1,24 @@
 (ns pg.pool-test
   (:require
    [com.stuartsierra.component :as component]
-   [clojure.test :refer [is deftest]]
+   [clojure.test :refer [is deftest use-fixtures]]
+   [pg.integration :as pgi :refer [*CONFIG*]]
    [pg.pool :as pool]
    [pg.client :as pg]))
 
 
-(def PG_CONFIG
-  {:host "127.0.0.1"
-   :port 15432
-   :user "ivan"
-   :password "ivan"
-   :database "ivan"})
+(use-fixtures :each pgi/fix-multi-version)
 
 
 (deftest test-pool-it-works
-  (pool/with-pool [pool PG_CONFIG]
+  (pool/with-pool [pool *CONFIG*]
     (pool/with-connection [conn pool]
       (let [res (pg/execute conn "select 1 as one")]
         (is (= [{:one 1}] res))))))
 
 
 (deftest test-pool-basic-features
-  (pool/with-pool [pool PG_CONFIG {:max-size 2}]
+  (pool/with-pool [pool *CONFIG* {:max-size 2}]
 
     (let [t1-conn-id
           (promise)
@@ -88,7 +84,7 @@
 
 
 (deftest test-pool-lifetime
-  (pool/with-pool [pool PG_CONFIG {:min-size 2
+  (pool/with-pool [pool *CONFIG* {:min-size 2
                                    :max-size 2
                                    :ms-lifetime 300}]
 
@@ -112,7 +108,7 @@
 
 
 (deftest test-pool-exception-terminated
-  (pool/with-pool [pool PG_CONFIG {:min-size 1
+  (pool/with-pool [pool *CONFIG* {:min-size 1
                                    :max-size 1}]
 
     (let [id1
@@ -146,7 +142,7 @@
 
 
 (deftest test-pool-in-transaction-state
-  (pool/with-pool [pool PG_CONFIG {:min-size 1
+  (pool/with-pool [pool *CONFIG* {:min-size 1
                                    :max-size 1}]
 
     (let [id1
@@ -180,7 +176,7 @@
 
 
 (deftest test-pool-in-error-state
-  (pool/with-pool [pool PG_CONFIG {:min-size 1
+  (pool/with-pool [pool *CONFIG* {:min-size 1
                                    :max-size 1}]
 
     (let [id1
@@ -215,7 +211,7 @@
 (deftest test-pool-component
 
   (let [c
-        (pool/component PG_CONFIG)
+        (pool/component *CONFIG*)
 
         _
         (is (not (pool/closed? c)))
@@ -257,7 +253,7 @@
 (deftest test-pool-component-redundant-start
 
   (let [c-started
-        (-> (pool/component PG_CONFIG)
+        (-> (pool/component *CONFIG*)
             (component/start)
             (component/start)
             (component/start))]
@@ -276,7 +272,7 @@
 
 
 (deftest test-pool-with-open
-  (with-open [pool (pool/make-pool PG_CONFIG)]
+  (with-open [pool (pool/make-pool *CONFIG*)]
     (pool/with-connection [conn pool]
       (let [res (pg/execute conn "select 1 as one")]
         (is (= [{:one 1}] res))))))
@@ -302,7 +298,7 @@
         pool-config
         {:min-size 0 :max-size 1}]
 
-    (with-open [pool (pool/make-pool PG_CONFIG pool-config)]
+    (with-open [pool (pool/make-pool *CONFIG* pool-config)]
 
       (pool/with-connection [conn pool]
         (deliver id1 (pg/id conn)))
@@ -326,7 +322,7 @@
 
 (deftest test-pool-termination
 
-  (pool/with-pool [pool PG_CONFIG]
+  (pool/with-pool [pool *CONFIG*]
     (pool/terminate pool)
 
     (try
