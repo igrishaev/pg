@@ -35,7 +35,7 @@
 
     (is (pg/idle? conn))
 
-    (pg/execute conn "select 1")
+    (pg/query conn "select 1")
 
     (is (= :I (pg/status conn)))
 
@@ -46,7 +46,8 @@
     (is (pg/in-transaction? conn))
 
     (try
-      (pg/execute conn "selekt 1")
+      (pg/query conn "selekt 1")
+      (is false)
       (catch Exception _
         nil))
 
@@ -82,7 +83,7 @@
 
   (let [result
         (pg/with-connection [conn *CONFIG*]
-          (pg/execute conn "select 1 as foo, 'hello' as bar"))]
+          (pg/execute conn "select 1 as foo, 'hello' as bar" nil))]
 
     (is (= [{:foo 1 :bar "hello"}]
            result))))
@@ -92,7 +93,7 @@
 
   (let [result
         (pg/with-connection [conn *CONFIG*]
-          (pg/execute conn "select 1 as foo; select 'two' as bar"))]
+          (pg/query conn "select 1 as foo; select 'two' as bar"))]
 
     (is (= [[{:foo 1}]
             [{:bar "two"}]]
@@ -103,7 +104,7 @@
 
   (let [result
         (pg/with-connection [conn *CONFIG*]
-          (pg/execute conn ""))]
+          (pg/query conn ""))]
 
     (is (nil? result))))
 
@@ -141,10 +142,10 @@
   (pg/with-connection [conn *CONFIG*]
 
     (let [res1
-          (pg/execute conn "select 1 as foo")
+          (pg/query conn "select 1 as foo")
 
           res2
-          (pg/execute conn "select 'hello' as bar")]
+          (pg/query conn "select 'hello' as bar")]
 
       (is (= [{:foo 1}] res1))
       (is (= [{:bar "hello"}] res2)))))
@@ -752,7 +753,7 @@ drop table %1$s;
            table)
 
           res
-          (pg/execute conn query nil {:fn-column str/upper-case})]
+          (pg/query conn query {:fn-column str/upper-case})]
 
       (is (= [nil
               2
@@ -797,7 +798,7 @@ drop table %1$s;
   (pg/with-connection [conn *CONFIG*]
 
     (let [res
-          (pg/execute conn "select 1 as foo; select 2 as bar")]
+          (pg/query conn "select 1 as foo; select 2 as bar")]
 
       (is (= [[{:foo 1}] [{:bar 2}]] res)))))
 

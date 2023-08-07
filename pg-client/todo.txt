@@ -1,7 +1,6 @@
 
 - conn component?
 - unify encode/decode
-- query and execute functions
 - add docstrings, arglists
 
 - benchmarks

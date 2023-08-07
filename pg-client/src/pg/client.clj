@@ -134,6 +134,16 @@
   (conn/get-created-at conn))
 
 
+(defn query
+
+  ([conn sql]
+   (query conn sql nil))
+
+  ([conn sql opt]
+   (conn/send-query conn sql)
+   (res/interact conn :query opt)))
+
+
 (defn execute-statement
 
   ([conn stmt]
@@ -173,18 +183,9 @@
    (execute conn sql params nil))
 
   ([conn sql params opt]
-
-   (if (nil? params)
-
-     (do
-       (conn/send-query conn sql)
-       (res/interact conn :query opt))
-
-     (let [oids
-           (mapv hint/hint params)]
-
-       (with-statement [stmt conn sql oids]
-         (execute-statement conn stmt params opt))))))
+   (let [oids (mapv hint/hint params)]
+     (with-statement [stmt conn sql oids]
+       (execute-statement conn stmt params opt)))))
 
 
 (defn begin [conn]
@@ -216,8 +217,8 @@
              (try
                [nil (do
                       ~(when (or isolation-level read-only?)
-                         `(when-let [query# (sql/set-tx ~opt)]
-                            (execute ~bind query# nil)))
+                         `(when-let [sql# (sql/set-tx ~opt)]
+                            (query ~bind sql# nil)))
                       ~@body)]
                (catch Throwable e#
                  [e# nil]))
