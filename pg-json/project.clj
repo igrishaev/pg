@@ -7,8 +7,7 @@
   [[lein-parent "0.3.8"]]
 
   :dependencies
-  [[com.github.igrishaev/pg-encode]
-   [com.github.igrishaev/pg-decode]
+  [[com.github.igrishaev/pg-types]
    [cheshire]]
 
   :parent-project

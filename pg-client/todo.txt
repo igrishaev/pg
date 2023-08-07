@@ -1,13 +1,11 @@
 
-- conn component?
-- unify encode/decode
+- result: java maps?
 - add docstrings, arglists
 
 - benchmarks
 - interval support
 - range support
 - array support
-- result: java maps?
 - thread safe?
 - batch queries
 - channel options

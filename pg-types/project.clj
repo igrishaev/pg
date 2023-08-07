@@ -1,7 +1,7 @@
-(defproject com.github.igrishaev/pg-decode "0.1.1-SNAPSHOT"
+(defproject com.github.igrishaev/pg-types "0.1.1-SNAPSHOT"
 
   :description
-  "PG data decoding"
+  "PG types encoding and decoding"
 
   :plugins
   [[lein-parent "0.3.8"]]
