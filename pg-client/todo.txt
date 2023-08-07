@@ -1,5 +1,4 @@
 
-- result: java maps?
 - add docstrings, arglists
 
 - benchmarks

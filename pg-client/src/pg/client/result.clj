@@ -58,12 +58,22 @@
     (merge this as)))
 
 
-(defn make-result [phase init]
-  (-> result-defaults
-      (merge (remap-as init))
-      (assoc :I 0
-             :phase phase
-             :errors (new ArrayList))))
+(defn make-result ^Map [phase init]
+
+  (doto (new HashMap)
+
+    (.putAll result-defaults)
+    (.putAll (remap-as init))
+
+    (.put :map-RowDescription (new HashMap))
+    (.put :map-Keys (new HashMap))
+    (.put :map-Rows (new HashMap))
+    (.put :map-ParameterDescription (new HashMap))
+    (.put :map-CommandComplete (new HashMap))
+
+    (.put :I 0)
+    (.put :phase phase)
+    (.put :errors (new ArrayList))))
 
 
 (defn handle-ReadyForQuery
@@ -137,14 +147,13 @@
 
 (defn handle-AuthenticationCleartextPassword
   [result conn message]
-  (let [password
-        (conn/get-password conn)]
+  (let [password (conn/get-password conn)]
     (conn/send-password conn password))
   result)
 
 
 (defn handle-SCRAM_SHA_256
-  [result conn AuthenticationSASL]
+  [^Map result conn AuthenticationSASL]
 
   (let [user
         (conn/get-user conn)
@@ -163,7 +172,9 @@
                                       client-first-message)]
 
     (conn/send-message conn msg)
-    (assoc result :SASL SASL)))
+
+    (doto result
+      (.put :SASL SASL))))
 
 
 (defn handle-AuthenticationSASL
@@ -183,7 +194,7 @@
 
 
 (defn handle-AuthenticationSASLContinue
-  [{:as result :keys [SASL]}
+  [{:as ^Map result :keys [SASL]}
    conn
    {:keys [server-first-message]}]
 
@@ -199,11 +210,13 @@
         (msg/make-SASLResponse client-final-message)]
 
     (conn/send-message conn msg)
-    (assoc result :SASL SASL)))
+
+    (doto result
+      (.put :SASL SASL))))
 
 
 (defn handle-AuthenticationSASLFinal
-  [{:as result :keys [SASL]}
+  [{:as ^Map result :keys [SASL]}
    conn
    {:keys [server-final-message]}]
 
@@ -211,32 +224,35 @@
       (scram-sha-256/step4-server-final-message server-final-message)
       (scram-sha-256/step5-verify-server-signatures))
 
-  (dissoc result :SASL))
+  (doto result
+    (.remove result :SASL)))
 
 
 (defn make-Keys
-  [{:as result :keys [fn-unify]}
+  [{:as result :keys [fn-unify
+                      fn-column]}
    {:as RowDescription :keys [columns]}]
-
-  (let [fn-column
-        (get result :fn-column keyword)]
-
-    (->> columns
-         (mapv :name)
-         (fn-unify)
-         (mapv fn-column))))
+  (->> columns
+       (mapv :name)
+       (fn-unify)
+       (mapv fn-column)))
 
 
 (defn handle-ParameterDescription
-  [{:as result :keys [I]}
+  [{:as result :keys [I
+                      ^Map map-ParameterDescription]}
    ParameterDescription]
-  (assoc-in result
-            [:map-ParameterDescription I]
-            ParameterDescription))
+  (.put map-ParameterDescription I ParameterDescription)
+  result)
 
 
 (defn handle-RowDescription
-  [{:as result :keys [fn-init I]}
+  [{:as result
+    :keys [I
+           fn-init
+           ^Map map-RowDescription
+           ^Map map-Keys
+           ^Map map-Rows]}
    RowDescription]
 
   (let [Keys
@@ -245,16 +261,21 @@
         Rows-init
         (fn-init)]
 
-    (-> result
-        (assoc-in [:map-RowDescription I] RowDescription)
-        (assoc-in [:map-Keys I] Keys)
-        (assoc-in [:map-Rows I] Rows-init))))
+    (.put map-RowDescription I RowDescription)
+    (.put map-Keys I Keys)
+    (.put map-Rows I Rows-init)
+
+    result))
 
 
 (defn handle-DataRow
-  [{:as result :keys [I
-                      fn-keyval
-                      fn-reduce]}
+  [{:as result
+    :keys [I
+           fn-keyval
+           fn-reduce
+           ^Map map-RowDescription
+           ^Map map-Keys
+           ^Map map-Rows]}
    conn
    {:keys [^List values
            value-count]}]
@@ -266,10 +287,10 @@
           (conn/get-server-encoding conn)
 
           RowDescription
-          (get-in result [:map-RowDescription I])
+          (.get map-RowDescription I)
 
           Keys
-          (get-in result [:map-Keys I])
+          (.get map-Keys I)
 
           {:keys [^List columns]}
           RowDescription
@@ -295,24 +316,30 @@
                     (txt/decode string type-oid opt))
                 1 (bin/decode buf type-oid opt))))
 
+          Rows
+          (.get map-Rows I)
 
           Row
           (fn-keyval Keys values-decoded)]
 
-      (update-in result [:map-Rows I] fn-reduce Row))))
+      (.put map-Rows I (fn-reduce Rows Row))
+
+      result)))
 
 
 (defn handle-CommandComplete
-  [{:as result :keys [I]}
+  [{:as ^Map result :keys [I
+                           ^Map map-CommandComplete]}
    CommandComplete]
-  (-> result
-      (assoc-in [:map-CommandComplete I] CommandComplete)
-      (update :I inc)))
+  (.put map-CommandComplete I CommandComplete)
+  (doto result
+    (.put :I (inc I))))
 
 
 (defn handle-PortalSuspended
-  [result]
-  (update result :I inc))
+  [{:as ^Map result :keys [I]}]
+  (doto result
+    (.put :I (inc I))))
 
 
 (defn handle [{:as result :keys [phase]}
@@ -385,10 +412,12 @@
                      :message message}))))
 
 
-(defn finalize-query [{:as result
-                       :keys [I
+(defn finalize-query [{:keys [I
                               fn-result
-                              fn-finalize]}]
+                              fn-finalize
+                              ^Map map-CommandComplete
+                              ^Map map-Rows
+                              ^Map map-RowDescription]}]
 
   (loop [i 0
          acc! (transient [])]
@@ -406,13 +435,13 @@
           acc))
 
       (let [Rows
-            (get-in result [:map-Rows i])
+            (.get map-Rows i)
 
             CommandComplete
-            (get-in result [:map-CommandComplete i])
+            (.get map-CommandComplete i)
 
             RowDescription
-            (get-in result [:map-RowDescription i])
+            (.get map-RowDescription i)
 
             {:keys [tag]}
             CommandComplete
@@ -439,13 +468,13 @@
 
 (defn finalize-prepare
   [{:keys [statement
-           map-ParameterDescription
-           map-RowDescription
+           ^Map map-ParameterDescription
+           ^Map map-RowDescription
            I]}]
 
   {:statement statement
-   :RowDescription (get map-RowDescription I)
-   :ParameterDescription (get map-ParameterDescription I)})
+   :RowDescription (.get map-RowDescription I)
+   :ParameterDescription (.get map-ParameterDescription I)})
 
 
 (defn finalize-errors! [{:keys [^List errors]}]
