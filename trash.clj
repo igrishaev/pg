@@ -83,3 +83,19 @@
 https://github.com/pgjdbc/r2dbc-postgresql/blob/main/src/main/java/io/r2dbc/postgresql/codec/NumericDecodeUtils.java
 
 https://stackoverflow.com/questions/38532361/converting-joda-time-instant-to-java-time-instant
+
+
+(time
+ (pg/with-connection [conn (assoc *CONFIG*
+                                  :port 10150
+                                  :binary-encode? true
+                                  :binary-decode? true)]
+
+   (pg/execute conn "select * from generate_series(1,999)" nil {:as pg.client.as/default})
+   nil))
+
+
+(time
+ (let [conn (jdbc/get-connection (assoc *DB-SPEC* :port 10150))]
+   (jdbc/execute! conn ["select * from generate_series(1,999)"])
+   nil))
