@@ -99,3 +99,18 @@ https://stackoverflow.com/questions/38532361/converting-joda-time-instant-to-jav
  (let [conn (jdbc/get-connection (assoc *DB-SPEC* :port 10150))]
    (jdbc/execute! conn ["select * from generate_series(1,999)"])
    nil))
+
+
+(doto ch
+      (.setOption StandardSocketOptions/TCP_NODELAY true)
+      (.setOption StandardSocketOptions/SO_KEEPALIVE true)
+      (.setOption StandardSocketOptions/SO_REUSEADDR true)
+      (.setOption StandardSocketOptions/SO_REUSEPORT true)
+
+      ;; (.setOption SocketOptions/SO_TIMEOUT (int 123))
+      ;; (.setOption StandardSocketOptions/)
+      ;;
+      ;;
+      ;; SO_RCVBUF
+      ;; SocketOptions
+      )

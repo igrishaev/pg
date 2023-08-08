@@ -1,4 +1,5 @@
 
+- socket/channel options
 - add docstrings, arglists
 
 - benchmarks
@@ -7,7 +8,6 @@
 - array support
 - thread safe?
 - batch queries
-- channel options
 - ssl
 - adopt honey-sql
 - adopt gosql
@@ -19,3 +19,6 @@
 - copy support
 - function call
 - pubsub pool + namespace
+
+perf:
+- enough?
