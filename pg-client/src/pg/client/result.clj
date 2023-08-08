@@ -58,19 +58,16 @@
     (merge this as)))
 
 
+(defn make-node []
+  (new HashMap))
+
+
 (defn make-result ^Map [phase init]
-
   (doto (new HashMap)
-
     (.putAll result-defaults)
     (.putAll (remap-as init))
-
-    (.put :map-RowDescription (new HashMap))
-    (.put :map-Keys (new HashMap))
-    (.put :map-Rows (new HashMap))
-    (.put :map-ParameterDescription (new HashMap))
-    (.put :map-CommandComplete (new HashMap))
-
+    (.put :nodes (doto (new ArrayList)
+                   (.add (make-node))))
     (.put :I 0)
     (.put :phase phase)
     (.put :errors (new ArrayList))))
@@ -239,20 +236,21 @@
 
 
 (defn handle-ParameterDescription
-  [{:as result :keys [I
-                      ^Map map-ParameterDescription]}
+  [{:as result :keys [^int I
+                      ^List nodes]}
    ParameterDescription]
-  (.put map-ParameterDescription I ParameterDescription)
+
+  (doto ^Map (.get nodes I)
+    (.put :ParameterDescription ParameterDescription))
+
   result)
 
 
 (defn handle-RowDescription
   [{:as result
-    :keys [I
+    :keys [^int I
            fn-init
-           ^Map map-RowDescription
-           ^Map map-Keys
-           ^Map map-Rows]}
+           ^List nodes]}
    RowDescription]
 
   (let [Keys
@@ -261,21 +259,20 @@
         Rows-init
         (fn-init)]
 
-    (.put map-RowDescription I RowDescription)
-    (.put map-Keys I Keys)
-    (.put map-Rows I Rows-init)
+    (doto ^Map (.get nodes I)
+      (.put :RowDescription RowDescription)
+      (.put :Keys Keys)
+      (.put :Rows Rows-init))
 
     result))
 
 
 (defn handle-DataRow
   [{:as result
-    :keys [I
+    :keys [^int I
            fn-keyval
            fn-reduce
-           ^Map map-RowDescription
-           ^Map map-Keys
-           ^Map map-Rows]}
+           ^List nodes]}
    conn
    {:keys [^List values
            value-count]}]
@@ -283,14 +280,16 @@
   (if (zero? value-count)
     result
 
-    (let [encoding
+    (let [^Map node
+          (.get nodes I)
+
+          {:keys [RowDescription
+                  Keys
+                  Rows]}
+          node
+
+          encoding
           (conn/get-server-encoding conn)
-
-          RowDescription
-          (.get map-RowDescription I)
-
-          Keys
-          (.get map-Keys I)
 
           {:keys [^List columns]}
           RowDescription
@@ -316,28 +315,35 @@
                     (txt/decode string type-oid opt))
                 1 (bin/decode buf type-oid opt))))
 
-          Rows
-          (.get map-Rows I)
-
           Row
           (fn-keyval Keys values-decoded)]
 
-      (.put map-Rows I (fn-reduce Rows Row))
+      (.put node :Rows (fn-reduce Rows Row))
 
       result)))
 
 
 (defn handle-CommandComplete
-  [{:as ^Map result :keys [I
-                           ^Map map-CommandComplete]}
+  [{:as ^Map result :keys [^int I
+                           ^List nodes]}
    CommandComplete]
-  (.put map-CommandComplete I CommandComplete)
+
+  (doto ^Map (.get nodes I)
+    (.put :CommandComplete CommandComplete))
+
+  (doto nodes
+    (.add (make-node)))
+
   (doto result
     (.put :I (inc I))))
 
 
 (defn handle-PortalSuspended
-  [{:as ^Map result :keys [I]}]
+  [{:as ^Map result :keys [^int I
+                           ^List nodes]}]
+  (doto nodes
+    (.add (make-node)))
+
   (doto result
     (.put :I (inc I))))
 
@@ -412,44 +418,27 @@
                      :message message}))))
 
 
-(defn finalize-query [{:keys [I
+(defn finalize-query [{:keys [^int I
                               fn-result
                               fn-finalize
-                              ^Map map-CommandComplete
-                              ^Map map-Rows
-                              ^Map map-RowDescription]}]
+                              ^List nodes]}]
 
-  (loop [i 0
-         acc! (transient [])]
+  (.remove nodes I)
 
-    (if (= i I)
+  (let [subs
+        (coll/for-list [i ^Map node nodes]
 
-      (let [acc
-            (cond->> (persistent! acc!)
-              fn-result
-              (mapv fn-result))]
+          (let [{:keys [Rows
+                        CommandComplete
+                        RowDescription]}
+                node
 
-        (case (count acc)
-          0 nil
-          1 (first acc)
-          acc))
+                {:keys [tag]}
+                CommandComplete
 
-      (let [Rows
-            (.get map-Rows i)
+                amount
+                (some-> tag tag->amount)]
 
-            CommandComplete
-            (.get map-CommandComplete i)
-
-            RowDescription
-            (.get map-RowDescription i)
-
-            {:keys [tag]}
-            CommandComplete
-
-            amount
-            (some-> tag tag->amount)
-
-            subresult
             (cond
 
               RowDescription
@@ -461,20 +450,85 @@
               amount
 
               :else
-              nil)]
+              nil)))]
 
-        (recur (inc i) (conj! acc! subresult))))))
+    (let [^List subs
+          (if fn-result
+            (mapv fn-result subs)
+            subs)]
+
+      (case (.size subs)
+        0 nil
+        1 (.get subs 0)
+        subs)))
+
+
+
+  #_
+  (let [len (.size nodes)]
+
+    (loop [i 0
+           acc! (transient [])]
+
+      (if (= i len)
+
+        (let [acc
+              (cond->> (persistent! acc!)
+                fn-result
+                (mapv fn-result))]
+
+          (case (count acc)
+            0 nil
+            1 (first acc)
+            acc))
+
+
+        (let [^Map node
+              (.get nodes i)
+
+              {:keys [Rows
+                      CommandComplete
+                      RowDescription]}
+              node
+
+              {:keys [tag]}
+              CommandComplete
+
+              amount
+              (some-> tag tag->amount)
+
+              subresult
+              (cond
+
+                RowDescription
+                (if fn-finalize
+                  (fn-finalize Rows)
+                  Rows)
+
+                amount
+                amount
+
+                :else
+                nil)]
+
+          (recur (inc i) (conj! acc! subresult)))))))
 
 
 (defn finalize-prepare
   [{:keys [statement
-           ^Map map-ParameterDescription
-           ^Map map-RowDescription
-           I]}]
+           I
+           ^List nodes]}]
 
-  {:statement statement
-   :RowDescription (.get map-RowDescription I)
-   :ParameterDescription (.get map-ParameterDescription I)})
+  (let [node
+        (.get nodes I)
+
+        {:keys [RowDescription
+                ParameterDescription]}
+        node]
+
+    {:statement statement
+     :RowDescription RowDescription
+     :ParameterDescription ParameterDescription}))
 
 
 (defn finalize-errors! [{:keys [^List errors]}]
