@@ -167,6 +167,26 @@
       (is (= [{:foo 1}] res1)))))
 
 
+(deftest test-client-65k-params-execute
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (let [ids
+          (range 1 0xFFFF)
+
+          params
+          (for [id ids]
+            (format "$%d" id))f
+
+          query
+          (format "select 42 in (%s) answer" (str/join "," params))
+
+          res1
+          (pg/execute conn query ids)]
+
+      (is (= [{:answer true}] res1)))))
+
+
 (deftest test-client-with-tx-syntax-issue
   (pg/with-connection [conn *CONFIG*]
     (pg/with-tx [conn]

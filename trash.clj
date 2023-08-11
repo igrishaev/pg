@@ -84,6 +84,7 @@ https://github.com/pgjdbc/r2dbc-postgresql/blob/main/src/main/java/io/r2dbc/post
 
 https://stackoverflow.com/questions/38532361/converting-joda-time-instant-to-java-time-instant
 
+https://github.com/pgjdbc/pgjdbc/issues/1311#issuecomment-1143805011
 
 (time
  (pg/with-connection [conn (assoc *CONFIG*
