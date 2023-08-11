@@ -151,6 +151,22 @@
       (is (= [{:bar "hello"}] res2)))))
 
 
+(deftest test-client-socket-opt
+
+  (pg/with-connection [conn (update *CONFIG* :socket assoc
+                                    :tcp-no-delay? false
+                                    :so-keep-alive? false
+                                    :so-reuse-addr? false
+                                    :so-reuse-port? false
+                                    :so-rcv-buf (int 1234)
+                                    :so-snd-buf (int 4567))]
+
+    (let [res1
+          (pg/query conn "select 1 as foo")]
+
+      (is (= [{:foo 1}] res1)))))
+
+
 (deftest test-client-with-tx-syntax-issue
   (pg/with-connection [conn *CONFIG*]
     (pg/with-tx [conn]

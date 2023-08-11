@@ -1,8 +1,7 @@
 
-- socket/channel options
 - add docstrings, arglists
+- test 65,535 params
 
-- 65,535 params
 - benchmarks
 - interval support
 - range support

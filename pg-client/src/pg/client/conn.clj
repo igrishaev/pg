@@ -3,6 +3,7 @@
    java.io.Closeable
    java.io.Writer
    java.nio.channels.SocketChannel
+   java.net.StandardSocketOptions
    java.net.InetSocketAddress
    java.nio.ByteBuffer
    java.util.HashMap
@@ -31,7 +32,13 @@
    :fn-notification fn-notification-default
    :protocol-version const/PROTOCOL_VERSION
    :binary-encode? false
-   :binary-decode? false})
+   :binary-decode? false
+   :socket {:tcp-no-delay? true
+            :so-keep-alive? true
+            :so-reuse-addr? true
+            :so-reuse-port? true
+            :so-rcv-buf nil
+            :so-snd-buf nil}})
 
 
 (defn get-id [conn]
@@ -371,13 +378,43 @@
   (.write w (str conn)))
 
 
+(defn set-socket-opts
+  [^SocketChannel ch {:keys [tcp-no-delay?
+                             so-keep-alive?
+                             so-reuse-addr?
+                             so-reuse-port?
+                             so-rcv-buf
+                             so-snd-buf]}]
+
+  (cond-> ch
+
+    (some? tcp-no-delay?)
+    (.setOption StandardSocketOptions/TCP_NODELAY tcp-no-delay?)
+
+    (some? so-keep-alive?)
+    (.setOption StandardSocketOptions/SO_KEEPALIVE so-keep-alive?)
+
+    (some? so-reuse-addr?)
+    (.setOption StandardSocketOptions/SO_REUSEADDR so-reuse-addr?)
+
+    (some? so-reuse-port?)
+    (.setOption StandardSocketOptions/SO_REUSEPORT so-reuse-port?)
+
+    (some? so-rcv-buf)
+    (.setOption StandardSocketOptions/SO_RCVBUF so-rcv-buf)
+
+    (some? so-snd-buf)
+    (.setOption StandardSocketOptions/SO_SNDBUF so-snd-buf)))
+
+
 (defn connect [config]
 
   (let [config-full
-        (merge config-defaults config)
+        (coll/deep-merge config-defaults config)
 
         {:keys [^String host
-                ^Integer port]}
+                ^Integer port
+                socket]}
         config-full
 
         addr
@@ -391,6 +428,8 @@
 
         created-at
         (System/currentTimeMillis)]
+
+    (set-socket-opts ch socket)
 
     (new Connection
          id
