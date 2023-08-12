@@ -1,4 +1,5 @@
 (ns pg.client.as
+  (:refer-clojure :exclude [group-by])
   (:require
    [pg.client.func :as func])
   (:import

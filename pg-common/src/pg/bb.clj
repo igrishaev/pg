@@ -1,4 +1,6 @@
 (ns pg.bb
+  (:require
+   [pg.bytes :as bytes])
   (:import
    java.nio.channels.SocketChannel
    java.io.ByteArrayOutputStream
@@ -23,6 +25,10 @@
 
 (defn write-int16 [^ByteBuffer bb value]
   (.putShort bb value))
+
+
+(defn write-uint16 [^ByteBuffer bb value]
+  (.put bb (bytes/uint16->bytes value)))
 
 
 (defn write-int32 [^ByteBuffer bb value]
@@ -71,6 +77,10 @@
 
 (defmacro read-int16 [^ByteBuffer bb]
   `(.. ~(with-meta bb {:tag `ByteBuffer}) (getShort)))
+
+
+(defn read-uint16 [^ByteBuffer bb]
+  (-> bb (.getShort) (Short/toUnsignedInt)))
 
 
 (defmacro read-int32 [^ByteBuffer bb]

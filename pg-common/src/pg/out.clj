@@ -41,17 +41,21 @@
 
 
 (defn write-int32
-  [^ByteArrayOutputStream out
-   ^Integer value]
+  [^ByteArrayOutputStream out value]
   (doto out
     (.writeBytes (bytes/int32->bytes value))))
 
 
 (defn write-int16
-  [^ByteArrayOutputStream out
-   ^Integer value]
+  [^ByteArrayOutputStream out value]
   (doto out
     (.writeBytes (bytes/int16->bytes value))))
+
+
+(defn write-uint16
+  [^ByteArrayOutputStream out value]
+  (doto out
+    (.writeBytes (bytes/uint16->bytes value))))
 
 
 (defn write-int16s

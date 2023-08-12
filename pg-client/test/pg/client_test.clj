@@ -172,11 +172,11 @@
   (pg/with-connection [conn *CONFIG*]
 
     (let [ids
-          (range 1 0xFFFF)
+          (vec (range 1 0xFFFF))
 
           params
           (for [id ids]
-            (format "$%d" id))f
+            (format "$%d" id))
 
           query
           (format "select 42 in (%s) answer" (str/join "," params))

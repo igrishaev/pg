@@ -312,7 +312,7 @@
 (defn parse-ParameterDescription [bb opt]
 
   (let [param-count
-        (bb/read-int16 bb)
+        (bb/read-uint16 bb)
 
         param-oids
         (coll/for-n [_ param-count]
@@ -617,7 +617,7 @@
         (doto (out/create)
           (out/write-cstring statement encoding)
           (out/write-cstring query encoding)
-          (out/write-int16 (count param-oids)))]
+          (out/write-uint16 (count param-oids)))]
 
     (coll/do-list [_ oid param-oids]
       (out/write-int32 out oid))
@@ -729,10 +729,10 @@
         (doto (out/create)
           (out/write-cstring portal encoding)
           (out/write-cstring statement encoding)
-          (out/write-int16 (count param-formats))
+          (out/write-uint16 (count param-formats))
           (out/write-int16s param-formats))]
 
-    (out/write-int16 out (count params))
+    (out/write-uint16 out (count params))
 
     (coll/do-n [i (count params)]
 

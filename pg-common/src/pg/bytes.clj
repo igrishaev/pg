@@ -36,6 +36,17 @@
       (.array)))
 
 
+(defn uint16->bytes ^bytes [value]
+  (when-not (<= 0 value 0xFFFF)
+    (throw
+     (ex-info
+      (format "uint16->bytes error: value %s is out of range" value)
+      {:value value})))
+  (let [b1 (-> value (bit-and 0xFF00) (bit-shift-right 8))
+        b2 (-> value (bit-and 0xFF))]
+    (byte-array [b1 b2])))
+
+
 (defn int32->bytes ^bytes [^Integer value]
   (-> (ByteBuffer/allocate 4)
       (.putInt value)
