@@ -734,6 +734,12 @@
 
     (out/write-uint16 out (count params))
 
+    (coll/do-iter [param params]
+      )
+
+
+
+    #_
     (coll/do-n [i (count params)]
 
       (let [param (.get params i)

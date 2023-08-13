@@ -1,4 +1,6 @@
-(ns pg.client.coll)
+(ns pg.client.coll
+  (:import
+   clojure.lang.RT))
 
 
 (defmacro do-n
@@ -78,3 +80,29 @@
        (reduce merge-entry (or a {}) (seq b)))))
   ([a b & more]
    (reduce deep-merge (or a {}) (cons b more))))
+
+
+(defmacro do-map
+  {:style/indent 1}
+  [[[k v] m] & body]
+  `(let [itr# (RT/iter ~m)]
+     (loop [i# 0]
+       (when (.hasNext itr#)
+         (let [~'&i i#
+               item# (.next itr#)
+               ~k (key item#)
+               ~v (val item#)]
+           (do ~@body)
+           (recur (inc i#)))))))
+
+
+(defmacro do-seq
+  {:style/indent 1}
+  [[bind coll] & body]
+  `(let [itr# (RT/iter ~coll)]
+     (loop [i# 0]
+       (when (.hasNext itr#)
+         (let [~'&i i#
+               ~bind (.next itr#)]
+           (do ~@body)
+           (recur (inc i#)))))))

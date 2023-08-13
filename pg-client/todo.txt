@@ -1,5 +1,6 @@
 
 - add docstrings, arglists
+- fix bin params
 - fix seq params
 - test wrong params count
 - test rows limit range
