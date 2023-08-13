@@ -264,13 +264,11 @@
 
         param-formats
         (if binary-encode?
-          (coll/for-n [_ params-len] 1)
-          (coll/for-n [_ params-len] 0))
+          [const/FORMAT_BIN] [const/FORMAT_TXT])
 
         column-formats
         (if binary-decode?
-          [1]
-          [0])
+          [const/FORMAT_BIN] [const/FORMAT_TXT])
 
         portal
         (name (gensym "portal_"))

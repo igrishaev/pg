@@ -1,6 +1,8 @@
 
 - add docstrings, arglists
 - fix seq params
+- test wrong params count
+- test rows limit range
 
 - benchmarks
 - interval support
