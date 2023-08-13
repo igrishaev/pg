@@ -7,6 +7,7 @@
   (:require
    [pg.out :as out]
    [pg.bb :as bb]
+   [pg.const :as const]
    [pg.client.coll :as coll]
    [pg.encode.txt :as txt]
    [pg.encode.bin :as bin]))
@@ -690,70 +691,81 @@
 
 (defn make-Bind [^String portal
                  ^String statement
-                 ^List param-formats
                  ^List params
-                 ^List param-oids
-                 ^List column-formats]
+                 ^List oids
+                 ^Boolean binary-encode?
+                 ^Boolean binary-decode?]
 
   {:msg :Bind
    :portal         portal
    :statement      statement
-   :param-formats  param-formats
    :params         params
-   :param-oids     param-oids
-   :column-formats column-formats})
+   :oids           oids
+   :binary-encode? binary-encode?
+   :binary-decode? binary-decode?})
+
+
+(defn validate-params-count! [params oids]
+  (let [len-params (count params)
+        len-oids (count oids)]
+    (when-not (= len-params len-oids)
+      (let [msg
+            (format "Wrong parameters count: %s (must be %s)"
+                    len-params len-oids)]
+        (throw (ex-info msg {:params params
+                             :oids oids}))))))
 
 
 (defn encode-Bind
   [{:as message
     :keys [^String portal
            ^String statement
-           ^List param-formats
            ^List params
-           ^List param-oids
-           ^List column-formats]}
+           ^List oids
+           ^Boolean binary-encode?
+           ^Boolean binary-decode?]}
    opt]
 
-  (let [len-params (count params)
-        len-param-oids (count param-oids)]
-    (when-not (= len-params len-param-oids)
-      (let [msg
-            (format "Wrong parameters count: %s (must be %s)"
-                    len-params len-param-oids)]
-        (throw (ex-info msg message)))))
+  (validate-params-count! params oids)
 
   (let [^String encoding
         (get-client-encoding opt)
+
+        param-formats
+        (if binary-encode?
+          [const/FORMAT_BIN] [const/FORMAT_TXT])
+
+        column-formats
+        (if binary-decode?
+          [const/FORMAT_BIN] [const/FORMAT_TXT])
 
         out
         (doto (out/create)
           (out/write-cstring portal encoding)
           (out/write-cstring statement encoding)
           (out/write-uint16 (count param-formats))
-          (out/write-int16s param-formats))]
+          (out/write-int16s param-formats))
+
+        iter-oids
+        (coll/iter oids)]
 
     (out/write-uint16 out (count params))
 
-    (coll/do-n [i (count params)]
-
-      (let [param (.get params i)
-            param-oid (.get param-oids i)
-            param-format (.get param-formats i)]
+    (coll/do-seq [param params]
+      (let [oid
+            (.next iter-oids)]
 
         (if (nil? param)
-
           (out/write-int32 out -1)
 
           (let [^bytes buf
-                (case (int param-format)
+                (if binary-encode?
 
-                  0
+                  (bin/encode param oid opt)
+
                   (let [^String encoded
-                        (txt/encode param param-oid opt)]
-                    (.getBytes encoded encoding))
-
-                  1
-                  (bin/encode param param-oid opt))
+                        (txt/encode param oid opt)]
+                    (.getBytes encoded encoding)))
 
                 len
                 (alength buf)]
@@ -761,7 +773,7 @@
             (out/write-int32 out len)
             (out/write-bytes out buf)))))
 
-    (out/write-int16 out (.size column-formats))
+    (out/write-int16 out (count column-formats))
     (out/write-int16s out column-formats)
 
     (to-bb \B out)))

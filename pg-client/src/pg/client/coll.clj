@@ -3,6 +3,10 @@
    clojure.lang.RT))
 
 
+(defmacro iter [coll]
+  `(RT/iter ~coll))
+
+
 (defmacro do-n
   {:style/indent 1}
   [[i n] & body]
@@ -17,7 +21,7 @@
 (defmacro do-seq
   {:style/indent 1}
   [[bind coll] & body]
-  `(let [itr# (RT/iter ~coll)]
+  `(let [itr# (iter ~coll)]
      (loop [i# 0]
        (when (.hasNext itr#)
          (let [~'&i i#
@@ -29,7 +33,7 @@
 (defmacro do-map
   {:style/indent 1}
   [[[k v] m] & body]
-  `(let [itr# (RT/iter ~m)]
+  `(let [itr# (iter ~m)]
      (loop [i# 0]
        (when (.hasNext itr#)
          (let [~'&i i#
@@ -56,7 +60,7 @@
 (defmacro for-seq
   {:style/indent 1}
   [[item items] & body]
-  `(let [iter# (RT/iter ~items)]
+  `(let [iter# (iter ~items)]
      (loop [i# 0
             result# (transient [])]
        (if (.hasNext iter#)

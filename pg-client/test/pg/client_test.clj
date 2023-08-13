@@ -172,7 +172,7 @@
   (pg/with-connection [conn *CONFIG*]
 
     (let [ids
-          (vec (range 1 0xFFFF))
+          (range 1 0xFFFF)
 
           params
           (for [id ids]

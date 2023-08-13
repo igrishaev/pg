@@ -250,7 +250,7 @@
     statement))
 
 
-(defn send-bind [conn statement params param-oids]
+(defn send-bind [conn statement params oids]
 
   (let [{:keys [config]}
         conn
@@ -259,27 +259,16 @@
                 binary-decode?]}
         config
 
-        params-len
-        (count params)
-
-        param-formats
-        (if binary-encode?
-          [const/FORMAT_BIN] [const/FORMAT_TXT])
-
-        column-formats
-        (if binary-decode?
-          [const/FORMAT_BIN] [const/FORMAT_TXT])
-
         portal
         (name (gensym "portal_"))
 
         msg
         (msg/make-Bind portal
                        statement
-                       param-formats
                        params
-                       param-oids
-                       column-formats)]
+                       oids
+                       binary-encode?
+                       binary-decode?)]
 
     (send-message conn msg)
 
