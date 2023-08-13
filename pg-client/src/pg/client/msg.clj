@@ -597,18 +597,18 @@
 
 (defn make-Parse [^String statement
                   ^String query
-                  ^List param-oids]
+                  ^List oids]
 
   {:msg :Parse
    :statement statement
    :query query
-   :param-oids param-oids})
+   :oids oids})
 
 
 (defn encode-Parse
   [{:keys [^String statement
            ^String query
-           ^List param-oids]}
+           ^List oids]}
    opt]
 
   (let [encoding
@@ -618,9 +618,9 @@
         (doto (out/create)
           (out/write-cstring statement encoding)
           (out/write-cstring query encoding)
-          (out/write-uint16 (count param-oids)))]
+          (out/write-uint16 (count oids)))]
 
-    (coll/do-seq [oid param-oids]
+    (coll/do-seq [oid oids]
       (out/write-int32 out oid))
 
     (to-bb \P out)))
@@ -856,7 +856,7 @@
         out
         (doto (out/create)
           (out/write-cstring portal encoding)
-          (out/write-int32 row-count))]
+          (out/write-uint32 row-count))]
 
     (to-bb \E out)))
 

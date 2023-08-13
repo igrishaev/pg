@@ -683,6 +683,26 @@
              (keys res))))))
 
 
+(deftest test-statement-params-wrong-count
+  (pg/with-connection [conn *CONFIG*]
+    (pg/with-statement [stmt conn "select $1::integer as foo, $2::integer as bar"]
+      (try
+        (pg/execute-statement conn stmt [1])
+        (is false)
+        (catch Exception e
+          (is (= "Wrong parameters count: 1 (must be 2)"
+                 (ex-message e)))
+          (is (= {:params [1] :oids [23 23]}
+                 (ex-data e))))))))
+
+
+(deftest test-statement-params-nil
+  (pg/with-connection [conn *CONFIG*]
+    (pg/with-statement [stmt conn "select 42 as answer"]
+      (let [res (pg/execute-statement conn stmt nil)]
+        (is (= [{:answer 42}] res))))))
+
+
 (deftest test-prepare-execute
 
   (pg/with-connection [conn *CONFIG*]
@@ -1081,6 +1101,23 @@ drop table %1$s;
               (pg/execute-statement conn stmt [] {:rows 1})]
 
           (is (= [{:column1 1 :column2 2}]
+                 result)))))))
+
+
+(deftest test-execute-row-limit-int32-unsigned
+  (pg/with-connection [conn *CONFIG*]
+
+    (let [query
+          "with foo as (values (1, 2), (3, 4), (5, 6)) select * from foo"]
+
+      (pg/with-statement [stmt conn query]
+
+        (let [result
+              (pg/execute-statement conn stmt [] {:rows 0xFFFFFFFF})]
+
+          (is (= [{:column1 1 :column2 2}
+                  {:column1 3 :column2 4}
+                  {:column1 5 :column2 6}]
                  result)))))))
 
 

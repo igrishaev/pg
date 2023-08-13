@@ -31,6 +31,10 @@
   (.put bb (bytes/uint16->bytes value)))
 
 
+(defn write-uint32 [^ByteBuffer bb value]
+  (.put bb (bytes/uint32->bytes value)))
+
+
 (defn write-int32 [^ByteBuffer bb value]
   (.putInt bb value))
 
