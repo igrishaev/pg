@@ -561,7 +561,7 @@
           (out/write-cstring "database" encoding)
           (out/write-cstring database encoding))]
 
-    (coll/do-map [k v options]
+    (coll/do-map [[k v] options]
       (doto out
         (out/write-cstring k encoding)
         (out/write-cstring v encoding)))
@@ -619,7 +619,7 @@
           (out/write-cstring query encoding)
           (out/write-uint16 (count param-oids)))]
 
-    (coll/do-list [_ oid param-oids]
+    (coll/do-seq [oid param-oids]
       (out/write-int32 out oid))
 
     (to-bb \P out)))
@@ -734,12 +734,6 @@
 
     (out/write-uint16 out (count params))
 
-    (coll/do-iter [param params]
-      )
-
-
-
-    #_
     (coll/do-n [i (count params)]
 
       (let [param (.get params i)

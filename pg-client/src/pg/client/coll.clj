@@ -14,6 +14,32 @@
            (recur (inc i#)))))))
 
 
+(defmacro do-seq
+  {:style/indent 1}
+  [[bind coll] & body]
+  `(let [itr# (RT/iter ~coll)]
+     (loop [i# 0]
+       (when (.hasNext itr#)
+         (let [~'&i i#
+               ~bind (.next itr#)]
+           (do ~@body)
+           (recur (inc i#)))))))
+
+
+(defmacro do-map
+  {:style/indent 1}
+  [[[k v] m] & body]
+  `(let [itr# (RT/iter ~m)]
+     (loop [i# 0]
+       (when (.hasNext itr#)
+         (let [~'&i i#
+               item# (.next itr#)
+               ~k (key item#)
+               ~v (val item#)]
+           (do ~@body)
+           (recur (inc i#)))))))
+
+
 (defmacro for-n
   {:style/indent 1}
   [[i n] & body]
@@ -27,42 +53,18 @@
            (recur (inc i#) (conj! result# item#)))))))
 
 
-(defmacro do-list
+(defmacro for-seq
   {:style/indent 1}
-  [[i item items] & body]
-  `(let [items# ~items
-         len# (count items#)]
-     (loop [i# 0]
-       (when-not (= i# len#)
-         (let [~item (.get items# i#)
-               ~i i#]
-           ~@body
-           (recur (inc i#)))))))
-
-
-(defmacro for-list
-  {:style/indent 1}
-  [[i item items] & body]
-  `(let [items# ~items
-         len# (count items#)]
+  [[item items] & body]
+  `(let [iter# (RT/iter ~items)]
      (loop [i# 0
             result# (transient [])]
-       (if (= i# len#)
-         (persistent! result#)
-         (let [~item (.get items# i#)
-               ~i i#
+       (if (.hasNext iter#)
+         (let [~'&i i#
+               ~item (.next iter#)
                item# (do ~@body)]
-           (recur (inc i#) (conj! result# item#)))))))
-
-
-(defmacro do-map
-  {:style/indent 1}
-  [[k v mapping] & body]
-  `(run! (fn [entry#]
-           (let [~k (key entry#)
-                 ~v (val entry#)]
-             ~@body))
-         ~mapping))
+           (recur (inc i#) (conj! result# item#)))
+         (persistent! result#)))))
 
 
 (defn deep-merge
@@ -80,29 +82,3 @@
        (reduce merge-entry (or a {}) (seq b)))))
   ([a b & more]
    (reduce deep-merge (or a {}) (cons b more))))
-
-
-(defmacro do-map
-  {:style/indent 1}
-  [[[k v] m] & body]
-  `(let [itr# (RT/iter ~m)]
-     (loop [i# 0]
-       (when (.hasNext itr#)
-         (let [~'&i i#
-               item# (.next itr#)
-               ~k (key item#)
-               ~v (val item#)]
-           (do ~@body)
-           (recur (inc i#)))))))
-
-
-(defmacro do-seq
-  {:style/indent 1}
-  [[bind coll] & body]
-  `(let [itr# (RT/iter ~coll)]
-     (loop [i# 0]
-       (when (.hasNext itr#)
-         (let [~'&i i#
-               ~bind (.next itr#)]
-           (do ~@body)
-           (recur (inc i#)))))))

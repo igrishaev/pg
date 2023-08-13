@@ -426,7 +426,7 @@
   (.remove nodes I)
 
   (let [subs
-        (coll/for-list [i ^Map node nodes]
+        (coll/for-seq [^Map node nodes]
 
           (let [{:keys [Rows
                         CommandComplete
