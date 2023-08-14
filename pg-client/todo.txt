@@ -1,5 +1,8 @@
 
 - add docstrings, arglists
+- json type hints
+- joda type hints
+- pg.hint ns?
 
 - benchmarks
 - interval support
