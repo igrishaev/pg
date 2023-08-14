@@ -1,10 +1,5 @@
 
 - add docstrings, arglists
-- json type hints
-- joda type hints
-- pg.hint ns?
-- refactor hints: add inheritance
-- refactor hints: separate package?
 
 - benchmarks
 - interval support

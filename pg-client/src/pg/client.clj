@@ -6,7 +6,7 @@
    [pg.client.result :as res]
    [pg.client.sql :as sql]
    [pg.oid :as oid]
-   [pg.encode.hint :as hint])
+   [pg.hint :as hint])
   (:import
    java.util.List
    java.util.Map
