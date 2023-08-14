@@ -890,6 +890,16 @@ drop table %1$s;
       (is (= {:obj {:foo 123}} res)))))
 
 
+(deftest test-client-json-write-no-hint
+  (pg/with-connection [conn *CONFIG*]
+    (let [res
+          (pg/execute conn
+                      "select $1 as obj"
+                      [{:foo 123}]
+                      {:fn-result first})]
+      (is (= {:obj {:foo 123}} res)))))
+
+
 (deftest test-client-jsonb-write
   (pg/with-connection [conn *CONFIG*]
     (let [json

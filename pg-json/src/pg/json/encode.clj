@@ -3,6 +3,7 @@
    [cheshire.core :as json]
    [pg.oid :as oid]
    [pg.encode.txt :as txt]
+   [pg.encode.hint :as hint]
    [pg.encode.bin :as bin]))
 
 
@@ -50,3 +51,11 @@
         (get-client-encoding opt)]
 
     (.getBytes string encoding)))
+
+
+;;
+;; Hint
+;;
+
+;; TODO: refactor this
+(hint/add-hint clojure.lang.PersistentArrayMap oid/json)
