@@ -1,49 +1,86 @@
 (ns pg.client
   (:require
-   [pg.const :as const]
    [pg.client.conn :as conn]
    [pg.client.func :as func]
    [pg.client.result :as res]
    [pg.client.sql :as sql]
-   [pg.oid :as oid]
-   [pg.hint :as hint])
+   [pg.const :as const]
+   [pg.hint :as hint]
+   [pg.oid :as oid])
   (:import
+   clojure.lang.Keyword
    java.util.List
    java.util.Map
    pg.client.conn.Connection))
 
 
-(defn status [conn]
+(defn status
+  "
+  Get the current status of the connection as a keyword.
+  "
+  ^Keyword [conn]
   (conn/get-tx-status conn))
 
 
-(defn idle? [conn]
+(defn idle?
+  "
+  True if the connection is idle at the moment.
+  "
+  ^Boolean [conn]
   (= (status conn) const/TX_IDLE))
 
 
-(defn in-transaction? [conn]
+(defn in-transaction?
+  "
+  True if the connection is in transaction at the moment.
+  "
+  ^Boolean [conn]
   (= (status conn) const/TX_TRANSACTION))
 
 
-(defn tx-error? [conn]
+(defn tx-error?
+  "
+  True if an error had occurred in a transaction.
+  "
+  ^Boolean [conn]
   (= (status conn) const/TX_ERROR))
 
 
 (defn get-parameter
-  [{:keys [^Map params]} ^String param]
+  "
+  Return a value of a connection parameter by its name
+  (.e.g 'integer_datetimes', 'application_name', etc).
+  "
+  ^String [{:keys [^Map params]} ^String param]
   (.get params param))
 
 
-(defn pid [conn]
+(defn pid
+  "
+  Get the connection PID as an Integer.
+  "
+  ^Integer [conn]
   (conn/get-pid conn))
 
 
 (defn prepare-statement
+  "
+  Prepare a statement from an SQL expression.
+  Args:
+  - conn: the connection map;
+  - sql: a string SQL expression;
+  - oids (optional): a vector of OIDs to specify the types
+    of the parameters; when not set, the OIDs a determined
+    by Postgres.
+  Return:
+  - a map with brief information about the statement
+    (name, columns, params).
+  "
 
-  ([conn sql]
+  (^Map [conn sql]
    (prepare-statement conn sql []))
 
-  ([conn sql oids]
+  (^Map [conn sql oids]
    (let [statement
          (conn/send-parse conn sql oids)
 
@@ -55,7 +92,11 @@
      (res/interact conn :prepare init))))
 
 
-(defn close-statement [conn ^Map stmt]
+(defn close-statement
+  "
+  Close a previously prepared statement on the server side.
+  "
+  [conn ^Map stmt]
   (let [{:keys [statement]}
         stmt]
     (conn/close-statement conn statement))
