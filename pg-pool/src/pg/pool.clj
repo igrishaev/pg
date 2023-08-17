@@ -1,8 +1,21 @@
 (ns pg.pool
   "
-  A simple, non-blocking connection pool.
-  It would throw an exception when being exhausted
-  (out of free connections).
+  A simple connection pool for Postgres connections.
+
+  Doesn't do any background job in a separate thread.
+  When initiated, creates up to `min-size` connections.
+  Tracks the lifetime of connections and closes them
+  when they expire.
+
+  Throws an exception when exhausted (out of free connections).
+
+  Uses `ArrayDeque` to store connections so the move by round
+  (round robin).
+
+  Provides the `with-connection` macro to safely borrow and return
+  a connection.
+
+  May act as a Component (see stuartsierra/component library).
 
   Links:
   - https://github.com/psycopg/psycopg2/blob/master/lib/pool.py
@@ -36,7 +49,11 @@
   pool)
 
 
-(defn closed? [{:as pool :keys [^Map state]}]
+(defn closed?
+  "
+  True if a connection pool has been closed.
+  "
+  [{:as pool :keys [^Map state]}]
   (.get state "closed"))
 
 
@@ -243,7 +260,9 @@
 
 
 (defn make-pool
-
+  "
+  Return a new initiated Pool object.
+  "
   (^Pool [pg-config]
    (make-pool pg-config nil))
 
@@ -251,7 +270,14 @@
    (initiate (-init-pool pg-config pool-config))))
 
 
-(defmacro with-connection [[bind pool] & body]
+(defmacro with-connection
+  "
+  Execute the body within a connection borrowed from a pool.
+
+  The connection is bound to the `bind` symbol. Any uncaught exception
+  is re-thrown. The connection is always sent back to the pool.
+  "
+  [[bind pool] & body]
   `(let [pool#
          ~pool
 
@@ -280,6 +306,11 @@
 
 
 (defmacro with-pool
+  "
+  Execute the body while a connection pool is running.
+  The pool is bound to the `bind` symbol. Always terminate
+  the pool at the end.
+  "
   [[bind pg-config pool-config] & body]
 
   `(let [~bind (make-pool ~pg-config ~pool-config)]
@@ -290,6 +321,11 @@
 
 
 (defn component
+  "
+  For given pg- and pool- configurations, return a Component-like
+  object that can be started and stopped. Starting it will open
+  a new connection pool, stopping -- terminate it.
+  "
   (^Pool [pg-config]
    (component pg-config nil))
 
@@ -298,22 +334,3 @@
    (with-meta (-init-pool pg-config pool-config)
      {'com.stuartsierra.component/start initiate
       'com.stuartsierra.component/stop terminate})))
-
-
-
-#_
-(comment
-
-  (def PG_CONFIG
-    {:host "127.0.0.1"
-     :port 15432
-     :user "ivan"
-     :password "ivan"
-     :database "ivan"})
-
-  (with-pool [pool PG_CONFIG]
-    (with-connection [conn pool]
-      (pg/execute conn "select 1 as one")
-      (println pool)))
-
-  )
