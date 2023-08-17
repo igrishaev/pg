@@ -49,3 +49,13 @@
 ;;  (-> bb
 ;;      bb/read-rest
 ;;      codec/bytes->str)}
+
+
+  Options:
+  - fn-result
+  - fn-column
+  - fn-unify
+  - fn-keyval
+  - fn-init
+  - fn-reduce
+  - fn-finalize

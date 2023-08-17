@@ -1,5 +1,5 @@
 
-- add docstrings, arglists
+- add docs
 
 - benchmarks
 - interval support

@@ -65,16 +65,20 @@
 
 (defn prepare-statement
   "
-  Prepare a statement from an SQL expression.
+  Prepare a statement from a SQL string. The query cannot have
+  more that one expression (e.g. 'select this; select that'
+  is not allowed).
+
   Args:
   - conn: the connection map;
-  - sql: a string SQL expression;
-  - oids (optional): a vector of OIDs to specify the types
-    of the parameters; when not set, the OIDs a determined
-    by Postgres.
+  - sql:  a string SQL expression;
+  - oids: (optional) a vector of OIDs to specify the types
+          of the parameters; when not set, the OIDs a determined
+          by Postgres.
+
   Return:
-  - a map with brief information about the statement
-    (name, columns, params).
+  - general information about the statement as a map
+    (name, columns, params, etc).
   "
 
   (^Map [conn sql]
@@ -96,7 +100,7 @@
   "
   Close a previously prepared statement on the server side.
   "
-  [conn ^Map stmt]
+  [conn stmt]
   (let [{:keys [statement]}
         stmt]
     (conn/close-statement conn statement))
@@ -105,6 +109,10 @@
 
 
 (defmacro with-statement
+  "
+  Execute a body in a prepare-/close-statement block.
+  Bind a prepared statement to the `bind` symbol.
+  "
   [[bind conn sql oids] & body]
   `(let [conn# ~conn
          sql# ~sql
@@ -115,28 +123,51 @@
          (close-statement conn# ~bind)))))
 
 
-(defn authenticate [conn]
+(defn authenticate
+  "
+  Run the authentication pipeline for a given connection.
+  Returns the connection.
+  "
+  [conn]
   (conn/authenticate conn)
   (res/interact conn :auth)
   conn)
 
 
-(defn closed? [conn]
+(defn closed?
+  "
+  True if a connection has been closed.
+  "
+  [conn]
   (conn/get-closed conn))
 
 
-(defn connect ^Connection [^Map config]
+(defn connect
+  "
+  Having a connection config, establish a connection
+  and pass the authentication pipeline.
+  Returns a Connection object.
+  "
+  ^Connection [^Map config]
   (-> config
       (conn/connect)
       (authenticate)))
 
 
-(defn terminate [conn]
+(defn terminate
+  "
+  Terminate a connection.
+  "
+  [conn]
   (when-not (closed? conn)
     (conn/terminate conn)))
 
 
 (defmacro with-connection
+  "
+  Execute a block of code binding a connection
+  to the `bind` symbol. Close the connection afterwards.
+  "
   [[bind config] & body]
   `(let [~bind (connect ~config)]
      (try
@@ -145,7 +176,12 @@
          (terminate ~bind)))))
 
 
-(defn clone [{:as conn :keys [config]}]
+(defn clone
+  "
+  Create a new connection based on the config
+  of the passed one.
+  "
+  ^Connection [{:as conn :keys [config]}]
   (connect config))
 
 
@@ -167,15 +203,36 @@
      (conn/cancel-request conn pid secret-key))))
 
 
-(defn id [conn]
+(defn id
+  "
+  Get a unique symbol assigned to a connection.
+  "
+  [conn]
   (conn/get-id conn))
 
 
-(defn created-at [conn]
+(defn created-at
+  "
+  Return the connection created time in milliseconds.
+  "
+  ^Long [conn]
   (conn/get-created-at conn))
 
 
 (defn query
+  "
+  Pefrorm a Simple Query request (see the link below).
+  Takes a SQL string that might carry several expressions
+  separated by a semicolon. Should there are more than one
+  expression, the result will be a vector of results.
+
+  Arguments:
+  - `conn`: a Connection object;
+  - `sql`: a string with (multiple) SQL expression(s).
+  - `opt`: additional options.
+
+  https://postgrespro.com/docs/postgrespro/14/protocol-flow#id-1.10.5.7.4
+  "
 
   ([conn sql]
    (query conn sql nil))
@@ -186,6 +243,23 @@
 
 
 (defn execute-statement
+  "
+  Execute a prepared statement.
+
+  Takes a previously prepared statement and a vector of parameters.
+  Binds the parameters the statements, obtains a portal and reads
+  the data from the portal. Closes the portal afterwards.
+
+  Args:
+  - conn:   the Connection object;
+  - stmt:   a map, the result of the `prepare-statement` function;
+  - params: a vector (seq) of params;
+  - opt:    additional options.
+
+  Options:
+  - `:rows`: now many rows to fetch from the portal. The default is 0
+    which means all rows.
+  "
 
   ([conn stmt]
    (execute-statement conn stmt nil nil))
@@ -216,6 +290,19 @@
 
 
 (defn execute
+  "
+  Perform an Extended Query request (see the link below).
+
+  The result depends on the expression and additional options.
+
+  Args:
+  - conn:   the Connection object;
+  - sql:    a string with a single SQL expression (; is not allowed)
+  - params: a vector (seq) of params;
+  - opt:    additional options.
+
+  https://postgrespro.com/docs/postgrespro/14/protocol-flow#PROTOCOL-FLOW-EXT-QUERY
+  "
 
   ([conn sql]
    (execute conn sql nil nil))
@@ -229,19 +316,53 @@
        (execute-statement conn stmt params opt)))))
 
 
-(defn begin [conn]
+(defn begin
+  "
+  Open a transaction.
+  "
+  [conn]
   (execute conn "BEGIN" nil nil))
 
 
-(defn commit [conn]
+(defn commit
+  "
+  Commit the current transaction.
+  "
+  [conn]
   (execute conn "COMMIT" nil nil))
 
 
-(defn rollback [conn]
+(defn rollback
+  "
+  Roll back the current transaction.
+  "
+  [conn]
   (execute conn "ROLLBACK" nil nil))
 
 
 (defmacro with-tx
+  "
+  Execute a body in a transaction block.
+
+  Opens a transaction optionally setting its parameters.
+  Executes the body block. Should an exception was caught,
+  roll back the transaction and re-throw the exception.
+  Otherwise, commit the transaction.
+
+  Arguments:
+  - conn: the Connection object;
+
+  Options:
+  - `read-only?`: pass true to open the transaction in read-only mode
+    (no update/detele/etc expressions are allowed);
+
+  - `isolation-level`: an isolation level of the transaction.
+    Keywords, symbols and strings are allowed, e.g:
+    `:repeatable-read`, `'REPEATABLE-READ'` (see `pg.client.sql`).
+
+  - `rollback?`: true if the transaction must be rolled back even
+    when no exception did appear. Useful for tests.
+  "
 
   [[conn {:as opt :keys [read-only?
                          isolation-level
