@@ -15,7 +15,6 @@
 
   :release-tasks
   [["vcs" "assert-committed"]
-   ["sub" "test"]
    ["sub" "change" "version" "leiningen.release/bump-version" "release"]
    ["change" "version" "leiningen.release/bump-version" "release"]
    ["vcs" "commit"]

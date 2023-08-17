@@ -37,5 +37,15 @@ pg-logs:
 psql-ssl:
 	PGSSLMODE=verify-full PGSSLROOTCERT=certs/server.crt psql -h localhost -p 35432 -U test test
 
+version ?= $(error Please specify the version=... argument)
+
 docs-trigger:
-	curl -X POST -d com.github.igrishaev/pg-client -d version=0.1.1 https://cljdoc.org/api/request-build2
+	curl -v -X POST \
+		-d project=com.github.igrishaev/pg-client \
+		-d version=${version} \
+		https://cljdoc.org/api/request-build2
+
+build ?= $(error Please specify the build=... argument)
+
+docs-build-info:
+	curl -s -H 'Accept: application/json' https://cljdoc.org/builds/${build} | jq
