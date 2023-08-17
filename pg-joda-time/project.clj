@@ -1,4 +1,4 @@
-(defproject com.github.igrishaev/pg-joda-time "0.1.1"
+(defproject com.github.igrishaev/pg-joda-time "0.1.2-SNAPSHOT"
 
   :description
   "Expand encoding & decoding with Joda Time"

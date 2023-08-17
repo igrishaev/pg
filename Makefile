@@ -36,3 +36,6 @@ pg-logs:
 
 psql-ssl:
 	PGSSLMODE=verify-full PGSSLROOTCERT=certs/server.crt psql -h localhost -p 35432 -U test test
+
+docs-trigger:
+	curl -X POST -d com.github.igrishaev/pg-client -d version=0.1.1 https://cljdoc.org/api/request-build2

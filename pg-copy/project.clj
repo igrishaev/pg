@@ -1,4 +1,4 @@
-(defproject com.github.igrishaev/pg-copy "0.1.1"
+(defproject com.github.igrishaev/pg-copy "0.1.2-SNAPSHOT"
 
   :description
   "COPY within PG binary format"
