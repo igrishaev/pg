@@ -249,6 +249,21 @@ usually, you pass `first`:
  :user2 {:id 2, :name "Juan", :age 38}}
 ~~~
 
+Pay attention: when passing the `:fn-result` function to `pg/query` with
+multiple expressions, the function is applied to each expression:
+
+~~~clojure
+(pg/query conn
+          "
+           select x from generate_series(0, 3) as s(x);
+           select y from generate_series(2, 5) as s(y)
+          "
+          {:fn-result set})
+
+[#{{:x 1} {:x 3} {:x 2} {:x 0}}
+ #{{:y 4} {:y 3} {:y 2} {:y 5}}]
+~~~
+
 ## Row keys coercion
 
 ## Reducers (extended coercion)
