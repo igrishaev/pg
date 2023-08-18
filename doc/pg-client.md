@@ -227,9 +227,31 @@ those statements. To prevent hanging statements, there is a macro called
   (pg/execute-statement conn stmt ["Simon" 33]))
 ~~~
 
-## Processing the result
+## Processing result with :fn-result
 
-## Reducers
+Often, you want to process the result somehow. Say, to take only the first row
+of selection (when you know for sure there is either zero or one record).
+
+All the `query`, `execute`, and `execute-statement` accept optional parameters
+for such purpose. The `:fn-result` function is applied to the whole result;
+usually, you pass `first`:
+
+~~~clojure
+(def sql "select * from users where id = $1")
+
+(pg/with-statement [stmt conn sql]
+    (let [user1 (pg/execute-statement conn stmt [1] {:fn-result first})
+          user2 (pg/execute-statement conn stmt [2] {:fn-result first})]
+      {:user1 user1
+       :user2 user2}))
+
+{:user1 {:id 1, :name "Ivan", :age 37},
+ :user2 {:id 2, :name "Juan", :age 38}}
+~~~
+
+## Row keys coercion
+
+## Reducers (extended coercion)
 
 ## Transactions
 
