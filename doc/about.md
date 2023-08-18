@@ -46,10 +46,6 @@ Here is a brief list of benefits of this project:
   when handling it ("unknown auth code 10");
 - And more.
 
-TO BE WRITTEN:
-
-- Installation
-- PG client
 - PG pool
 - Encoding and decoding values
 - JSON support

@@ -35,9 +35,9 @@ Lein users may specify a global `pg-version` variable on top of the
 Usually, you don't need to specify more than one package because they depend on
 each other and will be download automatically.
 
-## Installing the Client (without a pool)
+## Client
 
-The `pg-client` module ships a client access to Postgres. Since the coneection
+The `pg-client` module ships a client access to Postgres. Since the connection
 pool depends on logging facility, it's shipped in a separate package.
 
 ~~~clojure
@@ -50,7 +50,7 @@ Deps:
 {com.github.igrishaev/pg-client {:mvn/version "0.1.1"}
 ~~~
 
-## Installing the Pool
+## Connection Pool
 
 The client depends on pool so there is no need to specify it explicitly.
 
@@ -62,4 +62,32 @@ Deps:
 
 ~~~clojure
 {com.github.igrishaev/pg-pool {:mvn/version "0.1.1"}
+~~~
+
+## JSON extension
+
+A package that extends the client with reading and writing JSON objects.
+
+~~~clojure
+[com.github.igrishaev/pg-json "0.1.1"]
+~~~
+
+Deps:
+
+~~~clojure
+{com.github.igrishaev/pg-json {:mvn/version "0.1.1"}
+~~~
+
+## Joda Time extension
+
+Extends the client with Joda Time support.
+
+~~~clojure
+[com.github.igrishaev/pg-joda-time "0.1.1"]
+~~~
+
+Deps:
+
+~~~clojure
+{com.github.igrishaev/pg-joda-time {:mvn/version "0.1.1"}
 ~~~
