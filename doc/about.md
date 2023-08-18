@@ -6,30 +6,30 @@ This project is a set of libraries related to the [PostgreSQL][postgres]
 database. The primary library called `pg-client` is a driver for Postgres
 written in pure Clojure. By purity I mean, neither JDBC nor any other
 third-party Java libraries are involved. Everything is hold by a TCP socket plus
-Posrgres protocol implementation.
+implementation of Posrgres Wire protocol.
 
-Besides the client, the project provides such various additions as a connection
+Besides the client, the project provides various additions like a connection
 pool (see `pg-pool`). The `pg-types` library holds the encoding and decoding
-logic which determines how to write and read Clojure data from or into the
+logic which determines how to write and read Clojure data from and into the
 database. You can use this library separately in pair with JDBC.next for
 efficient data transcoding in binary format.
 
-The main question you would probably ask is, why would create a Postgres client
-from scratch? JDBC has been with us for decades, and there are good
-`clojure.java.jdbc` and `jdbc.next`?
+The question you would probably ask is, why would create a Postgres client from
+scratch? JDBC has been for decades with us, and there are also good
+`clojure.java.jdbc` and `jdbc.next` wrappers on top of it?
 
 The answer is: although these two libraries are amazing, they don't disclose all
-the Postgres features. JDBC is an abstraction which main goal is to satisfy all
-the database. Writing a general library that works with MS SQL, MySQL, and
-Postgres would reduce the variety of features each backend brings.
+Postgres features. JDBC is an abstraction which main goal is to satisfy all the
+DB engines. A general library that works with MS SQL, MySQL, and Postgres at the
+same time would reduce the variety of features each backend might bring.
 
-Postgres is great database that instroduces an anourmous amount of fearues. I've
-bee working with Postgres and in each project, I had to reinvent a wheel: add
-JSON support, various type mapping, smart `ResultSet` processing and so on. I
-strongly believe there should be a client that connects Postgres and Clojure
-seamlessly, when all the PG features availabe out from the box.
+Postgres is a great database that carries *an anourmous amount* of fearues. I've
+been working with Postgres a lot and in each project, I have to invent a wheel
+from scratch: add JSON support, type mapping, smart `ResultSet` processing and
+so on. I strongly believe there should be a client that pairs Postgres and
+Clojure seamlessly, when all the features availabe out from the box.
 
-Here is a brief list of benefits of the project:
+Here is a brief list of benefits of this project:
 
 - Written in pure Clojure and thus is completely transparent for users and
   developers;
@@ -42,7 +42,9 @@ Here is a brief list of benefits of the project:
 - Easy to debug what goes thought the wire;
 - Reducing the result on the fly, custom reducers;
 - Various ways to process the data;
-- and more.
+- Holds SAML authentication which is default since Postgres 15. JDBC still fails
+  when handling it ("unknown auth code 10");
+- And more.
 
 TO BE WRITTEN:
 
