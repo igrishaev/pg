@@ -8,6 +8,7 @@
 - thread safe?
 - batch queries
 - ssl
+- unix socket
 - adopt honey-sql
 - adopt gosql
 - errors addSuppressed
