@@ -264,9 +264,249 @@ multiple expressions, the function is applied to each expression:
  #{{:y 4} {:y 3} {:y 2} {:y 5}}]
 ~~~
 
-## Row keys coercion
+## Column names
 
-## Reducers (extended coercion)
+By default, the client library turns all the column names to keywords. It
+doesn't take any kebab-case transformations into account: a column `"user_name"`
+becomes `:user_name`.
+
+~~~clojure
+(pg/query conn "select 42 as the_answer")
+
+[{:the_answer 42}]
+~~~
+
+An optional parameter `:fn-column` changes this behaviour. It's a function that
+takes a string column and returns whatever you want. Here is how you can obtain
+upper-cased string keys:
+
+~~~clojure
+(require '[clojure.string :as str])
+
+(pg/query conn "select 42 as the_answer" {:fn-column str/upper-case})
+
+[{"THE_ANSWER" 42}]
+~~~
+
+Of course, you can pass a complex function that transforms the string somehow
+and then turns it into a keyword or a symbol.
+
+Some Clojure programmers prefer kebab-case keywords (which I honestly consider a
+bad practice, but still). For this, do one of the two options. Either get such
+function from the `pg.client.func` namespace:
+
+~~~clojure
+(require '[pg.client.func :as func])
+
+(pg/query conn "select 42 as the_answer" {:fn-column func/kebab-keyword})
+
+[{:the-answer 42}]
+~~~
+
+Or pass it as a "bundle":
+
+~~~clojure
+(require '[pg.client.as :as as])
+
+(pg/query conn "select 42 as the_answer" {:as as/kebab-keys})
+
+[{:the-answer 42}]
+~~~
+
+Bundles are maps of several processing functions which we're going to describe a
+bit below.
+
+## Column duplicates
+
+In SQL, that's completely fine when a query returns several columns with the
+same name, for example:
+
+~~~
+SELECT 1 as val, true as val, 'dunno' as val;
+
+ val | val |  val
+-----+-----+-------
+   1 | t   | dunno
+~~~
+
+But from the client prospective, that's unclear what to do with such a result,
+especially when you're dealing with maps.
+
+By default, the client library adds numbers to those columns that have already
+been in the result. Briefly, for the example above, you'll get `val`, `val_1`
+and `val_2` columns:
+
+~~~clojure
+(pg/query conn "SELECT 1 as val, true as val, 'dunno' as val")
+
+[{:val 1, :val_1 true, :val_2 "dunno"}]
+~~~
+
+This behaviour stacks with the `fn-column` parameter: the `fn-column` get
+applied after the column names have been transformed.
+
+~~~clojure
+(pg/query conn "SELECT 1 as val, true as val, 'dunno' as val" {:as as/kebab-keys})
+
+[{:val 1, :val-1 true, :val-2 "dunno"}]
+~~~
+
+The function which is responsible for column duplicates processing is called
+`:fn-unify`. It takes a vector of strings and must return a vector of something
+(strings, keywords, symbols).
+
+## Reducers and bundles
+
+As you're seen before, the result of `pg/query` or `pg/execute` is a vector of
+maps. Although it is most likely what you want by default, there are other ways
+to obtain the result in another shape.
+
+There is a `pg.client.as` namespaces that carries "bundles": named maps with
+predefined parameters, mostly functions. Passing these maps into the optional
+`:as` field when querying data affects how the rows will be processed.
+
+### Java
+
+The `as/java` bundle builds an `ArrayList` of mutable `HashMap`s. Both the
+top-level set of rows and its children are mutable:
+
+~~~clojure
+(def res (pg/query conn "SELECT 42 as the_answer" {:as as/java}))
+
+(.add res :someting)
+(.put (.get res 0) :some-key "A")
+
+;; [{:the_answer 42, :some-key "A"} :someting]
+~~~
+
+### Kebab-keys
+
+The `kebab-keys` bundle we have already seen in action: it just transforms the
+keys from `:foo_bar` to `:foo-bar`:
+
+~~~clojure
+(pg/query conn "SELECT 42 as the_answer" {:as as/kebab-keys})
+
+[{:the-answer 42}]
+~~~
+
+### Matrix
+
+The `as/matrix` bundle is useful for getting values without names:
+
+~~~clojure
+(pg/query conn "SELECT 1, false, 'hello'" {:as as/matrix})
+
+[[1 false "hello"]]
+~~~
+
+The result will be just vector of vectors which is convenient for writing to CSV
+or Excel files.
+
+### Index by
+
+The following case happens quite often: you select certain entities and then you
+need to build an index map by id. Namely, transform this:
+
+~~~clojure
+[{:id 1 :name "Ivan"}
+ {:id 2 :name "Juan"}
+ ...]
+~~~
+
+to this:
+
+~~~clojure
+{1 {:id 1 :name "Ivan"}
+ 2 {:id 2 :name "Juan"}
+ ...}
+~~~
+
+That would be great of course to do that not once *you have read* the rows from
+the database but *as you're reading* the rows. That would save the lines of code
+and resources.
+
+The `as/index-by` reducer does it for you. It's a function that takes a row
+function and returs a bundle:
+
+~~~clojure
+(pg/query conn "select * from users" {:as (as/index-by :id)})
+p
+{1 {:id 1, :name "Ivan", :age 37},
+ 2 {:id 2, :name "Juan", :age 38}}
+~~~
+
+Of course, a function which is passed to `index-by` might be something more
+complex than an ordinary keyword. It can be a call of `juxt` if you need to
+group rows by several keys:
+
+~~~clojure
+(pg/query conn "select * from users" {:as (as/index-by (juxt :id :name))})
+
+{[1 "Ivan"] {:id 1, :name "Ivan", :age 37},
+ [2 "Juan"] {:id 2, :name "Juan", :age 38}}
+~~~
+
+### Group by
+
+The `as/group-by` reducer acts like the standard `group-by` function. The it
+collects a map where a key is a result of `(f row)`, and the value is a vector
+of matched rows. The main difference is, it fills the result on the fly as the
+data arrives from the server.
+
+Imagine there are more users named Ivan and Juan in our database. Here is how we
+can select and group them by name:
+
+~~~clojure
+(pg/query conn "select * from users" {:as (as/group-by :name)})
+
+{"Ivan" [{:id 1, :name "Ivan", :age 37}
+         {:id 3, :name "Ivan", :age 37}],
+ "Juan" [{:id 2, :name "Juan", :age 38}
+         {:id 4, :name "Juan", :age 38}]}
+~~~
+
+### Key-value
+
+There as a `kv` reducer that allows you to build *any map* you want. It takes
+two parameters: a key function (fk) and a value function (fv). The result will
+be a map like this:
+
+~~~clojure
+{(fk row) (fv row)}
+~~~
+
+The `as/kv` reducer is useful when you want to get a map from rows, for example
+a mapping from the id to the name:
+
+~~~clojure
+(pg/query conn "select * from users" {:as (as/kv :id :name)})
+
+{1 "Ivan", 2 "Juan", 3 "Ivan", 4 "Juan"}
+~~~
+
+### Custom reducers
+
+Making a custom reducer means declaring either a map or a function that returns
+a map of the following structure:
+
+- `:fn-init`: a function that returns an empty accumulator value;
+
+- `:fn-reduce`: a function that takes the accumulator and a row and adds the row
+  to the accumulator;
+
+- `:fn-finalize`: a function that takes the accumulator and returns the final
+  value.
+
+Here is an example of the `kv` reducer:
+
+~~~clojure
+(defn kv [fk fv]
+  {:fn-init #(transient {})
+   :fn-reduce (fn [acc! row]
+                (assoc! acc! (fk row) (fv row)))
+   :fn-finalize persistent!})
+~~~
 
 ## Transactions
 
