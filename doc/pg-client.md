@@ -510,6 +510,135 @@ Here is an example of the `kv` reducer:
 
 ## Transactions
 
+~~~clojure
+(let [sql "INSERT INTO users (name, age) VALUES ($1, $2)"]
+  (pg/with-tx [conn]
+    (pg/execute conn sql ["Jim" 20])
+    (pg/execute conn sql ["Bob" 30])))
+~~~
+
+~~~clojure
+BEGIN
+INSERT INTO users (name, age) VALUES ($1, $2)
+  parameters: $1 = 'Jim', $2 = '20'
+INSERT INTO users (name, age) VALUES ($1, $2)
+  parameters: $1 = 'Bob', $2 = '30'
+COMMIT
+~~~
+
+~~~clojure
+(let [sql "INSERT INTO users (name, age) VALUES ($1, $2)"]
+  (pg/with-tx [conn]
+    (pg/execute conn sql ["Jim" 20])
+    (* 42 nil)
+    (pg/execute conn sql ["Bob" 30])))
+
+BEGIN
+INSERT INTO users (name, age) VALUES ($1, $2)
+  parameters: $1 = 'Jim', $2 = '20'
+ROLLBACK
+
+Execution error (NullPointerException) at repl/eval10751$fn (form-init3772788126061757178.clj:158).
+Cannot invoke "Object.getClass()" because "x" is null
+~~~
+
+### Rollback
+
+~~~clojure
+(let [sql "INSERT INTO users (name, age) VALUES ($1, $2)"]
+  (pg/with-tx [conn {:rollback? true}]
+    (pg/execute conn sql ["Jim" 20])
+    (pg/execute conn sql ["Bob" 30])))
+~~~
+
+~~~clojure
+BEGIN
+INSERT INTO users (name, age) VALUES ($1, $2)
+  parameters: $1 = 'Jim', $2 = '20'
+INSERT INTO users (name, age) VALUES ($1, $2)
+  parameters: $1 = 'Bob', $2 = '30'
+ROLLBACK
+~~~
+
+### Read-only
+
+~~~clojure
+(let [sql "INSERT INTO users (name, age) VALUES ($1, $2)"]
+  (pg/with-tx [conn {:read-only? true}]
+    (pg/query conn "select * from users")
+    (pg/execute conn sql ["Bob" 30])))
+
+Execution error (ExceptionInfo) at pg.client.result/finalize-errors! (result.clj:537).
+ErrorResponse
+
+clojure.lang.ExceptionInfo: ErrorResponse
+{:error {:msg :ErrorResponse, :errors {:severity "ERROR", :verbosity "ERROR",
+:code "25006", :message "cannot execute INSERT in a read-only transaction",
+:file "utility.c", :line "414", :function "PreventCommandIfReadOnly"}}}
+~~~
+
+### Isolation level
+
+~~~clojure
+(let [sql "INSERT INTO users (name, age) VALUES ($1, $2)"]
+  (pg/with-tx [conn {:isolation-level :serializable}]
+    (pg/execute conn sql ["Jim" 20])
+    (pg/execute conn sql ["Bob" 30])))
+
+BEGIN
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE
+INSERT INTO users (name, age) VALUES ($1, $2)
+  parameters: $1 = 'Jim', $2 = '20'
+INSERT INTO users (name, age) VALUES ($1, $2)
+  parameters: $1 = 'Bob', $2 = '30'
+COMMIT
+~~~
+
+Levels:
+
+
+~~~clojure
+(:SERIALIZABLE
+    :serializable
+    "SERIALIZABLE"
+    "serializable"
+    SERIALIZABLE
+    serializable)
+
+(:REPEATABLE-READ
+     :repeatable-read
+     "REPEATABLE-READ"
+     "repeatable-read"
+     REPEATABLE-READ
+     repeatable-read)
+
+
+(:READ-COMMITTED
+     :read-committed
+     "READ-COMMITTED"
+     "read-committed"
+     READ-COMMITTED
+     read-committed)
+
+(:READ-UNCOMMITTED
+     :read-uncommitted
+     "READ-UNCOMMITTED"
+     "read-uncommitted"
+     READ-UNCOMMITTED
+     read-uncommitted)
+~~~
+
+### Manual transactions
+
+begin
+commit
+rollback
+
+status
+idle?
+in-transaction?
+tx-error?
+
 ## Configuration
 
 ## Authorization
