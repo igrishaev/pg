@@ -321,7 +321,7 @@
   Open a transaction.
   "
   [conn]
-  (execute conn "BEGIN" nil nil))
+  (query conn "BEGIN" nil))
 
 
 (defn commit
@@ -329,7 +329,7 @@
   Commit the current transaction.
   "
   [conn]
-  (execute conn "COMMIT" nil nil))
+  (query conn "COMMIT" nil))
 
 
 (defn rollback
@@ -337,7 +337,7 @@
   Roll back the current transaction.
   "
   [conn]
-  (execute conn "ROLLBACK" nil nil))
+  (query conn "ROLLBACK" nil))
 
 
 (defmacro with-tx
