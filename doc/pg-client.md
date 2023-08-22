@@ -596,7 +596,6 @@ COMMIT
 
 Levels:
 
-
 ~~~clojure
 (:SERIALIZABLE
     :serializable
@@ -630,18 +629,78 @@ Levels:
 
 ### Manual transactions
 
-begin
-commit
-rollback
 
-status
-idle?
-in-transaction?
-tx-error?
+(pg/begin conn)
+(pg/execute conn ...)
+(pg/commit conn)
+
+
+(pg/begin conn)
+(try
+  (pg/execute conn ...)
+  (pg/execute conn ...)
+  (pg/commit conn)
+  (catch Throwable e
+    (pg/rollback conn)
+    (throw e)))
+
+
+(pg/status conn)
+:I
+
+(pg/begin conn)
+
+(pg/status conn)
+:T
+
+(pg/in-transaction? conn)
+true
+
+(pg/query conn "selekt ...")
+Execution error (ExceptionInfo) at pg.client.result/finalize-errors! (result.clj:537).
+ErrorResponse syntax error at or near \"selekt\"...
+
+(pg/status conn)
+:E
+
+(pg/tx-error? conn)
+true
+
+(pg/query conn "select 42")
+Execution error (ExceptionInfo) at pg.client.result/finalize-errors! (result.clj:537).
+ErrorResponse
+"current transaction is aborted, commands ignored until end of transaction block",
+
+
+(pg/rollback conn)
+
+(pg/status conn)
+:I
+
+(pg/idle? conn)
+true
 
 ## Configuration
 
+{:host "127.0.0.1"
+ :port 5432
+ :fn-notice fn-notice-default
+ :fn-notification fn-notification-default
+ :protocol-version const/PROTOCOL_VERSION
+ :binary-encode? false
+ :binary-decode? false
+ :socket {:tcp-no-delay? true
+          :so-keep-alive? true
+          :so-reuse-addr? true
+          :so-reuse-port? true
+          :so-rcv-buf nil
+          :so-snd-buf nil}}
+
 ## Authorization
+
+clear password
+MD5
+SASL / SCRAM-SHA-256
 
 ## Cloning a connection
 

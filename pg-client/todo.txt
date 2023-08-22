@@ -1,5 +1,6 @@
 
 - add docs
+- protocol-message notice
 
 - benchmarks
 - interval support

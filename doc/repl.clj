@@ -69,3 +69,18 @@
   (pg/with-tx [conn {:isolation-level :serializable}]
     (pg/execute conn sql ["Jim" 20])
     (pg/execute conn sql ["Bob" 30])))
+
+
+(pg/begin conn)
+(pg/execute conn ...)
+(pg/commit conn)
+
+
+(pg/begin conn)
+(try
+  (pg/execute conn ...)
+  (pg/execute conn ...)
+  (pg/commit conn)
+  (catch Throwable e
+    (pg/rollback conn)
+    (throw e)))
