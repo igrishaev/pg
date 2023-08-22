@@ -704,6 +704,12 @@ SASL / SCRAM-SHA-256
 
 ## Cloning a connection
 
+(pg/with-connection [conn config]
+  (with-open [conn2 (pg/clone conn)]
+    (pg/query conn2 "select 1 as one")))
+
+[{:one 1}]
+
 ## Cancelling
 
 ## Notifications

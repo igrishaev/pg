@@ -84,3 +84,8 @@
   (catch Throwable e
     (pg/rollback conn)
     (throw e)))
+
+
+(pg/with-connection [conn config]
+  (with-open [conn2 (pg/clone conn)]
+    (pg/query "select 1" conn2)))
