@@ -1508,3 +1508,26 @@ drop table %1$s;
           (-> res first :x)]
 
       (is (= (str x1) (str x2))))))
+
+
+#_
+(deftest test-cancel-query
+
+  (let [conn1
+        (pg/connect *CONFIG*)
+
+        fut
+        (future
+          (pg/query conn1 "select pg_sleep(7) as sleep"))
+
+        ]
+
+    (Thread/sleep 200)
+
+    (pg/cancel conn1)
+
+    (is (= 1 @fut))
+
+    )
+
+  )

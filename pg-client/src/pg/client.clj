@@ -185,10 +185,10 @@
   (connect config))
 
 
-(defn cancel-request
+;; TODO: refactor
+(defn cancel
 
   ([{:as conn :keys [config]}]
-
    (with-connection [new-conn config]
      (cancel-request new-conn conn)))
 
