@@ -117,3 +117,23 @@ clojure.lang.ExceptionInfo: ErrorResponse ...
    :file "postgres.c",
    :line "3092",
    :function "ProcessInterrupts"}}}
+
+
+
+(defn fn-notice-handler [NoticeResponse]
+  (log/infof "Notice response: %s" NoticeResponse))
+
+(def notices! (atom []))
+
+(defn fn-notice-handler [NoticeResponse]
+  (swap! notices! conj NoticeResponse))
+
+
+
+{:host "127.0.0.1"
+ :port 5432
+ ...
+ :fn-notice fn-notice-handler}
+
+
+(pg/rollback)
