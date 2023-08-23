@@ -710,11 +710,40 @@ SASL / SCRAM-SHA-256
 
 [{:one 1}]
 
-## Cancelling
+## Cancelling a query
 
-## Notifications
+(def fut
+  (future
+    (pg/query conn "select pg_sleep(600) as sleep")))
+
+
+(pg/cancel conn)
+
+@fut
+java.util.concurrent.ExecutionException ...
+clojure.lang.ExceptionInfo: ErrorResponse ...
+
+(try
+  @fut
+  (catch ExecutionException e
+    (let [data (-> e ex-case ex-data)]
+      ...)))
+
+
+{:error
+ {:msg :ErrorResponse,
+  :errors
+  {:severity "ERROR",
+   :verbosity "ERROR",
+   :code "57014",
+   :message "canceling statement due to user request",
+   :file "postgres.c",
+   :line "3092",
+   :function "ProcessInterrupts"}}}
 
 ## Notices
+
+## Notifications
 
 ## Thread safety
 

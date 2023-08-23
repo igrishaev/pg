@@ -1,7 +1,7 @@
 
 - add docs
-- tests for cancel (pg/query conn "select pg_sleep(10) as sleep")
 - protocol-message notice
+- error resp ex structure
 
 - benchmarks
 - interval support

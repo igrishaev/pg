@@ -185,22 +185,27 @@
   (connect config))
 
 
-;; TODO: refactor
 (defn cancel
+  "
+  Cancels a hanging query using a dedicated connection.
+  A cancelled query will end up with an error response.
+  "
+  [conn]
 
-  ([{:as conn :keys [config]}]
-   (with-connection [new-conn config]
-     (cancel-request new-conn conn)))
+  (let [master-conn
+        (-> conn
+            (get :config)
+            (conn/connect))
 
-  ([conn conn-to-cancel]
+        pid
+        (conn/get-pid conn)
 
-   (let [pid
-         (conn/get-pid conn-to-cancel)
+        secret-key
+        (conn/get-secret-key conn)]
 
-         secret-key
-         (conn/get-secret-key conn-to-cancel)]
-
-     (conn/cancel-request conn pid secret-key))))
+    (conn/cancel-request master-conn pid secret-key)
+    (terminate master-conn)
+    nil))
 
 
 (defn id

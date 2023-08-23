@@ -8,15 +8,16 @@
    java.time.OffsetTime
    java.util.ArrayList
    java.util.Date
-   java.util.HashMap)
+   java.util.HashMap
+   java.util.concurrent.ExecutionException)
   (:require
    [clojure.string :as str]
    [clojure.test :refer [deftest is use-fixtures testing]]
-   [pg.client.func :as func]
-   [pg.integration :as pgi :refer [*CONFIG*]]
    [pg.client :as pg]
    [pg.client.as :as as]
    [pg.client.conn :as conn]
+   [pg.client.func :as func]
+   [pg.integration :as pgi :refer [*CONFIG*]]
    [pg.json]))
 
 
@@ -1510,7 +1511,6 @@ drop table %1$s;
       (is (= (str x1) (str x2))))))
 
 
-#_
 (deftest test-cancel-query
 
   (let [conn1
@@ -1518,16 +1518,22 @@ drop table %1$s;
 
         fut
         (future
-          (pg/query conn1 "select pg_sleep(7) as sleep"))
+          (pg/query conn1 "select pg_sleep(60) as sleep"))]
 
-        ]
-
-    (Thread/sleep 200)
+    ;; let it start
+    (Thread/sleep 100)
 
     (pg/cancel conn1)
 
-    (is (= 1 @fut))
-
-    )
-
-  )
+    (try
+      @fut
+      (is false)
+      (catch ExecutionException e-future
+        (let [e (ex-cause e-future)]
+          (is (= "ErrorResponse" (ex-message e)))
+          (is (= "canceling statement due to user request"
+                 (-> e
+                     ex-data
+                     :error
+                     :errors
+                     :message))))))))
