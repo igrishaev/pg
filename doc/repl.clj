@@ -137,3 +137,39 @@ clojure.lang.ExceptionInfo: ErrorResponse ...
 
 
 (pg/rollback)
+
+
+(defn fn-notification [NotificationResponse]
+  (log/info NotificationResponse))
+
+(defn fn-notification [NotificationResponse]
+  (future
+    (process-notification NotificationResponse)))
+
+{:msg :NotificationResponse
+ :pid pid
+ :channel channel
+ :message message}
+
+
+(def notifications!
+  (atom []))
+
+(defn fn-notification [NotificationResponse]
+  (swap! notifications! conj NotificationResponse))
+
+
+(def conn1 (pg/connect {... :fn-notification fn-notification}))
+(def conn2 (pg/connect ...))
+
+(pg/query conn1 "listen FOO")
+
+(pg/query conn2 conn "notify FOO, 'kek'")
+(pg/query conn2 conn "notify FOO, 'lol'")
+
+@notifications!
+...
+
+(pg/query conn2 "unlisten FOO")
+
+further notifications won't work any longer.
