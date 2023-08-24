@@ -2,6 +2,7 @@
 - add docs
 - protocol-message notice
 - error resp ex structure
+- me.grishaev ns
 
 - benchmarks
 - interval support
@@ -24,3 +25,13 @@
 
 perf:
 - enough?
+
+
+- PG pool
+- Encoding and decoding values
+- JSON support
+- Joda Time support
+- Copy (general)
+- Copy with JDBC.Next
+- Full package list
+- Changelog

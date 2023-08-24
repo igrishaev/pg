@@ -1,8 +1,8 @@
 {:cljdoc.doc/tree
- [["About" {:file "doc/about.md"}]
-  ["Installation" {:file "doc/installation.md"}]
-  ["Client" {:file "doc/pg-client.md"}]
-  ["Connection pool" {:file "doc/pg-pool.md"}]
-  ["Types" {:file "doc/types.md"}]
-  ["JSON support" {:file "doc/json.md"}]
-  ["Joda Time support" {:file "doc/joda-time.md"}]]}
+ [["About"             {:file "doc/000-about.md"}]
+  ["Installation"      {:file "doc/010-installation.md"}]
+  ["Client"            {:file "doc/020-client.md"}]
+  ["Connection pool"   {:file "doc/030-pool.md"}]
+  ["Types"             {:file "doc/040-types.md"}]
+  ["JSON support"      {:file "doc/050-json.md"}]
+  ["Joda Time support" {:file "doc/060-joda-time.md"}]]}

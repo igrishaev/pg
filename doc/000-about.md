@@ -44,13 +44,5 @@ Here is a brief list of benefits of this project:
 - Various ways to process the data;
 - Holds SAML authentication which is default since Postgres 15. JDBC still fails
   when handling it ("unknown auth code 10");
+- Tested with Postgres 11, 12, 13, 14, 15, and 16-beta;
 - And more.
-
-- PG pool
-- Encoding and decoding values
-- JSON support
-- Joda Time support
-- Copy (general)
-- Copy with JDBC.Next
-- Full package list
-- Changelog
