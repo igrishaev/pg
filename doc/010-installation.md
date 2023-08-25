@@ -1,5 +1,15 @@
 # Installation
 
+<!-- toc -->
+
+- [General Notes](#general-notes)
+- [Client](#client)
+- [Connection Pool](#connection-pool)
+- [JSON extension](#json-extension)
+- [Joda Time extension](#joda-time-extension)
+
+<!-- tocstop -->
+
 ## General Notes
 
 Although PG is a set of modules, they all have the same version when deployed to

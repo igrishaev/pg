@@ -33,16 +33,26 @@ Here is a brief list of benefits of this project:
 
 - Written in pure Clojure and thus is completely transparent for users and
   developers;
+
 - Supports a lot of Clojure and Java types including `java.time.*` (see the
   dedicated section in the documentation);
+
 - Extendable encoding and decoding: adding a new type means just extending a
   multimethod;
+
 - Implements both **Simple** and **Extended** Postgres Wire protocols;
+
 - Implements both **text** and **binary** content encoding and decoding;
+
 - Easy to debug what goes thought the wire;
-- Reducing the result on the fly, custom reducers; various ways to process the data;
+
+- Reducing the result on the fly, custom reducers; various ways to process the
+  data;
+
 - SAML authentication out from the box; JDBC still fails when handling it
   ("unknown auth code 10");
+
 - Tested with Postgres 11, 12, 13, 14, 15, and 16-beta (integration tests with
   multiple Docker images);
+
 - And more.

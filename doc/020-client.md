@@ -1,5 +1,38 @@
 # The Client
 
+<!-- toc -->
+
+- [Basic usage](#basic-usage)
+- [Queries](#queries)
+- [Execute](#execute)
+- [Prepared Statements](#prepared-statements)
+- [Processing result with :fn-result](#processing-result-with-fn-result)
+- [Column names](#column-names)
+- [Column duplicates](#column-duplicates)
+- [Reducers and bundles](#reducers-and-bundles)
+  * [Java](#java)
+  * [Kebab-keys](#kebab-keys)
+  * [Matrix](#matrix)
+  * [Index by](#index-by)
+  * [Group by](#group-by)
+  * [Key-value](#key-value)
+  * [Custom reducers](#custom-reducers)
+- [Transactions](#transactions)
+  * [Rollback](#rollback)
+  * [Read-only](#read-only)
+  * [Isolation level](#isolation-level)
+  * [Manual transactions](#manual-transactions)
+- [Configuration](#configuration)
+- [Authorization](#authorization)
+- [Cloning a connection](#cloning-a-connection)
+- [Cancelling a query](#cancelling-a-query)
+- [Notices](#notices)
+- [Notifications](#notifications)
+- [Thread safety](#thread-safety)
+- [Debugging](#debugging)
+
+<!-- tocstop -->
+
 ## Basic usage
 
 Here is a brief example of using the client library:
@@ -629,7 +662,7 @@ Levels:
 
 ### Manual transactions
 
-
+~~~clojure
 (pg/begin conn)
 (pg/execute conn ...)
 (pg/commit conn)
@@ -679,9 +712,11 @@ ErrorResponse
 
 (pg/idle? conn)
 true
+~~~
 
 ## Configuration
 
+~~~clojure
 {:host "127.0.0.1"
  :port 5432
  :fn-notice fn-notice-default
@@ -695,6 +730,7 @@ true
           :so-reuse-port? true
           :so-rcv-buf nil
           :so-snd-buf nil}}
+~~~
 
 ## Authorization
 
@@ -702,16 +738,20 @@ clear password
 MD5
 SASL / SCRAM-SHA-256
 
+
 ## Cloning a connection
 
+~~~clojure
 (pg/with-connection [conn config]
   (with-open [conn2 (pg/clone conn)]
     (pg/query conn2 "select 1 as one")))
 
 [{:one 1}]
+~~~
 
 ## Cancelling a query
 
+~~~clojure
 (def fut
   (future
     (pg/query conn "select pg_sleep(600) as sleep")))
@@ -740,9 +780,11 @@ clojure.lang.ExceptionInfo: ErrorResponse ...
    :file "postgres.c",
    :line "3092",
    :function "ProcessInterrupts"}}}
+~~~
 
 ## Notices
 
+~~~clojure
 (defn fn-notice-handler [NoticeResponse]
   (log/infof "Notice response: %s" NoticeResponse))
 
@@ -757,9 +799,11 @@ clojure.lang.ExceptionInfo: ErrorResponse ...
  :fn-notice fn-notice-handler}
 
 (pg/rollback)
+~~~
 
 ## Notifications
 
+~~~clojure
 {:host "127.0.0.1"
  :port 5432
  ...
@@ -811,6 +855,7 @@ clojure.lang.ExceptionInfo: ErrorResponse ...
 (pg/query conn2 "unlisten FOO")
 
 further notifications won't work any longer.
+~~~
 
 ## Thread safety
 
@@ -818,6 +863,7 @@ Not safe, use pool
 
 ## Debugging
 
+~~~clojure
 pg.debug
 
 PG_DEBUG=1 lein with-profile +test repl
@@ -855,3 +901,4 @@ PG_DEBUG=1 lein with-profile +test repl
  -> {:msg :ReadyForQuery, :tx-status :I}
 
 ns pg.client.debug
+~~~
