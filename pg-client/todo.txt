@@ -5,6 +5,7 @@
 - me.grishaev ns
 - config: read-only default
 - pool: read-only default
+- write to csv/stream
 
 - benchmarks
 - interval support

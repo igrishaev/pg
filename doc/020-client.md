@@ -21,8 +21,7 @@
   * [Always Rollback](#always-rollback)
   * [Read-only](#read-only)
   * [Isolation level](#isolation-level)
-  * [Manual transactions](#manual-transactions)
-  * [Transaction statuses](#transaction-statuses)
+  * [Manual transactions and status check](#manual-transactions-and-status-check)
 - [Configuration](#configuration)
 - [Authorization](#authorization)
 - [Cloning a connection](#cloning-a-connection)
@@ -687,14 +686,15 @@ Just a reminder, there are four isolations level in Postgres:
 **Use them wisely: never set a level explicitly unless you clearly understand
 what is the default level and why doesn't it satisfy you.**
 
-### Manual transactions
+### Manual transactions and status check
+
+On the low level, transactions are driven by the `pg/begin`, `pg/commit` and
+`pg/rollback` functions. They all take a single argument (a connection) and send
+a corresponding command to the server.
+
+Briefly, the `pg/with-tx` macro boils down to the following code:
 
 ~~~clojure
-(pg/begin conn)
-(pg/execute conn ...)
-(pg/commit conn)
-
-
 (pg/begin conn)
 (try
   (pg/execute conn ...)
@@ -703,9 +703,35 @@ what is the default level and why doesn't it satisfy you.**
   (catch Throwable e
     (pg/rollback conn)
     (throw e)))
+~~~
+
+Sometimes, you'd like to know the current state of a connection: whether it's in
+a transaction or not, or if the transaction has been aborted. The `pg/status`
+takes returns a single-character keyword that represents the current state:
+
+~~~clojure
+(pg/status conn)
+:I
+~~~
+
+- `:I` stands for Idle: there is no a transaction;
+- `:T` stands for Transaction: the connection is in the middle of a transaction;
+- `:E` stands for Error: the transaction has failed. Any subsequent query would
+  lead to an error response.
+
+There are also shortcuts to check the state: `pg/idle?`, `pg/in-transaction?`
+and `pg/tx-error?`. Here is a quick session:
+
+~~~clojure
+;; no transaction
 
 (pg/status conn)
 :I
+
+(pg/idle? conn)
+true
+
+;; begin transaction
 
 (pg/begin conn)
 
@@ -715,8 +741,11 @@ what is the default level and why doesn't it satisfy you.**
 (pg/in-transaction? conn)
 true
 
+;; spoil the transaction
+
 (pg/query conn "selekt ...")
-Execution error (ExceptionInfo) at pg.client.result/finalize-errors! (result.clj:537).
+
+Execution error (ExceptionInfo) at ...
 ErrorResponse syntax error at or near \"selekt\"...
 
 (pg/status conn)
@@ -725,11 +754,7 @@ ErrorResponse syntax error at or near \"selekt\"...
 (pg/tx-error? conn)
 true
 
-(pg/query conn "select 42")
-Execution error (ExceptionInfo) at pg.client.result/finalize-errors! (result.clj:537).
-ErrorResponse
-"current transaction is aborted, commands ignored until end of transaction block",
-
+;; rolling back
 
 (pg/rollback conn)
 
@@ -739,8 +764,6 @@ ErrorResponse
 (pg/idle? conn)
 true
 ~~~
-
-### Transaction statuses
 
 ## Configuration
 
