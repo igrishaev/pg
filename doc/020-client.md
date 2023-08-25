@@ -783,7 +783,7 @@ parameters and their defaults.
 | `:binary-decode?`   | `false`                          | Use binary protocol to read data                   |
 | `:fn-notice`        | `pg.client.conn/fn-notice`       | 1-arg function to handle notices (see below)       |
 | `:fn-notification`  | `pg.client.conn/fn-notification` | 1-arg function to handle notifications (see below) |
-| `:socket`           |                                  | A nested map with socket options                   |
+| `:socket`           | (see below)                      | A nested map with socket options                   |
 
 The `:socket` map has the following sub-options:
 
