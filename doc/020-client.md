@@ -820,11 +820,23 @@ Here is an example of the configuration:
 
 ## Authorization
 
-clear password
-MD5
-SASL / SCRAM-SHA-256
+The PG client supports several authentication pipelines:
+
+| Title          | pg_hba.conf     | Comment                                                                       |
+|----------------|-----------------|-------------------------------------------------------------------------------|
+| No password    | `trust`         | No password is sent; used when user & host are trusted                        |
+| Clear password | `password`      | The password is sent unmasked; quite unsafe                                   |
+| MD5            | `md5`           | The password is sent being MD5-hashed with salt; the default method prior v15 |
+| SASL           | `scram-sha-256` | 3-steps pipeline with complex algorith; set as default since v15              |
+
+The SASL method includes two algorithms: SCRAM-SHA-256 and
+SCRAM-SHA-256-PLUS. It's up toe the client which one to use. At the moment, only
+SCRAM-SHA-256 is implemented.
 
 ## Cloning a connection
+
+The `pg/clone` function spawns a new connection from an existing one. It reuses
+the config from a given connection.
 
 ~~~clojure
 (pg/with-connection [conn config]
