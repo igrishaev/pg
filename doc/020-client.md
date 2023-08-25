@@ -677,7 +677,6 @@ Levels:
     (pg/rollback conn)
     (throw e)))
 
-
 (pg/status conn)
 :I
 
@@ -714,6 +713,8 @@ ErrorResponse
 true
 ~~~
 
+### Transaction statuses
+
 ## Configuration
 
 ~~~clojure
@@ -737,7 +738,6 @@ true
 clear password
 MD5
 SASL / SCRAM-SHA-256
-
 
 ## Cloning a connection
 
