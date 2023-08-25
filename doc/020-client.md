@@ -18,10 +18,11 @@
   * [Key-value](#key-value)
   * [Custom reducers](#custom-reducers)
 - [Transactions](#transactions)
-  * [Rollback](#rollback)
+  * [Always Rollback](#always-rollback)
   * [Read-only](#read-only)
   * [Isolation level](#isolation-level)
   * [Manual transactions](#manual-transactions)
+  * [Transaction statuses](#transaction-statuses)
 - [Configuration](#configuration)
 - [Authorization](#authorization)
 - [Cloning a connection](#cloning-a-connection)
@@ -543,12 +544,18 @@ Here is an example of the `kv` reducer:
 
 ## Transactions
 
+There is a special `pg/with-tx` macro to wrap several expressions in a single
+transaction. It takes a connection object and produces BEGIN ... COMMIT
+commands:
+
 ~~~clojure
 (let [sql "INSERT INTO users (name, age) VALUES ($1, $2)"]
   (pg/with-tx [conn]
     (pg/execute conn sql ["Jim" 20])
     (pg/execute conn sql ["Bob" 30])))
 ~~~
+
+Here is what you would see in the logs:
 
 ~~~clojure
 BEGIN
@@ -559,11 +566,14 @@ INSERT INTO users (name, age) VALUES ($1, $2)
 COMMIT
 ~~~
 
+Should an exception pop up the middle, the whole transaction ends up with
+ROLLBACK and the exception is re-thrown:
+
 ~~~clojure
 (let [sql "INSERT INTO users (name, age) VALUES ($1, $2)"]
   (pg/with-tx [conn]
     (pg/execute conn sql ["Jim" 20])
-    (* 42 nil)
+    (* 42 nil) ;; <-
     (pg/execute conn sql ["Bob" 30])))
 
 BEGIN
@@ -571,11 +581,18 @@ INSERT INTO users (name, age) VALUES ($1, $2)
   parameters: $1 = 'Jim', $2 = '20'
 ROLLBACK
 
-Execution error (NullPointerException) at repl/eval10751$fn (form-init3772788126061757178.clj:158).
+Execution error (NullPointerException) at ...
 Cannot invoke "Object.getClass()" because "x" is null
 ~~~
 
-### Rollback
+### Always Rollback
+
+The `pg/with-tx` macro takes additional options for precise control over the
+transaction. Passing the `{:rollback? true}` would end up a transaction with
+rolling back the changes even if there was no an error.
+
+Here we create a couple of users in a rolling-back transaction. Right after you
+exit the `pg/with-tx` macro, all the changes you made get wiped.
 
 ~~~clojure
 (let [sql "INSERT INTO users (name, age) VALUES ($1, $2)"]
@@ -583,6 +600,8 @@ Cannot invoke "Object.getClass()" because "x" is null
     (pg/execute conn sql ["Jim" 20])
     (pg/execute conn sql ["Bob" 30])))
 ~~~
+
+The logs:
 
 ~~~clojure
 BEGIN
@@ -593,7 +612,18 @@ INSERT INTO users (name, age) VALUES ($1, $2)
 ROLLBACK
 ~~~
 
+Always-rollback transactions are great for testing: first you insert something
+into the database, perform some checks, rollback, and the database stays
+untouched. Of course, this is not the case for multi-threaded tests or some
+tricky logic when multiple DB connections are involved.
+
 ### Read-only
+
+Passing the `{:read-only? true}` map will spawn a read-only transaction where
+only SELECT and SHOW commands are available. Triggering INSERT, DELETE, CREATE
+and similar commands would make Postgres to respond with an error.
+
+Here we try to create a couple of users in read-only mode:
 
 ~~~clojure
 (let [sql "INSERT INTO users (name, age) VALUES ($1, $2)"]
@@ -602,22 +632,37 @@ ROLLBACK
     (pg/execute conn sql ["Bob" 30])))
 
 Execution error (ExceptionInfo) at pg.client.result/finalize-errors! (result.clj:537).
-ErrorResponse
-
 clojure.lang.ExceptionInfo: ErrorResponse
-{:error {:msg :ErrorResponse, :errors {:severity "ERROR", :verbosity "ERROR",
-:code "25006", :message "cannot execute INSERT in a read-only transaction",
-:file "utility.c", :line "414", :function "PreventCommandIfReadOnly"}}}
+{:error
+  {:msg :ErrorResponse,
+   :errors {:severity "ERROR",
+            :verbosity "ERROR",
+            :code "25006",
+            :message "cannot execute INSERT in a read-only transaction",
+            :file "utility.c",
+            :line "414",
+            :function "PreventCommandIfReadOnly"}}}
 ~~~
 
+Usually, the read-only option is mandatory for replicas. Should you try to write
+something to the replica by mistake, you'll get an exception.
+
 ### Isolation level
+
+The `{:isolation-level ...}` options sets the isolation level for the new
+transaction. Here is an example of setting SERIALIZABLE level although there is
+no need for that, actually.
 
 ~~~clojure
 (let [sql "INSERT INTO users (name, age) VALUES ($1, $2)"]
   (pg/with-tx [conn {:isolation-level :serializable}]
     (pg/execute conn sql ["Jim" 20])
     (pg/execute conn sql ["Bob" 30])))
+~~~
 
+The logs:
+
+~~~
 BEGIN
 SET TRANSACTION ISOLATION LEVEL SERIALIZABLE
 INSERT INTO users (name, age) VALUES ($1, $2)
@@ -627,38 +672,20 @@ INSERT INTO users (name, age) VALUES ($1, $2)
 COMMIT
 ~~~
 
-Levels:
+The level might be a keyword, a string or a symbol, both in lower or upper
+case. For example, `:SERIALIZABLE`, `:serializable`, `"SERIALIZABLE"` and so
+on. Those levels that consist from two words, e.g. `REPEATABLE READ`, are
+separated with a hyphen: `:repeatable-read`, `"REPEATABLE-READ"`, etc.
 
-~~~clojure
-(:SERIALIZABLE
-    :serializable
-    "SERIALIZABLE"
-    "serializable"
-    SERIALIZABLE
-    serializable)
+Just a reminder, there are four isolations level in Postgres:
 
-(:REPEATABLE-READ
-     :repeatable-read
-     "REPEATABLE-READ"
-     "repeatable-read"
-     REPEATABLE-READ
-     repeatable-read)
+- READ UNCOMMITTED
+- READ COMMITTED (default)
+- REPEATABLE READ
+- SERIALIZABLE
 
-
-(:READ-COMMITTED
-     :read-committed
-     "READ-COMMITTED"
-     "read-committed"
-     READ-COMMITTED
-     read-committed)
-
-(:READ-UNCOMMITTED
-     :read-uncommitted
-     "READ-UNCOMMITTED"
-     "read-uncommitted"
-     READ-UNCOMMITTED
-     read-uncommitted)
-~~~
+**Use them wisely: never set a level explicitly unless you clearly understand
+what is the default level and why doesn't it satisfy you.**
 
 ### Manual transactions
 

@@ -3,6 +3,8 @@
 - protocol-message notice
 - error resp ex structure
 - me.grishaev ns
+- config: read-only default
+- pool: read-only default
 
 - benchmarks
 - interval support
