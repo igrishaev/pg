@@ -6,6 +6,7 @@
 - config: read-only default
 - pool: read-only default
 - write to csv/stream
+- refactor bind/binary enc/dec message
 
 - benchmarks
 - interval support
