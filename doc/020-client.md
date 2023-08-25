@@ -771,28 +771,28 @@ A config map that you pass to `pg/connect` has various fields. Most of them are
 not necessary and derived from the default map. Below, please find a list of
 parameters and their defaults.
 
-| Field               | Default                        | Comment                                            |
-|---------------------|--------------------------------|----------------------------------------------------|
-| `:host`             | "127.0.0.1"                    | Host                                               |
-| `:port`             | 5432                           | Port                                               |
-| `:database`         | -                              | Database                                           |
-| `:user`             | -                              | Username                                           |
-| `:password`         | -                              | Password                                           |
-| `:protocol-version` | 196608                         | PG protocol version                                |
-| `:binary-encode?`   | false                          | Use binary protocol to write data                  |
-| `:binary-decode?`   | false                          | Use binary protocol to read data                   |
-| `:fn-notice`        | pg.client.conn/fn-notice       | 1-arg function to handle notices (see below)       |
-| `:fn-notification`  | pg.client.conn/fn-notification | 1-arg function to handle notifications (see below) |
-| `:socket`           |                                | A nested map with socket options                   |
+| Field               | Default                          | Comment                                            |
+|---------------------|----------------------------------|----------------------------------------------------|
+| `:host`             | `"127.0.0.1"`                    | Host                                               |
+| `:port`             | `5432`                           | Port                                               |
+| `:database`         | -                                | Database                                           |
+| `:user`             | -                                | Username                                           |
+| `:password`         | -                                | Password                                           |
+| `:protocol-version` | `196608` (declared in constants) | PG protocol version                                |
+| `:binary-encode?`   | `false`                          | Use binary protocol to write data                  |
+| `:binary-decode?`   | `false`                          | Use binary protocol to read data                   |
+| `:fn-notice`        | `pg.client.conn/fn-notice`       | 1-arg function to handle notices (see below)       |
+| `:fn-notification`  | `pg.client.conn/fn-notification` | 1-arg function to handle notifications (see below) |
+| `:socket`           |                                  | A nested map with socket options                   |
 
 The `:socket` map has the following sub-options:
 
 | Field             | Default | Comment                                                                   |
 |-------------------|---------|---------------------------------------------------------------------------|
-| `:tcp-no-delay?`  | true    | Set `TCP_NODELAY` socket boolean property                                 |
-| `:so-keep-alive?` | true    | Set `SO_KEEPALIVE` socket boolean property                                |
-| `:so-reuse-addr?` | true    | Set `SO_REUSEADDR` socket boolean property                                |
-| `:so-reuse-port?` | true    | Set `SO_REUSEPORT` socket boolean property                                |
+| `:tcp-no-delay?`  | `true`  | Set `TCP_NODELAY` socket boolean property                                 |
+| `:so-keep-alive?` | `true`  | Set `SO_KEEPALIVE` socket boolean property                                |
+| `:so-reuse-addr?` | `true`  | Set `SO_REUSEADDR` socket boolean property                                |
+| `:so-reuse-port?` | `true`  | Set `SO_REUSEPORT` socket boolean property                                |
 | `:so-rcv-buf`     | -       | Set `SO_RCVBUF` socket size; **must be** an integer (e.g. `(int 123456)`) |
 | `:so-snd-buf`     | -       | Set `SO_SNDBUF` socket size; **must be** an integer (e.g. `(int 123456)`) |
 
