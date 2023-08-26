@@ -331,16 +331,16 @@
             (pg/pid conn)
 
             res1
-            (pg/execute conn "listen FOO")
+            (pg/query conn "listen FOO")
 
             res2
-            (pg/execute conn "notify FOO, 'kek-lol'")
+            (pg/query conn "notify FOO, 'kek-lol'")
 
             res3
-            (pg/execute conn "unlisten FOO")
+            (pg/query conn "unlisten FOO")
 
             res4
-            (pg/execute conn "notify FOO, 'hello'")
+            (pg/query conn "notify FOO, 'hello'")
 
             messages
             @capture!
