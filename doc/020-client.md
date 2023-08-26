@@ -848,24 +848,44 @@ the config from a given connection.
 
 ## Cancelling a query
 
+Sometimes, a poorly composed query might hang. If you have a reference to the
+connection that as spawned such a query, you may cancel it. Cancelling a query
+requires a new connection to be opened and thus is usually done in a separate
+thread.
+
+Imagine you're running a long query in a future:
+
 ~~~clojure
 (def fut
   (future
     (pg/query conn "select pg_sleep(600) as sleep")))
+~~~
 
+The `pg/cancel` takes a connection and cancels its current query:
 
+~~~clojure
 (pg/cancel conn)
+~~~
 
+Now if you try to deref the future, you'll get an exception caused by an error
+response from the server:
+
+
+~~~clojure
 @fut
+
 java.util.concurrent.ExecutionException ...
 clojure.lang.ExceptionInfo: ErrorResponse ...
+~~~
 
+Here is what inside the `ex-data`:
+
+~~~clojure
 (try
   @fut
   (catch ExecutionException e
     (let [data (-> e ex-case ex-data)]
       ...)))
-
 
 {:error
  {:msg :ErrorResponse,
@@ -878,6 +898,10 @@ clojure.lang.ExceptionInfo: ErrorResponse ...
    :line "3092",
    :function "ProcessInterrupts"}}}
 ~~~
+
+Under the hood, canceling a query means taking some private data from the target
+connection, opening a new connection and sending a special message. Then, the
+new connection gets closed immediately.
 
 ## Notices
 
