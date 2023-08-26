@@ -2,6 +2,7 @@
  [["About"             {:file "doc/000-about.md"}]
   ["Installation"      {:file "doc/010-installation.md"}]
   ["Client"            {:file "doc/020-client.md"}]
+  ["Notifications"     {:file "doc/025-notifications.md"}]
   ["Connection pool"   {:file "doc/030-pool.md"}]
   ["Types"             {:file "doc/040-types.md"}]
   ["JSON support"      {:file "doc/050-json.md"}]

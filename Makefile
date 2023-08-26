@@ -34,6 +34,7 @@ toc-build:
 doc-toc:
 	node_modules/.bin/markdown-toc -i doc/010-installation.md
 	node_modules/.bin/markdown-toc -i doc/020-client.md
+	node_modules/.bin/markdown-toc -i doc/025-notifications.md
 
 pg-logs:
 	tail -f '/Users/ivan/Library/Application Support/Postgres/var-14/postgresql.log'
