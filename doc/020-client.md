@@ -905,24 +905,47 @@ new connection gets closed immediately.
 
 ## Notices
 
+In Postgres, notices are short informative messages shown to the user
+sometimes. For example, if you try to `ROLLBACK` although there was no `BEGIN`
+first, you won't get not an error but a notice instead.
+
+~~~
+ROLLBACK;
+WARNING:  there is no transaction in progress
+~~~
+
+**Don't mix notices with notifications (see below).**
+
+By default, the client library just prints the `NoticeResponse` map with all the
+fields. You're welcome to pass your own notice handler which logs them, store in
+an atom or whatever else:
+
 ~~~clojure
-(defn fn-notice-handler [NoticeResponse]
+(defn my-notice-handler [NoticeResponse]
   (log/infof "Notice response: %s" NoticeResponse))
+
+;; or
 
 (def notices! (atom []))
 
-(defn fn-notice-handler [NoticeResponse]
+(defn my-notice-handler [NoticeResponse]
   (swap! notices! conj NoticeResponse))
+
+;; config
 
 {:host "127.0.0.1"
  :port 5432
  ...
- :fn-notice fn-notice-handler}
-
-(pg/rollback)
+ :fn-notice my-notice-handler}
 ~~~
 
+[notify]: https://www.postgresql.org/docs/current/sql-notify.html
+
 ## Notifications
+
+Notifications are somewhat pub-sub message system in Postgres. First you define
+a channel. Then some actors produce messages to that channels and other actors
+read them.
 
 ~~~clojure
 {:host "127.0.0.1"
