@@ -943,46 +943,80 @@ an atom or whatever else:
 
 ## Thread safety
 
-Not safe, use pool
+The connection object **is not thread safe**. What it means is, sharing a
+connection between multiple threads (futures, agents) might lead to weird
+behaviour when two threads read something from a socket
+simultaneously. Technically it's possible to fix that by wrapping each API call
+with `with-locking`; yet it's much better to use the connection pool. The pool
+provides a special `with-connection` macro that ships the `with-locking` wrapper
+under the hood, so no other threads can interfere.
 
 ## Debugging
 
-~~~clojure
-pg.debug
+It's quite easy to debug messages that the client sends and receives from the
+server. Run REPL with either `PG_DEBUG` environment variable or `pg.debug`
+system property set:
 
+~~~clojure
 PG_DEBUG=1 lein with-profile +test repl
 
-<-  {:msg :StartupMessage, :protocol-version 196608, :user test, :database test, :options nil}
- -> {:msg :AuthenticationSASL, :status 10, :sasl-types #{SCRAM-SHA-256}}
-<-  {:msg :SASLInitialResponse, :sasl-type SCRAM-SHA-256, :client-first-message n,,n=test,r=2c0549c8-ef3f-44d4-82e4-4ad99303f7ec}
- -> {:msg :AuthenticationSASLContinue, :status 11, :server-first-message r=2c0549c8-ef3f-44d4-82e4-4ad99303f7echCLyIqVeK1lswQUcIZPZgNB5,s=qkGROo12a/m8jDa9wv90TA==,i=4096}
-<-  {:msg :SASLResponse, :client-final-message c=biws,r=2c0549c8-ef3f-44d4-82e4-4ad99303f7echCLyIqVeK1lswQUcIZPZgNB5,p=IbvOGV7fKIj+OIt54dopu/HI35+9Q67R7uPRp1/Ein8=}
- -> {:msg :AuthenticationSASLFinal, :status 12, :server-final-message v=0Mj1tVhYjDUKt7k9ClCkj9h/6zyVtLMAlZ9HIKA6vyc=}
- -> {:msg :AuthenticationOk, :status 0}
- -> {:msg :ParameterStatus, :param in_hot_standby, :value off}
- -> {:msg :ParameterStatus, :param integer_datetimes, :value on}
- -> {:msg :ParameterStatus, :param TimeZone, :value Etc/UTC}
- -> {:msg :ParameterStatus, :param IntervalStyle, :value postgres}
- -> {:msg :ParameterStatus, :param is_superuser, :value on}
- -> {:msg :ParameterStatus, :param application_name, :value }
- -> {:msg :ParameterStatus, :param default_transaction_read_only, :value off}
- -> {:msg :ParameterStatus, :param scram_iterations, :value 4096}
- -> {:msg :ParameterStatus, :param DateStyle, :value ISO, MDY}
- -> {:msg :ParameterStatus, :param standard_conforming_strings, :value on}
- -> {:msg :ParameterStatus, :param session_authorization, :value test}
- -> {:msg :ParameterStatus, :param client_encoding, :value UTF8}
- -> {:msg :ParameterStatus, :param server_version, :value 16beta2 (Debian 16~beta2-1.pgdg120+1)}
- -> {:msg :ParameterStatus, :param server_encoding, :value UTF8}
- -> {:msg :BackendKeyData, :pid 5671, :secret-key -1344960525}
- -> {:msg :ReadyForQuery, :tx-status :I}
-<-  {:msg :Query, :query select pg_sleep(60) as sleep}
+;; or, in lein:
 
-<-  {:msg :CancelRequest, :code 80877102, :pid 5671, :secret-key -1344960525}
-<-  {:msg :Terminate}
-
- -> {:msg :RowDescription, :column-count 1, :columns [{:index 0, :name sleep, :table-oid 0, :column-oid 0, :type-oid 2278, :type-len 4, :type-mod -1, :format 0}]}
- -> {:msg :ErrorResponse, :errors {:severity ERROR, :verbosity ERROR, :code 57014, :message canceling statement due to user request, :file postgres.c, :line 3396, :function ProcessInterrupts}}
- -> {:msg :ReadyForQuery, :tx-status :I}
-
-ns pg.client.debug
+:profiles {:dev {:jvm-opts ["-Dpg.debug=1"]}}
 ~~~
+
+Now that you have the debug option set, run some queries in REPL, and you'll see
+the dump:
+
+~~~clojure
+
+;; startup pipeline
+
+ -> {:msg :StartupMessage, :protocol-version 196608, :user test, :database test, :options nil}
+<-  {:msg :AuthenticationSASL, :status 10, :sasl-types #{SCRAM-SHA-256}}
+ -> {:msg :SASLInitialResponse, :sasl-type SCRAM-SHA-256, :client-first-message n,,n=test,r=2c0549c8-ef3f-44d4-82e4-4ad99303f7ec}
+<-  {:msg :AuthenticationSASLContinue, :status 11, :server-first-message r=2c0549c8-ef3f-44d4-82e4-4ad99303f7echCLyIqVeK1lswQUcIZPZgNB5,s=qkGROo12a/m8jDa9wv90TA==,i=4096}
+ -> {:msg :SASLResponse, :client-final-message c=biws,r=2c0549c8-ef3f-44d4-82e4-4ad99303f7echCLyIqVeK1lswQUcIZPZgNB5,p=IbvOGV7fKIj+OIt54dopu/HI35+9Q67R7uPRp1/Ein8=}
+<-  {:msg :AuthenticationSASLFinal, :status 12, :server-final-message v=0Mj1tVhYjDUKt7k9ClCkj9h/6zyVtLMAlZ9HIKA6vyc=}
+<-  {:msg :AuthenticationOk, :status 0}
+
+;; init pipeline
+
+<-  {:msg :ParameterStatus, :param in_hot_standby, :value off}
+<-  {:msg :ParameterStatus, :param integer_datetimes, :value on}
+<-  {:msg :ParameterStatus, :param TimeZone, :value Etc/UTC}
+<-  {:msg :ParameterStatus, :param IntervalStyle, :value postgres}
+<-  {:msg :ParameterStatus, :param is_superuser, :value on}
+<-  {:msg :ParameterStatus, :param application_name, :value }
+<-  {:msg :ParameterStatus, :param default_transaction_read_only, :value off}
+<-  {:msg :ParameterStatus, :param scram_iterations, :value 4096}
+<-  {:msg :ParameterStatus, :param DateStyle, :value ISO, MDY}
+<-  {:msg :ParameterStatus, :param standard_conforming_strings, :value on}
+<-  {:msg :ParameterStatus, :param session_authorization, :value test}
+<-  {:msg :ParameterStatus, :param client_encoding, :value UTF8}
+<-  {:msg :ParameterStatus, :param server_version, :value 16beta2 (Debian 16~beta2-1.pgdg120+1)}
+<-  {:msg :ParameterStatus, :param server_encoding, :value UTF8}
+<-  {:msg :BackendKeyData, :pid 5671, :secret-key -1344960525}
+<-  {:msg :ReadyForQuery, :tx-status :I}
+
+;; a hanging query has been run
+
+ -> {:msg :Query, :query select pg_sleep(60) as sleep}
+
+;; cancelling it from another connection and terminate
+
+ -> {:msg :CancelRequest, :code 80877102, :pid 5671, :secret-key -1344960525}
+ -> {:msg :Terminate}
+
+;; the query fails, emits an error message, then the connection is ready for
+;;  further queries
+
+<-  {:msg :RowDescription, :column-count 1, :columns [{:index 0, :name sleep, :table-oid 0, :column-oid 0, :type-oid 2278, :type-len 4, :type-mod -1, :format 0}]}
+<-  {:msg :ErrorResponse, :errors {:severity ERROR, :verbosity ERROR, :code 57014, :message canceling statement due to user request, :file postgres.c, :line 3396, :function ProcessInterrupts}}
+<-  {:msg :ReadyForQuery, :tx-status :I}
+~~~
+
+The right arrow ` ->` means the message is passed from the client to the
+server. The left arrow `<- ` stands for reading a message from the server.
+
+The debugging facilities come from the `pg.client.debug` namespace.
