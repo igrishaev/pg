@@ -4,8 +4,8 @@ all: sub-clean sub-install sub-test
 sub-clean:
 	lein sub clean
 
-sub-release:
-	lein sub release
+release:
+	lein release
 
 sub-install:
 	lein sub install
@@ -28,10 +28,7 @@ docker-psql:
 toc-install:
 	npm install --save markdown-toc
 
-toc-build:
-	node_modules/.bin/markdown-toc -i README.md
-
-doc-toc:
+toc-doc:
 	node_modules/.bin/markdown-toc -i doc/010-installation.md
 	node_modules/.bin/markdown-toc -i doc/020-client.md
 	node_modules/.bin/markdown-toc -i doc/025-notifications.md

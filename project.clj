@@ -14,15 +14,15 @@
   {"releases" {:url "https://repo.clojars.org" :creds :gpg}}
 
   :release-tasks
-  [["vcs" "assert-committed"]
+  [#_["vcs" "assert-committed"]
    ["sub" "change" "version" "leiningen.release/bump-version" "release"]
-   ["change" "version" "leiningen.release/bump-version" "release"]
+         ["change" "version" "leiningen.release/bump-version" "release"]
    ["vcs" "commit"]
    ["vcs" "tag" "--no-sign"]
    ["sub" "with-profile" "uberjar" "install"]
    ["sub" "with-profile" "uberjar" "deploy"]
    ["sub" "change" "version" "leiningen.release/bump-version"]
-   ["change" "version" "leiningen.release/bump-version"]
+         ["change" "version" "leiningen.release/bump-version"]
    ["vcs" "commit"]
    ["vcs" "push"]]
 
