@@ -1,4 +1,4 @@
-(defproject com.github.igrishaev/pg-pool "0.1.2-SNAPSHOT"
+(defproject com.github.igrishaev/pg-pool "0.1.2"
 
   :description
   "A simple, handmade connection pool for PG"
