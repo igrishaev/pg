@@ -1,4 +1,4 @@
-(defproject com.github.igrishaev/pg-common "0.1.3"
+(defproject com.github.igrishaev/pg-common "0.1.4-SNAPSHOT"
 
   :description
   "Common PG modules"
