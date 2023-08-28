@@ -1,4 +1,4 @@
-(defproject com.github.igrishaev/pg-integration "0.1.5"
+(defproject com.github.igrishaev/pg-integration "0.1.6-SNAPSHOT"
 
   :description
   "Multi-version integration tests in Docker"

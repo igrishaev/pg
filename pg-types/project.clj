@@ -1,4 +1,4 @@
-(defproject com.github.igrishaev/pg-types "0.1.5"
+(defproject com.github.igrishaev/pg-types "0.1.6-SNAPSHOT"
 
   :description
   "PG types encoding and decoding"
