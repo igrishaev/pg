@@ -1,4 +1,4 @@
-(defproject com.github.igrishaev/pg-copy-jdbc "0.1.4-SNAPSHOT"
+(defproject com.github.igrishaev/pg-copy-jdbc "0.1.4"
 
   :description
   "COPY powered with JDBC.next"
