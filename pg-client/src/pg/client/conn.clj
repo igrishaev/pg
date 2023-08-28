@@ -150,7 +150,7 @@
 
 
 (defn send-message [{:as conn :keys [opt ch]} message]
-  (debug/debug-message message "<- ")
+  (debug/debug-message message " ->")
   (let [bb (msg/encode-message message opt)]
     (bb/write-to ch bb))
   conn)
@@ -203,7 +203,7 @@
           message
           (msg/parse-message tag bb-body opt)]
 
-      (debug/debug-message message " ->")
+      (debug/debug-message message "<- ")
 
       message)))
 
