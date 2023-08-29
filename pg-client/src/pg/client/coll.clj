@@ -1,5 +1,6 @@
 (ns pg.client.coll
   (:import
+   java.util.Iterator
    clojure.lang.RT))
 
 
@@ -86,3 +87,29 @@
        (reduce merge-entry (or a {}) (seq b)))))
   ([a b & more]
    (reduce deep-merge (or a {}) (cons b more))))
+
+
+(letfn [(->iter [coll]
+          (RT/iter coll))
+        (has-next? [iter]
+          (.hasNext ^Iterator iter))
+        (next! [iter]
+          (.next ^Iterator iter))]
+  (defn map!
+    ([f coll]
+     (mapv f coll))
+    ([f coll & colls]
+     (let [iters (map ->iter (cons coll colls))]
+       (loop [acc! (transient [])]
+         (if (every? has-next? iters)
+           (let [item (apply f (map next! iters))]
+             (recur (conj! acc! item)))
+           (persistent! acc!)))))))
+
+
+(defmacro for-seqs
+  {:style/indent 1}
+  [bindings & body]
+  (let [ks (take-nth 2 bindings)
+        vs (take-nth 2 (rest bindings))]
+    `(map! (fn [~@ks] ~@body) ~@vs)))
