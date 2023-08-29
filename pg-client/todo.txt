@@ -6,14 +6,12 @@
 - config: read-only default
 - pool: read-only default
 - write to csv/stream
-- refactor bind/binary enc/dec message
 - conn: read-only check?
 
 - benchmarks
 - interval support
 - range support
 - array support
-- thread safe?
 - batch queries
 - ssl
 - unix socket
@@ -21,7 +19,6 @@
 - adopt gosql
 - errors addSuppressed
 - cursor package
-- client package docs
 - joda update docs
 - json package docs
 - copy support
@@ -30,7 +27,6 @@
 
 perf:
 - enough?
-
 
 - PG pool
 - Encoding and decoding values
