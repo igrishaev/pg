@@ -60,3 +60,10 @@
                 (fn-row row)
                 (inc n))
    :fn-finalize identity})
+
+
+(defn fold [init fn-reduce]
+  {:fn-init (constantly init)
+   :fn-reduce (fn [acc row]
+                (fn-reduce acc row))
+   :fn-finalize identity})

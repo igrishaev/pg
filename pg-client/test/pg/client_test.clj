@@ -1226,6 +1226,23 @@ drop table %1$s;
              @capture!)))))
 
 
+(deftest test-acc-as-fold
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (let [query
+          "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
+
+          as
+          (as/fold #{} (fn [acc {:keys [a b]}]
+                         (conj acc [a b])))
+
+          res
+          (pg/execute conn query nil {:as as})]
+
+      (is (= #{[3 4] [5 6] [1 2]} res)))))
+
+
 (deftest test-acc-as-matrix
 
   (pg/with-connection [conn *CONFIG*]

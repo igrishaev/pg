@@ -17,6 +17,7 @@
   * [Group by](#group-by)
   * [Key-value](#key-value)
   * [Run](#run)
+  * [Fold](#fold)
   * [Custom reducers](#custom-reducers)
 - [Transactions](#transactions)
   * [Always Rollback](#always-rollback)
@@ -528,6 +529,28 @@ the number of times the function was called:
 
 5
 ~~~
+
+### Fold
+
+The `fold` reducer acts like the standard `reduce`. It takes an initial value
+and a function that accepts an accumulator and the current row. The function
+must return a new accumulator, usually with `assoc`, `conj`, and similar.
+
+~~~clojure
+(let [query
+      "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
+
+      as
+      (as/fold #{} (fn [acc {:keys [a b]}]
+                     (conj acc [a b])))]
+
+  (pg/execute conn query nil {:as as}))
+
+;; #{[3 4] [5 6] [1 2]}
+~~~
+
+Pay attention, the initial value must be immutable. Passing something like
+`HashMap` or `ArrayList` might lead to weird behavior.
 
 ### Custom reducers
 
