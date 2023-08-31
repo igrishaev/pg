@@ -52,3 +52,11 @@
    :fn-reduce (fn [acc! row]
                 (assoc! acc! (fk row) (fv row)))
    :fn-finalize persistent!})
+
+
+(defn run [fn-row]
+  {:fn-init (constantly 0)
+   :fn-reduce (fn [n row]
+                (fn-row row)
+                (inc n))
+   :fn-finalize identity})

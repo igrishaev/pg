@@ -1202,6 +1202,30 @@ drop table %1$s;
              res)))))
 
 
+(deftest test-acc-as-run
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (let [query
+          "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
+
+          capture!
+          (atom [])
+
+          as
+          (as/run
+            (fn [row]
+              (swap! capture! conj row)))
+
+          res
+          (pg/execute conn query nil {:as as})]
+
+      (is (= 3 res))
+
+      (is (= [{:a 1 :b 2} {:a 3 :b 4} {:a 5 :b 6}]
+             @capture!)))))
+
+
 (deftest test-acc-as-matrix
 
   (pg/with-connection [conn *CONFIG*]

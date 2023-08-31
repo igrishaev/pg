@@ -16,6 +16,7 @@
   * [Index by](#index-by)
   * [Group by](#group-by)
   * [Key-value](#key-value)
+  * [Run](#run)
   * [Custom reducers](#custom-reducers)
 - [Transactions](#transactions)
   * [Always Rollback](#always-rollback)
@@ -511,6 +512,21 @@ a mapping from the id to the name:
 (pg/query conn "select * from users" {:as (as/kv :id :name)})
 
 {1 "Ivan", 2 "Juan", 3 "Ivan", 4 "Juan"}
+~~~
+
+### Run
+
+The `run` reducer executes a certain function for each row. The result would be
+the number of times the function was called:
+
+~~~clojure
+(pg/query conn "select * from users" {:as (as/run println)})
+
+;; {... row1}
+;; {... row2}
+;; ...
+
+5
 ~~~
 
 ### Custom reducers
