@@ -54,9 +54,12 @@ Here is a brief example of using the client library:
 ;; [{:one 1}]
 ~~~
 
-First, you import the `pg.client` namespace which brings the top-level API functions to interact with Postgres. The `config` map above specifies the minimal configuration; it might have more fields which we will explore in a separate section.
+First, you import the `pg.client` namespace which brings the top-level API functions to interact with Postgres. The `config` map above specifies the minimal configuration;
+it might have more fields which we will explore in a separate section.
 
-The `with-connection` macro establishes a new connection, binds it to the `conn` symbol, and executes the body. The connection is closed afterward, even if an exception pops up.
+The `with-connection` macro establishes a new connection, binds it to the `conn`
+symbol, and executes the body. The connection is closed afterward, even if an
+exception pops up.
 
 Technically you can open and terminate a connection manually like this:
 
@@ -69,7 +72,8 @@ Technically you can open and terminate a connection manually like this:
 ;; [{:one 1}]
 ~~~
 
-but it's not recommended. Also, since the `Connection` object implements `java.io.Closeable`, it's possible to use it in `with-open`:
+but it's not recommended. Also, since the `Connection` object implements
+`java.io.Closeable`, it's possible to use it in `with-open`:
 
 ~~~clojure
 (with-open [conn (pg/connect config)]
@@ -80,14 +84,19 @@ but it's not recommended. Also, since the `Connection` object implements `java.i
 
 ## Queries
 
-The `pg/query` function above runs a query using a *Simple Wire* protocol (Postgres has two kinds of protocols to communicate each having its own pros and cons). The function takes a connection object, a string query, and a map of non-required options:
+The `pg/query` function above runs a query using a *Simple Wire* protocol
+(Postgres has two kinds of protocols to communicate each having its own pros and
+cons). The function takes a connection object, a string query, and a map of
+non-required options:
 
 ~~~clojure
 (pg/query conn "select 1 as one")
 (pg/query conn "select 2 as two" {...})
 ~~~
 
-*Pay attention:* There is no way to pass parameters because the Simple Wire protocol doesn't support them! In other words, `pg/query` doesn't allow you to write something like this:
+*Pay attention:* There is no way to pass parameters because the Simple Wire
+protocol doesn't support them! In other words, `pg/query` doesn't allow you to
+write something like this:
 
 ~~~clojure
 (pg/query conn "select * from users where id = $1" [42])
@@ -95,7 +104,8 @@ The `pg/query` function above runs a query using a *Simple Wire* protocol (Postg
 
 This behavior is held by `pg/execute` and statements (see below).
 
-What is the benefit of Simple Wire queries then? They allow you to send multiple expressions in one separating them with a semicolon:
+What is the benefit of Simple Wire queries then? They allow you to send multiple
+expressions in one separating them with a semicolon:
 
 ~~~clojure
 (pg/query conn
@@ -116,13 +126,18 @@ What is the benefit of Simple Wire queries then? They allow you to send multiple
   {:x #object[j.t.LocalDateTime "2008-03-04T08:00"]}]]
 ~~~
 
-The result will be a vector of two results, each for the corresponding expression. Each expression has its own column set and doesn't depend on other expressions.
+The result will be a vector of two results, each for the corresponding
+expression. Each expression has its own column set and doesn't depend on other
+expressions.
 
-Obviously, it's better to avoid mixing DDL expressions like `CREATE TABLE` with data selection.
+Obviously, it's better to avoid mixing DDL expressions like `CREATE TABLE` with
+data selection.
 
 ## Execute
 
-The `pg/execute` function implements the *Extended Wire* protocol for Postgres. Although it doesn't allow you to pass multiple expressions separated by a semicolon, it supports passing parameters.
+The `pg/execute` function implements the *Extended Wire* protocol for
+Postgres. Although it doesn't allow you to pass multiple expressions separated
+by a semicolon, it supports passing parameters.
 
 First, let's prepare a table:
 
@@ -142,7 +157,8 @@ Let's insert a couple of users:
 ;; [{:id 1} {:id 2}]
 ~~~
 
-Above, "Ivan" becomes `$1`, 37 becomes `$2` and so on. Now that we have some data, let's query users by id:
+Above, "Ivan" becomes `$1`, 37 becomes `$2` and so on. Now that we have some
+data, let's query users by id:
 
 ~~~clojure
 (def sql "select * from users where id = $1")
@@ -158,15 +174,23 @@ This technique allows to you share the same queries for different values.
 
 ## Prepared Statements
 
-The `pg/execute` function above does several things under the hood. It prepares a statement, binds the parameters to it, and obtains a *portal*; then it reads the from the portal and closes it.
+The `pg/execute` function above does several things under the hood. It prepares
+a statement, binds the parameters to it, and obtains a *portal*; then it reads
+the from the portal and closes it.
 
-There are a couple of functions to do the same in a breakdown. The `pg/prepare-statement` accepts a connection, a SQL expression and returns a prepared statement:
+There are a couple of functions to do the same in a breakdown. The
+`pg/prepare-statement` accepts a connection, a SQL expression and returns a
+prepared statement:
 
 ~~~clojure
 (def stmt (pg/prepare-statement conn sql))
 ~~~
 
-A prepared statement is just a plain map that carries brief information about its name (auto-generated), columns, and parameters. In the example below, the statement is called `statement_10637`, there are three columns called "id", "name" and "age" of type OIDs 23, 25, and 23. There is a single parameter with type 23 (integer):
+A prepared statement is just a plain map that carries brief information about
+its name (auto-generated), columns, and parameters. In the example below, the
+statement is called `statement_10637`, there are three columns called "id",
+"name" and "age" of type OIDs 23, 25, and 23. There is a single parameter with
+type 23 (integer):
 
 ~~~clojure
 {:statement "statement_10637"
@@ -213,7 +237,9 @@ Having a prepared statement, execute it as follows:
 ;; [{:id 2, :name "Juan", :age 38}]
 ~~~
 
-*Pay attention that prepared statements are always bound to a certain connection. You cannot prepare a statement in one connection and execute it with another: it will cause an error response from Postgres.*
+*Pay attention that prepared statements are always bound to a certain
+connection. You cannot prepare a statement in one connection and execute it with
+another: it will cause an error response from Postgres.*
 
 Once you've done with a prepared statement, close it:
 
@@ -221,7 +247,9 @@ Once you've done with a prepared statement, close it:
 (pg/close-statement conn stmt)
 ~~~
 
-Closing statements is important for the server as it releases resources allocated to those statements. To prevent hanging statements, there is a macro called `with-statement` which closes a statement afterward:
+Closing statements is important for the server as it releases resources
+allocated to those statements. To prevent hanging statements, there is a macro
+called `with-statement` which closes a statement afterward:
 
 ~~~clojure
 (pg/with-statement [stmt conn "INSERT INTO users (name, age) VALUES ($1, $2)"]
@@ -231,9 +259,12 @@ Closing statements is important for the server as it releases resources allocate
 
 ## Processing result with :fn-result
 
-Often, you want to process the result somehow. Say, take only the first row of the selection (when you know there is either zero or one record).
+Often, you want to process the result somehow. Say, take only the first row of
+the selection (when you know there is either zero or one record).
 
-All the `query`, `execute`, and `execute-statement` accept optional parameters. The `:fn-result` function is applied to the whole result; usually, you pass `first`:
+All the `query`, `execute`, and `execute-statement` accept optional
+parameters. The `:fn-result` function is applied to the whole result; usually,
+you pass `first`:
 
 ~~~clojure
 (def sql "select * from users where id = $1")
@@ -248,7 +279,8 @@ All the `query`, `execute`, and `execute-statement` accept optional parameters. 
  :user2 {:id 2, :name "Juan", :age 38}}
 ~~~
 
-Pay attention: when passing the `:fn-result` function to `pg/query` with multiple expressions, the function is applied to each expression:
+Pay attention: when passing the `:fn-result` function to `pg/query` with
+multiple expressions, the function is applied to each expression:
 
 ~~~clojure
 (pg/query conn
@@ -264,7 +296,9 @@ Pay attention: when passing the `:fn-result` function to `pg/query` with multipl
 
 ## Column names
 
-By default, the client library turns all the column names to keywords. It doesn't take any kebab-case transformations into account: a column `"user_name"` becomes `:user_name`.
+By default, the client library turns all the column names to keywords. It
+doesn't take any kebab-case transformations into account: a column `"user_name"`
+becomes `:user_name`.
 
 ~~~clojure
 (pg/query conn "select 42 as the_answer")
@@ -272,7 +306,9 @@ By default, the client library turns all the column names to keywords. It doesn'
 [{:the_answer 42}]
 ~~~
 
-An optional parameter `:fn-column` changes this behaviour. It's a function that takes a string column and returns whatever you want. Here is how you can obtain upper-cased string keys:
+An optional parameter `:fn-column` changes this behaviour. It's a function that
+takes a string column and returns whatever you want. Here is how you can obtain
+upper-cased string keys:
 
 ~~~clojure
 (require '[clojure.string :as str])
@@ -282,7 +318,8 @@ An optional parameter `:fn-column` changes this behaviour. It's a function that 
 [{"THE_ANSWER" 42}]
 ~~~
 
-Of course, you can pass a complex function that transforms the string somehow and then turns it into a keyword or a symbol.
+Of course, you can pass a complex function that transforms the string somehow
+and then turns it into a keyword or a symbol.
 
 Some Clojure programmers prefer kebab-case keywords (which I honestly consider a bad practice, but still). For this, do one of the two options. Either get such function from the `pg.client.func` namespace:
 
@@ -304,11 +341,13 @@ Or pass it as a "bundle":
 [{:the-answer 42}]
 ~~~
 
-Bundles are maps of several processing functions which we're going to describe a bit below.
+Bundles are maps of several processing functions which we're going to describe a
+bit below.
 
 ## Column duplicates
 
-In SQL, that's completely fine when a query returns several columns with the same name, for example:
+In SQL, that's completely fine when a query returns several columns with the
+same name, for example:
 
 ~~~
 SELECT 1 as val, true as val, 'dunno' as val;
@@ -318,9 +357,12 @@ SELECT 1 as val, true as val, 'dunno' as val;
    1 | t   | dunno
 ~~~
 
-But from the client's perspective, that's unclear what to do with such a result, especially when you're dealing with maps.
+But from the client's perspective, that's unclear what to do with such a result,
+especially when you're dealing with maps.
 
-By default, the client library adds numbers to those columns that have already been in the result. Briefly, for the example above, you'll get `val`, `val_1` and `val_2` columns:
+By default, the client library adds numbers to those columns that have already
+been in the result. Briefly, for the example above, you'll get `val`, `val_1`
+and `val_2` columns:
 
 ~~~clojure
 (pg/query conn "SELECT 1 as val, true as val, 'dunno' as val")
@@ -328,7 +370,8 @@ By default, the client library adds numbers to those columns that have already b
 [{:val 1, :val_1 true, :val_2 "dunno"}]
 ~~~
 
-This behaviour stacks with the `fn-column` parameter: the `fn-column` gets applied after the column names have been transformed.
+This behaviour stacks with the `fn-column` parameter: the `fn-column` gets
+applied after the column names have been transformed.
 
 ~~~clojure
 (pg/query conn "SELECT 1 as val, true as val, 'dunno' as val" {:as as/kebab-keys})
@@ -336,17 +379,24 @@ This behaviour stacks with the `fn-column` parameter: the `fn-column` gets appli
 [{:val 1, :val-1 true, :val-2 "dunno"}]
 ~~~
 
-The function which is responsible for column duplicate processing is called `:fn-unify`. It takes a vector of strings and must return a vector of something (strings, keywords, symbols).
+The function which is responsible for column duplicate processing is called
+`:fn-unify`. It takes a vector of strings and must return a vector of something
+(strings, keywords, symbols).
 
 ## Reducers and bundles
 
-As you've seen before, the result of `pg/query` or `pg/execute` is a vector of maps. Although it is most likely what you want by default, there are other ways to obtain the result in another shape.
+As you've seen before, the result of `pg/query` or `pg/execute` is a vector of
+maps. Although it is most likely what you want by default, there are other ways
+to obtain the result in another shape.
 
-There is a `pg.client.as` namespace that carries "bundles": named maps with predefined parameters, mostly functions. Passing these maps into the optional `:as` field when querying data affects how the rows will be processed.
+There is a `pg.client.as` namespace that carries "bundles": named maps with
+predefined parameters, mostly functions. Passing these maps into the optional
+`:as` field when querying data affects how the rows will be processed.
 
 ### Java
 
-The `as/java` bundle builds an `ArrayList` of mutable `HashMap`s. Both the top-level set of rows and its children are mutable:
+The `as/java` bundle builds an `ArrayList` of mutable `HashMap`s. Both the
+top-level set of rows and its children are mutable:
 
 ~~~clojure
 (def res (pg/query conn "SELECT 42 as the_answer" {:as as/java}))
@@ -359,7 +409,8 @@ The `as/java` bundle builds an `ArrayList` of mutable `HashMap`s. Both the top-l
 
 ### Kebab-keys
 
-The `kebab-keys` bundle we have already seen in action: it just transforms the keys from `:foo_bar` to `:foo-bar`:
+The `kebab-keys` bundle we have already seen in action: it just transforms the
+keys from `:foo_bar` to `:foo-bar`:
 
 ~~~clojure
 (pg/query conn "SELECT 42 as the_answer" {:as as/kebab-keys})
@@ -377,8 +428,8 @@ The `as/matrix` bundle is useful for getting values without names:
 [[1 false "hello"]]
 ~~~
 
-The result will be just vector of vectors which is convenient for writing to CSV
-or Excel files.
+The result will be just a vector of vectors which is convenient for writing to
+CSV or Excel files.
 
 ### Index by
 
@@ -404,7 +455,7 @@ the database but *as you're reading* the rows. That would save the lines of code
 and resources.
 
 The `as/index-by` reducer does it for you. It's a function that takes a row
-function and returs a bundle:
+function and returns a bundle:
 
 ~~~clojure
 (pg/query conn "select * from users" {:as (as/index-by :id)})
@@ -413,7 +464,7 @@ p
  2 {:id 2, :name "Juan", :age 38}}
 ~~~
 
-Of course, a function which is passed to `index-by` might be something more
+Of course, a function that is passed to `index-by` might be something more
 complex than an ordinary keyword. It can be a call of `juxt` if you need to
 group rows by several keys:
 
@@ -426,10 +477,10 @@ group rows by several keys:
 
 ### Group by
 
-The `as/group-by` reducer acts like the standard `group-by` function. The it
+The `as/group-by` reducer acts like the standard `group-by` function. It
 collects a map where a key is a result of `(f row)`, and the value is a vector
-of matched rows. The main difference is, it fills the result on the fly as the
-data arrives from the server.
+of matched rows. The main difference is, that it fills the result on the fly as
+the data arrives from the server.
 
 Imagine there are more users named Ivan and Juan in our database. Here is how we
 can select and group them by name:
@@ -445,7 +496,7 @@ can select and group them by name:
 
 ### Key-value
 
-There as a `kv` reducer that allows you to build *any map* you want. It takes
+There is a `kv` reducer that allows you to build *any map* you want. It takes
 two parameters: a key function (fk) and a value function (fv). The result will
 be a map like this:
 
@@ -453,7 +504,7 @@ be a map like this:
 {(fk row) (fv row)}
 ~~~
 
-The `as/kv` reducer is useful when you want to get a map from rows, for example
+The `as/kv` reducer is useful when you want to get a map from rows, for example,
 a mapping from the id to the name:
 
 ~~~clojure
@@ -510,7 +561,7 @@ COMMIT
 ~~~
 
 Should an exception pop up the middle, the whole transaction ends up with
-ROLLBACK and the exception is re-thrown:
+ROLLBACK and the exception is rethrown:
 
 ~~~clojure
 (let [sql "INSERT INTO users (name, age) VALUES ($1, $2)"]
@@ -532,7 +583,7 @@ Cannot invoke "Object.getClass()" because "x" is null
 
 The `pg/with-tx` macro takes additional options for precise control over the
 transaction. Passing the `{:rollback? true}` would end up a transaction with
-rolling back the changes even if there was no an error.
+rolling back the changes even if there was no error.
 
 Here we create a couple of users in a rolling-back transaction. Right after you
 exit the `pg/with-tx` macro, all the changes you made get wiped.
@@ -555,8 +606,8 @@ INSERT INTO users (name, age) VALUES ($1, $2)
 ROLLBACK
 ~~~
 
-Always-rollback transactions are great for testing: first you insert something
-into the database, perform some checks, rollback, and the database stays
+Always-rollback transactions are great for testing: first, you insert something
+into the database, perform some checks, roll back, and the database stays
 untouched. Of course, this is not the case for multi-threaded tests or some
 tricky logic when multiple DB connections are involved.
 
@@ -564,7 +615,7 @@ tricky logic when multiple DB connections are involved.
 
 Passing the `{:read-only? true}` map will spawn a read-only transaction where
 only SELECT and SHOW commands are available. Triggering INSERT, DELETE, CREATE
-and similar commands would make Postgres to respond with an error.
+and similar commands would make Postgres respond with an error.
 
 Here we try to create a couple of users in read-only mode:
 
@@ -592,9 +643,9 @@ something to the replica by mistake, you'll get an exception.
 
 ### Isolation level
 
-The `{:isolation-level ...}` options sets the isolation level for the new
-transaction. Here is an example of setting SERIALIZABLE level although there is
-no need for that, actually.
+The `{:isolation-level ...}` option sets the isolation level for the new
+transaction. Here is an example of setting a SERIALIZABLE level although there
+is no need for that, actually.
 
 ~~~clojure
 (let [sql "INSERT INTO users (name, age) VALUES ($1, $2)"]
@@ -617,17 +668,17 @@ COMMIT
 
 The level might be a keyword, a string or a symbol, both in lower or upper
 case. For example, `:SERIALIZABLE`, `:serializable`, `"SERIALIZABLE"` and so
-on. Those levels that consist from two words, e.g. `REPEATABLE READ`, are
+on. Those levels that consist of two words, e.g. `REPEATABLE READ`, are
 separated with a hyphen: `:repeatable-read`, `"REPEATABLE-READ"`, etc.
 
-Just a reminder, there are four isolations level in Postgres:
+Just a reminder, there are four isolation levels in Postgres:
 
 - READ UNCOMMITTED
 - READ COMMITTED (default)
 - REPEATABLE READ
 - SERIALIZABLE
 
-**Use them wisely: never set a level explicitly unless you clearly understand
+**Use them wisely: Never set a level explicitly unless you clearly understand
 what is the default level and why doesn't it satisfy you.**
 
 ### Manual transactions and status check
@@ -651,14 +702,14 @@ Briefly, the `pg/with-tx` macro boils down to the following code:
 
 Sometimes, you'd like to know the current state of a connection: whether it's in
 a transaction or not, or if the transaction has been aborted. The `pg/status`
-takes returns a single-character keyword that represents the current state:
+returns a single-character keyword that represents the current state:
 
 ~~~clojure
 (pg/status conn)
 :I
 ~~~
 
-- `:I` stands for Idle: there is no a transaction;
+- `:I` stands for Idle: there is no transaction;
 - `:T` stands for Transaction: the connection is in the middle of a transaction;
 - `:E` stands for Error: the transaction has failed. Any subsequent query would
   lead to an error response.
@@ -712,7 +763,7 @@ true
 ## Configuration
 
 A config map that you pass to `pg/connect` has various fields. Most of them are
-not necessary and derived from the default map. Below, please find a list of
+not necessary and are derived from the default map. Below, please find a list of
 parameters and their defaults.
 
 | Field               | Default                          | Comment                                            |
@@ -774,7 +825,7 @@ The PG client supports several authentication pipelines:
 | SASL           | `scram-sha-256` | 3-steps pipeline with complex algorith; set as default since v15              |
 
 The SASL method includes two algorithms: SCRAM-SHA-256 and
-SCRAM-SHA-256-PLUS. It's up toe the client which one to use. At the moment, only
+SCRAM-SHA-256-PLUS. It's up to the client which one to use. At the moment, only
 SCRAM-SHA-256 is implemented.
 
 ## Cloning a connection
@@ -793,11 +844,11 @@ the config from a given connection.
 ## Cancelling a query
 
 Sometimes, a poorly composed query might hang. If you have a reference to the
-connection that as spawned such a query, you may cancel it. Cancelling a query
+connection that has spawned such a query, you may cancel it. Cancelling a query
 requires a new connection to be opened and thus is usually done in a separate
 thread.
 
-Imagine you're running a long query in a future:
+Imagine you're running a long query in the future:
 
 ~~~clojure
 (def fut
@@ -843,15 +894,15 @@ Here is what inside the `ex-data`:
    :function "ProcessInterrupts"}}}
 ~~~
 
-Under the hood, canceling a query means taking some private data from the target
-connection, opening a new connection and sending a special message. Then, the
-new connection gets closed immediately.
+Under the hood, cancelling a query means taking some private data from the
+target connection, opening a new connection and sending a special message. Then,
+the new connection gets closed immediately.
 
 ## Notices
 
 In Postgres, notices are short informative messages shown to the user
 sometimes. For example, if you try to `ROLLBACK` although there was no `BEGIN`
-first, you won't get not an error but a notice instead.
+first, you won't get an error but a notice instead.
 
 ~~~
 ROLLBACK;
@@ -861,8 +912,8 @@ WARNING:  there is no transaction in progress
 **Don't mix notices with notifications (see the corresponding chapter).**
 
 By default, the client library just prints the `NoticeResponse` map with all the
-fields. You're welcome to pass your own notice handler which logs them, store in
-an atom or whatever else:
+fields. You're welcome to pass your own notice handler which logs them, stores
+them in an atom or whatever else:
 
 ~~~clojure
 (defn my-notice-handler [NoticeResponse]
@@ -885,10 +936,9 @@ an atom or whatever else:
 
 [notify]: https://www.postgresql.org/docs/current/sql-notify.html
 
-
 ## Thread safety
 
-The connection object **is not thread safe**. What it means is, sharing a
+The connection object **is not thread-safe**. What it means is, that sharing a
 connection between multiple threads (futures, agents) might lead to weird
 behaviour when two threads read something from a socket
 simultaneously. Technically it's possible to fix that by wrapping each API call
@@ -899,7 +949,7 @@ under the hood, so no other threads can interfere.
 ## Debugging
 
 It's quite easy to debug messages that the client sends and receives from the
-server. Run REPL with either `PG_DEBUG` environment variable or `pg.debug`
+server. Run REPL with either the `PG_DEBUG` environment variable or `pg.debug`
 system property set:
 
 ~~~clojure
