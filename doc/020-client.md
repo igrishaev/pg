@@ -231,9 +231,9 @@ Closing statements is important for the server as it releases resources allocate
 
 ## Processing result with :fn-result
 
-Often, you want to process the result somehow. Say, to take only the first row of selection (when you know for sure there is either zero or one record).
+Often, you want to process the result somehow. Say, take only the first row of the selection (when you know there is either zero or one record).
 
-All the `query`, `execute`, and `execute-statement` accept optional parameters for such purposes. The `:fn-result` function is applied to the whole result; usually, you pass `first`:
+All the `query`, `execute`, and `execute-statement` accept optional parameters. The `:fn-result` function is applied to the whole result; usually, you pass `first`:
 
 ~~~clojure
 (def sql "select * from users where id = $1")
@@ -248,8 +248,7 @@ All the `query`, `execute`, and `execute-statement` accept optional parameters f
  :user2 {:id 2, :name "Juan", :age 38}}
 ~~~
 
-Pay attention: when passing the `:fn-result` function to `pg/query` with
-multiple expressions, the function is applied to each expression:
+Pay attention: when passing the `:fn-result` function to `pg/query` with multiple expressions, the function is applied to each expression:
 
 ~~~clojure
 (pg/query conn
@@ -265,9 +264,7 @@ multiple expressions, the function is applied to each expression:
 
 ## Column names
 
-By default, the client library turns all the column names to keywords. It
-doesn't take any kebab-case transformations into account: a column `"user_name"`
-becomes `:user_name`.
+By default, the client library turns all the column names to keywords. It doesn't take any kebab-case transformations into account: a column `"user_name"` becomes `:user_name`.
 
 ~~~clojure
 (pg/query conn "select 42 as the_answer")
@@ -275,9 +272,7 @@ becomes `:user_name`.
 [{:the_answer 42}]
 ~~~
 
-An optional parameter `:fn-column` changes this behaviour. It's a function that
-takes a string column and returns whatever you want. Here is how you can obtain
-upper-cased string keys:
+An optional parameter `:fn-column` changes this behaviour. It's a function that takes a string column and returns whatever you want. Here is how you can obtain upper-cased string keys:
 
 ~~~clojure
 (require '[clojure.string :as str])
@@ -287,12 +282,9 @@ upper-cased string keys:
 [{"THE_ANSWER" 42}]
 ~~~
 
-Of course, you can pass a complex function that transforms the string somehow
-and then turns it into a keyword or a symbol.
+Of course, you can pass a complex function that transforms the string somehow and then turns it into a keyword or a symbol.
 
-Some Clojure programmers prefer kebab-case keywords (which I honestly consider a
-bad practice, but still). For this, do one of the two options. Either get such
-function from the `pg.client.func` namespace:
+Some Clojure programmers prefer kebab-case keywords (which I honestly consider a bad practice, but still). For this, do one of the two options. Either get such function from the `pg.client.func` namespace:
 
 ~~~clojure
 (require '[pg.client.func :as func])
@@ -312,13 +304,11 @@ Or pass it as a "bundle":
 [{:the-answer 42}]
 ~~~
 
-Bundles are maps of several processing functions which we're going to describe a
-bit below.
+Bundles are maps of several processing functions which we're going to describe a bit below.
 
 ## Column duplicates
 
-In SQL, that's completely fine when a query returns several columns with the
-same name, for example:
+In SQL, that's completely fine when a query returns several columns with the same name, for example:
 
 ~~~
 SELECT 1 as val, true as val, 'dunno' as val;
@@ -328,12 +318,9 @@ SELECT 1 as val, true as val, 'dunno' as val;
    1 | t   | dunno
 ~~~
 
-But from the client prospective, that's unclear what to do with such a result,
-especially when you're dealing with maps.
+But from the client's perspective, that's unclear what to do with such a result, especially when you're dealing with maps.
 
-By default, the client library adds numbers to those columns that have already
-been in the result. Briefly, for the example above, you'll get `val`, `val_1`
-and `val_2` columns:
+By default, the client library adds numbers to those columns that have already been in the result. Briefly, for the example above, you'll get `val`, `val_1` and `val_2` columns:
 
 ~~~clojure
 (pg/query conn "SELECT 1 as val, true as val, 'dunno' as val")
@@ -341,8 +328,7 @@ and `val_2` columns:
 [{:val 1, :val_1 true, :val_2 "dunno"}]
 ~~~
 
-This behaviour stacks with the `fn-column` parameter: the `fn-column` get
-applied after the column names have been transformed.
+This behaviour stacks with the `fn-column` parameter: the `fn-column` gets applied after the column names have been transformed.
 
 ~~~clojure
 (pg/query conn "SELECT 1 as val, true as val, 'dunno' as val" {:as as/kebab-keys})
@@ -350,24 +336,17 @@ applied after the column names have been transformed.
 [{:val 1, :val-1 true, :val-2 "dunno"}]
 ~~~
 
-The function which is responsible for column duplicates processing is called
-`:fn-unify`. It takes a vector of strings and must return a vector of something
-(strings, keywords, symbols).
+The function which is responsible for column duplicate processing is called `:fn-unify`. It takes a vector of strings and must return a vector of something (strings, keywords, symbols).
 
 ## Reducers and bundles
 
-As you're seen before, the result of `pg/query` or `pg/execute` is a vector of
-maps. Although it is most likely what you want by default, there are other ways
-to obtain the result in another shape.
+As you've seen before, the result of `pg/query` or `pg/execute` is a vector of maps. Although it is most likely what you want by default, there are other ways to obtain the result in another shape.
 
-There is a `pg.client.as` namespaces that carries "bundles": named maps with
-predefined parameters, mostly functions. Passing these maps into the optional
-`:as` field when querying data affects how the rows will be processed.
+There is a `pg.client.as` namespace that carries "bundles": named maps with predefined parameters, mostly functions. Passing these maps into the optional `:as` field when querying data affects how the rows will be processed.
 
 ### Java
 
-The `as/java` bundle builds an `ArrayList` of mutable `HashMap`s. Both the
-top-level set of rows and its children are mutable:
+The `as/java` bundle builds an `ArrayList` of mutable `HashMap`s. Both the top-level set of rows and its children are mutable:
 
 ~~~clojure
 (def res (pg/query conn "SELECT 42 as the_answer" {:as as/java}))
@@ -380,8 +359,7 @@ top-level set of rows and its children are mutable:
 
 ### Kebab-keys
 
-The `kebab-keys` bundle we have already seen in action: it just transforms the
-keys from `:foo_bar` to `:foo-bar`:
+The `kebab-keys` bundle we have already seen in action: it just transforms the keys from `:foo_bar` to `:foo-bar`:
 
 ~~~clojure
 (pg/query conn "SELECT 42 as the_answer" {:as as/kebab-keys})
