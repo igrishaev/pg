@@ -1603,11 +1603,9 @@ drop table %1$s;
           res
           (pg/copy-out conn sql out)
 
-          buf
-          (.toByteArray out)
-
           rows
-          (with-open [reader (-> buf
+          (with-open [reader (-> out
+                                 (.toByteArray)
                                  (io/input-stream)
                                  (io/reader))]
             (vec (csv/read-csv reader)))]
@@ -1631,12 +1629,35 @@ drop table %1$s;
   (pg/with-connection [conn *CONFIG*]
 
     (let [sql
-          "copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT BINARY); select 1 as one"
+          "
+copy (select s.x as x, s.x * s.x as square from generate_series(1, 4) as s(x)) TO STDOUT WITH (FORMAT BINARY);
+select 1 as one;
+copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT CSV);
+          "
+
+          out1
+          (new ByteArrayOutputStream)
+
+          out2
+          (new ByteArrayOutputStream)
+
+          output-streams
+          [out1 out2]
 
           res
-          (pg/query conn sql)]
+          (pg/query conn sql {:output-streams output-streams})
 
-      (is (= [9 [{:one 1}]] res)))))
+          dump1
+          (.toByteArray out1)
+
+          dump2
+          (.toByteArray out2)]
+
+      (is (= 93 (count dump1)))
+
+      (is (not= 0 (count dump2)))
+
+      (is (= [4 [{:one 1}] 3] res)))))
 
 
 #_

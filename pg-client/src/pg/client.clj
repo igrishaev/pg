@@ -451,8 +451,8 @@
 
   Returns a number of rows processed.
   "
-  [conn sql out-stream]
-  (execute conn sql nil {:out-stream out-stream}))
+  [conn sql output-stream]
+  (execute conn sql nil {:output-streams [output-stream]}))
 
 
 #_

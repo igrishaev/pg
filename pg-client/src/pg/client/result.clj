@@ -4,8 +4,7 @@
    java.util.HashMap
    java.util.List
    java.util.ArrayList
-   java.io.OutputStream
-   java.io.ByteArrayOutputStream)
+   java.io.OutputStream)
   (:require
    [pg.client.scram-sha-256 :as scram-sha-256]
    [clojure.string :as str]
@@ -337,23 +336,25 @@
     (.put :I (inc I))))
 
 
+(defn get-output-stream
+  ^OutputStream [{:keys [^int I
+                         ^List output-streams]}]
+  (nth output-streams I nil))
+
+
 (defn handle-CopyData
-  [{:as result :keys [^OutputStream out-stream]}
-   {:keys [^bytes data]}]
-  (.write out-stream data)
-  result)
-
-
-(defn handle-CopyOutResponse
-  [{:as ^Map result :keys [out-stream]} message]
-  (when-not out-stream
-    (.put result :out-stream (new ByteArrayOutputStream)))
+  [result {:keys [^bytes data]}]
+  (when-let [output-stream
+             (get-output-stream result)]
+    (.write output-stream data))
   result)
 
 
 (defn handle-CopyDone
-  [{:as ^Map result :keys [^OutputStream out-stream]} message]
-  (.close out-stream)
+  [result message]
+  (when-let [output-stream
+             (get-output-stream result)]
+    (.close output-stream))
   result)
 
 
@@ -369,7 +370,8 @@
      :BindComplete
      :NoData
      :ParseComplete
-     :CopyInResponse)
+     :CopyInResponse
+     :CopyOutResponse)
     result
 
     :ErrorResponse
@@ -425,9 +427,6 @@
 
     :CopyData
     (handle-CopyData result message)
-
-    :CopyOutResponse
-    (handle-CopyOutResponse result message)
 
     :CopyDone
     (handle-CopyDone result message)
