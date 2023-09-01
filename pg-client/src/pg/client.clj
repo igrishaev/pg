@@ -446,7 +446,10 @@
 (defn copy-out
   "
   Copy a table or a result of a query into an output stream.
-  TODO
+  The content might be either CSV or a binary dump depending on
+  the SQL expression.
+
+  Returns a number of rows processed.
   "
   [conn sql out-stream]
   (execute conn sql nil {:out-stream out-stream}))
