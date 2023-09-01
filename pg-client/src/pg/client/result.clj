@@ -3,7 +3,9 @@
    java.util.Map
    java.util.HashMap
    java.util.List
-   java.util.ArrayList)
+   java.util.ArrayList
+   java.io.OutputStream
+   java.io.ByteArrayOutputStream)
   (:require
    [pg.client.scram-sha-256 :as scram-sha-256]
    [clojure.string :as str]
@@ -18,33 +20,20 @@
    [pg.client.conn :as conn]))
 
 
-(defn subs-safe
-  (^String [^String string from]
-   (let [len (.length string)]
-     (when (<= from len)
-       (.substring string from len))))
-
-  (^String [^String string from to]
-   (let [len (.length string)]
-     (when (<= from to len)
-       (.substring string from to)))))
-
-
 (defn tag->amount [^String tag]
 
-  (case (subs-safe tag 0 6)
+  (let [[lead & args]
+        (str/split tag #"\s+")]
 
-    "INSERT"
-    (-> tag
-        (subs-safe 7)
-        (str/split #" " )
-        (second)
-        (Long/parseLong))
+    (case lead
 
-    ("UPDATE" "DELETE")
-    (-> tag (subs-safe 7) Long/parseLong)
+      "INSERT"
+      (-> args (nth 1) Long/parseLong)
 
-    nil))
+      ("UPDATE" "DELETE" "COPY")
+      (-> args first Long/parseLong)
+
+      nil)))
 
 
 (def result-defaults
@@ -348,8 +337,23 @@
     (.put :I (inc I))))
 
 
-(defn handle-CopyData [result {:keys [data]}]
-  (println data)
+(defn handle-CopyData
+  [{:as result :keys [^OutputStream out-stream]}
+   {:keys [^bytes data]}]
+  (.write out-stream data)
+  result)
+
+
+(defn handle-CopyOutResponse
+  [{:as ^Map result :keys [out-stream]} message]
+  (when-not out-stream
+    (.put result :out-stream (new ByteArrayOutputStream)))
+  result)
+
+
+(defn handle-CopyDone
+  [{:as ^Map result :keys [^OutputStream out-stream]} message]
+  (.close out-stream)
   result)
 
 
@@ -365,8 +369,6 @@
      :BindComplete
      :NoData
      :ParseComplete
-     :CopyDone
-     :CopyOutResponse
      :CopyInResponse)
     result
 
@@ -423,6 +425,14 @@
 
     :CopyData
     (handle-CopyData result message)
+
+    :CopyOutResponse
+    (handle-CopyOutResponse result message)
+
+    :CopyDone
+    (handle-CopyDone result message)
+
+    ;; else
 
     (throw (ex-info "Cannot handle a message"
                     {:phase phase

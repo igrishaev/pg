@@ -8,6 +8,7 @@
 - write to csv/stream
 - conn: read-only check?
 - check if socket is closed?
+- execute: add flush?
 
 - benchmarks
 - interval support

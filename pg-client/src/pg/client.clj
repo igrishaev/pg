@@ -444,7 +444,7 @@
 
 
 (defn copy-out [conn sql out-stream]
-  )
+  (execute conn sql nil {:out-stream out-stream}))
 
 
 #_

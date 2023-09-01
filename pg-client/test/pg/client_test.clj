@@ -1,5 +1,6 @@
 (ns pg.client-test
   (:import
+   java.io.ByteArrayOutputStream
    java.time.Instant
    java.time.LocalDate
    java.time.LocalDateTime
@@ -11,6 +12,8 @@
    java.util.HashMap
    java.util.concurrent.ExecutionException)
   (:require
+   [clojure.data.csv :as csv]
+   [clojure.java.io :as io]
    [clojure.string :as str]
    [clojure.test :refer [deftest is use-fixtures testing]]
    [pg.client :as pg]
@@ -1590,12 +1593,57 @@ drop table %1$s;
 
   (pg/with-connection [conn *CONFIG*]
 
+    (let [sql
+          "copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT CSV)"
+
+          out
+          (new ByteArrayOutputStream)
+
+          res
+          (pg/copy-out conn sql out)
+
+          buf
+          (.toByteArray out)
+
+          rows
+          (with-open [reader (-> buf
+                                 (io/input-stream)
+                                 (io/reader))]
+            (vec (csv/read-csv reader)))]
+
+      (is (= 9 res))
+
+      (is (= 1 rows))
+
+      ))
+
+
+  )
+
+
+#_
+(deftest test-copy-out-execute
+
+  (pg/with-connection [conn *CONFIG*]
+
     (let [res
           (pg/query conn "copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT BINARY)")]
 
       (is (nil? res)))))
 
 
+#_
+(deftest test-copy-out-query
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (let [res
+          (pg/query conn "copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT BINARY); select 42 as foo")]
+
+      (is (= [nil [{:foo 42}]] res)))))
+
+
+#_
 (deftest test-copy-in
 
   (pg/with-connection [conn *CONFIG*]

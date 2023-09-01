@@ -25,4 +25,5 @@
   {:test
    {:dependencies
     [[com.github.igrishaev/pg-json]
-     [com.github.igrishaev/pg-integration]]}})
+     [com.github.igrishaev/pg-integration]
+     [org.clojure/data.csv]]}})
