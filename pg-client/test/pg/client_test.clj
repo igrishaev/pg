@@ -1589,7 +1589,7 @@ drop table %1$s;
                      :message))))))))
 
 
-(deftest test-copy-out
+(deftest test-copy-out-text
 
   (pg/with-connection [conn *CONFIG*]
 
@@ -1613,12 +1613,15 @@ drop table %1$s;
 
       (is (= 9 res))
 
-      (is (= 1 rows))
-
-      ))
-
-
-  )
+      (is (= [["1" "1"]
+              ["2" "4"]
+              ["3" "9"]
+              ["4" "16"]
+              ["5" "25"]
+              ["6" "36"]
+              ["7" "49"]
+              ["8" "64"]
+              ["9" "81"]] rows)))))
 
 
 #_

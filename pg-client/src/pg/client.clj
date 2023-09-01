@@ -443,7 +443,12 @@
   nil)
 
 
-(defn copy-out [conn sql out-stream]
+(defn copy-out
+  "
+  Copy a table or a result of a query into an output stream.
+  TODO
+  "
+  [conn sql out-stream]
   (execute conn sql nil {:out-stream out-stream}))
 
 
