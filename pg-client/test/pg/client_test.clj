@@ -330,17 +330,23 @@
       (let [pid
             (pg/pid conn)
 
+            channel
+            "!@#$%^&*();\" d'rop \"t'a'ble students--;42"
+
             res1
-            (pg/query conn "listen FOO")
+            (pg/listen conn channel)
+
+            payload
+            "'; \n\t\rdrop table studets--!@#$%^\""
 
             res2
-            (pg/query conn "notify FOO, 'kek-lol'")
+            (pg/notify conn channel payload)
 
             res3
-            (pg/query conn "unlisten FOO")
+            (pg/unlisten conn channel)
 
             res4
-            (pg/query conn "notify FOO, 'hello'")
+            (pg/notify conn channel "more")
 
             messages
             @capture!
@@ -357,8 +363,8 @@
 
         (is (= {:msg :NotificationResponse
                 :pid pid
-                :channel "foo"
-                :message "kek-lol"}
+                :channel channel
+                :message payload}
                message))))))
 
 

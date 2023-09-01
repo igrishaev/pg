@@ -1,7 +1,9 @@
 (ns pg.client
   (:require
+   [clojure.string :as str]
    [pg.client.conn :as conn]
    [pg.client.func :as func]
+   [pg.client.quote :as quote]
    [pg.client.result :as res]
    [pg.client.sql :as sql]
    [pg.const :as const]
@@ -406,3 +408,36 @@
                 `(rollback ~bind)
                 `(commit ~bind))
              result#))))))
+
+
+(defn listen
+  "
+  Subscribe the connection to a given channel.
+  "
+  [conn ^String channel]
+  (execute conn
+           (format "LISTEN %s" (quote/quote'' channel))
+           nil
+           nil))
+
+
+(defn unlisten
+  "
+  Unsbuscribe the connection from a given channel.
+  "
+  [conn ^String channel]
+  (execute conn
+           (format "UNLISTEN %s" (quote/quote'' channel))
+           nil
+           nil))
+
+
+(defn notify
+  "
+  Send a text message to the given channel.
+  "
+  [conn ^String channel ^String message]
+  (execute conn
+           "select pg_notify($1, $2)"
+           [(str/lower-case channel) message])
+  nil)
