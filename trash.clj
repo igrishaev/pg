@@ -115,3 +115,7 @@ https://github.com/pgjdbc/pgjdbc/issues/1311#issuecomment-1143805011
       ;; SO_RCVBUF
       ;; SocketOptions
       )
+
+
+<-  {:msg :ErrorResponse, :errors {:severity ERROR, :verbosity ERROR, :code 08P01, :message unexpected message type 0x43 during COPY from stdin, :stacktrace COPY foo, line 1, :file copyfromparse.c, :line 292, :function CopyGetData}}
+<-  {:msg :ErrorResponse, :errors {:severity FATAL, :verbosity FATAL, :code 08P01, :message terminating connection because protocol synchronization was lost, :file postgres.c, :line 4369, :function PostgresMain}}

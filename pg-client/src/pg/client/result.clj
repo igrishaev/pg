@@ -348,6 +348,11 @@
     (.put :I (inc I))))
 
 
+(defn handle-CopyData [result {:keys [data]}]
+  (println data)
+  result)
+
+
 (defn handle [{:as result :keys [phase]}
               conn
               {:as message :keys [msg]}]
@@ -359,7 +364,10 @@
      :CloseComplete
      :BindComplete
      :NoData
-     :ParseComplete)
+     :ParseComplete
+     :CopyDone
+     :CopyOutResponse
+     :CopyInResponse)
     result
 
     :ErrorResponse
@@ -413,6 +421,9 @@
     :ParameterDescription
     (handle-ParameterDescription result message)
 
+    :CopyData
+    (handle-CopyData result message)
+
     (throw (ex-info "Cannot handle a message"
                     {:phase phase
                      :message message}))))
@@ -460,58 +471,7 @@
       (case (.size subs)
         0 nil
         1 (.get subs 0)
-        subs)))
-
-
-
-  #_
-  (let [len (.size nodes)]
-
-    (loop [i 0
-           acc! (transient [])]
-
-      (if (= i len)
-
-        (let [acc
-              (cond->> (persistent! acc!)
-                fn-result
-                (mapv fn-result))]
-
-          (case (count acc)
-            0 nil
-            1 (first acc)
-            acc))
-
-
-        (let [^Map node
-              (.get nodes i)
-
-              {:keys [Rows
-                      CommandComplete
-                      RowDescription]}
-              node
-
-              {:keys [tag]}
-              CommandComplete
-
-              amount
-              (some-> tag tag->amount)
-
-              subresult
-              (cond
-
-                RowDescription
-                (if fn-finalize
-                  (fn-finalize Rows)
-                  Rows)
-
-                amount
-                amount
-
-                :else
-                nil)]
-
-          (recur (inc i) (conj! acc! subresult)))))))
+        subs))))
 
 
 (defn finalize-prepare

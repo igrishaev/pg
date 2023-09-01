@@ -1584,3 +1584,27 @@ drop table %1$s;
                      :error
                      :errors
                      :message))))))))
+
+
+(deftest test-copy-out
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (let [res
+          (pg/query conn "copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT BINARY)")]
+
+      (is (nil? res)))))
+
+
+(deftest test-copy-in
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (pg/query conn "create temp table foo (id bigint, name text, active boolean)")
+
+    (let [res
+          (pg/query conn "copy foo (id, name, active) from STDIN WITH (FORMAT CSV)")
+          #_
+          (pg/execute conn "copy foo (id, name, active) from STDIN WITH (FORMAT CSV)" nil)]
+
+      (is (nil? res)))))

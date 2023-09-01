@@ -281,6 +281,11 @@
     (send-message conn msg)))
 
 
+(defn send-copy-data [conn buffer]
+  (let [msg (msg/make-CopyData buffer)]
+    (send-message conn msg)))
+
+
 (defn close-statement
   [conn ^String statement]
   (send-message conn (msg/make-Close \S statement)))

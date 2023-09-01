@@ -369,6 +369,51 @@
      :params params}))
 
 
+(defn parse-CopyData [bb opt]
+  {:msg :CopyData
+   :data (bb/read-rest bb)})
+
+
+(defn parse-CopyDone [bb opt]
+  {:msg :CopyDone})
+
+
+(defn parse-CopyOutResponse [bb opt]
+
+  (let [format
+        (bb/read-byte bb)
+
+        column-count
+        (bb/read-uint16 bb)
+
+        column-formats
+        (coll/for-n [_ column-count]
+          (bb/read-int16 bb))]
+
+    {:msg :CopyOutResponse
+     :format format
+     :column-count column-count
+     :column-formats column-formats}))
+
+
+(defn parse-CopyInResponse [bb opt]
+
+  (let [format
+        (bb/read-byte bb)
+
+        column-count
+        (bb/read-uint16 bb)
+
+        column-formats
+        (coll/for-n [_ column-count]
+          (bb/read-int16 bb))]
+
+    {:msg :CopyInResponse
+     :format format
+     :column-count column-count
+     :column-formats column-formats}))
+
+
 (defn parse-message
 
   [tag bb opt]
@@ -429,10 +474,17 @@
     \t
     (parse-ParameterDescription bb opt)
 
+    \d
+    (parse-CopyData bb opt)
 
+    \c
+    (parse-CopyDone bb opt)
 
+    \H
+    (parse-CopyOutResponse bb opt)
 
-
+    \G
+    (parse-CopyInResponse bb opt)
 
     ;; else
 
@@ -861,6 +913,20 @@
     (to-bb \E out)))
 
 
+(defn make-CopyData [data]
+  {:msg :CopyData
+   :data data})
+
+
+;; TODO: improve
+(defn encode-CopyData
+  [{:keys [data]}
+   opt]
+
+;;;
+  )
+
+
 (defn encode-message [{:as message :keys [msg]} opt]
 
   (case msg
@@ -909,6 +975,9 @@
 
     :SASLInitialResponse
     (encode-SASLInitialResponse message opt)
+
+    :CopyData
+    (encode-CopyData message opt)
 
     ;; else
 

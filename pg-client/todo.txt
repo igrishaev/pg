@@ -7,6 +7,7 @@
 - pool: read-only default
 - write to csv/stream
 - conn: read-only check?
+- check if socket is closed?
 
 - benchmarks
 - interval support

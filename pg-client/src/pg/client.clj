@@ -441,3 +441,23 @@
            "select pg_notify($1, $2)"
            [(str/lower-case channel) message])
   nil)
+
+
+(defn copy-out [conn sql out-stream]
+  )
+
+
+#_
+(defn copy-in [conn sql input-stream]
+
+  (query conn sql)
+
+  (let [buf (byte-array 128)]
+
+    (loop []
+      (let [read (.read input-stream buf)]
+        (if (neg? read)
+          :CopyDone
+          (do
+            (conn/send-copy-data conn buf)
+            (recur)))))))
