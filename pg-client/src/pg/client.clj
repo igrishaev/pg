@@ -458,12 +458,13 @@
 
   (query conn sql)
 
-  (let [buf (byte-array 128)]
+  (let [len 2048
+        buf (byte-array len)]
 
     (loop []
       (let [read (.read input-stream buf)]
         (if (neg? read)
           :CopyDone
           (do
-            (conn/send-copy-data conn buf)
+            (conn/send-copy-data conn buf 0 read)
             (recur)))))))
