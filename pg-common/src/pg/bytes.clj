@@ -109,3 +109,8 @@
 
 (defmacro byte? [x]
   `(instance? Byte ~x))
+
+
+(defn slice ^bytes
+  [^bytes src ^Integer offset ^Integer length]
+  (Arrays/copyOfRange src offset length))

@@ -1,6 +1,7 @@
 (ns pg.client
   (:require
    [clojure.string :as str]
+   [pg.bytes :as bytes]
    [pg.client.conn :as conn]
    [pg.client.func :as func]
    [pg.client.quote :as quote]
@@ -11,6 +12,7 @@
    [pg.oid :as oid])
   (:import
    clojure.lang.Keyword
+   java.io.InputStream
    java.util.List
    java.util.Map
    pg.client.conn.Connection))
@@ -453,18 +455,30 @@
   (execute conn sql nil {:output-stream output-stream}))
 
 
-#_
-(defn copy-in [conn sql input-stream]
+(defn copy-in [conn sql ^InputStream input-stream]
 
-  (query conn sql)
+  (conn/send-query conn sql)
 
-  (let [len 2048
-        buf (byte-array len)]
+  (let [LIMIT
+        8 ;; 2048
+
+        buf
+        (byte-array LIMIT)
+
+        full?
+        (= (alength buf) LIMIT)]
 
     (loop []
+      ;; #bogus
       (let [read (.read input-stream buf)]
-        (if (neg? read)
-          :CopyDone
-          (do
-            (conn/send-copy-data conn buf 0 read)
-            (recur)))))))
+        (when-not (neg? read)
+          (if full?
+            (conn/send-copy-data conn buf)
+            (let [slice (bytes/slice buf 0 read)]
+              (conn/send-copy-data conn slice)))
+          (recur))))
+
+    #_
+    (conn/send-copy-done conn)
+    #_
+    (res/interact conn :copy-in nil)))

@@ -918,13 +918,13 @@
    :data data})
 
 
-;; TODO: improve
 (defn encode-CopyData
-  [{:keys [data]}
-   opt]
-
-;;;
-  )
+  [{:keys [^bytes data]} opt]
+  (let [len (alength data)]
+    (doto (bb/allocate (+ 1 4 len))
+      (bb/write-byte \d)
+      (bb/write-int32 (+ 4 len))
+      (bb/write-bytes data))))
 
 
 (defn encode-message [{:as message :keys [msg]} opt]

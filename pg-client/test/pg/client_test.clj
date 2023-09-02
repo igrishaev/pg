@@ -1697,16 +1697,29 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
       (is (= [4 [{:one 1}] 3] res)))))
 
 
-#_
-(deftest test-copy-in
+(deftest test-copy-in-api-txt
 
   (pg/with-connection [conn *CONFIG*]
 
     (pg/query conn "create temp table foo (id bigint, name text, active boolean)")
 
-    (let [res
-          (pg/query conn "copy foo (id, name, active) from STDIN WITH (FORMAT CSV)")
-          #_
-          (pg/execute conn "copy foo (id, name, active) from STDIN WITH (FORMAT CSV)" nil)]
+    (let [rows
+          [[1 "Ivan" true]
+           [1 "Juan" false]]
 
-      (is (nil? res)))))
+          out
+          (new ByteArrayOutputStream)
+
+          _
+          (with-open [writer (io/writer out)]
+            (csv/write-csv writer rows))
+
+          in-stream
+          (-> out .toByteArray io/input-stream)
+
+          res
+          (pg/copy-in conn
+                      "copy foo (id, name, active) from STDIN WITH (FORMAT CSV)"
+                      in-stream)]
+
+      (is (= 1 res)))))
