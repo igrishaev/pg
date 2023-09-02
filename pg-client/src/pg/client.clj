@@ -447,12 +447,10 @@
   "
   Copy a table or a result of a query into an output stream.
   The content might be either CSV or a binary dump depending on
-  the SQL expression.
-
-  Returns a number of rows processed.
+  the SQL expression. Return a number of rows processed.
   "
   [conn sql output-stream]
-  (execute conn sql nil {:output-streams [output-stream]}))
+  (execute conn sql nil {:output-stream output-stream}))
 
 
 #_

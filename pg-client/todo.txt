@@ -9,6 +9,7 @@
 - conn: read-only check?
 - check if socket is closed?
 - execute: add flush?
+- copy-out multiple streams?
 
 - benchmarks
 - interval support

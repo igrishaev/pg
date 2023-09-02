@@ -1589,8 +1589,7 @@ drop table %1$s;
                      :message))))))))
 
 
-;; TODO: test binary
-(deftest test-copy-out-api
+(deftest test-copy-out-api-txt
 
   (pg/with-connection [conn *CONFIG*]
 
@@ -1623,7 +1622,46 @@ drop table %1$s;
               ["9" "81"]] rows)))))
 
 
-#_
+(deftest test-copy-out-api-bin
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (let [sql
+          "copy (select s.x as x, s.x * s.x as square from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT BINARY)"
+
+          out
+          (new ByteArrayOutputStream)
+
+          res
+          (pg/copy-out conn sql out)]
+
+      (is (= 3 res))
+
+      (is (= [80 71 67 79 80 89 10 -1 13 10 0 0 0 0 0 0 0 0 0 0 2 0 0 0 4 0 0 0 1 0 0 0 4 0 0 0 1 0 2 0 0 0 4 0 0 0 2 0 0 0 4 0 0 0 4 0 2 0 0 0 4 0 0 0 3 0 0 0 4 0 0 0 9 -1 -1]
+             (-> out (.toByteArray) (vec)))))))
+
+
+(deftest test-copy-out-api-multiple-expressions
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (let [sql
+          "select 42; copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT CSV)"
+
+          out
+          (new ByteArrayOutputStream)]
+
+      (try
+        (pg/copy-out conn sql out)
+        (is false)
+        (catch Exception e
+          (is (= "cannot insert multiple commands into a prepared statement"
+                 (-> e ex-data :error :errors :message))))))
+
+    (let [res (pg/query conn "select 1 as one")]
+      (is (= [{:one 1}] res)))))
+
+
 (deftest test-copy-out-query
 
   (pg/with-connection [conn *CONFIG*]
@@ -1645,7 +1683,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
           [out1 out2]
 
           res
-          (pg/query conn sql {:output-streams output-streams})
+          (pg/query conn sql)
 
           dump1
           (.toByteArray out1)
@@ -1653,22 +1691,10 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
           dump2
           (.toByteArray out2)]
 
-      (is (= 93 (count dump1)))
-
-      (is (not= 0 (count dump2)))
+      (is (= 0 (count dump1)))
+      (is (= 0 (count dump2)))
 
       (is (= [4 [{:one 1}] 3] res)))))
-
-
-#_
-(deftest test-copy-out-execute
-
-  (pg/with-connection [conn *CONFIG*]
-
-    (let [res
-          (pg/query conn "copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT BINARY)")]
-
-      (is (nil? res)))))
 
 
 #_

@@ -336,24 +336,18 @@
     (.put :I (inc I))))
 
 
-(defn get-output-stream
-  ^OutputStream [{:keys [^int I
-                         ^List output-streams]}]
-  (nth output-streams I nil))
-
-
 (defn handle-CopyData
-  [result {:keys [^bytes data]}]
-  (when-let [output-stream
-             (get-output-stream result)]
+  [{:as result :keys [^OutputStream output-stream]}
+   {:keys [^bytes data]}]
+  (when output-stream
     (.write output-stream data))
   result)
 
 
 (defn handle-CopyDone
-  [result message]
-  (when-let [output-stream
-             (get-output-stream result)]
+  [{:as result :keys [^OutputStream output-stream]}
+   _]
+  (when output-stream
     (.close output-stream))
   result)
 
