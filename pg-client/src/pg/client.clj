@@ -460,7 +460,7 @@
   (conn/send-query conn sql)
 
   (let [LIMIT
-        8 ;; 2048
+        2048
 
         buf
         (byte-array LIMIT)
@@ -469,7 +469,6 @@
         (= (alength buf) LIMIT)]
 
     (loop []
-      ;; #bogus
       (let [read (.read input-stream buf)]
         (when-not (neg? read)
           (if full?
@@ -478,7 +477,5 @@
               (conn/send-copy-data conn slice)))
           (recur))))
 
-    #_
     (conn/send-copy-done conn)
-    #_
     (res/interact conn :copy-in nil)))

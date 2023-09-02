@@ -927,6 +927,16 @@
       (bb/write-bytes data))))
 
 
+(defn make-CopyDone []
+  {:msg :CopyDone})
+
+
+(defn encode-CopyDone [_ _]
+  (doto (bb/allocate 5)
+    (bb/write-byte \c)
+    (bb/write-int32 4)))
+
+
 (defn encode-message [{:as message :keys [msg]} opt]
 
   (case msg
@@ -978,6 +988,9 @@
 
     :CopyData
     (encode-CopyData message opt)
+
+    :CopyDone
+    (encode-CopyDone message opt)
 
     ;; else
 

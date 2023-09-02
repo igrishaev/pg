@@ -286,6 +286,11 @@
     (send-message conn msg)))
 
 
+(defn send-copy-done [conn]
+  (let [msg (msg/make-CopyDone)]
+    (send-message conn msg)))
+
+
 (defn close-statement
   [conn ^String statement]
   (send-message conn (msg/make-Close \S statement)))

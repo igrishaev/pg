@@ -1,5 +1,6 @@
 (ns pg.client-test
   (:import
+   java.io.ByteArrayInputStream
    java.io.ByteArrayOutputStream
    java.time.Instant
    java.time.LocalDate
@@ -1715,11 +1716,19 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
             (csv/write-csv writer rows))
 
           in-stream
+          #_
+          (-> "1,Ivan,true\n1,Juan,false"
+              (.getBytes)
+              (ByteArrayInputStream.))
           (-> out .toByteArray io/input-stream)
 
+
           res
+          ;; (slurp in-stream)
           (pg/copy-in conn
                       "copy foo (id, name, active) from STDIN WITH (FORMAT CSV)"
-                      in-stream)]
+                      in-stream)
+
+          ]
 
       (is (= 1 res)))))
