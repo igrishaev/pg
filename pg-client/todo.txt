@@ -1,5 +1,12 @@
 
 - add docs
+-- pool
+-- notify
+-- copy
+-- types
+-- json
+-- joda
+
 - protocol-message notice
 - error resp ex structure
 - me.grishaev ns
@@ -12,6 +19,7 @@
 - copy-out multiple streams?
 - copy-out try/catch
 - copy failed
+- pg-csv: parse csv to clj; bin
 
 - benchmarks
 - interval support

@@ -452,8 +452,7 @@
   the SQL expression. Return a number of rows processed.
   "
   [conn sql output-stream]
-  ;; TODO: catch IOException
-  (execute conn sql nil {:output-stream output-stream}))
+  (query conn sql {:output-stream output-stream}))
 
 
 (defn copy-in

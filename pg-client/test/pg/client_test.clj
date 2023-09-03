@@ -1650,14 +1650,13 @@ drop table %1$s;
           "select 42; copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT CSV)"
 
           out
-          (new ByteArrayOutputStream)]
+          (new ByteArrayOutputStream)
 
-      (try
-        (pg/copy-out conn sql out)
-        (is false)
-        (catch Exception e
-          (is (= "cannot insert multiple commands into a prepared statement"
-                 (-> e ex-data :error :errors :message))))))
+          _
+          (pg/copy-out conn sql out)]
+
+      (is (= "1,1\n2,4\n3,9\n4,16\n5,25\n6,36\n7,49\n8,64\n9,81\n"
+             (-> out .toByteArray String.))))
 
     (let [res (pg/query conn "select 1 as one")]
       (is (= [{:one 1}] res)))))
