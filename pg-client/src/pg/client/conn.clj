@@ -276,8 +276,7 @@
 
 
 (defn send-execute [conn portal row-count]
-  (let [msg
-        (msg/make-Execute portal row-count)]
+  (let [msg (msg/make-Execute portal row-count)]
     (send-message conn msg)))
 
 

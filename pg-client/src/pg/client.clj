@@ -452,30 +452,33 @@
   the SQL expression. Return a number of rows processed.
   "
   [conn sql output-stream]
+  ;; TODO: catch IOException
   (execute conn sql nil {:output-stream output-stream}))
 
 
-(defn copy-in [conn sql ^InputStream input-stream]
+(defn copy-in
 
-  (conn/send-query conn sql)
+  ([conn sql input-stream]
+   (copy-in conn sql input-stream nil))
 
-  (let [LIMIT
-        2048
+  ([conn
+    sql
+    ^InputStream input-stream
+    {:keys [buffer-size]
+     :or {buffer-size const/COPY_BUFFER_SIZE}}]
 
-        buf
-        (byte-array LIMIT)
+   (conn/send-query conn sql)
 
-        full?
-        (= (alength buf) LIMIT)]
+   (let [buf (byte-array buffer-size)]
 
-    (loop []
-      (let [read (.read input-stream buf)]
-        (when-not (neg? read)
-          (if full?
-            (conn/send-copy-data conn buf)
-            (let [slice (bytes/slice buf 0 read)]
-              (conn/send-copy-data conn slice)))
-          (recur))))
+     (loop []
+       (let [read (.read input-stream buf)]
+         (when-not (neg? read)
+           (if (= read buffer-size)
+             (conn/send-copy-data conn buf)
+             (let [slice (bytes/slice buf 0 read)]
+               (conn/send-copy-data conn slice)))
+           (recur))))
 
-    (conn/send-copy-done conn)
-    (res/interact conn :copy-in nil)))
+     (conn/send-copy-done conn)
+     (res/interact conn :copy-in nil))))

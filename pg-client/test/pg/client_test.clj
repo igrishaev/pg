@@ -1706,7 +1706,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
 
     (let [rows
           [[1 "Ivan" true]
-           [1 "Juan" false]]
+           [2 "Juan" false]]
 
           out
           (new ByteArrayOutputStream)
@@ -1716,19 +1716,44 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
             (csv/write-csv writer rows))
 
           in-stream
-          #_
-          (-> "1,Ivan,true\n1,Juan,false"
-              (.getBytes)
-              (ByteArrayInputStream.))
           (-> out .toByteArray io/input-stream)
 
-
-          res
-          ;; (slurp in-stream)
+          res-copy
           (pg/copy-in conn
                       "copy foo (id, name, active) from STDIN WITH (FORMAT CSV)"
                       in-stream)
 
-          ]
 
-      (is (= 1 res)))))
+          res-query
+          (pg/query conn "select * from foo")]
+
+      (is (= 2 res-copy))
+
+      (is (= [{:id 1 :name "Ivan" :active true}
+              {:id 2 :name "Juan" :active false}]
+             res-query)))))
+
+
+(deftest test-copy-in-broken-csv
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (pg/query conn "create temp table foo (id bigint, name text, active boolean)")
+
+    (let [in-stream
+          (-> "\n\b232\t\n\n@#^@#$\r\b"
+              (.getBytes)
+              io/input-stream)]
+
+      (try
+        (pg/copy-in conn
+                    "copy foo (id, name, active) from STDIN WITH (FORMAT CSV)"
+                    in-stream
+                    {:buffer-size 1})
+        (is false)
+        (catch Exception e
+          (is e)))
+
+      (let [res-query
+            (pg/query conn "select 1 as one")]
+        (is (= [{:one 1}] res-query))))))

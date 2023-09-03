@@ -38,3 +38,5 @@
 (def NUMERIC_POS (int 0x0000))
 (def NUMERIC_NEG (int 0x4000))
 (def NUMERIC_NAN (int 0xC000))
+
+(def COPY_BUFFER_SIZE 2048)
