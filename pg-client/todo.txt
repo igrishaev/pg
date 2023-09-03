@@ -10,6 +10,8 @@
 - check if socket is closed?
 - execute: add flush?
 - copy-out multiple streams?
+- copy-out try/catch
+- copy failed
 
 - benchmarks
 - interval support
