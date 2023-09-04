@@ -186,6 +186,9 @@ in the pool.
 
 ## Logs
 
+The pool logs its events using the `clojure.tools.logging` library. The
+namespace is `pg.pool`. Here is an example of logs you would get:
+
 ~~~
 16:20:35 DEBUG pg.pool - a new connection created: pg10177
 16:20:35 DEBUG pg.pool - connection pg10177 has been acquired
@@ -197,6 +200,13 @@ in the pool.
 16:20:35 DEBUG pg.pool - terminating connection pg10178
 16:20:35 DEBUG pg.pool - terminating connection pg10177
 16:20:35 DEBUG pg.pool - pool termination done
+~~~
+
+A snippet for Logback configuration: add it into your `logback.xml` file:
+
+~~~xml
+<logger name="pg.pool" level="DEBUG" additivity="false">
+</logger>
 ~~~
 
 ## Component
