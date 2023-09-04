@@ -180,9 +180,58 @@ a free connection again. Although it's possible with a blocking version of
 
 ## Exception handling
 
-Should any exception occurres in the `with-connection` macro, the DB connection
-will be terminated. A new connection will be spawned to instead.
+Should any exception occur in the in the middle of the `with-connection` macro,
+the DB connection gets terminated. A new connection is spawned to substitute it
+in the pool.
 
 ## Logs
 
+~~~
+16:20:35 DEBUG pg.pool - a new connection created: pg10177
+16:20:35 DEBUG pg.pool - connection pg10177 has been acquired
+16:20:35 DEBUG pg.pool - a new connection created: pg10178
+16:20:35 DEBUG pg.pool - connection pg10177 has been acquired
+...
+16:20:35 DEBUG pg.pool - connection pg10177 has been released
+16:20:35 DEBUG pg.pool - terminating the pool...
+16:20:35 DEBUG pg.pool - terminating connection pg10178
+16:20:35 DEBUG pg.pool - terminating connection pg10177
+16:20:35 DEBUG pg.pool - pool termination done
+~~~
+
 ## Component
+
+~~~clojure
+(require '[com.stuartsierra.component :as component])
+
+(def pool
+  (pool/component pg-config))
+
+(component/start c)
+
+(component/stop c-started)
+
+
+(defrecord SomeJob [;; opt
+                    params
+                    ;; deps
+                    pool]
+
+  component/Lifecycle
+
+  (start [this]
+    (pool/with-connection [conn pool]
+      ...))
+
+  (stop [this]
+    ...))
+
+
+(def system
+  {:pool
+   (pool/component pg-config)
+
+   :some-job
+   (-> (map->SomeJob {...})
+       (component/using [:pool]))})
+~~~

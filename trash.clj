@@ -119,3 +119,15 @@ https://github.com/pgjdbc/pgjdbc/issues/1311#issuecomment-1143805011
 
 <-  {:msg :ErrorResponse, :errors {:severity ERROR, :verbosity ERROR, :code 08P01, :message unexpected message type 0x43 during COPY from stdin, :stacktrace COPY foo, line 1, :file copyfromparse.c, :line 292, :function CopyGetData}}
 <-  {:msg :ErrorResponse, :errors {:severity FATAL, :verbosity FATAL, :code 08P01, :message terminating connection because protocol synchronization was lost, :file postgres.c, :line 4369, :function PostgresMain}}
+
+
+16:20:35 DEBUG pg.pool - a new connection created: pg10177
+16:20:35 DEBUG pg.pool - connection pg10177 has been acquired
+16:20:35 DEBUG pg.pool - a new connection created: pg10178
+16:20:35 DEBUG pg.pool - connection pg10177 has been acquired
+...
+16:20:35 DEBUG pg.pool - connection pg10177 has been released
+16:20:35 DEBUG pg.pool - terminating the pool...
+16:20:35 DEBUG pg.pool - terminating connection pg10178
+16:20:35 DEBUG pg.pool - terminating connection pg10177
+16:20:35 DEBUG pg.pool - pool termination done

@@ -232,3 +232,49 @@ further notifications won't work any longer.
 
   (pool/with-connection [conn pool]
     (pg/query conn "select pg_sleep(600) as sleep")))
+
+
+
+(require '[com.stuartsierra.component :as component])
+
+
+(def pool-idle
+  (pool/component pg-config))
+
+
+(def pool-started
+  (component/start pool-idle))
+
+
+(pool/with-connection [conn pool-started]
+  (pg/query conn "select 42 as the_answer"))
+
+[{:the_answer 42}]
+
+
+(def pool-stopped
+  (component/stop pool-started))
+
+
+(defrecord SomeJob [;; opt
+                    params
+                    ;; deps
+                    pool]
+
+  component/Lifecycle
+
+  (start [this]
+    (pool/with-connection [conn pool]
+      ...))
+
+  (stop [this]
+    ...))
+
+
+(def system
+  {:pool
+   (pool/component pg-config)
+
+   :some-job
+   (-> (map->SomeJob {,,,})
+       (component/using [:pool]))})
