@@ -23,7 +23,7 @@ connections or threads/futures that do the same, sooner or later you'll reach an
 error response saying "too many connections".
 
 The connection pool is an objects that holds several open connections at
-once. It allows you to `borrow` a connection for some period of time. A borrowed
+once. It allows you to *borrow* a connection for some period of time. A borrowed
 connection can be only used in a block of code that has borrowed it but nowhere
 else. Once the block of code has done its duties, the connection gets returned
 to the pool.
@@ -37,7 +37,35 @@ facility.
 
 ## Basic usage
 
+~~~clojure
+[pg.pool :as pool]
+[pg.client :as pg]
+
+(def pg-config {...})
+(def pool-config {...})
+
+(def pool (pool/make-pool pg-config pg-config))
+
+(pool/with-connection [conn pool]
+  ...)
+
+(pool/with-pool [pool pg-config pg-config]
+  (future
+    (pool/with-connectoin [conn pool]
+      ...))
+  (future
+    (pool/with-connectoin [conn pool]
+      ...)))
+~~~
+
 ## Config
+
+~~~clojure
+(def pool-defaults
+  {:min-size 2
+   :max-size 8
+   :ms-lifetime (* 1000 60 60 1)})
+~~~
 
 ## Thread safety
 

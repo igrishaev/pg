@@ -173,3 +173,24 @@ clojure.lang.ExceptionInfo: ErrorResponse ...
 (pg/query conn2 "unlisten FOO")
 
 further notifications won't work any longer.
+
+
+[pg.pool :as pool]
+[pg.client :as pg]
+
+
+(def pg-config {...})
+(def pool-config {...})
+
+(def pool (pool/make-pool pg-config pg-config))
+
+(pool/with-connection [conn pool]
+  ...)
+
+(pool/with-pool [pool pg-config pg-config]
+  (future
+    (pool/with-connectoin [conn pool]
+      ...))
+  (future
+    (pool/with-connectoin [conn pool]
+      ...)))
