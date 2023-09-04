@@ -194,3 +194,8 @@ further notifications won't work any longer.
   (future
     (pool/with-connectoin [conn pool]
       ...)))
+
+
+(pool/with-pool [pool pg-config pool-config]
+  (pool/with-connection [conn pool]
+    (pg/query conn "select 1 as one")))

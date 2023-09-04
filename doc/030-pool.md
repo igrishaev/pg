@@ -3,9 +3,8 @@
 <!-- toc -->
 
 - [Basic usage](#basic-usage)
-- [With-pool macro](#with-pool-macro)
+- [With-pool & with-open](#with-pool--with-open)
 - [Config](#config)
-- [Pool Info](#pool-info)
 - [Thread safety](#thread-safety)
 - [Pool Exhausting](#pool-exhausting)
 - [Exception handling](#exception-handling)
@@ -97,20 +96,45 @@ those that are borrowed at the moment**.
 (pool/terminate pool)
 ~~~
 
-## With-pool macro
+## With-pool & with-open
 
-with-open
+To open the pool temporary, use the `with-pool` macro. It wraps a block of code
+with logic and opens and terminates a pool. The first argument is a symbol which
+a new pool instance is bound to.
+
+~~~clojure
+(pool/with-pool [pool pg-config pool-config]
+  (pool/with-connection [conn pool]
+    (pg/query conn "select 1 as one")))
+
+;; [{:one 1}]
+~~~
+
+Since the `Pool` object implements the `Closeable` interface, it can be used in
+the `with-open` macro:
+
+~~~clojure
+(with-open [pool (pool/make-pool pg-config)]
+  (pool/with-connection [conn pool]
+    ...))
+~~~
 
 ## Config
 
-~~~clojure
-(def pool-defaults
-  {:min-size 2
-   :max-size 8
-   :ms-lifetime (* 1000 60 60 1)})
-~~~
+| Parameter      | Default            | Comment                                                                    |
+|----------------|--------------------|----------------------------------------------------------------------------|
+| `:min-size`    | 2                  | The minimum number of connections to be opened during the initialization.  |
+| `:max-size`    | 8                  | The maximum number of connections to be opened during the initialization.  |
+| `:ms-lifetime` | 3.600.000 (1 hour) | The number of milliseconds in which a connection is considered as expired. |
 
-## Pool Info
+Example:
+
+~~~clojure
+(def pool-config
+  {:min-size 1
+   :max-size 4
+   :ms-lifetime (* 1000 60 15)}) ;; 15 minutes
+~~~
 
 ## Thread safety
 
