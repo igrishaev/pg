@@ -3,10 +3,12 @@
 <!-- toc -->
 
 - [Basic usage](#basic-usage)
+- [With-pool macro](#with-pool-macro)
 - [Config](#config)
+- [Pool Info](#pool-info)
 - [Thread safety](#thread-safety)
-- [Exhausting](#exhausting)
-- [Exceptions](#exceptions)
+- [Pool Exhausting](#pool-exhausting)
+- [Exception handling](#exception-handling)
 - [Logs](#logs)
 - [Component](#component)
 
@@ -38,25 +40,39 @@ facility.
 ## Basic usage
 
 ~~~clojure
-[pg.pool :as pool]
-[pg.client :as pg]
+(ns repl
+  (:require
+   [pg.client :as pg]
+   [pg.pool :as pool]))
 
-(def pg-config {...})
-(def pool-config {...})
+(def pg-config
+  {:host "127.0.0.1"
+   :port 10150
+   :user "test"
+   :password "test"
+   :database "test"})
 
-(def pool (pool/make-pool pg-config pg-config))
+(def pool-config
+  {:min-size 1
+   :max-size 4
+   :ms-lifetime (* 1000 60 60)})
+
+(def pool
+  (pool/make-pool pg-config pool-config))
+
+(println pool)
+;; < PG pool, min: 1, max: 4, free: 1, used: 0, lifetime: 3600000 ms >
 
 (pool/with-connection [conn pool]
-  ...)
+  (pg/query conn "select 1 as one"))
+;; [{:one 1}]
 
-(pool/with-pool [pool pg-config pg-config]
-  (future
-    (pool/with-connectoin [conn pool]
-      ...))
-  (future
-    (pool/with-connectoin [conn pool]
-      ...)))
+(pool/terminate pool)
 ~~~
+
+## With-pool macro
+
+with-open
 
 ## Config
 
@@ -67,11 +83,13 @@ facility.
    :ms-lifetime (* 1000 60 60 1)})
 ~~~
 
+## Pool Info
+
 ## Thread safety
 
-## Exhausting
+## Pool Exhausting
 
-## Exceptions
+## Exception handling
 
 ## Logs
 

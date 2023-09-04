@@ -1,14 +1,7 @@
 (ns repl
   (:require
-   [pg.client :as pg]))
-
-(def config
-  {:host "127.0.0.1"
-   :port 10150
-   :user "test"
-   :password "test"
-   :database "test"})
-
+   [pg.client :as pg]
+   [pg.pool :as pool]))
 
 (def conn (pg/connect config))
 
@@ -175,17 +168,24 @@ clojure.lang.ExceptionInfo: ErrorResponse ...
 further notifications won't work any longer.
 
 
-[pg.pool :as pool]
-[pg.client :as pg]
+(def pg-config
+  {:host "127.0.0.1"
+   :port 10150
+   :user "test"
+   :password "test"
+   :database "test"})
+
+(def pool-config
+  {:min-size 1
+   :max-size 4
+   :ms-lifetime (* 1000 60 60)})
 
 
-(def pg-config {...})
-(def pool-config {...})
-
-(def pool (pool/make-pool pg-config pg-config))
+(def pool
+  (pool/make-pool pg-config pool-config))
 
 (pool/with-connection [conn pool]
-  ...)
+  (pg/query conn "select 1 as one"))
 
 (pool/with-pool [pool pg-config pg-config]
   (future
