@@ -5,8 +5,9 @@ Documentation:
 - [About](doc/000-about.md)
 - [Installation](doc/010-installation.md)
 - [Client](doc/020-client.md)
-- [Notifications](doc/025-notifications.md)
-- Connection pool
+- [Connection pool](doc/030-pool.md)
+- Notifications
 - Types
 - JSON support
 - Joda Time support
+- COPYing
