@@ -34,10 +34,16 @@ The pool is also capable of calculating the lifetime of connections and their
 expiration moments. Once a connection has expired, it gets terminated and the
 pool spawns a new connection.
 
-The connection pool is shipped in a dedicated library as it depends on logging
-facility.
+The connection pool is shipped in a dedicated library
+`com.github.igrishaev/pg-pool` as it depends on logging facility.
 
 ## Basic usage
+
+Everything related to the pool is located in the `pg.pool` namespace. To run a
+pool, at least you need a Postgres config which is passed as the first argument
+to the `make-pool` function. This config is used to spawn new connections. The
+second map controls the inner pool logic and might be skipped as it has
+defaults.
 
 ~~~clojure
 (ns repl
@@ -62,11 +68,32 @@ facility.
 
 (println pool)
 ;; < PG pool, min: 1, max: 4, free: 1, used: 0, lifetime: 3600000 ms >
+~~~
 
+Once you've created a pool, borrow a connection using the `with-connection`
+macro. The connection will be bound to the first argument:
+
+~~~clojure
 (pool/with-connection [conn pool]
   (pg/query conn "select 1 as one"))
-;; [{:one 1}]
 
+;; [{:one 1}]
+~~~
+
+Briefly, that's everything you need because the rest of the logic depends on the
+client library but not the pool. Being inside the `with-connection` macro, you
+can call `pg/query`, `pg/execute` and other client API.
+
+Exiting the macro body will put the connection back keeping it open. The
+connection is put at the end of the queue and taken from the head. Say, if you
+have four connections in the pool, you'll face the same connection each fourth
+`with-connection` call.
+
+Once you've done with the pool, terminate it by calling
+`pool/terminate`. Terminating a pool closes all the open connections **including
+those that are borrowed at the moment**.
+
+~~~clojure
 (pool/terminate pool)
 ~~~
 
