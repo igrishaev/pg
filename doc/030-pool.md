@@ -138,9 +138,50 @@ Example:
 
 ## Thread safety
 
+Unlike a connection object, the pool *is thread safe* indeed. What it means is,
+that two parallel threads cannot obtain the same connection at once. This logic
+is serialized: each thread will obtain its own connection one after another.
+
 ## Pool Exhausting
 
+Should you exhaust the pool -- meaning you try to borrow a connection while
+there aren't any idle connects and the `max-size` of busy connections is reached
+-- the pool will throw an exception to let you know about this.
+
+Here is a simple way to trigger this behaviour:
+
+~~~clojure
+;; create a pool with up to 2 connections
+(pool/with-pool [pool pg-config {:min-size 1
+                                 :max-size 2}]
+
+  ;; spawn two hanging queries that lock connections
+  (future
+    (pool/with-connection [conn pool]
+      (pg/query conn "select pg_sleep(600) as sleep")))
+  (future
+    (pool/with-connection [conn pool]
+      (pg/query conn "select pg_sleep(600) as sleep")))
+
+  ;; wait for a bit to let the futures start their work
+  (Thread/sleep 100)
+
+  ;; try to get a new connection => exception
+  (pool/with-connection [conn pool]
+    (pg/query conn "select pg_sleep(600) as sleep")))
+
+;; Execution error (ExceptionInfo) at pg.pool/-borrow-connection (pool.clj:95).
+;; pool is exhausted: 2 connections in use
+~~~
+
+At the moment, there is no a way to block the execution and wait until there is
+a free connection again. Although it's possible with a blocking version of
+`ArrayDeque` class.
+
 ## Exception handling
+
+Should any exception occurres in the `with-connection` macro, the DB connection
+will be terminated. A new connection will be spawned to instead.
 
 ## Logs
 

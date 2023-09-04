@@ -199,3 +199,36 @@ further notifications won't work any longer.
 (pool/with-pool [pool pg-config pool-config]
   (pool/with-connection [conn pool]
     (pg/query conn "select 1 as one")))
+
+
+(pool/with-pool [pool pg-config {:min-size 1
+                                 :max-size 2}]
+
+  (future
+    (pool/with-connection [conn pool]
+      (pg/query conn "select pg_sleep(600) as sleep")))
+
+  (future
+    (pool/with-connection [conn pool]
+      (pg/query conn "select pg_sleep(600) as sleep")))
+
+  (pool/with-connection [conn pool]
+    (pg/query conn "select 42")))
+
+
+
+(pool/with-pool [pool pg-config {:min-size 1
+                                 :max-size 2}]
+
+  (future
+    (pool/with-connection [conn pool]
+      (pg/query conn "select pg_sleep(600) as sleep")))
+
+  (future
+    (pool/with-connection [conn pool]
+      (pg/query conn "select pg_sleep(600) as sleep")))
+
+  (Thread/sleep 100)
+
+  (pool/with-connection [conn pool]
+    (pg/query conn "select pg_sleep(600) as sleep")))
