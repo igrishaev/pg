@@ -121,6 +121,8 @@ within the `with-open` macro:
 
 ## Config
 
+Functions and macros that create a pool take an extra map of pool options:
+
 | Parameter      | Default            | Comment                                                                    |
 |----------------|--------------------|----------------------------------------------------------------------------|
 | `:min-size`    | 2                  | The minimum number of connections to be opened during the initialization.  |
@@ -134,6 +136,8 @@ Example:
   {:min-size 1
    :max-size 4
    :ms-lifetime (* 1000 60 15)}) ;; 15 minutes
+
+(pool/make-pool pg-config pool-config)
 ~~~
 
 ## Thread safety
