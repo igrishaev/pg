@@ -98,9 +98,9 @@ those that are borrowed at the moment**.
 
 ## With-pool & with-open
 
-To open the pool temporarily, use the `with-pool` macro. It wraps a block of
-code with logic and opens and terminates a pool. The first argument is a symbol
-that a new pool instance is bound to.
+To open a pool temporarily, use the `with-pool` macro. It wraps a block of code
+with logic that opens and terminates a pool. The first argument is a symbol that
+a new pool is bound to.
 
 ~~~clojure
 (pool/with-pool [pool pg-config pool-config]
