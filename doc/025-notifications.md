@@ -49,7 +49,7 @@ To subscribe to a channel, run a LISTEN query. It takes a single parameter: a
 name of the channel (without quotes).
 
 ~~~clojure
-(pg/query conn2 "LISTEN FOO")
+(pg/listen conn2 "FOO")
 ~~~
 
 Now that you have a listening client, emit a couple of messages from the first
@@ -58,8 +58,9 @@ connection using NOTIFY:
 ~~~clojure
 (def conn1 (pg/connect ...))
 
-(pg/query conn1 "notify FOO, 'hello'")
-(pg/query conn1 "notify FOO, 'a message'")
+(pg/notify conn1 "FOO" "hello!")           ;; a string
+(pg/notify conn1 "FOO" "[1, 2, 3]")        ;; JSON
+(pg/notify conn1 "FOO" "{:color [a b c]}") ;; EDN
 ~~~
 
 The NOTIFY expression accepts the name of the channel and a string message. At
@@ -91,5 +92,5 @@ kind of routing or processing rules.
 To stop listening a channel, run:
 
 ~~~clojure
-(pg/query conn2 "UNLISTEN FOO")
+(pg/unlisten conn2 "FOO")
 ~~~

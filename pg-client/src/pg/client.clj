@@ -456,6 +456,13 @@
 
 
 (defn copy-in
+  "
+  Copy the data from an `InputStream` into the database.
+  A `sql` string argument specifies all the details: a table,
+  columns, format, header, etc. The payload might be either
+  CSV or binary-encoded data (see Postgres binary encoding).
+  Returns a number of rows processed.
+  "
 
   ([conn sql input-stream]
    (copy-in conn sql input-stream nil))
