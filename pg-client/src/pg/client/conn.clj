@@ -30,6 +30,7 @@
    :port 5432
    :fn-notice fn-notice-default
    :fn-notification fn-notification-default
+   :pg-params {}
    :protocol-version const/PROTOCOL_VERSION
    :binary-encode? false
    :binary-decode? false

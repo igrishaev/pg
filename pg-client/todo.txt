@@ -1,12 +1,12 @@
 
 - add docs
--- pool
 -- notify
 -- copy
 -- types
 -- json
 -- joda
 
+- pg-params docs
 - protocol-message notice
 - error resp ex structure
 - me.grishaev ns
