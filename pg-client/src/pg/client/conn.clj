@@ -290,6 +290,21 @@
     (send-message conn msg)))
 
 
+(defn send-copy-fail
+  ([conn]
+   (let [msg (msg/make-CopyFail)]
+     (send-message conn msg)))
+
+  ([conn message]
+   (let [msg (msg/make-CopyFail message)]
+    (send-message conn msg))))
+
+
+(defn send-ssl-request [conn]
+  (let [msg (msg/make-SSLRequest const/SSL_CODE)]
+    (send-message conn msg)))
+
+
 (defn close-statement
   [conn ^String statement]
   (send-message conn (msg/make-Close \S statement)))

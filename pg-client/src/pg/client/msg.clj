@@ -16,13 +16,7 @@
 ;; FunctionCall
 ;; FunctionCallResponse
 
-;; SSLRequest
-
-;; CopyData
-;; CopyDone
 ;; CopyFail
-;; CopyInResponse
-;; CopyOutResponse
 ;; CopyBothResponse
 
 
@@ -937,6 +931,25 @@
     (bb/write-int32 4)))
 
 
+(defn make-CopyFail
+  ([]
+   (make-CopyFail const/COPY_FAIL_MSG))
+  ([message]
+   {:msg :CopyFail
+    :message message}))
+
+
+(defn encode-CopyFail [{:keys [message]} opt]
+  (let [encoding
+        (get-client-encoding opt)
+
+        out
+        (doto (out/create)
+          (out/write-cstring message encoding))]
+
+    (to-bb \f out)))
+
+
 (defn encode-message [{:as message :keys [msg]} opt]
 
   (case msg
@@ -991,6 +1004,9 @@
 
     :CopyDone
     (encode-CopyDone message opt)
+
+    :CopyFail
+    (encode-CopyFail message opt)
 
     ;; else
 

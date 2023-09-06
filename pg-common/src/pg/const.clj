@@ -40,3 +40,5 @@
 (def NUMERIC_NAN (int 0xC000))
 
 (def COPY_BUFFER_SIZE 2048)
+
+(def COPY_FAIL_MSG "COPY has been interrupted by the client")
