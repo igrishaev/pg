@@ -15,6 +15,12 @@
   `(ByteBuffer/wrap ~buf))
 
 
+(defn skip ^ByteBuffer[^ByteBuffer bb offset]
+  (let [pos ^Integer (+ (.position bb) offset)]
+    (doto bb
+      (.position pos))))
+
+
 (defmacro remaining [bb]
   `(.. ~(with-meta bb {:tag `ByteBuffer}) (remaining)))
 

@@ -66,9 +66,8 @@
           (if (= i dim-count)
             acc
             (let [dim
-                  (bb/read-int32 bb)
-                  _
                   (bb/read-int32 bb)]
+              (bb/skip bb 4)
               (recur (inc i)
                      (conj acc dim)))))
 
