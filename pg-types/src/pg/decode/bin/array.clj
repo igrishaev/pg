@@ -3,6 +3,7 @@
 (ns pg.decode.bin.array
   (:require
    [pg.bb :as bb]
+   [pg.out :as out]
    ;; [pg.coll :as coll]
    ))
 
@@ -102,8 +103,6 @@
               (recur (inc i)
                      (conj acc dim)))))
 
-        _ (println '--- dims)
-
         total
         (apply * dims)
 
@@ -124,8 +123,24 @@
               (when (not= len -1)
                 (bb/read-bytes bb len))]
 
-          (println i idx buf)
           (apply aset array (conj idx buf))
           (recur (inc i) (ticker idx)))))
 
     array))
+
+
+#_
+(defn encode-array [matrix oid]
+
+
+  (doto (out/create)
+
+    dim-count
+    has-nulls
+    oid
+    [dim 1]+
+    [len/-1 buf]+
+
+    )
+
+  )

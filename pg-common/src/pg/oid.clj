@@ -197,7 +197,9 @@
 (def ^int pg_brin_bloom_summary          4600)
 (def ^int pg_brin_minmax_multi_summary   4601)
 
+;; TODO: array-mapping
 
+;; TODO: fix value
 (def ^:private oid-name->oid-int
   {"_int8multirange"              6157
    "json"                         114

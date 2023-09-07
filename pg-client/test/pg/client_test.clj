@@ -1759,6 +1759,25 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
 
 
 #_
+(deftest test-query-line-breaks-txt
+  (pg/with-connection [conn *CONFIG*]
+    (let [res (pg/query conn "select $$abcde
+fghij$$ line")]
+      (is (= [{:line "abcde\nfghij"}] res)))))
+
+
+#_
+(deftest test-query-text-array-breaks
+  (pg/with-connection [conn *CONFIG*]
+    (let [res (pg/execute conn
+                          "select array[$1, $2, $3]::text[] as words"
+                          ["aaa"
+                           "!@#@%#'''$%\r\n\t$%^%^&*(\"\")_"
+                           "{}(){}<>?%"])]
+      (is (= 1 res)))))
+
+
+#_
 (deftest test-array-read-bin
   (pg/with-connection [conn (assoc *CONFIG* :binary-decode? true)]
     (let [res (pg/execute conn "select '{1,2,3}'::int[] as numbers")]

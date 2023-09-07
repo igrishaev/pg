@@ -81,7 +81,9 @@
 ;; Text
 ;;
 
-(expand [oid/text oid/varchar oid/name]
+(expand [oid/text
+         oid/varchar
+         oid/name]
   [^bytes buf _ opt]
   (let [encoding
         (get-server-encoding opt)]
@@ -172,3 +174,18 @@
 (expand [oid/date]
   [^bytes buf _ opt]
   (datetime/parse-date buf opt))
+
+
+;;
+;; Arrays
+;;
+
+#_
+(expand [oid/_bool
+         oid/_int2
+         oid/_int4
+         oid/_int8]
+  [^bytes buf array-oid opt]
+  (let [oid (array-oid->oid array-oid)
+        method (get-method -decode oid)]
+    (array/decode buf method opt)))
