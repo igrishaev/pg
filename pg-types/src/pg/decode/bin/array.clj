@@ -42,6 +42,37 @@
   0,  0,  0,  6   ;; 6
  ]
 
+;; [3 4 5]
+;; 34
+
+;; 34 / 3 = (10, 3)
+
+(defn dim-next
+  ([dims curr]
+   (foo dims curr (dec (count curr))))
+
+  ([dims curr i]
+   (when (= i -1)
+     (throw (new Exception "out of boundaries")))
+   (if (= (get dims i) (get curr i))
+     (recur dims (assoc curr i 0) (dec i))
+     (update curr i inc))))
+
+
+(defn make-ticker [dims]
+  (fn -tick
+    ([curr]
+     (-tick curr (dec (count curr))))
+    ([curr i]
+
+     #_
+     (when (= i -1)
+       (throw (new Exception "out of boundaries")))
+     (when (not= i -1)
+       (if (= (get dims i) (get curr i))
+         (recur (assoc curr i 0) (dec i))
+         (update curr i inc))))))
+
 
 
 (defn decode-array [^bytes buf]
@@ -71,11 +102,30 @@
               (recur (inc i)
                      (conj acc dim)))))
 
+        _ (println '--- dims)
 
+        total
+        (apply * dims)
 
+        ticker
+        (make-ticker (mapv dec dims))
 
-        ])
+        array
+        (apply make-array Object dims)
 
+        idx
+        (vec (repeat dim-count 0))]
 
+    (loop [i 0 idx idx]
+      (when (not= i total)
+        (let [len
+              (bb/read-int32 bb)
+              buf
+              (when (not= len -1)
+                (bb/read-bytes bb len))]
 
-  )
+          (println i idx buf)
+          (apply aset array (conj idx buf))
+          (recur (inc i) (ticker idx)))))
+
+    array))
