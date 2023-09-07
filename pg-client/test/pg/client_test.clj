@@ -1756,3 +1756,17 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
       (let [res-query
             (pg/query conn "select 1 as one")]
         (is (= [{:one 1}] res-query))))))
+
+
+#_
+(deftest test-array-read-bin
+  (pg/with-connection [conn (assoc *CONFIG* :binary-decode? true)]
+    (let [res (pg/execute conn "select '{1,2,3}'::int[] as numbers")]
+      (is (= 1 res)))))
+
+
+#_
+(deftest test-array-read-bin-2
+  (pg/with-connection [conn (assoc *CONFIG* :binary-decode? true)]
+    (let [res (pg/execute conn "select '{{1,2,3},{4,null,6}}'::int[][] as numbers")]
+      (is (= 1 res)))))
