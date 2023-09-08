@@ -1,16 +1,19 @@
 (ns pg.encode.bin.numeric
   (:require
    [clojure.string :as str]
-   [pg.const :as const]
    [pg.bb :as bb]
-   [pg.const :as const])
+   [pg.bytes :as bytes]
+   [pg.const :as const]
+   [pg.encode.bin.core :refer [expand
+                               -encode]]
+   [pg.oid :as oid])
   (:import
-   java.util.List
-   java.util.ArrayList
-   java.math.RoundingMode
    clojure.lang.BigInt
+   java.math.BigDecimal
    java.math.BigInteger
-   java.math.BigDecimal))
+   java.math.RoundingMode
+   java.util.ArrayList
+   java.util.List))
 
 
 (defn parse-short [x]
@@ -92,3 +95,90 @@
   (-> value
       (bigdec)
       (BigDecimal-numeric opt)))
+
+
+;;
+;; BigDecimal
+;;
+
+(expand [BigDecimal nil
+         BigDecimal oid/numeric]
+  [value _ opt]
+  (BigDecimal-numeric value opt))
+
+
+(expand [BigDecimal oid/int2]
+  [^BigDecimal value _ opt]
+  (-> value
+      (.shortValueExact)
+      (bytes/int16->bytes)))
+
+
+(expand [BigDecimal oid/int4]
+  [^BigDecimal value _ opt]
+  (-> value
+      (.intValueExact)
+      (bytes/int32->bytes)))
+
+
+(expand [BigDecimal oid/int8]
+  [^BigDecimal value _ opt]
+  (-> value
+      (.longValueExact)
+      (bytes/int64->bytes)))
+
+
+(expand [BigDecimal oid/float4]
+  [^BigDecimal value _ opt]
+  (-> value
+      (.floatValue)
+      (Float/floatToIntBits)
+      (bytes/int32->bytes)))
+
+
+(expand [BigDecimal oid/float8]
+  [^BigDecimal value _ opt]
+  (-> value
+      (.longValue)
+      (Double/doubleToLongBits)
+      (bytes/int64->bytes)))
+
+
+;;
+;; BigInt
+;;
+
+(expand [BigInt nil
+         BigInt oid/numeric]
+  [value _ opt]
+  (BigInt-numeric value opt))
+
+
+(expand [BigInt oid/int2]
+  [value _ opt]
+  (bytes/int16->bytes (short value)))
+
+
+(expand [BigInt oid/int4]
+  [value _ opt]
+  (bytes/int32->bytes (int value)))
+
+
+(expand [BigInt oid/int8]
+  [value _ opt]
+  (bytes/int64->bytes (long value)))
+
+
+;;
+;; BigInteger
+;;
+
+(expand [BigInteger nil
+         BigInteger oid/numeric
+         BigInteger oid/int2
+         BigInteger oid/int4
+         BigInteger oid/int8]
+  [^BigInteger value oid opt]
+  (-encode (new BigDecimal value)
+           oid
+           opt))

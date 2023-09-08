@@ -4,7 +4,7 @@
    org.joda.time.DateTime)
   (:require
    [pg.oid :as oid]
-   [pg.encode.bin :as bin]
+   [pg.encode.bin.core :as bin]
    [pg.encode.txt :as txt]))
 
 

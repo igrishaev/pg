@@ -286,3 +286,36 @@
         buf (encode val1 oid/timestamptz)
         val2 (decode buf oid/timestamptz)]
     (is (= (OffsetDateTime/parse "2023-07-25T01:00:00.123Z") val2))))
+
+
+(deftest test-arrays
+
+  ;; simple
+  (let [val1 [1 2 3]
+        buf (encode val1)
+        val2 (decode buf oid/_int8)]
+    (is (= [1 2 3] val2)))
+
+  ;; multi-dim
+  (let [val1 [[[1 nil 3] [4 nil 6]]
+              [[3 nil 1] [9 nil 7]]]
+        buf (encode val1)
+        val2 (decode buf oid/_int8)]
+    (is (= [[[1 nil 3] [4 nil 6]]
+            [[3 nil 1] [9 nil 7]]]
+           val2)))
+
+  ;; string
+  ;; bools
+  ;; uuids
+  ;; floats
+  ;; dates
+  ;; time
+  ;; datetime
+  ;; numeric
+
+
+
+
+
+  )

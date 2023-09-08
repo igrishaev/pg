@@ -1,10 +1,12 @@
 (ns pg.encode.bin.array
+  (:import
+   clojure.lang.Sequential)
   (:require
-   [pg.bytes :as bytes]
-   [pg.bb :as bb]
    [pg.hint :as hint]
    [pg.out :as out]
-   [pg.oid :as oid]))
+   [pg.oid :as oid]
+   [pg.encode.bin.core :refer [expand
+                               -encode]]))
 
 
 (defn matrix-dims [matrix]
@@ -18,48 +20,63 @@
 
 ;; todo throw if nil
 
-(defn encode-array [matrix]
+(defn encode-array
 
-  (let [dims
-        (matrix-dims matrix)
+  ([matrix]
+   (encode-array matrix nil))
 
-        dim-count
-        (count dims)
+  ([matrix opt]
 
-        total
-        (apply * dims)
+   (let [dims
+         (matrix-dims matrix)
 
-        items
-        (flatten matrix)
+         dim-count
+         (count dims)
 
-        has-nulls
-        (if (some nil? items)
-          1
-          0)
+         total
+         (apply * dims)
 
-        oid
-        (-> (filter some? items)
-            (first)
-            (hint/hint))
+         items
+         (flatten matrix)
 
-        out
-        (doto (out/create)
-          (out/write-int32 dim-count)
-          (out/write-int32 has-nulls)
-          (out/write-int32 oid))]
+         has-nulls
+         (if (some nil? items)
+           1
+           0)
 
-    ;; TODO coll
-    (doseq [dim dims]
-      (out/write-int32 out dim)
-      (out/write-int32 out 1))
+         oid
+         (-> (filter some? items)
+             (first)
+             (hint/hint))
 
-    ;; TODO coll
-    (doseq [item items]
-      (if (nil? item)
-        (out/write-int32 out -1)
-        (let [^bytes buf (byte-array [0 0 0 9]) #_(:encode item oid :opt)
-              len (alength buf)]
-          (out/write-int32 out len)
-          (out/write-bytes out buf))))
+         out
+         (doto (out/create)
+           (out/write-int32 dim-count)
+           (out/write-int32 has-nulls)
+           (out/write-int32 oid))]
 
-    (out/array out)))
+     ;; TODO coll
+     (doseq [dim dims]
+       (out/write-int32 out dim)
+       (out/write-int32 out 1))
+
+     ;; TODO coll
+     (doseq [item items]
+       (if (nil? item)
+         (out/write-int32 out -1)
+         (let [buf ^bytes (-encode item oid opt)
+               len (alength buf)]
+           (out/write-int32 out len)
+           (out/write-bytes out buf))))
+
+     (out/array out))))
+
+
+;; typed arrays
+;; java.util.List?
+;; java.lang.Iterable?
+
+(expand [Sequential nil
+         Sequential oid/_text]
+        [value _ opt]
+        (encode-array value opt))
