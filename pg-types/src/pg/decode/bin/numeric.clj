@@ -2,6 +2,8 @@
 
 (ns pg.decode.bin.numeric
   (:require
+   [pg.decode.bin.core :refer [expand]]
+   [pg.oid :as oid]
    [pg.bb :as bb])
   (:import
    java.util.ArrayList
@@ -55,3 +57,12 @@
         (-> (new BigDecimal (.toString sb))
             (.movePointRight (* 4 (+ weight 1)))
             (.setScale scale RoundingMode/DOWN))))))
+
+
+;;
+;; BigDecimal
+;;
+
+(expand [oid/numeric]
+  [buf _ opt]
+  (BigDecimal-numeric buf opt))

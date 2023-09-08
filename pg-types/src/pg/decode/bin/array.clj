@@ -3,9 +3,11 @@
 (ns pg.decode.bin.array
   (:require
    [pg.bb :as bb]
+   [pg.oid :as oid]
    [pg.out :as out]
-   ;; [pg.coll :as coll]
-   ))
+   [pg.decode.bin.core
+    :refer [expand
+            -decode]]))
 
 
 #_
@@ -22,111 +24,102 @@
  0, 0, 0, 3   ;; val3
  ]
 
-#_
-[ 0,  0,  0,  2,  ;; dims
-  0,  0,  0,  1,  ;; nulls true
-  0,  0,  0,  23, ;; oid
-  0,  0,  0,  2,  ;; dim1 = 2
-  0,  0,  0,  1,  ;; ?
-  0,  0,  0,  3,  ;; dom2 = 3
-  0,  0,  0,  1,  ;; ?
-  0,  0,  0,  4,  ;; len
-  0,  0,  0,  1,  ;; 1
-  0,  0,  0,  4,  ;; len
-  0,  0,  0,  2,  ;; 2
-  0,  0,  0,  4,  ;; len
-  0,  0,  0,  3,  ;; 3
-  0,  0,  0,  4,  ;; len
-  0,  0,  0,  4,  ;; 4
- -1, -1, -1, -1,  ;; nul
-  0,  0,  0,  4,  ;; len
-  0,  0,  0,  6   ;; 6
- ]
-
-;; [3 4 5]
-;; 34
-
-;; 34 / 3 = (10, 3)
-
-(defn dim-next
-  ([dims curr]
-   (foo dims curr (dec (count curr))))
-
-  ([dims curr i]
-   (when (= i -1)
-     (throw (new Exception "out of boundaries")))
-   (if (= (get dims i) (get curr i))
-     (recur dims (assoc curr i 0) (dec i))
-     (update curr i inc))))
 
 
-(defn make-ticker [dims]
-  (fn -tick
+
+(defn ticker [dims]
+  (fn -this
+    ([]
+     (vec (repeat (count dims) 0)))
+
     ([curr]
-     (-tick curr (dec (count curr))))
+     (-this curr (dec (count curr))))
     ([curr i]
-
-     #_
-     (when (= i -1)
-       (throw (new Exception "out of boundaries")))
-     (when (not= i -1)
+     (when-not (= i -1)
        (if (= (get dims i) (get curr i))
          (recur (assoc curr i 0) (dec i))
          (update curr i inc))))))
 
 
 
-(defn decode-array [^bytes buf]
+(defn decode-array
 
-  (let [bb
-        (bb/wrap buf)
+  ([buf]
+   (decode-array buf nil))
 
-        dim-count
-        (bb/read-int32 bb)
+  ([^bytes buf opt]
 
-        has-nulls?
-        (case (bb/read-int32 bb)
-          1 true
-          0 false)
+   (let [bb
+         (bb/wrap buf)
 
-        oid
-        (bb/read-int32 bb)
+         dim-count
+         (bb/read-int32 bb)
 
-        dims
-        (loop [i 0
-               acc []]
-          (if (= i dim-count)
-            acc
-            (let [dim
-                  (bb/read-int32 bb)]
-              (bb/skip bb 4)
-              (recur (inc i)
-                     (conj acc dim)))))
+         has-nulls?
+         (case (bb/read-int32 bb)
+           1 true
+           0 false)
 
-        total
-        (apply * dims)
+         oid
+         (bb/read-int32 bb)
 
-        ticker
-        (make-ticker (mapv dec dims))
+         dims
+         (loop [i 0
+                acc []]
+           (if (= i dim-count)
+             acc
+             (let [dim
+                   (bb/read-int32 bb)]
+               (bb/skip bb 4)
+               (recur (inc i)
+                      (conj acc dim)))))
 
-        array
-        (apply make-array Object dims)
+         total
+         (apply * dims)
 
-        idx
-        (vec (repeat dim-count 0))]
+         tick
+         (ticker (mapv dec dims))
 
-    (loop [i 0 idx idx]
-      (when (not= i total)
-        (let [len
-              (bb/read-int32 bb)
-              buf
-              (when (not= len -1)
-                (bb/read-bytes bb len))]
+         array
+         (apply make-array Object dims)]
 
-          (apply aset array (conj idx buf))
-          (recur (inc i) (ticker idx)))))
+     (loop [i 0 idx (tick)]
+       (when-not (= i total)
 
-    array))
+         (let [len
+               (bb/read-int32 bb)
+
+               null?
+               (= len -1)
+
+               buf
+               (when-not null?
+                 (bb/read-bytes bb len))
+
+               obj
+               (when-not null?
+                 (-decode buf oid opt))]
+
+           (apply aset array (conj idx obj))
+           (recur (inc i) (tick idx)))))
+
+     array)))
+
+
+;; TODO: vectors?
+
+
+;;
+;; Arrays
+;;
+
+(expand [oid/_bool
+         oid/_text
+         oid/_int2
+         oid/_int4
+         oid/_int8]
+  [buf _ opt]
+  (decode-array buf opt))
 
 
 #_

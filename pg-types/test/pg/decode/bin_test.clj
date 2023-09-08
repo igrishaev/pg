@@ -123,3 +123,33 @@
 
     (is (instance? BigDecimal res))
     (is (= -123.456M res))))
+
+
+(def BUF-ARRAY-2X3-INT4
+  (byte-array
+   [0,  0,  0,  2,  ;; dims
+    0,  0,  0,  1,  ;; nulls true
+    0,  0,  0,  23, ;; oid
+    0,  0,  0,  2,  ;; dim1 = 2
+    0,  0,  0,  1,  ;; ?
+    0,  0,  0,  3,  ;; dom2 = 3
+    0,  0,  0,  1,  ;; ?
+    0,  0,  0,  4,  ;; len
+    0,  0,  0,  1,  ;; 1
+    0,  0,  0,  4,  ;; len
+    0,  0,  0,  2,  ;; 2
+    0,  0,  0,  4,  ;; len
+    0,  0,  0,  3,  ;; 3
+    0,  0,  0,  4,  ;; len
+    0,  0,  0,  4,  ;; 4
+    -1, -1, -1, -1, ;; nul
+    0,  0,  0,  4,  ;; len
+    0,  0,  0,  6   ;; 6
+    ]))
+
+
+(deftest test-arrays
+  (let [res
+        (bin/decode BUF-ARRAY-2X3-INT4 oid/_int4)]
+    (is (= [[1, 2, 3], [4, nil, 6]]
+           (mapv vec res)))))

@@ -1,6 +1,8 @@
 (ns pg.decode.bin.datetime
   (:require
+   [pg.decode.bin.core :refer [expand]]
    [pg.bb :as bb]
+   [pg.oid :as oid]
    [pg.const :as const])
   (:import
    java.time.Instant
@@ -95,3 +97,32 @@
         (bb/read-int64 bb)]
 
     (LocalTime/ofNanoOfDay (* micros const/MILLIS))))
+
+
+;;
+;; Date & time
+;;
+
+(expand [oid/time]
+  [^bytes buf _ opt]
+  (parse-time buf opt))
+
+
+(expand [oid/timetz]
+  [^bytes buf _ opt]
+  (parse-timetz buf opt))
+
+
+(expand [oid/timestamp]
+  [^bytes buf _ opt]
+  (parse-timestamp buf opt))
+
+
+(expand [oid/timestamptz]
+  [^bytes buf _ opt]
+  (parse-timestamptz buf opt))
+
+
+(expand [oid/date]
+  [^bytes buf _ opt]
+  (parse-date buf opt))
