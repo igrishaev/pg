@@ -1758,6 +1758,41 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
         (is (= [{:one 1}] res-query))))))
 
 
+(deftest test-array-read-bin
+  (pg/with-connection [conn (assoc *CONFIG* :binary-decode? true)]
+
+    (let [res (pg/execute conn "select '{1,2,3}'::int[] as array")]
+      (is (= [{:array [1 2 3]}] res)))
+
+    (let [res (pg/execute conn "select '{foo,null,baz}'::text[] as array")]
+      (is (= [{:array ["foo" nil "baz"]}] res)))
+
+    (let [res (pg/execute conn "select '{{{1,2,3},{4,5,6}},{{7,8,9},{10,11,12}}}'::text[] as array")]
+      (is (= [{:array
+               [[["1" "2" "3"] ["4" "5" "6"]]
+                [["7" "8" "9"] ["10" "11" "12"]]]}]
+             res)))
+
+    (let [res (pg/execute conn "select '{true,false,null,false,true}'::bool[] as array")]
+      (is (= [{:array [true false nil false true]}]
+             res)))
+
+    (let [res (pg/execute conn "select '{10:00,12:00,23:59}'::time[] as array")]
+      (is (= [{:array
+               [(LocalTime/parse "10:00")
+                (LocalTime/parse "12:00")
+                (LocalTime/parse "23:59")]}]
+             res)))
+
+    (let [res (pg/execute conn "select '{{2020-01-01,2021-12-31},{2099-11-03,1301-01-23}}'::date[][] as array")]
+      (is (= [{:array
+               [[(LocalDate/parse "2020-01-01")
+                 (LocalDate/parse "2021-12-31")]
+                [(LocalDate/parse "2099-11-03")
+                 (LocalDate/parse "1301-01-23")]]}]
+             res)))))
+
+
 #_
 (deftest test-query-line-breaks-txt
   (pg/with-connection [conn *CONFIG*]
@@ -1774,18 +1809,4 @@ fghij$$ line")]
                           ["aaa"
                            "!@#@%#'''$%\r\n\t$%^%^&*(\"\")_"
                            "{}(){}<>?%"])]
-      (is (= 1 res)))))
-
-
-#_
-(deftest test-array-read-bin
-  (pg/with-connection [conn (assoc *CONFIG* :binary-decode? true)]
-    (let [res (pg/execute conn "select '{1,2,3}'::int[] as numbers")]
-      (is (= 1 res)))))
-
-
-#_
-(deftest test-array-read-bin-2
-  (pg/with-connection [conn (assoc *CONFIG* :binary-decode? true)]
-    (let [res (pg/execute conn "select '{{1,2,3},{4,null,6}}'::int[][] as numbers")]
       (is (= 1 res)))))
