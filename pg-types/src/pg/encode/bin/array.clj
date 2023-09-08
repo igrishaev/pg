@@ -76,7 +76,16 @@
 ;; java.util.List?
 ;; java.lang.Iterable?
 
+;; Class ofArray = o.getClass().getComponentType();
+
+
+#_
+(def IntArray
+  (type (int-array 0)))
+
+
 (expand [Sequential nil
-         Sequential oid/_text]
-        [value _ opt]
-        (encode-array value opt))
+         ;; Sequential oid/_text
+         ]
+  [value _ opt]
+  (encode-array value opt))
