@@ -1,17 +1,19 @@
 ## Notifications
 
 <!-- toc -->
-
-
-
 <!-- tocstop -->
 
-Notifications are somewhat pub-sub message system in Postgres. First you define
-a channel. Then some actors produce messages to the channels and other actors
-read them.
+Notifications are somewhat pub-sub message system in Postgres. It can be
+described in four simple steps:
 
-Imagine you have two connections: `conn1` and `conn2`. We use `conn1` to emit
-messages into a channel and use `conn2` to listen that channel.
+- someone declares a channel;
+- client A sends a message to that channel;
+- client B subscribes to the channel;
+- every time client B interacts with the database, they receive messages sent bo
+  this channel by other clients.
+
+To handle a message, the client invoces a special handler. This handler comes
+from the configuration
 
 The `conn2` needs a handler function which is passed into the `:fn-notification`
 configuration field. By default, it just prints the `NotificationResponse`
