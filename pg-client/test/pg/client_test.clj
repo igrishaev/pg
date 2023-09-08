@@ -1790,6 +1790,14 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
                  (LocalDate/parse "2021-12-31")]
                 [(LocalDate/parse "2099-11-03")
                  (LocalDate/parse "1301-01-23")]]}]
+             res)))
+
+    (let [res (pg/execute conn "select '{{887dfa2b-ab88-47d6-ab2f-83b66685063e,9ae401db-95ee-4612-880c-011ad15cdacf},{2f15d54b-836d-426a-9389-b878f6b0aa18,88991362-20ff-4217-96d5-20bd70166916}}'::uuid[][] as array")]
+      (is (= [{:array
+               [[#uuid "887dfa2b-ab88-47d6-ab2f-83b66685063e"
+                 #uuid "9ae401db-95ee-4612-880c-011ad15cdacf"]
+                [#uuid "2f15d54b-836d-426a-9389-b878f6b0aa18"
+                 #uuid "88991362-20ff-4217-96d5-20bd70166916"]]}]
              res)))))
 
 
