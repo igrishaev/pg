@@ -48,10 +48,12 @@
           (out/write-int32 has-nulls)
           (out/write-int32 oid))]
 
+    ;; TODO coll
     (doseq [dim dims]
       (out/write-int32 out dim)
       (out/write-int32 out 1))
 
+    ;; TODO coll
     (doseq [item items]
       (if (nil? item)
         (out/write-int32 out -1)

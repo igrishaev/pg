@@ -32,7 +32,6 @@
       (vec (repeat dim nil)))))
 
 
-
 (defn decode-array
 
   ([buf]
