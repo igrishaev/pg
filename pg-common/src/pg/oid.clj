@@ -197,210 +197,293 @@
 (def ^int pg_brin_bloom_summary          4600)
 (def ^int pg_brin_minmax_multi_summary   4601)
 
-;; TODO: array-mapping
 
-;; TODO: fix value
-(def ^:private oid-name->oid-int
-  {"_int8multirange"              6157
-   "json"                         114
-   "pg_snapshot"                  5038
-   "regconfig"                    3734
-   "pg_type"                      71
-   "_xid8"                        271
-   "_box"                         1020
-   "bytea"                        17
-   "anycompatiblerange"           5080
-   "numrange"                     3906
-   "float8"                       701
-   "tsrange"                      3908
-   "numeric"                      1700
-   "anyelement"                   2283
-   "_cid"                         1012
-   "internal"                     2281
-   "_jsonb"                       3807
-   "_xml"                         143
-   "xml"                          142
-   "cidr"                         650
-   "_pg_lsn"                      3221
-   "int8multirange"               4536
-   "_regconfig"                   3735
-   "void"                         2278
-   "_name"                        1003
-   "daterange"                    3912
-   "bit"                          1560
-   "_regproc"                     1008
-   "_int4range"                   3905
-   "anymultirange"                4537
-   "macaddr"                      829
-   "_tstzrange"                   3911
-   "_tsrange"                     3909
-   "_time"                        1183
-   "tsquery"                      3615
-   "_tsquery"                     3645
-   "_uuid"                        2951
-   "xid8"                         5069
-   "_timetz"                      1270
-   "record"                       2249
-   "_float8"                      1022
-   "_numrange"                    3907
-   "int2vector"                   22
-   "_interval"                    1187
-   "_float4"                      1021
-   "_nummultirange"               6151
-   "pg_brin_bloom_summary"        4600
-   "_polygon"                     1027
-   "_aclitem"                     1034
-   "regcollation"                 4191
-   "language_handler"             2280
-   "_regdictionary"               3770
-   "pg_dependencies"              3402
-   "_path"                        1019
-   "regoperator"                  2204
-   "path"                         602
-   "anynonarray"                  2776
-   "_tsmultirange"                6152
-   "_txid_snapshot"               2949
-   "anyarray"                     2277
-   "jsonpath"                     4072
-   "pg_ndistinct"                 3361
-   "_int4multirange"              6150
-   "nummultirange"                4532
-   "timestamp"                    1114
-   "jsonb"                        3802
-   "_point"                       1017
-   "int4range"                    3904
-   "_regoper"                     2208
-   "_regnamespace"                4090
-   "_regoperator"                 2209
-   "box"                          603
-   "_oid"                         1028
-   "float4"                       700
-   "_numeric"                     1231
-   "xid"                          28
-   "_int2vector"                  1006
-   "regdictionary"                3769
-   "regnamespace"                 4089
-   "_timestamp"                   1115
-   "tsmultirange"                 4533
-   "bpchar"                       1042
-   "pg_lsn"                       3220
-   "any"                          2276
-   "tsm_handler"                  3310
-   "_json"                        199
-   "_regclass"                    2210
-   "oid"                          26
-   "name"                         19
-   "tstzmultirange"               4534
-   "oidvector"                    30
-   "uuid"                         2950
-   "int4"                         23
-   "_inet"                        1041
-   "interval"                     1186
-   "inet"                         869
-   "regoper"                      2203
-   "_tid"                         1010
-   "_bytea"                       1001
-   "bool"                         16
-   "char"                         18
-   "fdw_handler"                  3115
-   "varbit"                       1562
-   "_text"                        1009
-   "tsvector"                     3614
-   "_regtype"                     2211
-   "regprocedure"                 2202
-   "datemultirange"               4535
-   "_pg_attribute"                270
-   "anycompatiblearray"           5078
-   "text"                         25
-   "_lseg"                        1018
-   "anyrange"                     3831
-   "_regprocedure"                2207
-   "_regrole"                     4097
-   "_bpchar"                      1014
-   "txid_snapshot"                2970
-   "time"                         1083
-   "_gtsvector"                   3644
-   "_regcollation"                4192
-   "event_trigger"                3838
-   "regrole"                      4096
-   "anycompatiblenonarray"        5079
-   "_datemultirange"              6155
-   "anycompatible"                5077
-   "_line"                        629
-   "_int8"                        1016
-   "line"                         628
-   "aclitem"                      1033
-   "gtsvector"                    3642
-   "pg_node_tree"                 194
-   "_pg_proc"                     272
-   "int8"                         20
-   "polygon"                      604
-   "_varchar"                     1015
-   "unknown"                      705
-   "cstring"                      2275
-   "regproc"                      24
-   "anyenum"                      3500
-   "_daterange"                   3913
-   "int2"                         21
-   "money"                        790
-   "macaddr8"                     774
-   "refcursor"                    1790
-   "_macaddr8"                    775
-   "_cidr"                        651
-   "_bool"                        1000
-   "date"                         1082
-   "pg_brin_minmax_multi_summary" 4601
-   "pg_class"                     83
-   "_int2"                        1005
-   "varchar"                      1043
-   "pg_attribute"                 75
-   "pg_proc"                      81
-   "cid"                          29
-   "_macaddr"                     1040
-   "_date"                        1182
-   "_bit"                         1561
-   "anycompatiblemultirange"      4538
-   "pg_mcv_list"                  5017
-   "_int8range"                   3927
-   "int8range"                    3926
-   "_record"                      2287
-   "_varbit"                      1563
-   "int4multirange"               4451
-   "index_am_handler"             325
-   "trigger"                      2279
-   "_refcursor"                   2201
-   "circle"                       718
-   "_cstring"                     1263
-   "_jsonpath"                    4073
-   "_char"                        1002
-   "_circle"                      719
-   "regclass"                     2205
-   "tstzrange"                    3910
-   "_pg_snapshot"                 5039
-   "_pg_type"                     210
-   "_timestamptz"                 1185
-   "timetz"                       1266
-   "timestamptz"                  1184
-   "_money"                       791
-   "point"                        600
-   "tid"                          27
-   "_tstzmultirange"              6153
-   "_tsvector"                    3643
-   "_pg_class"                    273
-   "_int4"                        1007
-   "regtype"                      2206
-   "pg_ddl_command"               32
-   "lseg"                         601
-   "_oidvector"                   1013
-   "_xid"                         1011
-   "table_am_handler"             269})
+(def ^:private -name->oid {
+  "_int8multirange"             _int8multirange
+  "json"                        json
+  "pg_snapshot"                 pg_snapshot
+  "regconfig"                   regconfig
+  "pg_type"                     pg_type
+  "_xid8"                       _xid8
+  "_box"                        _box
+  "bytea"                       bytea
+  "anycompatiblerange"          anycompatiblerange
+  "numrange"                    numrange
+  "float8"                      float8
+  "tsrange"                     tsrange
+  "numeric"                     numeric
+  "anyelement"                  anyelement
+  "_cid"                        _cid
+  "internal"                    internal
+  "_jsonb"                      _jsonb
+  "_xml"                        _xml
+  "xml"                         xml
+  "cidr"                        cidr
+  "_pg_lsn"                     _pg_lsn
+  "int8multirange"              int8multirange
+  "_regconfig"                  _regconfig
+  "void"                        void
+  "_name"                       _name
+  "daterange"                   daterange
+  "bit"                         bit
+  "_regproc"                    _regproc
+  "_int4range"                  _int4range
+  "anymultirange"               anymultirange
+  "macaddr"                     macaddr
+  "_tstzrange"                  _tstzrange
+  "_tsrange"                    _tsrange
+  "_time"                       _time
+  "tsquery"                     tsquery
+  "_tsquery"                    _tsquery
+  "_uuid"                       _uuid
+  "xid8"                        xid8
+  "_timetz"                     _timetz
+  "record"                      record
+  "_float8"                     _float8
+  "_numrange"                   _numrange
+  "int2vector"                  int2vector
+  "_interval"                   _interval
+  "_float4"                     _float4
+  "_nummultirange"              _nummultirange
+  "pg_brin_bloom_summary"       pg_brin_bloom_summary
+  "_polygon"                    _polygon
+  "_aclitem"                    _aclitem
+  "regcollation"                regcollation
+  "language_handler"            language_handler
+  "_regdictionary"              _regdictionary
+  "pg_dependencies"             pg_dependencies
+  "_path"                       _path
+  "regoperator"                 regoperator
+  "path"                        path
+  "anynonarray"                 anynonarray
+  "_tsmultirange"               _tsmultirange
+  "_txid_snapshot"              _txid_snapshot
+  "anyarray"                    anyarray
+  "jsonpath"                    jsonpath
+  "pg_ndistinct"                pg_ndistinct
+  "_int4multirange"             _int4multirange
+  "nummultirange"               nummultirange
+  "timestamp"                   timestamp
+  "jsonb"                       jsonb
+  "_point"                      _point
+  "int4range"                   int4range
+  "_regoper"                    _regoper
+  "_regnamespace"               _regnamespace
+  "_regoperator"                _regoperator
+  "box"                         box
+  "_oid"                        _oid
+  "float4"                      float4
+  "_numeric"                    _numeric
+  "xid"                         xid
+  "_int2vector"                 _int2vector
+  "regdictionary"               regdictionary
+  "regnamespace"                regnamespace
+  "_timestamp"                  _timestamp
+  "tsmultirange"                tsmultirange
+  "bpchar"                      bpchar
+  "pg_lsn"                      pg_lsn
+  "any"                         any
+  "tsm_handler"                 tsm_handler
+  "_json"                       _json
+  "_regclass"                   _regclass
+  "oid"                         oid
+  "name"                        name
+  "tstzmultirange"              tstzmultirange
+  "oidvector"                   oidvector
+  "uuid"                        uuid
+  "int4"                        int4
+  "_inet"                       _inet
+  "interval"                    interval
+  "inet"                        inet
+  "regoper"                     regoper
+  "_tid"                        _tid
+  "_bytea"                      _bytea
+  "bool"                        bool
+  "char"                        char
+  "fdw_handler"                 fdw_handler
+  "varbit"                      varbit
+  "_text"                       _text
+  "tsvector"                    tsvector
+  "_regtype"                    _regtype
+  "regprocedure"                regprocedure
+  "datemultirange"              datemultirange
+  "_pg_attribute"               _pg_attribute
+  "anycompatiblearray"          anycompatiblearray
+  "text"                        text
+  "_lseg"                       _lseg
+  "anyrange"                    anyrange
+  "_regprocedure"               _regprocedure
+  "_regrole"                    _regrole
+  "_bpchar"                     _bpchar
+  "txid_snapshot"               txid_snapshot
+  "time"                        time
+  "_gtsvector"                  _gtsvector
+  "_regcollation"               _regcollation
+  "event_trigger"               event_trigger
+  "regrole"                     regrole
+  "anycompatiblenonarray"       anycompatiblenonarray
+  "_datemultirange"             _datemultirange
+  "anycompatible"               anycompatible
+  "_line"                       _line
+  "_int8"                       _int8
+  "line"                        line
+  "aclitem"                     aclitem
+  "gtsvector"                   gtsvector
+  "pg_node_tree"                pg_node_tree
+  "_pg_proc"                    _pg_proc
+  "int8"                        int8
+  "polygon"                     polygon
+  "_varchar"                    _varchar
+  "unknown"                     unknown
+  "cstring"                     cstring
+  "regproc"                     regproc
+  "anyenum"                     anyenum
+  "_daterange"                  _daterange
+  "int2"                        int2
+  "money"                       money
+  "macaddr8"                    macaddr8
+  "refcursor"                   refcursor
+  "_macaddr8"                   _macaddr8
+  "_cidr"                       _cidr
+  "_bool"                       _bool
+  "date"                        date
+  "pg_brin_minmax_multi_summary" pg_brin_minmax_multi_summary
+  "pg_class"                    pg_class
+  "_int2"                       _int2
+  "varchar"                     varchar
+  "pg_attribute"                pg_attribute
+  "pg_proc"                     pg_proc
+  "cid"                         cid
+  "_macaddr"                    _macaddr
+  "_date"                       _date
+  "_bit"                        _bit
+  "anycompatiblemultirange"     anycompatiblemultirange
+  "pg_mcv_list"                 pg_mcv_list
+  "_int8range"                  _int8range
+  "int8range"                   int8range
+  "_record"                     _record
+  "_varbit"                     _varbit
+  "int4multirange"              int4multirange
+  "index_am_handler"            index_am_handler
+  "trigger"                     trigger
+  "_refcursor"                  _refcursor
+  "circle"                      circle
+  "_cstring"                    _cstring
+  "_jsonpath"                   _jsonpath
+  "_char"                       _char
+  "_circle"                     _circle
+  "regclass"                    regclass
+  "tstzrange"                   tstzrange
+  "_pg_snapshot"                _pg_snapshot
+  "_pg_type"                    _pg_type
+  "_timestamptz"                _timestamptz
+  "timetz"                      timetz
+  "timestamptz"                 timestamptz
+  "_money"                      _money
+  "point"                       point
+  "tid"                         tid
+  "_tstzmultirange"             _tstzmultirange
+  "_tsvector"                   _tsvector
+  "_pg_class"                   _pg_class
+  "_int4"                       _int4
+  "regtype"                     regtype
+  "pg_ddl_command"              pg_ddl_command
+  "lseg"                        lseg
+  "_oidvector"                  _oidvector
+  "_xid"                        _xid
+  "table_am_handler"            table_am_handler
+})
+
+(def array-oids #{
+  _bool
+  _bytea
+  _char
+  _name
+  _int8
+  _int2
+  _int2vector
+  _int4
+  _regproc
+  _text
+  _oid
+  _tid
+  _xid
+  _cid
+  _oidvector
+  _pg_type
+  _pg_attribute
+  _pg_proc
+  _pg_class
+  _json
+  _xml
+  _xid8
+  _point
+  _lseg
+  _path
+  _box
+  _polygon
+  _line
+  _float4
+  _float8
+  _circle
+  _money
+  _macaddr
+  _inet
+  _cidr
+  _macaddr8
+  _aclitem
+  _bpchar
+  _varchar
+  _date
+  _time
+  _timestamp
+  _timestamptz
+  _interval
+  _timetz
+  _bit
+  _varbit
+  _numeric
+  _refcursor
+  _regprocedure
+  _regoper
+  _regoperator
+  _regclass
+  _regcollation
+  _regtype
+  _regrole
+  _regnamespace
+  _uuid
+  _pg_lsn
+  _tsvector
+  _gtsvector
+  _tsquery
+  _regconfig
+  _regdictionary
+  _jsonb
+  _jsonpath
+  _txid_snapshot
+  _pg_snapshot
+  _int4range
+  _numrange
+  _tsrange
+  _tstzrange
+  _daterange
+  _int8range
+  _int4multirange
+  _nummultirange
+  _tsmultirange
+  _tstzmultirange
+  _datemultirange
+  _int8multirange
+  _cstring
+})
 
 
-(defn name->int ^Integer [^String oid-name]
-  (get oid-name->oid-int oid-name))
+(defn name->oid [^String oid-name]
+  (get -name->oid oid-name))
 
 
 (defn ->oid [x]
   (cond
     (int? x) x
-    (string? x) (name->int x)))
+    (string? x) (name->oid x)))

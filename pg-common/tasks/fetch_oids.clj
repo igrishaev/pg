@@ -4,6 +4,7 @@
   (:require
    [clojure.edn :as edn]
    [clojure.string :as str]
+   [clojure.pprint :as pprint]
    [clojure.java.io :as io]))
 
 
@@ -43,6 +44,12 @@
                    (update 'array_type_oid (fnil parse-long ""))))
              content)
 
+        array-oids
+        (->> content
+             (map (fn [info]
+                    (get info 'array_type_oid)))
+             (filter int?))
+
         name->oid
         (reduce
          (fn [acc {:syms [typname oid array_type_oid]}]
@@ -52,7 +59,11 @@
              array_type_oid
              (assoc (format "_%s" typname) array_type_oid)))
          {}
-         content)]
+         content)
+
+        oid->name
+        (into {} (for [[k v] name->oid]
+                   [v k]))]
 
     (println)
 
@@ -61,22 +72,38 @@
                     descr
                     array_type_oid]} content]
 
-      (println (format "(defn ^int %-30s %4d)" typname oid))
+      (println (format "(def ^int %-30s %4d)" typname oid))
 
       (when array_type_oid
-        (println (format "(defn ^int _%-29s %4d)" typname array_type_oid))))
+        (println (format "(def ^int _%-29s %4d)" typname array_type_oid))))
+
+    (println)
+    (println)
+
+    (println "(def ^:private -name->oid {")
+    (doseq [[k _] name->oid]
+      (println (format "  %-29s %s" (str \" k \") k)))
+    (println "})")
 
     (println)
 
-    (printf "
-(def ^:private oid-name->oid-int
-  %s) "
-            (with-out-str
-              (clojure.pprint/pprint name->oid)))
+    (println "(def array-oids #{")
+    (doseq [oid array-oids]
+      (println (format "  %s" (get oid->name oid))))
+    (println "})")
 
     (println)
 
     (println "
-(defn name->int ^int [^String oid-name]
-  (get oid-name->oid-int oid-name))
-")))
+(defn name->oid [^String oid-name]
+  (get -name->oid oid-name))
+")
+
+    (println "
+(defn ->oid [x]
+  (cond
+    (int? x) x
+    (string? x) (name->oid x)))
+")
+
+    (println)))

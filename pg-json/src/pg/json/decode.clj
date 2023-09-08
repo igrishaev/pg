@@ -3,7 +3,7 @@
    [cheshire.core :as json]
    [pg.oid :as oid]
    [pg.decode.txt :as txt]
-   [pg.decode.bin :as bin]))
+   [pg.decode.bin.core :as bin]))
 
 
 ;;

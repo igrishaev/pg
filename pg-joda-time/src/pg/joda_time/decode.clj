@@ -10,7 +10,7 @@
    [pg.oid :as oid]
    [pg.decode.txt.datetime :as txt.datetime]
    [pg.decode.bin.datetime :as bin.datetime]
-   [pg.decode.bin :as bin]
+   [pg.decode.bin.core :as bin]
    [pg.decode.txt :as txt]))
 
 
