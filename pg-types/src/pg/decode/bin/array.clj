@@ -10,23 +10,6 @@
             -decode]]))
 
 
-#_
-[0, 0, 0, 1,  ;; dim count
- 0, 0, 0, 0,  ;; nuls
- 0, 0, 0, 23, ;; oid
- 0, 0, 0, 3,  ;; dim1
- 0, 0, 0, 1,  ;; ?
- 0, 0, 0, 4,  ;; len
- 0, 0, 0, 1,  ;; val1
- 0, 0, 0, 4,  ;; len
- 0, 0, 0, 2,  ;; val2
- 0, 0, 0, 4,  ;; len
- 0, 0, 0, 3   ;; val3
- ]
-
-
-
-
 (defn ticker [dims]
   (fn -this
     ([]
@@ -39,6 +22,14 @@
        (if (= (get dims i) (get curr i))
          (recur (assoc curr i 0) (dec i))
          (update curr i inc))))))
+
+
+(defn get-matrix
+  [[dim & dims]]
+  (when dim
+    (if (seq dims)
+      (vec (repeat dim (get-matrix dims)))
+      (vec (repeat dim nil)))))
 
 
 
@@ -80,11 +71,15 @@
          tick
          (ticker (mapv dec dims))
 
-         array
-         (apply make-array Object dims)]
+         matrix
+         (get-matrix dims)]
 
-     (loop [i 0 idx (tick)]
-       (when-not (= i total)
+     (loop [i 0
+            idx (tick)
+            matrix (get-matrix dims)]
+
+       (if (= i total)
+         matrix
 
          (let [len
                (bb/read-int32 bb)
@@ -100,13 +95,9 @@
                (when-not null?
                  (-decode buf oid opt))]
 
-           (apply aset array (conj idx obj))
-           (recur (inc i) (tick idx)))))
-
-     array)))
-
-
-;; TODO: vectors?
+           (recur (inc i)
+                  (tick idx)
+                  (assoc-in matrix idx obj))))))))
 
 
 ;;
@@ -117,23 +108,10 @@
          oid/_text
          oid/_int2
          oid/_int4
-         oid/_int8]
+         oid/_int8
+
+         ;; TODO: more types
+
+         ]
   [buf _ opt]
   (decode-array buf opt))
-
-
-#_
-(defn encode-array [matrix oid]
-
-
-  (doto (out/create)
-
-    dim-count
-    has-nulls
-    oid
-    [dim 1]+
-    [len/-1 buf]+
-
-    )
-
-  )

@@ -151,5 +151,5 @@
 (deftest test-arrays
   (let [res
         (bin/decode BUF-ARRAY-2X3-INT4 oid/_int4)]
-    (is (= [[1, 2, 3], [4, nil, 6]]
-           (mapv vec res)))))
+    (is (= [[1 2 3] [4 nil 6]]
+           res))))

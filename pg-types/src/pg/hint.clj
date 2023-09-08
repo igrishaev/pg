@@ -22,6 +22,9 @@
 
 (extend-protocol IHint
 
+  nil
+  (hint [_] 0)
+
   Object
   (hint [_] 0)
 
