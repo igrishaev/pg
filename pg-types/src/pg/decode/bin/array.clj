@@ -6,8 +6,7 @@
    [pg.oid :as oid]
    [pg.out :as out]
    [pg.decode.bin.core
-    :refer [expand
-            -decode]]))
+    :refer [-decode]]))
 
 
 (defn ticker [dims]
@@ -103,14 +102,7 @@
 ;; Arrays
 ;;
 
-(expand [oid/_bool
-         oid/_text
-         oid/_int2
-         oid/_int4
-         oid/_int8
-
-         ;; TODO: more types
-
-         ]
-  [buf _ opt]
-  (decode-array buf opt))
+(doseq [oid oid/array-oids]
+  (defmethod -decode oid
+    [buf _ opt]
+    (decode-array buf opt)))
