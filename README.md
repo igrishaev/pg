@@ -11,3 +11,4 @@ Documentation:
 - JSON support
 - Joda Time support
 - COPYing
+- Arrays
