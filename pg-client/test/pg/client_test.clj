@@ -1801,6 +1801,22 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
              res)))))
 
 
+(deftest test-array-input-text-output-bin
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? false
+                                   :binary-decode? true)]
+    (let [weird-word
+          "\"{}(),,'''\" !@#$%^&*()_\\+AS<>??~\\\\sfd \\\r\n\t\bsdf"
+
+          arr
+          [["aaa" weird-word] [nil nil]]
+
+          res
+          (pg/execute conn "select $1::text[][] as arr" [arr])]
+
+      (is (= [{:arr arr}] res)))))
+
+
 #_
 (deftest test-query-line-breaks-txt
   (pg/with-connection [conn *CONFIG*]

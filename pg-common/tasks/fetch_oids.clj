@@ -1,5 +1,6 @@
 (ns fetch-oids
   (:import
+   java.io.File
    java.net.URL)
   (:require
    [clojure.edn :as edn]
@@ -7,10 +8,17 @@
    [clojure.pprint :as pprint]
    [clojure.java.io :as io]))
 
-
 (def URL_RAW
   "https://raw.githubusercontent.com/postgres/postgres/master/src/include/catalog/pg_type.dat")
 
+(def ^String FILE_DAT
+  "../pg_type.dat")
+
+(defn load-from-url []
+  (slurp (new URL URL_RAW)))
+
+(defn load-from-file []
+  (slurp (new File FILE_DAT)))
 
 #_
 {typcategory "N"
@@ -29,8 +37,7 @@
 
 (defn -main [& _]
   (let [content
-        (-> (new URL URL_RAW)
-            (slurp)
+        (-> (load-from-file) ;; (load-from-url)
             (str/replace #"#.*" "")
             (str/replace #"'" "\"")
             (str/replace #"=>" "")
@@ -50,6 +57,14 @@
                     (get info 'array_type_oid)))
              (filter int?))
 
+
+        array->oid
+        (into {} (for [{:syms [oid
+                               typname
+                               array_type_oid]} content
+                       :when (and oid array_type_oid)]
+                   [array_type_oid typname]))
+
         name->oid
         (reduce
          (fn [acc {:syms [typname oid array_type_oid]}]
@@ -65,6 +80,11 @@
         (into {} (for [[k v] name->oid]
                    [v k]))]
 
+    (println ";; Mostly machine-generated, see `fetch_oids.clj`")
+    (println "(ns pg.oid")
+    (println "  (:refer-clojure :exclude [char name time]))")
+
+    (println)
     (println)
 
     (doseq [{:syms [oid
@@ -94,9 +114,23 @@
 
     (println)
 
+    (println "(def ^:private -array->oid {")
+    (doseq [[k v] array->oid]
+      (println (format "  %-15s %s" (get oid->name k) v)))
+    (println "})")
+
+
+    (println)
+
     (println "
 (defn name->oid [^String oid-name]
   (get -name->oid oid-name))
+")
+
+
+    (println "
+(defn array->oid [array-oid]
+  (get -array->oid array-oid))
 ")
 
     (println "

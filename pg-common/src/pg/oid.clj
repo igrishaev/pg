@@ -478,9 +478,97 @@
   _cstring
 })
 
+(def ^:private -array->oid {
+  _regconfig      regconfig
+  _timestamptz    timestamptz
+  _regcollation   regcollation
+  _text           text
+  _macaddr        macaddr
+  _pg_class       pg_class
+  _varbit         varbit
+  _regprocedure   regprocedure
+  _pg_type        pg_type
+  _tid            tid
+  _numeric        numeric
+  _bytea          bytea
+  _regclass       regclass
+  _tstzrange      tstzrange
+  _tsrange        tsrange
+  _xid            xid
+  _int2vector     int2vector
+  _int4range      int4range
+  _timetz         timetz
+  _interval       interval
+  _regrole        regrole
+  _bit            bit
+  _timestamp      timestamp
+  _nummultirange  nummultirange
+  _regproc        regproc
+  _regoper        regoper
+  _pg_lsn         pg_lsn
+  _point          point
+  _regoperator    regoperator
+  _cid            cid
+  _path           path
+  _char           char
+  _datemultirange datemultirange
+  _int8           int8
+  _oid            oid
+  _tsmultirange   tsmultirange
+  _int4multirange int4multirange
+  _bool           bool
+  _time           time
+  _refcursor      refcursor
+  _lseg           lseg
+  _tsquery        tsquery
+  _int4           int4
+  _regnamespace   regnamespace
+  _xml            xml
+  _regdictionary  regdictionary
+  _regtype        regtype
+  _date           date
+  _jsonpath       jsonpath
+  _daterange      daterange
+  _uuid           uuid
+  _line           line
+  _int8multirange int8multirange
+  _name           name
+  _jsonb          jsonb
+  _aclitem        aclitem
+  _tstzmultirange tstzmultirange
+  _numrange       numrange
+  _macaddr8       macaddr8
+  _int2           int2
+  _box            box
+  _pg_snapshot    pg_snapshot
+  _circle         circle
+  _txid_snapshot  txid_snapshot
+  _bpchar         bpchar
+  _oidvector      oidvector
+  _int8range      int8range
+  _polygon        polygon
+  _cstring        cstring
+  _pg_proc        pg_proc
+  _pg_attribute   pg_attribute
+  _xid8           xid8
+  _gtsvector      gtsvector
+  _varchar        varchar
+  _float8         float8
+  _cidr           cidr
+  _inet           inet
+  _json           json
+  _tsvector       tsvector
+  _money          money
+  _float4         float4
+})
+
 
 (defn name->oid [^String oid-name]
   (get -name->oid oid-name))
+
+
+(defn array->oid [array-oid]
+  (get -array->oid array-oid))
 
 
 (defn ->oid [x]
