@@ -5,7 +5,7 @@
   (:require
    [pg.oid :as oid]
    [pg.encode.bin.core :as bin]
-   [pg.encode.txt :as txt]))
+   [pg.encode.txt.core :as txt]))
 
 
 ;; bin

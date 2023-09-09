@@ -2,7 +2,7 @@
   (:require
    [cheshire.core :as json]
    [pg.oid :as oid]
-   [pg.encode.txt :as txt]
+   [pg.encode.txt.core :as txt]
    [pg.encode.bin.core :as bin]))
 
 
@@ -26,16 +26,12 @@
 ;; Bin
 ;;
 
-(defn get-client-encoding ^String [opt]
-  (get opt :client-encoding "UTF-8"))
-
-
 (bin/expand [Object oid/json
              Object oid/jsonb]
   [obj _ opt]
 
   (let [encoding
-        (get-client-encoding opt)]
+        (bin/get-client-encoding opt)]
 
     (-> obj
         (json/generate-string obj)
@@ -47,6 +43,6 @@
   [^String string _ opt]
 
   (let [encoding
-        (get-client-encoding opt)]
+        (bin/get-client-encoding opt)]
 
     (.getBytes string encoding)))

@@ -7,7 +7,7 @@
    [pg.bytes :as bytes]
    [pg.encode.bin.core
     :refer [expand
-            get-encoding
+            get-client-encoding
             -encode]]
    [pg.oid :as oid]))
 
@@ -31,7 +31,7 @@
          String oid/text
          String oid/varchar]
   [^String value oid opt]
-  (.getBytes value ^String (get-encoding opt)))
+  (.getBytes value ^String (get-client-encoding opt)))
 
 
 ;;
@@ -42,7 +42,7 @@
          Character oid/text
          Character oid/varchar]
   [^Character value oid opt]
-  (.getBytes (str value) (get-encoding opt)))
+  (.getBytes (str value) (get-client-encoding opt)))
 
 
 ;;

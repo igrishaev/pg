@@ -4,30 +4,24 @@
    [pg.hint :as hint]
    [pg.out :as out]
    [pg.oid :as oid]
-   #_
-   [pg.encode.bin.core :refer [expand
-                               -encode]]))
+   [pg.encode.txt.core
+    :refer [expand -encode]]))
 
 
 (defn quote'''' ^String [^String string]
   (format "\"%s\"" (str/replace string #"\"" "\\\\\"")))
 
 
-(defn matrix-dims [matrix]
-  (loop [dims []
-         m matrix]
-    (if (sequential? m)
-      (recur (conj dims (count m))
-             (first m))
-      (not-empty dims))))
-
-
-(defn foo [data]
+;; TODO: recursion
+(defn ->string [data oid opt]
   (if (sequential? data)
     (format "{%s}" (->> data
-                        (mapv foo)
+                        (mapv (fn [x]
+                                (->string x oid opt)))
                         (str/join ",")))
-    (quote'''' data)))
+    (quote'''' (str data)
+
+     #_('-encode data oid opt))))
 
 
 (defn encode-array
@@ -39,12 +33,4 @@
    (encode-array matrix oid nil))
 
   ([matrix oid opt]
-   (with-out-str
-     (loop [m matrix]
-       (if-let [item (first m)]
-         1
-         )
-       )
-     ))
-
-  )
+   (->string matrix oid opt)))

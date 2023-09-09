@@ -1,4 +1,4 @@
-(ns pg.encode.bin.core
+(ns pg.encode.txt.core
   (:require
    [clojure.template :refer [do-template]]))
 
@@ -6,6 +6,14 @@
 (defmulti -encode
   (fn [value oid _]
     [(type value) oid]))
+
+
+(defmethod -encode :default
+  [value oid opt]
+  (throw (ex-info "Cannot text-encode a value"
+                  {:value value
+                   :oid oid
+                   :opt opt})))
 
 
 (defmacro expand
@@ -16,15 +24,3 @@
                   ~binding
                   ~@body)
                 ~@type-oid's))
-
-
-(defmethod -encode :default
-  [value oid opt]
-  (throw (ex-info "Cannot binary encode a value"
-                  {:value value
-                   :oid oid
-                   :opt opt})))
-
-
-(defn get-client-encoding ^String [opt]
-  (get opt :client-encoding "UTF-8"))

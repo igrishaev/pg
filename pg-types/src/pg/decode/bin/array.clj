@@ -74,7 +74,7 @@
 
      (loop [i 0
             idx (tick)
-            matrix (get-matrix dims)]
+            matrix matrix]
 
        (if (= i total)
          matrix

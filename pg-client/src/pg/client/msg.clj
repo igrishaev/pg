@@ -15,8 +15,6 @@
 
 ;; FunctionCall
 ;; FunctionCallResponse
-
-;; CopyFail
 ;; CopyBothResponse
 
 
