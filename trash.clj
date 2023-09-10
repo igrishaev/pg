@@ -131,3 +131,5 @@ https://github.com/pgjdbc/pgjdbc/issues/1311#issuecomment-1143805011
 16:20:35 DEBUG pg.pool - terminating connection pg10178
 16:20:35 DEBUG pg.pool - terminating connection pg10177
 16:20:35 DEBUG pg.pool - pool termination done
+
+{:array "{NULL,\"null\",\"NULL\",NULL}"}

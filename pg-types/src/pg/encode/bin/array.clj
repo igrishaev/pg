@@ -84,8 +84,9 @@
   (type (int-array 0)))
 
 
+;; TODO
+
 (expand [Sequential nil
-         ;; Sequential oid/_text
-         ]
+   Sequential oid/_text]
   [value _ opt]
   (encode-array value opt))

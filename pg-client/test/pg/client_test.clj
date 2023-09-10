@@ -1817,6 +1817,16 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
       (is (= [{:arr arr}] res)))))
 
 
+(deftest test-array-null-string
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? false)]
+
+    (let [res (pg/execute conn "select $1::text[] as array"
+                          [[nil "null" "NULL" nil]])]
+      (is (= 1 res)))))
+
+
 #_
 (deftest test-query-line-breaks-txt
   (pg/with-connection [conn *CONFIG*]
