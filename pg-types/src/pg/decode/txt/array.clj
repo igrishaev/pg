@@ -33,14 +33,27 @@
 
       (if (= i len)
 
-        {:res res
-         :dims dims}
+        res
 
         (let [c (.charAt string i)]
 
-          (println "---" c (if reading? 1 0) (if quote? 1 0) dims pos (str sb) res)
+          (println "---" c (if reading? 't 'f) (if quote? 't 'f) dims pos (str sb) res)
 
           (case [c reading? quote?]
+
+            [\" false false]
+            (recur (inc i) false true dims pos res)
+
+            [\\ true true]
+            (let [c+ (.charAt string (inc i))]
+              (case c+
+                (\" \\)
+                (do
+                  (.append sb c+)
+                  (recur (+ i 2) true quote? dims pos res))))
+
+            [\" true true]
+            (recur (inc i) true false dims pos res)
 
             [\{ false false]
             (let [pos+ (inc pos)]
@@ -56,6 +69,7 @@
               (.append sb c)
               (recur (inc i) reading? quote? dims pos res))
 
+            ;; commit
             [\, true false]
             (let [line (str sb)]
               (.setLength sb 0)
@@ -75,6 +89,7 @@
               (.append sb c)
               (recur (inc i) reading? quote? dims pos res))
 
+            ;; commit
             [\} true false]
             (let [line (str sb)]
               (.setLength sb 0)

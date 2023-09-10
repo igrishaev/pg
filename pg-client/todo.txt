@@ -6,10 +6,11 @@
 -- json
 -- joda
 
+pg.encode.bin.array TODOs
+
 - pg-params docs
 - protocol-message notice
 - error resp ex structure
-- me.grishaev ns
 - config: read-only default
 - pool: read-only default
 - write to csv/stream
