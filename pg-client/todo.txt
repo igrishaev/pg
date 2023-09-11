@@ -5,6 +5,7 @@
 -- types
 -- json
 -- joda
+-- arrays
 
 pg.encode.bin.array TODOs
 

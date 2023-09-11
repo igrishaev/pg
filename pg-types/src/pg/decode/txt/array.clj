@@ -1,7 +1,8 @@
 (ns pg.decode.txt.array
   (:require
    [pg.oid :as oid]
-   [pg.decode.txt.core :refer [expand]])
+   [pg.decode.txt.core :refer [expand
+                               -decode]])
   (:import
    java.io.Reader
    java.io.StringReader
@@ -76,9 +77,9 @@
             (recur)))))))
 
 
-(defn parse-array [value]
+(defn decode-array [string oid opt]
 
-  (let [in (->> value
+  (let [in (->> string
                 (new StringReader)
                 (new PushbackReader))]
 
@@ -115,15 +116,28 @@
               \"
               (do
                 (.unread in r)
-                (let [string (read-quoted-string in)]
+                (let [buf (read-quoted-string in)
+                      obj (-decode buf oid opt)]
                   (recur dims
                          pos
-                         (assoc-vec-in res dims string))))
+                         (assoc-vec-in res dims obj))))
 
               ;; else
               (do
                 (.unread in r)
-                (let [string (read-non-quoted-string in)]
+                (let [buf (read-non-quoted-string in)
+                      obj (-decode buf oid opt)]
                   (recur dims
                          pos
-                         (assoc-vec-in res dims string)))))))))))
+                         (assoc-vec-in res dims obj)))))))))))
+
+
+;;
+;; Arrays
+;;
+
+(doseq [oid oid/array-oids]
+  (defmethod -decode oid
+    [string oid-arr opt]
+    (let [oid (oid/array->oid oid-arr)]
+      (decode-array string oid opt))))

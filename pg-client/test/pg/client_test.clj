@@ -1817,15 +1817,18 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
       (is (= [{:arr arr}] res)))))
 
 
-#_
-(deftest test-array-null-string
+(deftest test-array-null-string-bin-txt
   (pg/with-connection [conn (assoc *CONFIG*
                                    :binary-encode? true
                                    :binary-decode? false)]
+    (let [arr [nil "null" "NULL" nil "!!@#$%^&*()\"\\{}[]--`\r\b\n\f\tkek"]
+          res (pg/execute conn "select $1::text[] as arr" [arr])]
+      (is (= [{:arr arr}] res)))))
 
-    (let [res (pg/execute conn "select $1::text[] as array"
-                          [[nil "null" "NULL" nil]])]
-      (is (= 1 res)))))
+
+;; multi-dim arrays
+;; arrays of ts
+;; encode arrays macro
 
 
 #_
