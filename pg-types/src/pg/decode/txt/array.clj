@@ -1,4 +1,8 @@
-(ns pg.decode.txt.array)
+(ns pg.decode.txt.array
+  (:import
+   java.io.Reader
+   java.io.StringReader
+   java.io.PushbackReader))
 
 
 (defn assoc-vec [v i x]
@@ -104,3 +108,93 @@
             (do
               (.append sb c)
               (recur (inc i) true quote? dims pos res))))))))
+
+
+(defmacro ->char [r]
+  `(if (= ~r -1)
+     (throw (new Exception "EOF"))
+     (char ~r)))
+
+
+(defn read-non-quoted-string [^PushbackReader in]
+  (let [sb (new StringBuilder)]
+    (loop []
+      (let [r (.read in)
+            c (->char r)]
+        (case c
+          (\, \})
+          (do
+            (.unread in r)
+            (str sb))
+          (do
+            (.append sb c)
+            (recur)))))))
+
+
+(defn read-quoted-string [^Reader in]
+  (.read in) ;; skip the leading "
+  (let [sb (new StringBuilder)]
+    (loop []
+      (let [r (.read in)
+            c (->char r)]
+        (case c
+
+          \\
+          (let [r+ (.read in)
+                c+ (->char r+)]
+            (case c+
+              (\\ \")
+              (do (.append sb c+)
+                  (recur))
+              ;; else
+              (throw (new Exception "unexpected \\ character"))))
+
+          \"
+          (let [line (str sb)]
+            (when-not (= line "NULL")
+              line))
+
+          ;; else
+          (do
+            (.append sb c)
+            (recur)))))))
+
+
+(defn aaa [value]
+
+  (let [in (->> value
+                (new StringReader)
+                (new PushbackReader))]
+
+    (loop [dims []
+           pos -1
+           res []]
+
+      (let [r (.read in)]
+        (if (= -1 r)
+          res
+
+          (let [c (char r)]
+
+            (case c
+
+              \{
+              (recur dims pos res)
+
+              \}
+              (recur dims pos res)
+
+              \,
+              (recur dims pos res)
+
+              \"
+              (do
+                (.unread in r)
+                (let [string (read-quoted-string in)]
+                  (recur dims pos (conj res string))))
+
+              ;; else
+              (do
+                (.unread in r)
+                (let [string (read-non-quoted-string in)]
+                  (recur dims pos (conj res string)))))))))))
