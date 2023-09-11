@@ -1,4 +1,7 @@
 (ns pg.decode.txt.datetime
+  (:require
+   [pg.oid :as oid]
+   [pg.decode.txt.core :refer [expand]])
   (:import
    java.time.LocalDate
    java.time.LocalDateTime
@@ -64,3 +67,32 @@
 
 (defn parse-time [^String string opt]
   (LocalTime/parse string))
+
+
+;;
+;; Date & time
+;;
+
+(expand [oid/timestamptz]
+  [string _ opt]
+  (parse-timestampz string opt))
+
+
+(expand [oid/timestamp]
+  [string _ opt]
+  (parse-timestamp string opt))
+
+
+(expand [oid/date]
+  [string _ opt]
+  (parse-date string opt))
+
+
+(expand [oid/timetz]
+  [string _ opt]
+  (parse-timetz string opt))
+
+
+(expand [oid/time]
+  [string _ opt]
+  (parse-time string opt))

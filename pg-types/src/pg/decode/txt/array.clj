@@ -1,4 +1,7 @@
 (ns pg.decode.txt.array
+  (:require
+   [pg.oid :as oid]
+   [pg.decode.txt.core :refer [expand]])
   (:import
    java.io.Reader
    java.io.StringReader

@@ -2,7 +2,7 @@
   (:require
    [cheshire.core :as json]
    [pg.oid :as oid]
-   [pg.decode.txt :as txt]
+   [pg.decode.txt.core :as txt]
    [pg.decode.bin.core :as bin]))
 
 

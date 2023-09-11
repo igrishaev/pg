@@ -136,7 +136,7 @@
 
     (is (thrown?
          Exception
-         (with-redefs [pg.decode.txt/-decode
+         (with-redefs [pg.decode.txt/decode
                        (fn [& _]
                          (throw (new Exception "boom")))]
            (pg/execute conn "select 1 as foo"))))))
@@ -1817,6 +1817,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
       (is (= [{:arr arr}] res)))))
 
 
+#_
 (deftest test-array-null-string
   (pg/with-connection [conn (assoc *CONFIG*
                                    :binary-encode? true

@@ -11,7 +11,7 @@
    [pg.decode.txt.datetime :as txt.datetime]
    [pg.decode.bin.datetime :as bin.datetime]
    [pg.decode.bin.core :as bin]
-   [pg.decode.txt :as txt]))
+   [pg.decode.txt.core :as txt]))
 
 
 (defmacro Instant->DateTime [obj]
