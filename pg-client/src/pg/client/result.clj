@@ -1,22 +1,22 @@
 (ns pg.client.result
   (:import
-   java.util.Map
+   java.io.OutputStream
+   java.util.ArrayList
    java.util.HashMap
    java.util.List
-   java.util.ArrayList
-   java.io.OutputStream)
+   java.util.Map)
   (:require
-   [pg.client.scram-sha-256 :as scram-sha-256]
    [clojure.string :as str]
-   [pg.const :as const]
-   [pg.client.func :as func]
    [pg.client.as :as as]
-   [pg.client.coll :as coll]
-   [pg.client.msg :as msg]
-   [pg.decode.txt :as txt]
-   [pg.decode.bin :as bin]
+   [pg.client.conn :as conn]
+   [pg.client.func :as func]
    [pg.client.md5 :as md5]
-   [pg.client.conn :as conn]))
+   [pg.client.msg :as msg]
+   [pg.client.scram-sha-256 :as scram-sha-256]
+   [pg.coll :as coll]
+   [pg.const :as const]
+   [pg.decode.bin :as bin]
+   [pg.decode.txt :as txt]))
 
 
 (defn tag->amount [^String tag]

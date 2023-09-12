@@ -133,3 +133,13 @@ https://github.com/pgjdbc/pgjdbc/issues/1311#issuecomment-1143805011
 16:20:35 DEBUG pg.pool - pool termination done
 
 {:array "{NULL,\"null\",\"NULL\",NULL}"}
+
+typed arrays
+java.util.List?
+java.lang.Iterable?
+
+Class ofArray = o.getClass().getComponentType();
+
+
+(def IntArray
+  (type (int-array 0)))

@@ -1,4 +1,4 @@
-(ns pg.client.coll
+(ns pg.coll
   (:import
    java.util.Iterator
    clojure.lang.RT))

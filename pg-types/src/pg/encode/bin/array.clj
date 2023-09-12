@@ -2,6 +2,7 @@
   (:import
    clojure.lang.Sequential)
   (:require
+   [pg.coll :as coll]
    [pg.hint :as hint]
    [pg.out :as out]
    [pg.oid :as oid]
@@ -19,6 +20,7 @@
 
 
 ;; todo throw if nil
+;; TODO: guess-oid
 
 (defn encode-array
 
@@ -55,38 +57,26 @@
            (out/write-int32 has-nulls)
            (out/write-int32 oid))]
 
-     ;; TODO coll
-     (doseq [dim dims]
-       (out/write-int32 out dim)
-       (out/write-int32 out 1))
+     (coll/do-seq [dim dims]
+                  (out/write-int32 out dim)
+                  (out/write-int32 out 1))
 
-     ;; TODO coll
-     (doseq [item items]
-       (if (nil? item)
-         (out/write-int32 out -1)
-         (let [buf ^bytes (-encode item oid opt)
-               len (alength buf)]
-           (out/write-int32 out len)
-           (out/write-bytes out buf))))
+     (coll/do-seq [item items]
+                  (if (nil? item)
+                    (out/write-int32 out -1)
+                    (let [buf ^bytes (-encode item oid opt)
+                          len (alength buf)]
+                      (out/write-int32 out len)
+                      (out/write-bytes out buf))))
 
      (out/array out))))
 
 
-;; typed arrays
-;; java.util.List?
-;; java.lang.Iterable?
+;;
+;; Array
+;;
 
-;; Class ofArray = o.getClass().getComponentType();
-
-
-#_
-(def IntArray
-  (type (int-array 0)))
-
-
-;; TODO
-
-(expand [Sequential nil
-   Sequential oid/_text]
-  [value _ opt]
-  (encode-array value opt))
+(doseq [oid (conj oid/array-oids nil)]
+  (defmethod -encode [Sequential oid]
+    [value oid-arr opt]
+    (encode-array value opt)))

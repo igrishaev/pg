@@ -8,7 +8,7 @@
    [pg.out :as out]
    [pg.bb :as bb]
    [pg.const :as const]
-   [pg.client.coll :as coll]
+   [pg.coll :as coll]
    [pg.encode.txt :as txt]
    [pg.encode.bin :as bin]))
 

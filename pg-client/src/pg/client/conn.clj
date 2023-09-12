@@ -9,7 +9,7 @@
    java.util.HashMap
    java.util.Map)
   (:require
-   [pg.client.coll :as coll]
+   [pg.coll :as coll]
    [pg.const :as const]
    [pg.client.debug :as debug]
    [pg.bb :as bb]

@@ -1826,9 +1826,22 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
       (is (= [{:arr arr}] res)))))
 
 
-;; multi-dim arrays
-;; arrays of ts
-;; encode arrays macro
+(deftest test-array-multi-dim-bin-txt
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? false)]
+    (let [arr
+          [[(LocalTime/parse "10:00")
+            (LocalTime/parse "11:00")
+            (LocalTime/parse "12:00")]
+           [(LocalTime/parse "10:01")
+            (LocalTime/parse "11:01")
+            (LocalTime/parse "12:01")]
+           [(LocalTime/parse "10:02")
+            (LocalTime/parse "11:02")
+            (LocalTime/parse "12:02")]]
+          res (pg/execute conn "select $1::time[] as arr" [arr])]
+      (is (= [{:arr arr}] res)))))
 
 
 #_
