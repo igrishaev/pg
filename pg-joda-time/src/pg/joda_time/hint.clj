@@ -3,7 +3,7 @@
    org.joda.time.DateTime)
   (:require
    [pg.oid :as oid]
-   [pg.hint :as hint]))
+   [pg.types.hint :as hint]))
 
 
 (hint/add-hint DateTime oid/timestamptz)

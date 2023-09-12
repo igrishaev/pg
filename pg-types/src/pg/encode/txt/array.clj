@@ -3,18 +3,11 @@
    clojure.lang.Sequential)
   (:require
    [clojure.string :as str]
-   [pg.hint :as hint]
+   [pg.types.array :as array]
    [pg.out :as out]
    [pg.oid :as oid]
    [pg.encode.txt.core
     :refer [expand -encode]]))
-
-
-;; \tab       "\\t"
-;; \formfeed  "\\f"
-;; \newline   "\\n"
-;; \return    "\\r"
-;; \backspace "\\b"
 
 
 (defn quote-array ^String [^String string]
@@ -36,6 +29,7 @@
           (recur (inc i)))))))
 
 
+;; TODO?
 (defn ->string [data oid opt]
   (cond
 
@@ -66,14 +60,6 @@
    (->string matrix oid opt)))
 
 
-(defn guess-oid [matrix]
-  (->> matrix
-       (flatten)
-       (filter some?)
-       (first)
-       (hint/hint)))
-
-
 ;;
 ;; Array
 ;;
@@ -82,6 +68,6 @@
   (defmethod -encode [Sequential oid]
     [value oid-arr opt]
     (let [oid (if (nil? oid-arr)
-                (guess-oid value)
+                (array/guess-oid value)
                 (oid/array->oid oid-arr))]
       (encode-array value oid opt))))

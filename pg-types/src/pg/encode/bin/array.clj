@@ -3,9 +3,9 @@
    clojure.lang.Sequential)
   (:require
    [pg.coll :as coll]
-   [pg.hint :as hint]
    [pg.out :as out]
    [pg.oid :as oid]
+   [pg.types.array :as array]
    [pg.encode.bin.core :refer [expand
                                -encode]]))
 
@@ -19,57 +19,45 @@
       (not-empty dims))))
 
 
-;; todo throw if nil
-;; TODO: guess-oid
-
 (defn encode-array
+  [matrix oid opt]
 
-  ([matrix]
-   (encode-array matrix nil))
+  (let [dims
+        (matrix-dims matrix)
 
-  ([matrix opt]
+        dim-count
+        (count dims)
 
-   (let [dims
-         (matrix-dims matrix)
+        total
+        (apply * dims)
 
-         dim-count
-         (count dims)
+        items
+        (flatten matrix)
 
-         total
-         (apply * dims)
+        has-nulls
+        (if (some nil? items)
+          1
+          0)
 
-         items
-         (flatten matrix)
+        out
+        (doto (out/create)
+          (out/write-int32 dim-count)
+          (out/write-int32 has-nulls)
+          (out/write-int32 oid))]
 
-         has-nulls
-         (if (some nil? items)
-           1
-           0)
+    (coll/do-seq [dim dims]
+      (out/write-int32 out dim)
+      (out/write-int32 out 1))
 
-         oid
-         (-> (filter some? items)
-             (first)
-             (hint/hint))
+    (coll/do-seq [item items]
+      (if (nil? item)
+        (out/write-int32 out -1)
+        (let [buf ^bytes (-encode item oid opt)
+              len (alength buf)]
+          (out/write-int32 out len)
+          (out/write-bytes out buf))))
 
-         out
-         (doto (out/create)
-           (out/write-int32 dim-count)
-           (out/write-int32 has-nulls)
-           (out/write-int32 oid))]
-
-     (coll/do-seq [dim dims]
-                  (out/write-int32 out dim)
-                  (out/write-int32 out 1))
-
-     (coll/do-seq [item items]
-                  (if (nil? item)
-                    (out/write-int32 out -1)
-                    (let [buf ^bytes (-encode item oid opt)
-                          len (alength buf)]
-                      (out/write-int32 out len)
-                      (out/write-bytes out buf))))
-
-     (out/array out))))
+    (out/array out)))
 
 
 ;;
@@ -79,4 +67,7 @@
 (doseq [oid (conj oid/array-oids nil)]
   (defmethod -encode [Sequential oid]
     [value oid-arr opt]
-    (encode-array value opt)))
+    (let [oid (if (nil? oid-arr)
+                (array/guess-oid value)
+                (oid/array->oid oid-arr))]
+      (encode-array value oid opt))))

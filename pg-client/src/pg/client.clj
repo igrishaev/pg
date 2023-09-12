@@ -8,7 +8,7 @@
    [pg.client.result :as res]
    [pg.client.sql :as sql]
    [pg.const :as const]
-   [pg.hint :as hint]
+   [pg.types.hint :as hint]
    [pg.oid :as oid])
   (:import
    clojure.lang.Keyword

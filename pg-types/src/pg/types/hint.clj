@@ -1,4 +1,4 @@
-(ns pg.hint
+(ns pg.types.hint
   (:require
    [pg.oid :as oid])
   (:import

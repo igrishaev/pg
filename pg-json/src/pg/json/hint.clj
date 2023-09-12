@@ -3,7 +3,7 @@
    clojure.lang.IPersistentMap)
   (:require
    [pg.oid :as oid]
-   [pg.hint :as hint]))
+   [pg.types.hint :as hint]))
 
 
 (hint/add-hint IPersistentMap oid/json)
