@@ -181,3 +181,53 @@
       (is (instance? LocalTime res))
       (is (= "10:29:39.123400"
              (str res))))))
+
+
+(deftest test-decode-array
+
+  (testing "trivial ints"
+    (let [string
+          "{1,2,3}"
+          res1
+          (decode string oid/_int2)
+          res2
+          (decode string oid/_int4)
+          res3
+          (decode string oid/_int8)]
+      (is (= [1 2 3] res1 res2 res3))))
+
+  (testing "empty"
+    (let [string
+          "{}"
+          res1
+          (decode string oid/_int2)
+          res2
+          (decode string oid/_int4)
+          res3
+          (decode string oid/_int8)]
+      (is (= [] res1 res2 res3))))
+
+  (testing "text"
+    (let [string
+          "{foo,bar,baz}"
+          res
+          (decode string oid/_text)]
+      (is (= ["foo" "bar" "baz"] res))))
+
+  (testing "empty lines"
+    (let [string
+          "{\"\",\"\",\"\"}"
+          res
+          (decode string oid/_text)]
+      (is (= ["" "" ""] res))))
+
+  ;; TODO:
+  ;; nulls
+  ;; quotes
+  ;; slashes
+  ;; spaces
+  ;; multi-dims
+  ;; dates
+  ;; ?
+
+  )
