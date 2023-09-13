@@ -221,13 +221,55 @@
           (decode string oid/_text)]
       (is (= ["" "" ""] res))))
 
-  ;; TODO:
-  ;; nulls
-  ;; quotes
-  ;; slashes
-  ;; spaces
-  ;; multi-dims
-  ;; dates
-  ;; ?
+  (testing "null literals mixed"
+    (let [string
+          "{null,\"null\",NULL,\"NULL\",nullable,NULLABLE}"
+          res
+          (decode string oid/_text)]
+      (is (= [nil "null" nil "NULL" "nullable" "NULLABLE"] res))))
 
-  )
+  (testing "null literals case"
+    (let [string
+          "{null,NULL,Null}"
+          res
+          (decode string oid/_text)]
+      (is (= [nil nil nil] res))))
+
+  (testing "quotes, slashes, spaces"
+    (let [string
+          "{null,\"foo\\\"bar\",\"C:\\\\windows\"}"
+          res
+          (decode string oid/_text)]
+      (is (= [nil "foo\"bar" "C:\\windows"] res))))
+
+  (testing "multi-dim"
+    (let [string
+          "{{{a,b},{c,d}},{{e,f},{g,h}}}"
+          res
+          (decode string oid/_text)]
+      (is (= [[["a" "b"] ["c" "d"]]
+              [["e" "f"] ["g" "h"]]] res))))
+
+  (testing "multi-dim"
+    (let [string
+          "{{{a,b},{c,d}},{{e,f},{g,h}}}"
+          res
+          (decode string oid/_text)]
+      (is (= [[["a" "b"] ["c" "d"]]
+              [["e" "f"] ["g" "h"]]] res))))
+
+  (testing "multi-dim ts"
+    (let [string
+          "{{{\"2023-09-13 09:13:47.708253+00\",\"2023-09-13 09:13:47.708253+01\"},{\"2023-09-13 09:13:47.708253+02\",\"2023-09-13 09:13:47.708253+03\"}},{{\"2023-09-13 09:13:47.708253+04\",\"2023-09-13 09:13:47.708253+05\"},{\"2023-09-13 09:13:47.708253+06\",\"2023-09-13 09:13:47.708253+07\"}}}"
+          res
+          (decode string oid/_timestamptz)]
+
+      (is (= [[[(OffsetDateTime/parse "2023-09-13T09:13:47.708253+00:00")
+                (OffsetDateTime/parse "2023-09-13T09:13:47.708253+01:00")]
+               [(OffsetDateTime/parse "2023-09-13T09:13:47.708253+02:00")
+                (OffsetDateTime/parse "2023-09-13T09:13:47.708253+03:00")]]
+              [[(OffsetDateTime/parse "2023-09-13T09:13:47.708253+04:00")
+                (OffsetDateTime/parse "2023-09-13T09:13:47.708253+05:00")]
+               [(OffsetDateTime/parse "2023-09-13T09:13:47.708253+06:00")
+                (OffsetDateTime/parse "2023-09-13T09:13:47.708253+07:00")]]]
+             res)))))

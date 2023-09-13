@@ -1,12 +1,13 @@
 (ns pg.decode.txt.array
   (:require
-   [pg.oid :as oid]
+   [clojure.string :as str]
    [pg.decode.txt.core :refer [expand
-                               -decode]])
+                               -decode]]
+   [pg.oid :as oid])
   (:import
+   java.io.PushbackReader
    java.io.Reader
-   java.io.StringReader
-   java.io.PushbackReader))
+   java.io.StringReader))
 
 
 (defn assoc-vec [v i x]
@@ -33,6 +34,10 @@
      (char ~r)))
 
 
+(defmacro null-literal? [line]
+  `(= (str/lower-case ~line) "null"))
+
+
 (defn read-non-quoted-string [^PushbackReader in]
   (let [sb (new StringBuilder)]
     (loop []
@@ -43,7 +48,7 @@
           (do
             (.unread in r)
             (let [line (str sb)]
-              (when-not (= line "NULL")
+              (when-not (null-literal? line)
                 line)))
           (do
             (.append sb c)
