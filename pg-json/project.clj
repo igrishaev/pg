@@ -1,4 +1,4 @@
-(defproject com.github.igrishaev/pg-json "0.1.7-SNAPSHOT"
+(defproject com.github.igrishaev/pg-json "0.1.7"
 
   :description
   "Expand JSON(b) encoding & decoding with Cheshire"
