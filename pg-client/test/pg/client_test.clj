@@ -1853,20 +1853,8 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
       (is (= [{:arr arr}] res)))))
 
 
-#_
-(deftest test-query-line-breaks-txt
+(deftest test-array-in-array
   (pg/with-connection [conn *CONFIG*]
-    (let [res (pg/query conn "select $$abcde
-fghij$$ line")]
-      (is (= [{:line "abcde\nfghij"}] res)))))
-
-
-#_
-(deftest test-query-text-array-breaks
-  (pg/with-connection [conn *CONFIG*]
-    (let [res (pg/execute conn
-                          "select array[$1, $2, $3]::text[] as words"
-                          ["aaa"
-                           "!@#@%#'''$%\r\n\t$%^%^&*(\"\")_"
-                           "{}(){}<>?%"])]
-      (is (= 1 res)))))
+    (let [arr [1 2 3]
+          res (pg/execute conn "select 2 = ANY ($1) as in_array" [arr])]
+      (is (= [{:in_array true}] res)))))

@@ -1,6 +1,9 @@
 ## Notifications
 
 <!-- toc -->
+
+
+
 <!-- tocstop -->
 
 Notifications are somewhat pub-sub message system in Postgres. It can be

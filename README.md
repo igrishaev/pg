@@ -11,4 +11,5 @@ Documentation:
 - JSON support
 - Joda Time support
 - COPYing
-- Arrays
+- [Arrays](doc/070-arrays.md)
+- Using with Next.JDBC
