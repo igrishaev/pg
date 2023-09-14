@@ -143,3 +143,21 @@ Class ofArray = o.getClass().getComponentType();
 
 (def IntArray
   (type (int-array 0)))
+
+
+(def -spec
+  {:dbtype "postgres"
+   :port 10140
+   :dbname "test"
+   :user "test"
+   :password "test"})
+
+(next.jdbc/execute! -spec ["select '{1,2,3}'::int[] as arr"])
+#_[{:arr #object[org.postgresql.jdbc.PgArray 0x487ba693 "{1,2,3}"]}]
+
+(next.jdbc/execute! -spec ["select '{{1,2},{3,4}}'::int[] as arr"])
+#_[{:arr #object[org.postgresql.jdbc.PgArray 0x768c120c "{{1,2},{3,4}}"]}]
+
+(next.jdbc/execute! -spec ["select '{now(),now()}'::timestamp[] as arr"])
+#_[{:arr
+  #object[org.postgresql.jdbc.PgArray 0x3d72a56b "{\"2023-09-13 15:45:31.55814\",\"2023-09-13 15:45:31.55814\"}"]}]
