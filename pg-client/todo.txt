@@ -7,8 +7,7 @@
 -- joda
 -- arrays
 
-pg.encode.bin.array TODOs
-
+- socket refactor
 - pg-params docs
 - protocol-message notice
 - error resp ex structure
