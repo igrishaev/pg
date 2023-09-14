@@ -5,7 +5,6 @@
 -- types
 -- json
 -- joda
--- arrays
 
 - socket refactor
 - pg-params docs
@@ -25,7 +24,6 @@
 - benchmarks
 - interval support
 - range support
-- array support
 - batch queries
 - ssl
 - unix socket
@@ -42,7 +40,6 @@
 perf:
 - enough?
 
-- PG pool
 - Encoding and decoding values
 - JSON support
 - Joda Time support
