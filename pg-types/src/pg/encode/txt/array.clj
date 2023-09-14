@@ -63,10 +63,14 @@
 ;; Array
 ;;
 
-(doseq [oid (conj oid/array-oids nil)]
+(defmethod -encode [Sequential nil]
+    [value _ opt]
+    (let [oid (array/guess-oid value)]
+      (encode-array value oid opt)))
+
+
+(doseq [oid oid/array-oids]
   (defmethod -encode [Sequential oid]
     [value oid-arr opt]
-    (let [oid (if (nil? oid-arr)
-                (array/guess-oid value)
-                (oid/array->oid oid-arr))]
+    (let [oid (oid/array->oid oid-arr)]
       (encode-array value oid opt))))
