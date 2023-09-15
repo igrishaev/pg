@@ -18,7 +18,29 @@ interaction with a socket. To prevent the connection hanging due to
 time-consuming handling of a notification, provide a handler that sends its to
 some sort of a channel, agent, or a message queue system.
 
-Imagine you have two connections: `conn1` and `conn2`.
+Imagine you have two connections: `conn1` and `conn2`. Let `conn2` listen for a
+random channel:
+
+~~~clojure
+(def channel "hello")
+
+(pg/listen conn2 channel)
+~~~
+
+Let the `conn1` connection send something into that channel:
+
+~~~clojure
+(pg/notify conn1 channel "test")
+~~~
+
+Now, should `conn2` interact with the database, it will handle the notification
+by printing it to the console:
+
+~~~clojure
+(pg/query conn2 "select")
+~~~
+
+
 
 
 

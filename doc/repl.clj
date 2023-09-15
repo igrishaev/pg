@@ -1,7 +1,8 @@
 (ns repl
   (:require
    [pg.client :as pg]
-   [pg.pool :as pool]))
+   #_[pg.pool :as pool]
+   ))
 
 (def conn (pg/connect config))
 
@@ -278,3 +279,59 @@ further notifications won't work any longer.
    :some-job
    (-> (map->SomeJob {,,,})
        (component/using [:pool]))})
+
+
+(def config
+  {:host "127.0.0.1"
+   :port 10150
+   :user "test"
+   :password "test"
+   :database "test"})
+
+
+(def conn1
+  (pg/connect config))
+
+(def conn2
+  (pg/connect config))
+
+(def channel "hello")
+
+(pg/listen conn2 channel)
+
+(pg/notify conn1 channel "test")
+
+(pg/query conn2 "select")
+
+;; PG notification: {:msg :NotificationResponse, :pid 11244, :channel "hello", :message "test"}
+
+
+(def notifications
+  (atom []))
+
+
+(defn my-handler [notification]
+  (swap! notifications conj notification))
+
+
+(def conn2
+  (pg/connect (assoc config :fn-notification my-handler)))
+
+(pg/listen conn2 channel)
+
+(pg/notify conn1 channel "test1")
+(pg/notify conn1 channel "test2")
+
+(pg/query conn2 "select")
+
+
+@notifications
+
+[{:msg :NotificationResponse, :pid 11244, :channel "hello", :message "test1"}
+ {:msg :NotificationResponse, :pid 11244, :channel "hello", :message "test2"}]
+
+(defn my-handler [{:keys [pid channel message]}]
+  (future
+    (some-background-logic ...)))
+
+(pg/unlisten conn2 channel)
