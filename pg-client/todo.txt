@@ -1,11 +1,12 @@
 
 - add docs
--- notify
 -- copy
 -- types
 -- json
 -- joda
 
+- adopt honey-sql
+- query-first & execute first
 - socket refactor
 - pg-params docs
 - protocol-message notice
@@ -20,14 +21,12 @@
 - copy-out try/catch
 - copy failed
 - pg-csv: parse csv to clj; bin
-
 - benchmarks
 - interval support
 - range support
 - batch queries
 - ssl
 - unix socket
-- adopt honey-sql
 - adopt gosql
 - errors addSuppressed
 - cursor package
