@@ -1,7 +1,13 @@
 ## Notifications
 
 <!-- toc -->
+
+- [Introduction](#introduction)
+- [Usage](#usage)
+
 <!-- tocstop -->
+
+### Introduction
 
 Notifications are somewhat pub-sub message system in Postgres. It can be
 described in these simple steps:
@@ -18,8 +24,26 @@ interaction with a socket. To prevent the connection hanging due to
 time-consuming handling of a notification, provide a handler that sends its to
 some sort of a channel, agent, or a message queue system.
 
-Imagine you have two connections: `conn1` and `conn2`. Let `conn2` listen for a
-random channel:
+### Usage
+
+Imagine you have two connections: `conn1` and `conn2`:
+
+~~~clojure
+(def config
+  {:host "127.0.0.1"
+   :port 10150
+   :user "test"
+   :password "test"
+   :database "test"})
+
+(def conn1
+  (pg/connect config))
+
+(def conn2
+  (pg/connect config))
+~~~
+
+Let `conn2` listen for a random channel:
 
 ~~~clojure
 (def channel "hello")
@@ -38,92 +62,63 @@ by printing it to the console:
 
 ~~~clojure
 (pg/query conn2 "select")
+
+;; PG notification: {:msg :NotificationResponse, :pid 11244, :channel "hello", :message "test"}
 ~~~
 
+A notification is a map which tracks the channel name, the number of the process
+number (PID) of the connection that has emitted it and the string payload of the
+notification.
 
-
-
-
-
-
-The `conn2` needs a handler function which is passed into the `:fn-notification`
-configuration field. By default, it just prints the `NotificationResponse`
-map. The better approach would be to process them in the background, say, using
-futures, Manofold or core.async.
+To override the default printing handler, first declare a function. In our
+example, the function just stores the notifications in a global atom:
 
 ~~~clojure
-(defn fn-notification [NotificationResponse]
-  (future ;; or core.async
-    (process-notification NotificationResponse)))
-
-;; or
-
-(def notifications!
+(def notifications
   (atom []))
 
-(defn fn-notification [NotificationResponse]
-  (swap! notifications! conj NotificationResponse))
+(defn my-handler [notification]
+  (swap! notifications conj notification))
+~~~
 
-;; listener
+Let's go through the pipeline again with a new handler. Open a connection with
+the new hanlder and subscribe to the channel:
 
+~~~clojure
 (def conn2
-  (pg/connect {:host "127.0.0.1"
-               :port 5432
-               ...
-               :fn-notification fn-notification}))
+  (pg/connect (assoc config :fn-notification my-handler)))
+
+(pg/listen conn2 channel)
 ~~~
 
-The `fn-notification` function is processed in the connection's thread so it
-would be improper to block it with time-heavy logic. Ideally, you put the
-notification into some sort of a queue and let other parts of the system process
-it.
-
-To subscribe to a channel, run a LISTEN query. It takes a single parameter: a
-name of the channel (without quotes).
+Send a couple of messages from another connection:
 
 ~~~clojure
-(pg/listen conn2 "FOO")
+(pg/notify conn1 channel "test1")
+(pg/notify conn1 channel "test2")
 ~~~
 
-Now that you have a listening client, emit a couple of messages from the first
-connection using NOTIFY:
+Trigger receiving the messages and check out the atom:
 
 ~~~clojure
-(def conn1 (pg/connect ...))
+(pg/query conn2 "select")
 
-(pg/notify conn1 "FOO" "hello!")           ;; a string
-(pg/notify conn1 "FOO" "[1, 2, 3]")        ;; JSON
-(pg/notify conn1 "FOO" "{:color [a b c]}") ;; EDN
+@notifications
+
+[{:msg :NotificationResponse, :pid 11244, :channel "hello", :message "test1"}
+ {:msg :NotificationResponse, :pid 11244, :channel "hello", :message "test2"}]
 ~~~
 
-The NOTIFY expression accepts the name of the channel and a string message. At
-the moment, there is no way to pass it as a parameter (but it's a subject to be
-fixed).
+Futures, thread executors or core.async/Manofold are your best friends to
+organize background processing of notifications effectively.
 
-**Attention: in Postgres, listening a channel is passive!** You won't receive a
-message unless you perform a query to the server. It might be an empty query,
-literally `SELECT` with nothing else; yet you've got to ping the server so it
-sends all the collected messages to the client.
+Keep in mind that the listenting connection is passive: you won't get any of
+pending messages unless you interact with the database somehow. Running an empty
+query from time to time would solve the problem. Again, you may have a
+backgound loop or a scheduled task that does it for you.
 
-To have a listener that polls the server continuously, you need a background
-task driven with `ScheduledExecutorService`, core.async, Manifold, or something
-similar.
-
-Here is the structure of the `NotificationResponse` map:
+To stop receiving notifications from a certain channel, call unlisten:
 
 ~~~clojure
-{:msg :NotificationResponse
- :pid 123456
- :channel "FOO"
- :message "hello"}
-~~~
-
-The `:pid` is a number of process that has spawned this message. The PID might
-be also known from the `(pg/pid conn)` call. You can have a map of PIDs for some
-kind of routing or processing rules.
-
-To stop listening a channel, run:
-
-~~~clojure
-(pg/unlisten conn2 "FOO")
+(pg/unlisten conn2 channel)
 ~~~

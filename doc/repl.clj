@@ -288,7 +288,6 @@ further notifications won't work any longer.
    :password "test"
    :database "test"})
 
-
 (def conn1
   (pg/connect config))
 
@@ -308,7 +307,6 @@ further notifications won't work any longer.
 
 (def notifications
   (atom []))
-
 
 (defn my-handler [notification]
   (swap! notifications conj notification))
