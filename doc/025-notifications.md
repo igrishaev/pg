@@ -9,20 +9,23 @@
 
 ### Introduction
 
-Notifications are somewhat pub-sub message system in Postgres. It can be
+Notifications are somewhat pub-sub message systems in Postgres. They can be
 described in these simple steps:
 
-- client B subscribes to a channel; the channel gets created if it didn't exist.
+- client B subscribes to a channel; the channel gets created if it doesn't
+  exist.
+
 - client A sends a message to that channel;
-- every time client B interacts with the database, they receive messages sent bo
+
+- every time client B interacts with the database, they receive messages sent to
   this channel by other clients.
 
 To handle a message, the client invokes a special handler. This handler comes
 from the configuration. The default handler just prints the notification
 map. **Pay attention** that the handler is called synchronously blocking the
-interaction with a socket. To prevent the connection hanging due to
-time-consuming handling of a notification, provide a handler that sends its to
-some sort of a channel, agent, or a message queue system.
+interaction with a socket. To prevent the connection from hanging due to the
+time-consuming handling of a notification, provide a handler that sends it to
+some sort of channel, agent, or message queue system.
 
 ### Usage
 
@@ -114,10 +117,10 @@ organize background processing of notifications effectively.
 
 Keep in mind that the listenting connection is passive: you won't get any of
 pending messages unless you interact with the database somehow. Running an empty
-query from time to time would solve the problem. Again, you may have a
-backgound loop or a scheduled task that does it for you.
+query from time to time would solve the problem. Again, you may have a backgound
+loop or a scheduled task that does it for you.
 
-To stop receiving notifications from a certain channel, call unlisten:
+To stop receiving notifications from a certain channel, call `unlisten`:
 
 ~~~clojure
 (pg/unlisten conn2 channel)
