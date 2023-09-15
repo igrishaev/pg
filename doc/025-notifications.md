@@ -1,22 +1,28 @@
 ## Notifications
 
 <!-- toc -->
-
-
-
 <!-- tocstop -->
 
 Notifications are somewhat pub-sub message system in Postgres. It can be
-described in four simple steps:
+described in these simple steps:
 
-- someone declares a channel;
+- client B subscribes to a channel; the channel gets created if it didn't exist.
 - client A sends a message to that channel;
-- client B subscribes to the channel;
 - every time client B interacts with the database, they receive messages sent bo
   this channel by other clients.
 
-To handle a message, the client invoces a special handler. This handler comes
-from the configuration
+To handle a message, the client invokes a special handler. This handler comes
+from the configuration. The default handler just prints the notification
+map. **Pay attention** that the handler is called synchronously blocking the
+interaction with a socket. To prevent the connection hanging due to
+time-consuming handling of a notification, provide a handler that sends its to
+some sort of a channel, agent, or a message queue system.
+
+Imagine you have two connections: `conn1` and `conn2`.
+
+
+
+
 
 The `conn2` needs a handler function which is passed into the `:fn-notification`
 configuration field. By default, it just prints the `NotificationResponse`
