@@ -161,3 +161,9 @@ Class ofArray = o.getClass().getComponentType();
 (next.jdbc/execute! -spec ["select '{now(),now()}'::timestamp[] as arr"])
 #_[{:arr
   #object[org.postgresql.jdbc.PgArray 0x3d72a56b "{\"2023-09-13 15:45:31.55814\",\"2023-09-13 15:45:31.55814\"}"]}]
+
+
+ssl
+https://gist.github.com/achesco/b893fb55b90651cf5f4cc803b78e19fd
+https://docs.exalate.com/docs/how-to-secure-a-connection-between-exalate-and-a-postgresql-database-in-docker
+https://github.com/pgjdbc/pgjdbc/blob/5709a20fbef453749d2394e11502527e4a3ab5bb/pgjdbc/src/main/java/org/postgresql/ssl/MakeSSL.java#L26

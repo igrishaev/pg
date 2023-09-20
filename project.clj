@@ -56,6 +56,7 @@
 
    [joda-time/joda-time "2.12.5"]
    [clj-time "0.15.2"]
+   [less-awful-ssl "1.0.6"]
    [com.github.seancorfield/next.jdbc "1.2.796"]
    [org.postgresql/postgresql "42.2.18"]
    [org.clojure/tools.logging "1.2.4"]

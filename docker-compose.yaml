@@ -32,13 +32,14 @@ services:
 
   pg13:
     image: postgres:13
-    command: >
-      -E
+    command: "-E -c ssl=on -c ssl_cert_file=/var/lib/postgresql/server.crt -c ssl_key_file=/var/lib/postgresql/server.key"
     hostname: postgres
     ports:
       - "10130:5432"
     volumes:
       - ./.docker/postgres/initdb.d:/docker-entrypoint-initdb.d
+      - ./certs/server.crt:/var/lib/postgresql/server.crt
+      - ./certs/server.key:/var/lib/postgresql/server.key
     environment:
       - POSTGRES_DB=test
       - POSTGRES_PASSWORD=test

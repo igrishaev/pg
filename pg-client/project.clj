@@ -24,6 +24,7 @@
   :profiles
   {:test
    {:dependencies
-    [[com.github.igrishaev/pg-json]
+    [[less-awful-ssl]
+     [com.github.igrishaev/pg-json]
      [com.github.igrishaev/pg-integration]
      [org.clojure/data.csv]]}})
