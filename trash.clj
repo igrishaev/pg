@@ -167,3 +167,5 @@ ssl
 https://gist.github.com/achesco/b893fb55b90651cf5f4cc803b78e19fd
 https://docs.exalate.com/docs/how-to-secure-a-connection-between-exalate-and-a-postgresql-database-in-docker
 https://github.com/pgjdbc/pgjdbc/blob/5709a20fbef453749d2394e11502527e4a3ab5bb/pgjdbc/src/main/java/org/postgresql/ssl/MakeSSL.java#L26
+https://stackoverflow.com/questions/55072221/deploying-postgresql-docker-with-ssl-certificate-and-key-with-volumes
+https://www.crunchydata.com/blog/ssl-certificate-authentication-postgresql-docker-containers
