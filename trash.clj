@@ -169,3 +169,11 @@ https://docs.exalate.com/docs/how-to-secure-a-connection-between-exalate-and-a-p
 https://github.com/pgjdbc/pgjdbc/blob/5709a20fbef453749d2394e11502527e4a3ab5bb/pgjdbc/src/main/java/org/postgresql/ssl/MakeSSL.java#L26
 https://stackoverflow.com/questions/55072221/deploying-postgresql-docker-with-ssl-certificate-and-key-with-volumes
 https://www.crunchydata.com/blog/ssl-certificate-authentication-postgresql-docker-containers
+
+(require '[less.awful.ssl :as ssl])
+
+(.setUseClientMode -s true)
+(.startHandshake -s)
+
+(def -s (-> (ssl/ssl-context "/Users/ivan/work/pg/certs/client.key" "/Users/ivan/work/pg/certs/client.crt" "/Users/ivan/work/pg/certs/root.crt")
+            (ssl/socket "localhost" 10130)))
