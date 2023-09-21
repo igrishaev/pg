@@ -177,3 +177,29 @@ https://www.crunchydata.com/blog/ssl-certificate-authentication-postgresql-docke
 
 (def -s (-> (ssl/ssl-context "/Users/ivan/work/pg/certs/client.key" "/Users/ivan/work/pg/certs/client.crt" "/Users/ivan/work/pg/certs/root.crt")
             (ssl/socket "localhost" 10130)))
+
+
+[0, 0, 0, 8, 4, -46, 22, 47]
+
+(def -in (.getInputStream -s))
+
+(def -out (.getOutputStream -s))
+
+(.write -out (byte-array [0, 0, 0, 8, 4, -46, 22, 47]))
+
+https://stackoverflow.com/questions/8425999/upgrade-java-socket-to-encrypted-after-issue-starttls
+
+SSLSocket sslsocket = (SSLSocket) sslsocketfactory.createSocket(
+                                                                socket,
+                                                                socket.getInetAddress().getHostAddress(),
+                                                                socket.getPort(),
+                                                                true) ;
+
+ssl=on
+ssl_cert_file='/Users/ivan/work/pg/certs/server.crt'
+ssl_key_file='/Users/ivan/work/pg/certs/server.key'
+ssl_ca_file = '/Users/ivan/work/pg/certs/root.crt'
+
+hostssl all	all	all           cert #clientcert=verify-full
+
+psql "host=localhost dbname=ivan user=chesco port=15432 sslmode=verify-full sslcert=/Users/ivan/work/pg/certs/client.crt sslkey=/Users/ivan/work/pg/certs/client.key sslrootcert=/Users/ivan/work/pg/certs/root.crt"
