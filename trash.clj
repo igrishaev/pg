@@ -195,11 +195,62 @@ SSLSocket sslsocket = (SSLSocket) sslsocketfactory.createSocket(
                                                                 socket.getPort(),
                                                                 true) ;
 
-ssl=on
-ssl_cert_file='/Users/ivan/work/pg/certs/server.crt'
-ssl_key_file='/Users/ivan/work/pg/certs/server.key'
+ssl = on
+ssl_cert_file = '/Users/ivan/work/pg/certs/server.crt'
+ssl_key_file = '/Users/ivan/work/pg/certs/server.key'
 ssl_ca_file = '/Users/ivan/work/pg/certs/root.crt'
 
 hostssl all	all	all           cert #clientcert=verify-full
 
 psql "host=localhost dbname=ivan user=chesco port=15432 sslmode=verify-full sslcert=/Users/ivan/work/pg/certs/client.crt sslkey=/Users/ivan/work/pg/certs/client.key sslrootcert=/Users/ivan/work/pg/certs/root.crt"
+
+
+(encode-StartupMessage {:protocol-version 196608
+                          :user "chesco"
+                          :database "ivan"}
+                         nil)
+
+[0, 0, 0, 35, 0, 3, 0, 0, 117, 115, 101, 114, 0, 99, 104, 101, 115, 99, 111, 0,
+ 100, 97, 116, 97, 98, 97, 115, 101, 0, 105, 118, 97, 110, 0, 0]
+
+
+(comment
+
+  (def -s (new Socket "localhost" 15432 true))
+
+  (def -out (.getOutputStream -s))
+  (def -in (.getInputStream -s))
+
+  (.write -out (byte-array [0, 0, 0, 8, 4, -46, 22, 47]))
+  (.read -in)
+
+  (require '[less.awful.ssl :as ssl])
+
+  (def -sf (SSLSocketFactory/getDefault))
+
+  (def -ctx
+    (ssl/ssl-context "/Users/ivan/work/pg/certs/client.key"
+                     "/Users/ivan/work/pg/certs/client.crt"
+                     "/Users/ivan/work/pg/certs/root.crt"))
+
+  (def -sf
+    (.getSocketFactory -ctx))
+
+  (def -ss (.createSocket -sf -s "localhost" 15432 true))
+
+  (.setUseClientMode -ss true)
+  (.startHandshake -ss)
+
+  #_
+  (def -ch (.getChannel -ss))
+
+  (def -sout (.getOutputStream -ss))
+  (def -sin (.getInputStream -ss))
+
+  (.write -sout (byte-array [0, 0, 0, 35, 0, 3, 0, 0, 117, 115, 101, 114, 0, 99, 104, 101, 115, 99, 111, 0, 100, 97, 116, 97, 98, 97, 115, 101, 0, 105, 118, 97, 110, 0, 0]))
+
+  (def -buf (byte-array 32))
+
+  (.read -sin -buf)
+
+  )
