@@ -2,7 +2,6 @@
   (:require
    [pg.bytes :as bytes])
   (:import
-   java.nio.channels.SocketChannel
    java.io.ByteArrayOutputStream
    java.nio.ByteBuffer))
 
@@ -107,32 +106,9 @@
     buf))
 
 
-(defn array [^ByteBuffer bb]
+(defn array ^bytes [^ByteBuffer bb]
   (.array bb))
 
 
 (defn to-vector [^ByteBuffer bb]
   (vec (.array bb)))
-
-
-(defn read-from [^SocketChannel ch ^ByteBuffer bb]
-  (while (not (zero? (remaining bb)))
-    (.read ch bb))
-  (rewind bb)
-  bb)
-
-
-(defn write-to [^SocketChannel ch ^ByteBuffer bb]
-
-  (rewind bb)
-
-  (let [written
-        (.write ch (rewind bb))
-
-        remaining
-        (remaining bb)]
-
-    (when-not (zero? remaining)
-      (throw (ex-info "Incomplete `write-to` operation"
-                      {:written written
-                       :remaining remaining})))))

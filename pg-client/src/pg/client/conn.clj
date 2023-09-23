@@ -2,10 +2,9 @@
   (:import
    java.io.Closeable
    java.io.Writer
-   java.nio.channels.SocketChannel
-   java.net.StandardSocketOptions
-   java.net.InetSocketAddress
-   java.nio.ByteBuffer
+   java.io.InputStream
+   java.io.OutputStream
+   java.net.Socket
    java.util.HashMap
    java.util.Map)
   (:require
@@ -80,6 +79,7 @@
   conn)
 
 
+;; TODO
 (defn get-closed
   [{:as conn :keys [^Map state]}]
   (.get state "closed"))
@@ -150,10 +150,13 @@
   (-> conn :config :protocol-version))
 
 
-(defn send-message [{:as conn :keys [opt ch]} message]
+(defn send-message
+  [{:as conn :keys [^OutputStream out-stream
+                    opt]}
+   message]
   (debug/debug-message message " ->")
   (let [bb (msg/encode-message message opt)]
-    (bb/write-to ch bb))
+    (.write out-stream (bb/array bb)))
   conn)
 
 
@@ -164,10 +167,10 @@
 
 
 (defn terminate
-  [{:as conn :keys [^SocketChannel ch]}]
+  [{:as conn :keys [^Socket socket]}]
   (send-message conn (msg/make-Terminate))
-  (.close ch)
-  (set-closed conn)
+  (.close socket)
+  (set-closed conn) ;; TODO
   conn)
 
 
@@ -182,31 +185,33 @@
 
 
 (defn read-message
-  [{:keys [ch opt]}]
+  [{:keys [^InputStream in-stream
+           opt]}]
 
-  (let [bb-head
-        (bb/allocate 5)]
+  (let [buf-header
+        (.readNBytes in-stream 5)
 
-    (bb/read-from ch bb-head)
+        bb-head
+        (bb/wrap buf-header)
 
-    (let [tag
-          (char (bb/read-byte bb-head))
+        tag
+        (char (bb/read-byte bb-head))
 
-          len
-          (- (bb/read-int32 bb-head) 4)
+        len
+        (- (bb/read-int32 bb-head) 4)
 
-          bb-body
-          (bb/allocate len)
+        buf-body
+        (.readNBytes in-stream len)
 
-          _
-          (bb/read-from ch bb-body)
+        bb-body
+        (bb/wrap buf-body)
 
-          message
-          (msg/parse-message tag bb-body opt)]
+        message
+        (msg/parse-message tag bb-body opt)]
 
-      (debug/debug-message message "<- ")
+    (debug/debug-message message "<- ")
 
-      message)))
+    message))
 
 
 (defn authenticate [conn]
@@ -360,8 +365,9 @@
     [^String id
      ^Long created-at
      ^Map config
-     ^InetSocketAddress addr
-     ^SocketChannel ch
+     ^Socket socket
+     ^InputStream in-stream
+     ^OutputStream out-stream
      ^Map params
      ^Map state
      ^Map opt]
@@ -390,6 +396,7 @@
   (.write w (str conn)))
 
 
+#_
 (defn set-socket-opts
   [^SocketChannel ch {:keys [tcp-no-delay?
                              so-keep-alive?
@@ -426,14 +433,18 @@
 
         {:keys [^String host
                 ^Integer port
-                socket]}
+                ;; socket
+                ]}
         config-full
 
-        addr
-        (new java.net.InetSocketAddress host port)
+        socket
+        (new Socket host port)
 
-        ch
-        (SocketChannel/open addr)
+        in-stream
+        (.getInputStream socket)
+
+        out-stream
+        (.getOutputStream socket)
 
         id
         (gensym "pg")
@@ -441,14 +452,16 @@
         created-at
         (System/currentTimeMillis)]
 
+    #_
     (set-socket-opts ch socket)
 
     (new Connection
          id
          created-at
          config-full
-         addr
-         ch
+         socket
+         in-stream
+         out-stream
          (new HashMap)
          (new HashMap)
          (new HashMap))))
