@@ -6,7 +6,7 @@ services:
     image: postgres:11
     command: >
       -E
-    hostname: postgres
+    hostname: pg11
     ports:
       - "10110:5432"
     volumes:
@@ -20,7 +20,7 @@ services:
     image: postgres:12
     command: >
       -E
-    hostname: postgres
+    hostname: pg12
     ports:
       - "10120:5432"
     volumes:
@@ -32,14 +32,13 @@ services:
 
   pg13:
     image: postgres:13
-    command: "-E -c ssl=on -c ssl_cert_file=/var/lib/postgresql/server.crt -c ssl_key_file=/var/lib/postgresql/server.key"
-    hostname: postgres
+    command: >
+      -E
+    hostname: pg13
     ports:
       - "10130:5432"
     volumes:
       - ./.docker/postgres/initdb.d:/docker-entrypoint-initdb.d
-      - ./certs/server.crt:/var/lib/postgresql/server.crt
-      - ./certs/server.key:/var/lib/postgresql/server.key
     environment:
       - POSTGRES_DB=test
       - POSTGRES_PASSWORD=test
@@ -49,7 +48,7 @@ services:
     image: postgres:14
     command: >
       -E
-    hostname: postgres
+    hostname: pg14
     ports:
       - "10140:5432"
     volumes:
@@ -63,7 +62,7 @@ services:
     image: postgres:15
     command: >
       -E
-    hostname: postgres
+    hostname: pg15
     ports:
       - "10150:5432"
     volumes:
@@ -77,7 +76,7 @@ services:
     image: postgres:16beta2
     command: >
       -E
-    hostname: postgres
+    hostname: pg16
     ports:
       - "10160:5432"
     volumes:
