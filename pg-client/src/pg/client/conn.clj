@@ -73,16 +73,9 @@
   (.get state "pid"))
 
 
-(defn set-closed
-  [{:as conn :keys [^Map state]}]
-  (.put state "closed" true)
-  conn)
-
-
-;; TODO
-(defn get-closed
-  [{:as conn :keys [^Map state]}]
-  (.get state "closed"))
+(defn closed?
+  ^Boolean [{:as conn :keys [^Socket socket]}]
+  (.isClosed socket))
 
 
 (defn set-secret-key
@@ -170,7 +163,6 @@
   [{:as conn :keys [^Socket socket]}]
   (send-message conn (msg/make-Terminate))
   (.close socket)
-  (set-closed conn) ;; TODO
   conn)
 
 
@@ -396,34 +388,35 @@
   (.write w (str conn)))
 
 
-#_
 (defn set-socket-opts
-  [^SocketChannel ch {:keys [tcp-no-delay?
-                             so-keep-alive?
-                             so-reuse-addr?
-                             so-reuse-port?
-                             so-rcv-buf
-                             so-snd-buf]}]
+  [^Socket socket {:keys [tcp-no-delay?
+                          so-timeout
+                          so-keep-alive?
+                          so-oob-inline?
+                          so-reuse-addr?
+                          so-rcv-buf
+                          so-snd-buf]}]
 
-  (cond-> ch
+  (when (some? tcp-no-delay?)
+    (.setTcpNoDelay socket tcp-no-delay?))
 
-    (some? tcp-no-delay?)
-    (.setOption StandardSocketOptions/TCP_NODELAY tcp-no-delay?)
+  (when (some? so-oob-inline?)
+    (.setOOBInline socket so-oob-inline?))
 
-    (some? so-keep-alive?)
-    (.setOption StandardSocketOptions/SO_KEEPALIVE so-keep-alive?)
+  (when (some? so-keep-alive?)
+    (.setKeepAlive socket so-keep-alive?))
 
-    (some? so-reuse-addr?)
-    (.setOption StandardSocketOptions/SO_REUSEADDR so-reuse-addr?)
+  (when (some? so-reuse-addr?)
+    (.setReuseAddress socket so-reuse-addr?))
 
-    (some? so-reuse-port?)
-    (.setOption StandardSocketOptions/SO_REUSEPORT so-reuse-port?)
+  (when (some? so-rcv-buf)
+    (.setReceiveBufferSize socket so-rcv-buf))
 
-    (some? so-rcv-buf)
-    (.setOption StandardSocketOptions/SO_RCVBUF so-rcv-buf)
+  (when (some? so-snd-buf)
+    (.setSendBufferSize socket so-snd-buf))
 
-    (some? so-snd-buf)
-    (.setOption StandardSocketOptions/SO_SNDBUF so-snd-buf)))
+  (when (some? so-timeout)
+    (.setSoTimeout socket so-timeout)))
 
 
 (defn connect [config]
@@ -432,9 +425,8 @@
         (coll/deep-merge config-defaults config)
 
         {:keys [^String host
-                ^Integer port
-                ;; socket
-                ]}
+                ^Integer port]
+         socket-opt :socket}
         config-full
 
         socket
@@ -452,8 +444,7 @@
         created-at
         (System/currentTimeMillis)]
 
-    #_
-    (set-socket-opts ch socket)
+    (set-socket-opts socket socket-opt)
 
     (new Connection
          id

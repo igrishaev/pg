@@ -142,8 +142,8 @@
   "
   True if a connection has been closed.
   "
-  [conn]
-  (conn/get-closed conn))
+  ^Boolean [conn]
+  (conn/closed? conn))
 
 
 (defn connect

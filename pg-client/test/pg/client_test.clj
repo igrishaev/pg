@@ -162,9 +162,10 @@
                                     :tcp-no-delay? false
                                     :so-keep-alive? false
                                     :so-reuse-addr? false
-                                    :so-reuse-port? false
-                                    :so-rcv-buf (int 1234)
-                                    :so-snd-buf (int 4567))]
+                                    :so-rcv-buf 1234
+                                    :so-snd-buf 4567
+                                    :so-timeout 5000
+                                    :so-oob-inline? true)]
 
     (let [res1
           (pg/query conn "select 1 as foo")]

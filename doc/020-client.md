@@ -821,15 +821,15 @@ parameters and their defaults.
 
 The `:socket` map has the following sub-options:
 
-| Field             | Default | Comment                                                                   |
-|-------------------|---------|---------------------------------------------------------------------------|
-| `:tcp-no-delay?`  | `true`  | Set `TCP_NODELAY` socket boolean property                                 |
-| `:so-keep-alive?` | `true`  | Set `SO_KEEPALIVE` socket boolean property                                |
-| `:so-reuse-addr?` | `true`  | Set `SO_REUSEADDR` socket boolean property                                |
-| `:so-reuse-port?` | `true`  | Set `SO_REUSEPORT` socket boolean property                                |
-| `:so-rcv-buf`     | -       | Set `SO_RCVBUF` socket size; **must be** an integer (e.g. `(int 123456)`) |
-| `:so-snd-buf`     | -       | Set `SO_SNDBUF` socket size; **must be** an integer (e.g. `(int 123456)`) |
-
+| Field             | Default | Comment                                                   |
+|-------------------|---------|-----------------------------------------------------------|
+| `:tcp-no-delay?`  | `true`  | Set `TCP_NODELAY` socket boolean property                 |
+| `:so-timeout`     | -       | Set `SO_TIMEOUT` socket timeout property, in milliseconds |
+| `:so-keep-alive?` | `true`  | Set `SO_KEEPALIVE` socket boolean property                |
+| `:so-reuse-addr?` | `true`  | Set `SO_REUSEADDR` socket boolean property                |
+| `:so-oob-inline?` | -       | Set `SO_OOBINLINE` socket boolean property                |
+| `:so-rcv-buf`     | -       | Set `SO_RCVBUF` socket size, an integer                   |
+| `:so-snd-buf`     | -       | Set `SO_SNDBUF` socket size, an integer                   |
 
 Here is an example of the configuration:
 
@@ -847,9 +847,10 @@ Here is an example of the configuration:
  :socket {:tcp-no-delay? true
           :so-keep-alive? true
           :so-reuse-addr? true
-          :so-reuse-port? true
-          :so-rcv-buf (int ...)
-          :so-snd-buf (int ...)}}
+          :so-rcv-buf 1234
+          :so-snd-buf 5678
+          :so-oob-inline? false
+          :so-timeout 5000}}
 ~~~
 
 ## Authorization
