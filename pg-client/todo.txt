@@ -7,19 +7,15 @@
 
 - adopt honey-sql
 - query-first & execute first
-- socket refactor
 - pg-params docs
 - protocol-message notice
 - error resp ex structure
 - config: read-only default
 - pool: read-only default
-- write to csv/stream
 - conn: read-only check?
+- copy: seq of bytes
 - check if socket is closed?
 - execute: add flush?
-- copy-out multiple streams?
-- copy-out try/catch
-- copy failed
 - pg-csv: parse csv to clj; bin
 - benchmarks
 - interval support
@@ -30,9 +26,6 @@
 - adopt gosql
 - errors addSuppressed
 - cursor package
-- joda update docs
-- json package docs
-- copy support
 - function call
 - pubsub pool + namespace
 
