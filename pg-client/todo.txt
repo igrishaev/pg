@@ -5,6 +5,10 @@
 -- json
 -- joda
 
+- ssl? bool flag
+- ssl-context optional
+- ssl default context
+- pg-ssl library
 - adopt honey-sql
 - query-first & execute first
 - pg-params docs
@@ -22,7 +26,6 @@
 - interval support
 - range support
 - batch queries
-- ssl
 - unix socket
 - adopt gosql
 - errors addSuppressed
