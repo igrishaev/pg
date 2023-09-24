@@ -15,6 +15,7 @@
 - conn: read-only check?
 - copy: seq of bytes
 - check if socket is closed?
+- remove so- for socket vars
 - execute: add flush?
 - pg-csv: parse csv to clj; bin
 - benchmarks

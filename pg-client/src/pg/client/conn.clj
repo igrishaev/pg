@@ -1,18 +1,19 @@
 (ns pg.client.conn
   (:import
    java.io.Closeable
-   java.io.Writer
    java.io.InputStream
    java.io.OutputStream
+   java.io.Writer
    java.net.Socket
    java.util.HashMap
    java.util.Map)
   (:require
+   [pg.bb :as bb]
+   [pg.client.debug :as debug]
+   [pg.client.msg :as msg]
+   [pg.client.ssl :as ssl]
    [pg.coll :as coll]
    [pg.const :as const]
-   [pg.client.debug :as debug]
-   [pg.bb :as bb]
-   [pg.client.msg :as msg]
    [pg.const :as const]))
 
 
@@ -33,6 +34,7 @@
    :protocol-version const/PROTOCOL_VERSION
    :binary-encode? false
    :binary-decode? false
+   ;; TODO: remove so-
    :socket {:tcp-no-delay? true
             :so-keep-alive? true
             :so-reuse-addr? true
@@ -66,6 +68,10 @@
    ^Integer pid]
   (.put state "pid" pid)
   conn)
+
+
+(defn get-ssl? [{:as conn :keys [^Map state]}]
+  (.get state "ssl"))
 
 
 (defn get-pid
@@ -303,6 +309,12 @@
     (send-message conn msg)))
 
 
+(defn read-ssl-response ^Character [conn]
+  (let [{:keys [^InputStream input-stream]}
+        conn]
+    (-> input-stream .read char)))
+
+
 (defn close-statement
   [conn ^String statement]
   (send-message conn (msg/make-Close \S statement)))
@@ -430,7 +442,7 @@
         config-full
 
         socket
-        (new Socket host port)
+        (new Socket host port true)
 
         in-stream
         (.getInputStream socket)
@@ -442,17 +454,21 @@
         (gensym "pg")
 
         created-at
-        (System/currentTimeMillis)]
+        (System/currentTimeMillis)
 
-    (set-socket-opts socket socket-opt)
+        _
+        (set-socket-opts socket socket-opt)
 
-    (new Connection
-         id
-         created-at
-         config-full
-         socket
-         in-stream
-         out-stream
-         (new HashMap)
-         (new HashMap)
-         (new HashMap))))
+        conn
+        (new Connection
+             id
+             created-at
+             config-full
+             socket
+             in-stream
+             out-stream
+             (new HashMap)
+             (new HashMap)
+             (new HashMap))]
+
+    (ssl/maybe-wrap-ssl conn)))

@@ -146,6 +146,14 @@
   (conn/closed? conn))
 
 
+(defn ssl?
+  "
+  True if the connection is encrypted with SSL.
+  "
+  ^Boolean [conn]
+  (conn/get-ssl? conn))
+
+
 (defn connect
   "
   Having a connection config, establish a connection

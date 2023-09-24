@@ -8,7 +8,8 @@
 
   :dependencies
   [[com.github.igrishaev/pg-common]
-   [com.github.igrishaev/pg-types]]
+   [com.github.igrishaev/pg-types]
+   [less-awful-ssl]]
 
   :parent-project
   {:path "../project.clj"
@@ -24,7 +25,6 @@
   :profiles
   {:test
    {:dependencies
-    [[less-awful-ssl]
-     [com.github.igrishaev/pg-json]
+    [[com.github.igrishaev/pg-json]
      [com.github.igrishaev/pg-integration]
      [org.clojure/data.csv]]}})
