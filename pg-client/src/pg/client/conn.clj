@@ -166,9 +166,9 @@
 
 
 (defn terminate
-  [{:as conn :keys [^Socket socket]}]
+  [conn]
   (send-message conn (msg/make-Terminate))
-  (.close socket)
+  (-> conn ^Socket (get :socket) .close)
   conn)
 
 
@@ -310,9 +310,9 @@
 
 
 (defn read-ssl-response ^Character [conn]
-  (let [{:keys [^InputStream input-stream]}
+  (let [{:keys [^InputStream in-stream]}
         conn]
-    (-> input-stream .read char)))
+    (-> in-stream .read char)))
 
 
 (defn close-statement
@@ -431,6 +431,20 @@
     (.setSoTimeout socket so-timeout)))
 
 
+(defn pre-ssl-stage ^Connection [^Connection conn]
+  (if (-> conn :config :ssl)
+    (do
+      (send-ssl-request conn)
+      (case (read-ssl-response conn)
+        \N
+        (do
+          (terminate conn)
+          (throw (ex-info "SSL connection is not supported" {})))
+        \S
+        (ssl/wrap-ssl conn)))
+    conn))
+
+
 (defn connect [config]
 
   (let [config-full
@@ -471,4 +485,4 @@
              (new HashMap)
              (new HashMap))]
 
-    (ssl/maybe-wrap-ssl conn)))
+    (pre-ssl-stage conn)))

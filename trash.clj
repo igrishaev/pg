@@ -254,3 +254,21 @@ psql "host=localhost dbname=ivan user=chesco port=15432 sslmode=verify-full sslc
   (.read -sin -buf)
 
   )
+
+
+(def USER "chesco")
+
+(def PASS "chesco")
+
+(def DATABASE "ivan")
+
+
+(def ^:dynamic *CONFIG*
+  {:host HOST
+   :port nil
+   :user USER
+   :password PASS
+   :database DATABASE
+   :ssl {:key-file "/Users/ivan/work/pg/certs/client.key"
+         :cert-file "/Users/ivan/work/pg/certs/client.crt"
+         :ca-cert-file "/Users/ivan/work/pg/certs/root.crt"}})

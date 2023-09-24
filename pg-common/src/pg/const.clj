@@ -32,6 +32,8 @@
 (def TX_IDLE :I)
 
 (def SSL_CODE 80877103)
+(def SSL_YES \S)
+(def SSL_NO \N)
 
 (def SCRAM_SHA_256 "SCRAM-SHA-256")
 

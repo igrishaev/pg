@@ -8,10 +8,6 @@
    [less.awful.ssl :as ssl]))
 
 
-(defn is-ssl-needed? [conn]
-  (-> conn :config :ssl not-empty))
-
-
 (defn wrap-ssl [conn]
 
   (let [{:keys [^Socket socket
@@ -44,10 +40,10 @@
                        port
                        true)
 
-        ssl-in-stream
+        ssl-out-stream
         (.getOutputStream ssl-socket)
 
-        ssl-out-stream
+        ssl-in-stream
         (.getInputStream ssl-socket)]
 
     (doto ssl-socket
@@ -61,9 +57,3 @@
            :socket ssl-socket
            :in-stream ssl-in-stream
            :out-stream ssl-out-stream)))
-
-
-(defn maybe-wrap-ssl [conn]
-  (if (is-ssl-needed? conn)
-    (wrap-ssl conn)
-    conn))
