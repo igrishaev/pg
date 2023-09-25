@@ -272,3 +272,7 @@ psql "host=localhost dbname=ivan user=chesco port=15432 sslmode=verify-full sslc
    :ssl {:key-file "/Users/ivan/work/pg/certs/client.key"
          :cert-file "/Users/ivan/work/pg/certs/client.crt"
          :ca-cert-file "/Users/ivan/work/pg/certs/root.crt"}})
+
+
+(def enabled-protocols
+  (into-array String ["TLSv1.2" "TLSv1.1" "TLSv1"]))

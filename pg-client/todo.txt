@@ -5,6 +5,7 @@
 -- json
 -- joda
 
+- ssl set protocols
 - ssl? bool flag
 - ssl-context optional
 - ssl default context
