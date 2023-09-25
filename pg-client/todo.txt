@@ -5,11 +5,8 @@
 -- json
 -- joda
 
-- ssl set protocols
-- ssl? bool flag
-- ssl-context optional
-- ssl default context
-- pg-ssl library
+- ssl: new certs
+- ssl: add tests?
 - adopt honey-sql
 - query-first & execute first
 - pg-params docs
