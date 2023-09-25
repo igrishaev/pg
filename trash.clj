@@ -274,5 +274,27 @@ psql "host=localhost dbname=ivan user=chesco port=15432 sslmode=verify-full sslc
          :ca-cert-file "/Users/ivan/work/pg/certs/root.crt"}})
 
 
+(:require
+   [less.awful.ssl :as ssl])
+
 (def enabled-protocols
   (into-array String ["TLSv1.2" "TLSv1.1" "TLSv1"]))
+
+#_
+{:keys [key-file
+        cert-file
+        ca-cert-file]}
+#_
+ssl-opt
+
+;; ^SSLContext ssl-context
+
+#_
+(if ca-cert-file
+  (ssl/ssl-context key-file cert-file ca-cert-file)
+  (ssl/ssl-context key-file cert-file))
+
+;; socket-factory
+;; (.getSocketFactory ssl-context)
+
+[less-awful-ssl]

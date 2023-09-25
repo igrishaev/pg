@@ -34,6 +34,8 @@
    :protocol-version const/PROTOCOL_VERSION
    :binary-encode? false
    :binary-decode? false
+   :ssl? false
+   :ssl-context nil
    ;; TODO: remove so-
    :socket {:tcp-no-delay? true
             :so-keep-alive? true
@@ -431,15 +433,19 @@
     (.setSoTimeout socket so-timeout)))
 
 
+(defn ssl-requested? ^Boolean [^Connection conn]
+  (-> conn :config :ssl?))
+
+
 (defn pre-ssl-stage ^Connection [^Connection conn]
-  (if (-> conn :config :ssl)
+  (if (ssl-requested? conn)
     (do
       (send-ssl-request conn)
       (case (read-ssl-response conn)
         \N
         (do
           (terminate conn)
-          (throw (ex-info "SSL connection is not supported" {})))
+          (throw (new Exception "SSL connection is not supported by the server")))
         \S
         (ssl/wrap-ssl conn)))
     conn))

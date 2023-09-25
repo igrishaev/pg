@@ -42,6 +42,7 @@
    "pg-json"
    "pg-client"
    "pg-pool"
+   "pg-ssl"
    "pg-integration"]
 
   :managed-dependencies
@@ -52,6 +53,7 @@
    [com.github.igrishaev/pg-joda-time :version]
    [com.github.igrishaev/pg-json :version]
    [com.github.igrishaev/pg-client :version]
+   [com.github.igrishaev/pg-ssl :version]
    [com.github.igrishaev/pg-integration :version]
 
    [joda-time/joda-time "2.12.5"]

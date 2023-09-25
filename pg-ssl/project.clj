@@ -1,14 +1,13 @@
-(defproject com.github.igrishaev/pg-client "0.1.8-SNAPSHOT"
+(defproject com.github.igrishaev/pg-ssl "0.1.8-SNAPSHOT"
 
   :description
-  "Postgres client in pure Clojure (no JDBC)"
+  "SSL-related utils"
 
   :plugins
   [[lein-parent "0.3.8"]]
 
   :dependencies
-  [[com.github.igrishaev/pg-common]
-   [com.github.igrishaev/pg-types]]
+  [[less-awful-ssl]]
 
   :parent-project
   {:path "../project.clj"
@@ -24,6 +23,5 @@
   :profiles
   {:test
    {:dependencies
-    [[com.github.igrishaev/pg-json]
-     [com.github.igrishaev/pg-integration]
-     [org.clojure/data.csv]]}})
+    [[com.github.igrishaev/pg-client]
+     [com.github.igrishaev/pg-integration]]}})

@@ -3,9 +3,11 @@
    java.net.Socket
    java.util.Map
    javax.net.ssl.SSLContext
-   javax.net.ssl.SSLSocket)
-  (:require
-   [less.awful.ssl :as ssl]))
+   javax.net.ssl.SSLSocket))
+
+
+(def enabled-protocols
+  (into-array String ["TLSv1.2" "TLSv1.1" "TLSv1"]))
 
 
 (defn wrap-ssl [conn]
@@ -16,29 +18,21 @@
         conn
 
         {:keys [^String host
-                ^Integer port]
-         ssl-opt :ssl}
+                ^Integer port
+                ^SSLContext ssl-context]}
         config
 
-        {:keys [key-file
-                cert-file
-                ca-cert-file]}
-        ssl-opt
-
-        ^SSLContext ssl-context
-        (if ca-cert-file
-          (ssl/ssl-context key-file cert-file ca-cert-file)
-          (ssl/ssl-context key-file cert-file))
-
-        socket-factory
-        (.getSocketFactory ssl-context)
+        ssl-context
+        (or ssl-context
+            (SSLContext/getDefault))
 
         ^SSLSocket ssl-socket
-        (.createSocket socket-factory
-                       socket
-                       host
-                       port
-                       true)
+        (-> ssl-context
+            (.getSocketFactory)
+            (.createSocket socket
+                           host
+                           port
+                           true))
 
         ssl-out-stream
         (.getOutputStream ssl-socket)
@@ -48,7 +42,7 @@
 
     (doto ssl-socket
       (.setUseClientMode true)
-      (.setEnabledProtocols ssl/enabled-protocols)
+      (.setEnabledProtocols enabled-protocols)
       (.startHandshake))
 
     (.put state "ssl" true)
