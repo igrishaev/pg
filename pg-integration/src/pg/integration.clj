@@ -1,5 +1,7 @@
 (ns pg.integration
   (:require
+   [pg.coll :as coll]
+   [pg.ssl :as ssl]
    [clojure.test :refer [testing]]))
 
 
@@ -10,9 +12,21 @@
 (def P15 10150)
 (def P16 10160)
 
+(def PORT_SSL
+  (some-> (System/getenv "PG_PORT_SSL") Integer/parseInt))
+
+
+(def OVERRIDES
+  {PORT_SSL
+   {:ssl? true
+    :ssl-context
+    (ssl/context {:key-file "../certs/client.key"
+                  :cert-file "../certs/client.crt"
+                  :ca-cert-file "../certs/root.crt"})}})
+
 
 (def PORTS
-  [P11 P12 P13 P14 P15 P16])
+  [P11 P12 P13 P14 P15 P16 PORT_SSL])
 
 
 (def HOST "127.0.0.1")
@@ -43,10 +57,18 @@
 
 
 (defn fix-multi-version [t]
-  (doseq [port PORTS]
-    (binding [*PORT* port
-              *CONFIG* (assoc *CONFIG* :port port)
-              *DB-SPEC* (assoc *DB-SPEC* :port port)]
+  (doseq [port PORTS :when port]
+    (binding [*PORT*
+              port
+
+              *CONFIG*
+              (-> *CONFIG*
+                  (assoc :port port)
+                  (coll/deep-merge (get OVERRIDES port)))
+
+              *DB-SPEC*
+              (assoc *DB-SPEC* :port port)]
+
       (testing (format "PORT %s" port)
         (t)))))
 
@@ -68,3 +90,6 @@
 
 (defn is16? []
   (= *PORT* P16))
+
+(defn isSSL? []
+  (and PORT_SSL (= *PORT* PORT_SSL)))

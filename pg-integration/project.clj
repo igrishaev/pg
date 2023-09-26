@@ -7,7 +7,8 @@
   [[lein-parent "0.3.8"]]
 
   :dependencies
-  []
+  [[com.github.igrishaev/pg-common]
+   [com.github.igrishaev/pg-ssl]]
 
   :parent-project
   {:path "../project.clj"
