@@ -23,5 +23,4 @@
   :profiles
   {:test
    {:dependencies
-    [[com.github.igrishaev/pg-client]
-     [com.github.igrishaev/pg-integration]]}})
+    []}})

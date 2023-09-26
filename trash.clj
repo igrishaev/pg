@@ -298,3 +298,21 @@ ssl-opt
 ;; (.getSocketFactory ssl-context)
 
 [less-awful-ssl]
+
+
+(deftest test-custom-ssl-context
+
+  (let [ssl-context
+        (ssl/context {:key-file "../certs/client.key"
+                      :cert-file "../certs/client.crt"
+                      :ca-cert-file "../certs/root.crt"})]
+
+    (pg/with-connection [conn (assoc *CONFIG*
+                                     :port 15432
+                                     :ssl? true
+                                     :ssl-context ssl-context)]
+
+      (is (pg/ssl? conn))
+
+      (is (= [{:foo 1}]
+             (pg/query conn "select 1 as foo"))))))

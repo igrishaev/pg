@@ -22,7 +22,8 @@
    [pg.client.conn :as conn]
    [pg.client.func :as func]
    [pg.integration :as pgi :refer [*CONFIG*]]
-   [pg.json]))
+   [pg.json]
+   [pg.ssl :as ssl]))
 
 
 (use-fixtures :each pgi/fix-multi-version)

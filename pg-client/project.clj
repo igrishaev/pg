@@ -26,4 +26,5 @@
    {:dependencies
     [[com.github.igrishaev/pg-json]
      [com.github.igrishaev/pg-integration]
+     [com.github.igrishaev/pg-ssl]
      [org.clojure/data.csv]]}})
