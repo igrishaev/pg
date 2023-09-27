@@ -1,12 +1,11 @@
 
 - add docs
+-- ssl
 -- copy
 -- types
 -- json
 -- joda
 
-- ssl: new certs
-- ssl: add tests?
 - adopt honey-sql
 - query-first & execute first
 - pg-params docs
@@ -35,8 +34,6 @@ perf:
 - enough?
 
 - Encoding and decoding values
-- JSON support
-- Joda Time support
 - Copy (general)
 - Copy with JDBC.Next
 - Full package list
