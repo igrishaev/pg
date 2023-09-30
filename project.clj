@@ -1,4 +1,4 @@
-(defproject com.github.igrishaev/pg "0.1.8-SNAPSHOT"
+(defproject com.github.igrishaev/pg "0.1.8"
 
   :description
   "Postgres stuff in pure Clojure"
