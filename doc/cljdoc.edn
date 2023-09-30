@@ -7,4 +7,5 @@
   ["Types"             {:file "doc/040-types.md"}]
   ["JSON support"      {:file "doc/050-json.md"}]
   ["Joda Time support" {:file "doc/060-joda-time.md"}]
-  ["Arrays"            {:file "doc/070-arrays.md"}]]}
+  ["Arrays"            {:file "doc/070-arrays.md"}]
+  ["SSL"               {:file "doc/080-ssl.md"}]]}

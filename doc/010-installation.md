@@ -25,7 +25,7 @@ Lein:
 Deps:
 
 ~~~clojure
-{com.github.igrishaev/pg-client {:mvn/version "0.1.7"}
+{com.github.igrishaev/pg-client {:mvn/version "0.1.7"}}
 ~~~
 
 Lein users may specify a global `pg-version` variable on top of the

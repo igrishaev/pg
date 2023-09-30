@@ -12,4 +12,5 @@ Documentation:
 - Joda Time support
 - COPYing
 - [Arrays](doc/070-arrays.md)
+- [SSL](doc/080-ssl.md)
 - Using with Next.JDBC
