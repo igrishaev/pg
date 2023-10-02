@@ -1734,6 +1734,33 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
              res-query)))))
 
 
+(deftest test-copy-in-rows-ok-txt
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (pg/query conn "create temp table foo (id bigint, name text, active boolean)")
+
+    (let [rows
+          [[1 "Ivan" true]
+           [2 "Juan" false]]
+
+          res-copy
+          (pg/copy-in-rows conn
+                           "copy foo (id, name, active) from STDIN WITH (FORMAT CSV)"
+                           rows)
+
+
+          res-query
+          (pg/query conn "select * from foo")]
+
+      (is (= 2 res-copy))
+
+      (is (= [{:id 1 :name "Ivan" :active true}
+              {:id 2 :name "Juan" :active false}]
+             res-query)))))
+
+
+
 (deftest test-copy-in-broken-csv
 
   (pg/with-connection [conn *CONFIG*]

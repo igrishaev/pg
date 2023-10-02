@@ -3,13 +3,14 @@
    [clojure.string :as str]
    [pg.bytes :as bytes]
    [pg.client.conn :as conn]
+   [pg.client.copy :as copy]
    [pg.client.func :as func]
    [pg.client.quote :as quote]
    [pg.client.result :as res]
    [pg.client.sql :as sql]
    [pg.const :as const]
-   [pg.types.hint :as hint]
-   [pg.oid :as oid])
+   [pg.oid :as oid]
+   [pg.types.hint :as hint])
   (:import
    clojure.lang.Keyword
    java.io.InputStream
@@ -496,3 +497,23 @@
 
      (conn/send-copy-done conn)
      (res/interact conn :copy-in nil))))
+
+
+;; TODO: naming in/out
+;; TODO: const
+;; TODO: binary
+;; TODO: oids
+
+;; test csv
+;; test bins
+;; test nils
+
+;; TODO: pg-copy package?
+
+(defn copy-in-rows
+  ([conn sql rows]
+   (copy-in-rows conn sql rows nil))
+
+  ([conn sql rows {:keys [sep end]
+                   :or {sep \, end "\r\n"}}]
+   (copy/copy-in-rows conn sql rows sep end)))
