@@ -44,3 +44,6 @@
 (def COPY_BUFFER_SIZE 2048)
 
 (def COPY_FAIL_MSG "COPY has been interrupted by the client")
+
+(def COPY_CSV_CELL_SEP \,)
+(def COPY_CSV_LINE_SEP "\r\n")

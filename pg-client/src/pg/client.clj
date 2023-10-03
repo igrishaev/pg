@@ -1,7 +1,6 @@
 (ns pg.client
   (:require
    [clojure.string :as str]
-   [pg.bytes :as bytes]
    [pg.client.conn :as conn]
    [pg.client.copy :as copy]
    [pg.client.func :as func]
@@ -13,7 +12,6 @@
    [pg.types.hint :as hint])
   (:import
    clojure.lang.Keyword
-   java.io.InputStream
    java.util.List
    java.util.Map
    pg.client.conn.Connection))
@@ -476,27 +474,11 @@
   ([conn sql input-stream]
    (copy-in conn sql input-stream nil))
 
-  ([conn
-    sql
-    ^InputStream input-stream
+  ([conn sql input-stream
     {:keys [buffer-size]
      :or {buffer-size const/COPY_BUFFER_SIZE}}]
 
-   (conn/send-query conn sql)
-
-   (let [buf (byte-array buffer-size)]
-
-     (loop []
-       (let [read (.read input-stream buf)]
-         (when-not (neg? read)
-           (if (= read buffer-size)
-             (conn/send-copy-data conn buf)
-             (let [slice (bytes/slice buf 0 read)]
-               (conn/send-copy-data conn slice)))
-           (recur))))
-
-     (conn/send-copy-done conn)
-     (res/interact conn :copy-in nil))))
+   (copy/copy-in-stream conn sql input-stream buffer-size)))
 
 
 ;; TODO: naming in/out
@@ -514,6 +496,22 @@
   ([conn sql rows]
    (copy-in-rows conn sql rows nil))
 
-  ([conn sql rows {:keys [sep end]
-                   :or {sep \, end "\r\n"}}]
-   (copy/copy-in-rows conn sql rows sep end)))
+  ([conn sql rows {:keys [sep end oids binary?]
+                   :or {sep const/COPY_CSV_CELL_SEP
+                        end const/COPY_CSV_LINE_SEP}}]
+   (copy/copy-in-rows conn sql rows binary? oids sep end)))
+
+
+(defn copy-in-maps
+  ([conn sql maps fields]
+   (copy-in-maps conn sql maps fields nil))
+
+  ([conn sql maps fields
+    {:keys [sep end oids binary?]
+     :or {sep const/COPY_CSV_CELL_SEP
+          end const/COPY_CSV_LINE_SEP}}]
+
+   (let [rows (copy/maps->rows maps fields)
+         oids (copy/oids-maps->rows oids)]
+
+     (copy/copy-in-rows conn sql rows binary? oids sep end))))
