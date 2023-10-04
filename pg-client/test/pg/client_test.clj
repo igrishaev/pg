@@ -1740,8 +1740,11 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
 
     (pg/query conn "create temp table foo (id bigint, name text, active boolean, note text)")
 
-    (let [rows
-          [[1 "Ivan" true "test"]
+    (let [weird
+          "foo'''b'ar\r\n\f\t\bsdf--NULL~!@#$%^&*()\"sdf\"\""
+
+          rows
+          [[1 "Ivan" true weird]
            [2 "Juan" false nil]]
 
           res-copy
@@ -1756,7 +1759,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
 
       (is (= 2 res-copy))
 
-      (is (= [{:id 1 :name "Ivan" :active true :note "test"}
+      (is (= [{:id 1 :name "Ivan" :active true :note weird}
               {:id 2 :name "Juan" :active false :note nil}]
              res-query)))))
 
