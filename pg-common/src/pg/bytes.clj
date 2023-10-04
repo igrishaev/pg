@@ -5,6 +5,22 @@
    java.nio.ByteBuffer))
 
 
+(def ^bytes zero32
+  (byte-array [0 0 0 0]))
+
+
+(def ^bytes zero16
+  (byte-array [0 0]))
+
+
+(def ^bytes -one32
+  (byte-array [-1 -1 -1 -1]))
+
+
+(def ^bytes -one16
+  (byte-array [-1 -1]))
+
+
 (defn bytes->int16 ^Short [^bytes buf]
   (-> (ByteBuffer/wrap buf)
       (.getShort)))

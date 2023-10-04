@@ -1738,16 +1738,17 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
 
   (pg/with-connection [conn *CONFIG*]
 
-    (pg/query conn "create temp table foo (id bigint, name text, active boolean)")
+    (pg/query conn "create temp table foo (id bigint, name text, active boolean, note text)")
 
     (let [rows
-          [[1 "Ivan" true]
-           [2 "Juan" false]]
+          [[1 "Ivan" true "test"]
+           [2 "Juan" false nil]]
 
           res-copy
           (pg/copy-in-rows conn
-                           "copy foo (id, name, active) from STDIN WITH (FORMAT CSV)"
-                           rows)
+                           "copy foo (id, name, active, note) from STDIN WITH (FORMAT CSV, NULL 'dummy')"
+                           rows
+                           {:null "dummy"})
 
 
           res-query
@@ -1755,8 +1756,35 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
 
       (is (= 2 res-copy))
 
-      (is (= [{:id 1 :name "Ivan" :active true}
-              {:id 2 :name "Juan" :active false}]
+      (is (= [{:id 1 :name "Ivan" :active true :note "test"}
+              {:id 2 :name "Juan" :active false :note nil}]
+             res-query)))))
+
+
+(deftest test-copy-in-rows-ok-bin
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (pg/query conn "create temp table foo (id bigint, name text, active boolean, note text)")
+
+    (let [rows
+          [[1 "Ivan" true nil]
+           [2 "Juan" false "kek"]]
+
+          res-copy
+          (pg/copy-in-rows conn
+                           "copy foo (id, name, active, note) from STDIN WITH (FORMAT BINARY)"
+                           rows
+                           {:binary? true})
+
+
+          res-query
+          (pg/query conn "select * from foo")]
+
+      (is (= 2 res-copy))
+
+      (is (= [{:id 1 :name "Ivan" :active true :note nil}
+              {:id 2 :name "Juan" :active false :note "kek"}]
              res-query)))))
 
 

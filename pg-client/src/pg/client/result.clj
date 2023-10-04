@@ -298,10 +298,12 @@
                   ^bytes buf
                   (.get values i)]
 
-              (case (int format)
-                0 (let [string (new String buf encoding)]
-                    (txt/decode string type-oid opt))
-                1 (bin/decode buf type-oid opt))))
+              (when (some? buf)
+
+                (case (int format)
+                  0 (let [string (new String buf encoding)]
+                      (txt/decode string type-oid opt))
+                  1 (bin/decode buf type-oid opt)))))
 
           Row
           (fn-keyval Keys values-decoded)]

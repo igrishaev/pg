@@ -485,21 +485,23 @@
 ;; TODO: const
 ;; TODO: binary
 ;; TODO: oids
-
-;; test csv
-;; test bins
-;; test nils
-
 ;; TODO: pg-copy package?
+
+;; test:
+;; rows sep end
+;; rows oids
+;; maps oids
+
 
 (defn copy-in-rows
   ([conn sql rows]
    (copy-in-rows conn sql rows nil))
 
-  ([conn sql rows {:keys [sep end oids binary?]
+  ([conn sql rows {:keys [sep end oids binary? null]
                    :or {sep const/COPY_CSV_CELL_SEP
-                        end const/COPY_CSV_LINE_SEP}}]
-   (copy/copy-in-rows conn sql rows binary? oids sep end)))
+                        end const/COPY_CSV_LINE_SEP
+                        null const/COPY_CSV_NULL}}]
+   (copy/copy-in-rows conn sql rows binary? oids sep end null)))
 
 
 (defn copy-in-maps
@@ -510,8 +512,4 @@
     {:keys [sep end oids binary?]
      :or {sep const/COPY_CSV_CELL_SEP
           end const/COPY_CSV_LINE_SEP}}]
-
-   (let [rows (copy/maps->rows maps fields)
-         oids (copy/oids-maps->rows oids)]
-
-     (copy/copy-in-rows conn sql rows binary? oids sep end))))
+   (copy/copy-in-maps conn sql maps fields binary? oids sep end)))

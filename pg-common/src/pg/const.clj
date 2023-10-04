@@ -47,3 +47,4 @@
 
 (def COPY_CSV_CELL_SEP \,)
 (def COPY_CSV_LINE_SEP "\r\n")
+(def COPY_CSV_NULL "")

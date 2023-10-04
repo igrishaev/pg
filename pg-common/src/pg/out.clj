@@ -6,7 +6,7 @@
    java.io.ByteArrayOutputStream))
 
 
-(defn create []
+(defn create ^ByteArrayOutputStream []
   (new ByteArrayOutputStream))
 
 
