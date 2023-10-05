@@ -123,7 +123,7 @@
     (conn/send-copy-data conn bytes/-one16)))
 
 
-(defn copy-in-rows [conn sql rows binary? oids sep end null]
+(defn copy-in-rows [conn sql rows format oids sep end null]
 
   (let [opt
         (conn/get-opt conn)
@@ -133,9 +133,15 @@
 
     (conn/send-query conn sql)
 
-    (if binary?
+    (case format
+      :csv
+      (copy-in-csv conn rows oids sep end null)
+      :bin
       (copy-in-bin conn rows oids)
-      (copy-in-csv conn rows oids sep end null))
+      :txt
+      (throw (new Exception "Text COPY format is not implemented yet"))
+      ;; else
+      (throw (new Exception "wrong COPY format")))
 
     (conn/send-copy-done conn)
     (res/interact conn :copy-in nil)))
@@ -151,10 +157,10 @@
     (selector oids-map)))
 
 
-(defn copy-in-maps [conn sql maps fields binary? oids sep end null]
+(defn copy-in-maps [conn sql maps fields format oids sep end null]
   (let [rows (maps->rows maps fields)
         oids (oids-maps->rows oids fields)]
-    (copy-in-rows conn sql rows binary? oids sep end null)))
+    (copy-in-rows conn sql rows format oids sep end null)))
 
 
 (defn copy-in-stream

@@ -48,3 +48,7 @@
 (def COPY_CSV_CELL_SEP \,)
 (def COPY_CSV_LINE_SEP "\r\n")
 (def COPY_CSV_NULL "")
+
+(def COPY_FORMAT_TXT :txt)
+(def COPY_FORMAT_CSV :csv)
+(def COPY_FORMAT_BIN :bin)

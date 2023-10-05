@@ -1796,7 +1796,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
           (pg/copy-in-rows conn
                            "copy foo (id, name, active, note) from STDIN WITH (FORMAT BINARY)"
                            rows
-                           {:binary? true
+                           {:format :bin
                             :oids {0 oid/int2 2 oid/bool}})
 
           res-query
@@ -1852,7 +1852,8 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
                            "copy foo (id, name, active, note) from STDIN WITH (FORMAT CSV)"
                            maps
                            [:id :name :active :note]
-                           {:oids {:id oid/int2}})
+                           {:oids {:id oid/int2}
+                            :format :csv})
 
           res-query
           (pg/query conn "select * from foo")]
@@ -1883,7 +1884,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
                            maps
                            [:id :name :active :note]
                            {:oids {:id oid/int2}
-                            :binary? true})
+                            :format :bin})
 
           res-query
           (pg/query conn "select * from foo")]

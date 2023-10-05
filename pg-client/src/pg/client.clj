@@ -482,17 +482,17 @@
 
 
 ;; TODO: pg-copy package?
-;; TODO: format: bin txt csv
 
 (defn copy-in-rows
   ([conn sql rows]
    (copy-in-rows conn sql rows nil))
 
-  ([conn sql rows {:keys [sep end oids binary? null]
+  ([conn sql rows {:keys [sep end oids format null]
                    :or {sep const/COPY_CSV_CELL_SEP
                         end const/COPY_CSV_LINE_SEP
-                        null const/COPY_CSV_NULL}}]
-   (copy/copy-in-rows conn sql rows binary? oids sep end null)))
+                        null const/COPY_CSV_NULL
+                        format const/COPY_FORMAT_CSV}}]
+   (copy/copy-in-rows conn sql rows format oids sep end null)))
 
 
 (defn copy-in-maps
@@ -500,8 +500,9 @@
    (copy-in-maps conn sql maps fields nil))
 
   ([conn sql maps fields
-    {:keys [sep end oids binary? null]
+    {:keys [sep end oids format null]
      :or {sep const/COPY_CSV_CELL_SEP
           end const/COPY_CSV_LINE_SEP
-          null const/COPY_CSV_NULL}}]
-   (copy/copy-in-maps conn sql maps fields binary? oids sep end null)))
+          null const/COPY_CSV_NULL
+          format const/COPY_FORMAT_CSV}}]
+   (copy/copy-in-maps conn sql maps fields format oids sep end null)))
