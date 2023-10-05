@@ -1844,14 +1844,13 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
           "foo'''b'ar\r\n\f\t\bsdf--NULL~!@#$%^&*()\"sdf\"\""
 
           maps
-          [{:lala 123 :name "Ivan" :id 1 :active true :note "aaa"}
-           {:id 2 :active nil :note nil :name "Juan" :extra "Kek"}]
+          [{:id 1 :name "Ivan" :active true :note "aaa"}
+           {:aaa false :id 2 :active nil :note nil :name "Juan" :extra "Kek" :lol 123}]
 
           res-copy
           (pg/copy-in-maps conn
                            "copy foo (id, name, active, note) from STDIN WITH (FORMAT CSV)"
                            maps
-                           [:id :name :active :note]
                            {:oids {:id oid/int2}
                             :format :csv})
 
@@ -1882,8 +1881,8 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
           (pg/copy-in-maps conn
                            "copy foo (id, name, active, note) from STDIN WITH (FORMAT BINARY)"
                            maps
-                           [:id :name :active :note]
                            {:oids {:id oid/int2}
+                            :keys [:id :name :active :note]
                             :format :bin})
 
           res-query
@@ -1894,6 +1893,45 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
       (is (= [{:id 1, :name "Ivan", :active true, :note "aaa"}
               {:id 2, :name "Juan", :active nil, :note nil}]
              res-query)))))
+
+
+(deftest test-copy-in-rows-empty-csv
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (pg/query conn "create temp table foo (id int2, name text, active boolean, note text)")
+
+    (let [res-copy
+          (pg/copy-in-rows conn
+                           "copy foo (id, name, active, note) from STDIN WITH (FORMAT CSV)"
+                           nil
+                           {:oids {:id oid/int2}})
+
+          res-query
+          (pg/query conn "select * from foo")]
+
+      (is (= 0 res-copy))
+      (is (= [] res-query)))))
+
+
+(deftest test-copy-in-maps-empty-bin
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (pg/query conn "create temp table foo (id int2, name text, active boolean, note text)")
+
+    (let [res-copy
+          (pg/copy-in-maps conn
+                           "copy foo (id, name, active, note) from STDIN WITH (FORMAT BINARY)"
+                           nil
+                           {:oids {:id oid/int2}
+                            :format :bin})
+
+          res-query
+          (pg/query conn "select * from foo")]
+
+      (is (= 0 res-copy))
+      (is (= [] res-query)))))
 
 
 (deftest test-array-read-bin

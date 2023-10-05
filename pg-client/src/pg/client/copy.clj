@@ -152,14 +152,21 @@
     (map selector maps)))
 
 
-(defn oids-maps->rows [oids-map fields]
-  (let [selector (apply juxt fields)]
-    (selector oids-map)))
+(defn copy-in-maps [conn sql maps keys format oids sep end null]
+  (let [keys
+        (or keys (maps->keys maps))
 
+        selector
+        (if (seq keys)
+          (apply juxt keys)
+          (constantly nil))
 
-(defn copy-in-maps [conn sql maps fields format oids sep end null]
-  (let [rows (maps->rows maps fields)
-        oids (oids-maps->rows oids fields)]
+        rows
+        (map selector maps)
+
+        oids
+        (selector oids)]
+
     (copy-in-rows conn sql rows format oids sep end null)))
 
 

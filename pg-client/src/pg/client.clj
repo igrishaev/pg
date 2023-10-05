@@ -496,13 +496,13 @@
 
 
 (defn copy-in-maps
-  ([conn sql maps fields]
-   (copy-in-maps conn sql maps fields nil))
+  ([conn sql maps]
+   (copy-in-maps conn sql maps nil))
 
-  ([conn sql maps fields
-    {:keys [sep end oids format null]
+  ([conn sql maps
+    {:keys [sep end oids format null keys]
      :or {sep const/COPY_CSV_CELL_SEP
           end const/COPY_CSV_LINE_SEP
           null const/COPY_CSV_NULL
           format const/COPY_FORMAT_CSV}}]
-   (copy/copy-in-maps conn sql maps fields format oids sep end null)))
+   (copy/copy-in-maps conn sql maps keys format oids sep end null)))
