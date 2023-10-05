@@ -505,7 +505,8 @@
    (copy-in-maps conn sql maps fields nil))
 
   ([conn sql maps fields
-    {:keys [sep end oids binary?]
+    {:keys [sep end oids binary? null]
      :or {sep const/COPY_CSV_CELL_SEP
-          end const/COPY_CSV_LINE_SEP}}]
-   (copy/copy-in-maps conn sql maps fields binary? oids sep end)))
+          end const/COPY_CSV_LINE_SEP
+          null const/COPY_CSV_NULL}}]
+   (copy/copy-in-maps conn sql maps fields binary? oids sep end null)))

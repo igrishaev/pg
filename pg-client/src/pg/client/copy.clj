@@ -151,10 +151,10 @@
     (selector oids-map)))
 
 
-(defn copy-in-maps [conn sql maps fields binary? oids sep end]
+(defn copy-in-maps [conn sql maps fields binary? oids sep end null]
   (let [rows (maps->rows maps fields)
         oids (oids-maps->rows oids fields)]
-    (copy-in-rows conn sql rows binary? oids sep end)))
+    (copy-in-rows conn sql rows binary? oids sep end null)))
 
 
 (defn copy-in-stream
