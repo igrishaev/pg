@@ -22,7 +22,8 @@
    [pg.client.conn :as conn]
    [pg.client.func :as func]
    [pg.integration :as pgi :refer [*CONFIG*]]
-   [pg.json]))
+   [pg.json]
+   [pg.oid :as oid]))
 
 
 (use-fixtures :each pgi/fix-multi-version)
@@ -1698,7 +1699,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
       (is (= [4 [{:one 1}] 3] res)))))
 
 
-(deftest test-copy-in-api-txt
+(deftest test-copy-in-api-csv
 
   (pg/with-connection [conn *CONFIG*]
 
@@ -1734,7 +1735,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
              res-query)))))
 
 
-(deftest test-copy-in-rows-ok-txt
+(deftest test-copy-in-rows-ok-csv
 
   (pg/with-connection [conn *CONFIG*]
 
@@ -1749,10 +1750,10 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
 
           res-copy
           (pg/copy-in-rows conn
-                           "copy foo (id, name, active, note) from STDIN WITH (FORMAT CSV, NULL 'dummy')"
+                           "copy foo (id, name, active, note) from STDIN WITH (FORMAT CSV, NULL 'dummy', DELIMITER '|')"
                            rows
-                           {:null "dummy"})
-
+                           {:null "dummy"
+                            :sep \|})
 
           res-query
           (pg/query conn "select * from foo")]
@@ -1764,11 +1765,28 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
              res-query)))))
 
 
+(deftest test-copy-in-rows-ok-csv-wrong-oids
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (pg/query conn "create temp table foo (id int2)")
+
+    (try
+      (pg/copy-in-rows conn
+                       "copy foo (id) from STDIN WITH (FORMAT CSV)"
+                       [[1] [2] [3]]
+                       {:oids [oid/uuid]})
+      (is false)
+      (catch Exception e
+        (is (= "Cannot text-encode a value"
+               (ex-message e)))))))
+
+
 (deftest test-copy-in-rows-ok-bin
 
   (pg/with-connection [conn *CONFIG*]
 
-    (pg/query conn "create temp table foo (id bigint, name text, active boolean, note text)")
+    (pg/query conn "create temp table foo (id int2, name text, active boolean, note text)")
 
     (let [rows
           [[1 "Ivan" true nil]
@@ -1778,8 +1796,8 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
           (pg/copy-in-rows conn
                            "copy foo (id, name, active, note) from STDIN WITH (FORMAT BINARY)"
                            rows
-                           {:binary? true})
-
+                           {:binary? true
+                            :oids {0 oid/int2 2 oid/bool}})
 
           res-query
           (pg/query conn "select * from foo")]
@@ -1789,7 +1807,6 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
       (is (= [{:id 1 :name "Ivan" :active true :note nil}
               {:id 2 :name "Juan" :active false :note "kek"}]
              res-query)))))
-
 
 
 (deftest test-copy-in-broken-csv
@@ -1815,6 +1832,35 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
       (let [res-query
             (pg/query conn "select 1 as one")]
         (is (= [{:one 1}] res-query))))))
+
+
+(deftest test-copy-in-maps-ok-bin
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (pg/query conn "create temp table foo (id int2, name text, active boolean, note text)")
+
+    (let [weird
+          "foo'''b'ar\r\n\f\t\bsdf--NULL~!@#$%^&*()\"sdf\"\""
+
+          maps
+          [{:name "Ivan" :id 1 :active true :note weird}
+           {:id 2 :active nil :note nil :name "Juan" :extra "Kek"}]
+
+          res-copy
+          (pg/copy-in-maps conn
+                           "copy foo (id, name, active, note) from STDIN WITH (FORMAT BINARY)"
+                           maps
+                           [:id :name :acrive :note]
+                           {:oids {:id oid/int2}})
+
+          res-query
+          (pg/query conn "select * from foo")]
+
+      (is (= 2 res-copy))
+
+      (is (= 1
+             res-query)))))
 
 
 (deftest test-array-read-bin

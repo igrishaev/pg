@@ -482,15 +482,11 @@
 
 
 ;; TODO: naming in/out
-;; TODO: const
-;; TODO: binary
-;; TODO: oids
 ;; TODO: pg-copy package?
 
 ;; test:
-;; rows sep end
-;; rows oids
 ;; maps oids
+;; text format?
 
 
 (defn copy-in-rows

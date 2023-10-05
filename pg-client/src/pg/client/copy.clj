@@ -36,7 +36,7 @@
           (if (some? x)
             (do
               (.append sb \")
-              (.append sb (-> x (txt/encode nil opt) csv-quote))
+              (.append sb (-> x (txt/encode oid opt) csv-quote))
               (.append sb \"))
             (.append sb null))
           (when (.hasNext iter)
@@ -153,7 +153,7 @@
 
 (defn copy-in-maps [conn sql maps fields binary? oids sep end]
   (let [rows (maps->rows maps fields)
-        oids (oids-maps->rows oids)]
+        oids (oids-maps->rows oids fields)]
     (copy-in-rows conn sql rows binary? oids sep end)))
 
 
