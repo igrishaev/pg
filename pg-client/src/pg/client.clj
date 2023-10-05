@@ -481,13 +481,8 @@
    (copy/copy-in-stream conn sql input-stream buffer-size)))
 
 
-;; TODO: naming in/out
 ;; TODO: pg-copy package?
-
-;; test:
-;; maps oids
-;; text format?
-
+;; TODO: format: bin txt csv
 
 (defn copy-in-rows
   ([conn sql rows]
