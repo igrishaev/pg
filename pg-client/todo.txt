@@ -5,6 +5,7 @@
 -- json
 -- joda
 
+- unite the pg- packages?
 - drop pg-copy and pg-copy-jdbc
 - copy docstrings
 - adopt honey-sql

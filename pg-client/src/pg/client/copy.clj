@@ -147,9 +147,8 @@
     (res/interact conn :copy-in nil)))
 
 
-(defn maps->rows [maps fields]
-  (let [selector (apply juxt fields)]
-    (map selector maps)))
+(defn maps->keys [maps]
+  (some-> maps first keys vec))
 
 
 (defn copy-in-maps [conn sql maps keys format oids sep end null]
