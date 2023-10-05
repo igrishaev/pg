@@ -1,11 +1,12 @@
 
 - add docs
--- ssl
 -- copy
 -- types
 -- json
 -- joda
 
+- drop pg-copy and pg-copy-jdbc
+- copy docstrings
 - adopt honey-sql
 - query-first & execute first
 - pg-params docs
@@ -14,11 +15,9 @@
 - config: read-only default
 - pool: read-only default
 - conn: read-only check?
-- copy: seq of bytes
 - check if socket is closed?
 - remove so- for socket vars
 - execute: add flush?
-- pg-csv: parse csv to clj; bin
 - benchmarks
 - interval support
 - range support
