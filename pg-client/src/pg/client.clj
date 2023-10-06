@@ -481,9 +481,27 @@
    (copy/copy-in-stream conn sql input-stream buffer-size)))
 
 
-;; TODO: pg-copy package?
-
 (defn copy-in-rows
+  "
+  Copy a seq of rows into the database. Send each row directly to the
+  database without producing an intermediate InputStream. Supports CSV
+  and binary format types.
+
+  Required params:
+  - conn: a Connection object;
+  - sql: a SQL expression that describes a table, columns, etc;
+  - rows: a seq of rows; each row is a seq of values;
+
+  Optional params:
+  - sep: a charater to separate CSV columns, default is ,
+  - end: a line-ending sequence of characters, default is \r\n
+  - null: a string to represent NULL in CSV, default is an empty string;
+  - format: a keyword to to specify a format of a payload. Default is :csv;
+      another supported format is :bin. This parameter affects the entire
+      payload sent to the server.
+
+  Returns a number of rows processed by the server.
+  "
   ([conn sql rows]
    (copy-in-rows conn sql rows nil))
 
