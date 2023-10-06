@@ -35,6 +35,7 @@ toc-doc:
 	node_modules/.bin/markdown-toc -i doc/030-pool.md
 	node_modules/.bin/markdown-toc -i doc/070-arrays.md
 	node_modules/.bin/markdown-toc -i doc/080-ssl.md
+	node_modules/.bin/markdown-toc -i doc/090-copy.md
 
 pg-logs:
 	tail -f '/Users/ivan/Library/Application Support/Postgres/var-14/postgresql.log'

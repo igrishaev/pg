@@ -8,4 +8,5 @@
   ["JSON support"      {:file "doc/050-json.md"}]
   ["Joda Time support" {:file "doc/060-joda-time.md"}]
   ["Arrays"            {:file "doc/070-arrays.md"}]
-  ["SSL"               {:file "doc/080-ssl.md"}]]}
+  ["SSL"               {:file "doc/080-ssl.md"}]
+  ["COPY"              {:file "doc/090-copy.md"}]]}

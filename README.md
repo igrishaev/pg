@@ -10,7 +10,6 @@ Documentation:
 - Types
 - JSON support
 - Joda Time support
-- COPYing
 - [Arrays](doc/070-arrays.md)
 - [SSL](doc/080-ssl.md)
-- Using with Next.JDBC
+- [COPY functions](doc/090-copy.md)

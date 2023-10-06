@@ -496,6 +496,9 @@
   - sep: a charater to separate CSV columns, default is ,
   - end: a line-ending sequence of characters, default is \r\n
   - null: a string to represent NULL in CSV, default is an empty string;
+  - oids: type hints for proper values encoding. Either a vector or OIDs
+      or a map of {index => OID}. Examples: a vector [oid/int2 nil oid/date],
+      a map {0 oid/int2, 2 oid/date}.
   - format: a keyword to to specify a format of a payload. Default is :csv;
       another supported format is :bin. This parameter affects the entire
       payload sent to the server.
@@ -514,6 +517,16 @@
 
 
 (defn copy-in-maps
+  "
+  Copy a seq of maps into the database. Acts like copy-in-rows but
+  has the following features:
+
+  - the maps get turned into vectors
+  - keys ...
+  - oids ...
+
+  Returns a number of rows processed by the server.
+  "
   ([conn sql maps]
    (copy-in-maps conn sql maps nil))
 
