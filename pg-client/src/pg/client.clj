@@ -519,11 +519,14 @@
 (defn copy-in-maps
   "
   Copy a seq of maps into the database. Acts like copy-in-rows but
-  has the following features:
+  has turns maps into vectors first. Uses the keys of the first maps
+  as a reference set of keys (this might be overridden).
 
-  - the maps get turned into vectors
-  - keys ...
-  - oids ...
+  Required params: same as copy-in-rows;
+
+  Optional params: same as copy-in-rows plus:
+    - keys: a vector of keys applied to each map via juxt;
+    - oids: a map of {key => OID} for proper encoding.
 
   Returns a number of rows processed by the server.
   "
