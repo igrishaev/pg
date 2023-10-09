@@ -212,4 +212,5 @@ Copy rows as a binary payload with custom type hints:
 
 Often, we deal not with plain rows but maps. The `copy-in-maps` function acts
 but `copy-in-rows` but accepts a sequence of maps. Internally, all the maps get
-transformed into rows.
+transformed into rows. To transform it properly, the function needs to know the
+order of the keys.

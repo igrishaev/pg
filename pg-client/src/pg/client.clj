@@ -519,22 +519,22 @@
 (defn copy-in-maps
   "
   Copy a seq of maps into the database. Acts like copy-in-rows but
-  has turns maps into vectors first. Uses the keys of the first maps
-  as a reference set of keys (this might be overridden).
+  has turns maps into vectors first. The keys must be specified
+  explicitly
 
-  Required params: same as copy-in-rows;
+  Required params: same as copy-in-rows plus:
+    - keys: a vector of keys applied to each map via juxt;
 
   Optional params: same as copy-in-rows plus:
-    - keys: a vector of keys applied to each map via juxt;
     - oids: a map of {key => OID} for proper encoding.
 
   Returns a number of rows processed by the server.
   "
-  ([conn sql maps]
-   (copy-in-maps conn sql maps nil))
+  ([conn sql maps keys]
+   (copy-in-maps conn sql maps keys nil))
 
-  ([conn sql maps
-    {:keys [sep end oids format null keys]
+  ([conn sql maps keys
+    {:keys [sep end oids format null]
      :or {sep const/COPY_CSV_CELL_SEP
           end const/COPY_CSV_LINE_SEP
           null const/COPY_CSV_NULL
