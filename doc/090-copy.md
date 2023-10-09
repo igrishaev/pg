@@ -160,7 +160,31 @@ in the JDBC.
 
 ### COPY IN rows
 
-The `copy-in-rows` function ...
+The `copy-in-rows` function takes a sequence of rows and sends them into the
+database one by one. It doesn't do any intermediate step like dumping them into
+an InputStream first. Everything is done on the fly.
+
+The function takes a connection, a SQL expression, and a sequence of rows. A row
+is a sequence of values. The result is a number of rows copied into the database.
+
+~~~clojure
+(pg/copy-in-rows conn
+                 "copy foo (id, name, active, note) from STDIN WITH (FORMAT CSV)"
+                 [[1 "Ivan" true nil]
+                  [2 "Juan" false "kek"]])
+;; 2
+~~~
+
+The fourth optional parameter is a map of options. At the moment, the following
+options are supported:
+
+| name    | default      | example (or enum)                                     | description                                                                                |
+|---------+--------------+-------------------------------------------------------+--------------------------------------------------------------------------------------------|
+| :sep    | ,            |                                                       | a charater to separate columns in CSV/text formats                                         |
+| :end    | \r\n         |                                                       | a line-ending sequence of characters in CSV/text                                           |
+| :null   | empty string |                                                       | a string to represent NULL in CSV/text                                                     |
+| :oids   | nil          | `[oid/int2 nil oid/date]`, `{0 oid/int2, 2 oid/date}` | type hints for proper values encoding. Either a vector or OIDs, or a map of {index => OID} |
+| :format | :csv         | :csv, :bin, :txt                                      | a keyword to to specify the format of a payload.                                           |
 
 ### COPY IN maps
 
