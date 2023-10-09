@@ -178,14 +178,38 @@ is a sequence of values. The result is a number of rows copied into the database
 The fourth optional parameter is a map of options. At the moment, the following
 options are supported:
 
-| name    | default      | example (or enum)                                     | description                                                                                |
-|---------|--------------|-------------------------------------------------------|--------------------------------------------------------------------------------------------|
-| :sep    | ,            |                                                       | a charater to separate columns in CSV/text formats                                         |
-| :end    | \r\n         |                                                       | a line-ending sequence of characters in CSV/text                                           |
-| :null   | empty string |                                                       | a string to represent NULL in CSV/text                                                     |
-| :oids   | nil          | `[oid/int2 nil oid/date]`, `{0 oid/int2, 2 oid/date}` | type hints for proper values encoding. Either a vector or OIDs, or a map of {index => OID} |
-| :format | :csv         | :csv, :bin, :txt                                      | a keyword to to specify the format of a payload.                                           |
+| name      | default      | example (or enum)                                     | description                                                                                |
+|-----------|--------------|-------------------------------------------------------|--------------------------------------------------------------------------------------------|
+| `:sep`    | ,            |                                                       | a charater to separate columns in CSV/text formats                                         |
+| `:end`    | `\r\n`       |                                                       | a line-ending sequence of characters in CSV/text                                           |
+| `:null`   | empty string |                                                       | a string to represent NULL in CSV/text                                                     |
+| `:oids`   | `nil`        | `[oid/int2 nil oid/date]`, `{0 oid/int2, 2 oid/date}` | type hints for proper values encoding. Either a vector or OIDs, or a map of {index => OID} |
+| `:format` | `:csv`       | `:csv`, `:bin`, `:txt`                                | a keyword to to specify the format of a payload.                                           |
+
+Copy rows in CSV with custom column separators and NULL representation:
+
+~~~clojure
+(pg/copy-in-rows conn
+                 "COPY foo (id, name, active, note) FROM STDIN WITH (FORMAT CSV, NULL 'NULL', DELIMITER '|')"
+                 rows
+                 {:null "NULL"
+                  :sep \|})
+;; 1000
+~~~
+
+Copy rows as a binary payload with custom type hints:
+
+~~~clojure
+(pg/copy-in-rows conn
+                 "COPY foo (id, name, active, note) from STDIN WITH (FORMAT BINARY)"
+                 rows
+                 {:format :bin
+                  :oids {0 oid/int2 2 oid/bool}})
+;; 1000
+~~~
 
 ### COPY IN maps
 
-The `copy-in-maps` function ...
+Often, we deal not with plain rows but maps. The `copy-in-maps` function acts
+but `copy-in-rows` but accepts a sequence of maps. Internally, all the maps get
+transformed into rows.
