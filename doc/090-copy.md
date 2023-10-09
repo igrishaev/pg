@@ -179,7 +179,7 @@ The fourth optional parameter is a map of options. At the moment, the following
 options are supported:
 
 | name    | default      | example (or enum)                                     | description                                                                                |
-|---------+--------------+-------------------------------------------------------+--------------------------------------------------------------------------------------------|
+|---------|--------------|-------------------------------------------------------|--------------------------------------------------------------------------------------------|
 | :sep    | ,            |                                                       | a charater to separate columns in CSV/text formats                                         |
 | :end    | \r\n         |                                                       | a line-ending sequence of characters in CSV/text                                           |
 | :null   | empty string |                                                       | a string to represent NULL in CSV/text                                                     |
