@@ -1,9 +1,20 @@
 # COPY
 
 <!-- toc -->
+
+- [Theory](#theory)
+- [CSV vs Binary](#csv-vs-binary)
+- [Usage](#usage)
+  * [COPY out](#copy-out)
+  * [COPY IN from stream](#copy-in-from-stream)
+  * [COPY IN rows](#copy-in-rows)
+  * [COPY IN maps](#copy-in-maps)
+
 <!-- tocstop -->
 
 [CopyManager]: https://jdbc.postgresql.org/documentation/publicapi/org/postgresql/copy/CopyManager.html
+
+## Theory
 
 Since 0.1.9, the pg-client library supports various ways to COPY the data into
 or from the database. It's much more flexible than the standard
@@ -45,19 +56,21 @@ formats. The text format is somewhat CSV with different separators so it's not
 so important. But binary format *is* indeed! Binary-encoded data are faster to
 parse and process and thus is preferable when dealing with vast chunks of data.
 
+## CSV vs Binary
+
 Here is a couple of measurements I made on my local machine. I made two files
 containing 10 million rows: in CSV and in binary format. Than I used the
 official CopyManager to copy these files in the database. All the servers
 settings were default; the machine was Apple M1 Max 32Gb with 10 Cores.
 
-#### Single thread COPY
+**Single thread COPY**
 
 | Rows  | Format | Time, sec |
 |-------|--------|-----------|
 | 10M   | binary | 17.4      |
 | 10M   | CSV    | 51.2      |
 
-#### Parallel COPY
+**Parallel COPY**
 
 Binary:
 
@@ -214,3 +227,36 @@ Often, we deal not with plain rows but maps. The `copy-in-maps` function acts
 but `copy-in-rows` but accepts a sequence of maps. Internally, all the maps get
 transformed into rows. To transform it properly, the function needs to know the
 order of the keys.
+
+The funtion accepts a connection, a SQL expression, a sequence of maps and a
+sequence of keys. Internally, it produces a selector from the keys like this:
+`(apply juxt keys)` which gets applied to each map.
+
+One more thing about copying maps is, that the `:oids` parameter is a map like
+{key => OID}.
+
+An example of copying the maps in CSV. Pay attention that the second map has
+extra keys which are ignored.
+
+~~~clojure
+(pg/copy-in-maps conn
+                 "copy foo (id, name, active, note) from STDIN WITH (FORMAT CSV)"
+                 [{:id 1 :name "Ivan" :active true :note "aaa"}
+                  {:aaa false :id 2 :active nil :note nil :name "Juan" :extra "Kek" :lol 123}]
+                 [:id :name :active :note]
+                 {:oids {:id oid/int2}
+                  :format :csv})
+~~~
+
+Anothe example where we copy maps using binary format. The `:oids` map has a
+single type hint so the `:id` fields get transformed to int2 but not bigint
+which is default for Long values.
+
+~~~clojure
+(pg/copy-in-maps conn
+                 "copy foo (id, name, active, note) from STDIN WITH (FORMAT BINARY)"
+                 maps
+                 [:id :name :active :note]
+                 {:oids {:id oid/int2}
+                  :format :bin})
+~~~
