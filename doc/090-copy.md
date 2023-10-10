@@ -16,9 +16,9 @@
 
 ## Theory
 
-Since 0.1.9, the pg-client library supports various ways to COPY the data into
-or from the database. It's much more flexible than the official JDBC Postgres
-driver's standard [CopyManager][CopyManager] class.
+The recent update of pg-client library introduces various ways to COPY the data
+into or from the database. It's much more flexible than the official JDBC
+Postgres driver's standard [CopyManager][CopyManager] class.
 
 To remind you, COPY is a massive way of writing or reading data. Copying IN is
 much faster than inserting the rows by chunks. Postgres starts to read the data
