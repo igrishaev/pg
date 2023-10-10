@@ -39,7 +39,7 @@ way they're represented in Postgres. But it doesn't work for complex types like
 arrays. If you write a vector of `[1 2 3]` in CSV you'll get `"[1 2 3]"` which
 is an improper Postgres value. It must have been `{1, 2, 3}` instead.
 
-[copy-docs] https://postgrespro.ru/docs/postgrespro/14/protocol-flow?lang=en#PROTOCOL-COPY
+[copy-docs]: https://postgrespro.ru/docs/postgrespro/14/protocol-flow?lang=en#PROTOCOL-COPY
 
 Another flaw of JDBC CopyManager is, that it doesn't split the data by rows when
 sending them into the database. It simply reads 2Kb of bytes from an InputStream
