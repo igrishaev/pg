@@ -1,13 +1,13 @@
 
 - add docs
--- copy
 -- types
 -- json
 -- joda
 
+- as/first?
+- as functions -> pg
 - unite the pg- packages?
 - drop pg-copy and pg-copy-jdbc
-- copy docstrings
 - adopt honey-sql
 - query-first & execute first
 - pg-params docs
