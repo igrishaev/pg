@@ -1,29 +1,27 @@
 
-- release
-as/first
+release docs
+- as/first
+- pg-params docs
 
 - add docs
 -- types
 -- json
 -- joda
 
-- as functions -> pg
-- unite the pg- packages?
+- remove so- for socket vars
+- batch queries
 - adopt honey-sql
 - query-first & execute first
-- pg-params docs
 - protocol-message notice
 - error resp ex structure
 - config: read-only default
 - pool: read-only default
 - conn: read-only check?
 - check if socket is closed?
-- remove so- for socket vars
 - execute: add flush?
 - benchmarks
 - interval support
 - range support
-- batch queries
 - unix socket
 - adopt gosql
 - errors addSuppressed
@@ -33,8 +31,3 @@ as/first
 
 perf:
 - enough?
-
-- Encoding and decoding values
-- Copy (general)
-- Copy with JDBC.Next
-- Full package list
