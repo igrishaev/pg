@@ -7,7 +7,6 @@
    java.util.Map)
   (:require
    [clojure.string :as str]
-   [pg.client.as :as as]
    [pg.client.conn :as conn]
    [pg.client.func :as func]
    [pg.client.md5 :as md5]
@@ -41,9 +40,17 @@
    :fn-column keyword})
 
 
+(def as-default
+  {:fn-init #(transient [])
+   :fn-reduce conj!
+   :fn-finalize persistent!})
+
+
 (defn remap-as [this]
-  (let [as (get this :as as/default)]
-    (merge this as)))
+  (let [as (get this :as as-default)]
+    (-> this
+        (merge as)
+        (dissoc :as))))
 
 
 (defn make-node []

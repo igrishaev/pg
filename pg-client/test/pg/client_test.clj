@@ -18,7 +18,6 @@
    [clojure.string :as str]
    [clojure.test :refer [deftest is use-fixtures testing]]
    [pg.client :as pg]
-   [pg.client.as :as as]
    [pg.client.conn :as conn]
    [pg.client.func :as func]
    [pg.integration :as pgi :refer [*CONFIG*]]
@@ -1152,7 +1151,7 @@ drop table %1$s;
           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
           res
-          (pg/execute conn query nil {:as as/java})]
+          (pg/execute conn query nil {:as pg/java})]
 
       (is (= [{:b 2 :a 1}
               {:b 4 :a 3}
@@ -1173,7 +1172,7 @@ drop table %1$s;
           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
           res
-          (pg/execute conn query nil {:as (as/index-by :a)})]
+          (pg/execute conn query nil {:as (pg/index-by :a)})]
 
       (is (= {1 {:a 1 :b 2}
               3 {:a 3 :b 4}
@@ -1190,7 +1189,7 @@ drop table %1$s;
           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
           res
-          (pg/execute conn query nil {:as (as/group-by :a)})]
+          (pg/execute conn query nil {:as (pg/group-by :a)})]
 
       (is (= {1 [{:a 1 :b 2}]
               3 [{:a 3 :b 4}]
@@ -1206,7 +1205,7 @@ drop table %1$s;
           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
           res
-          (pg/execute conn query nil {:as (as/kv :b :a)})]
+          (pg/execute conn query nil {:as (pg/kv :b :a)})]
 
       (is (= {2 1
               4 3
@@ -1225,7 +1224,7 @@ drop table %1$s;
           (atom [])
 
           as
-          (as/run
+          (pg/run
             (fn [row]
               (swap! capture! conj row)))
 
@@ -1246,7 +1245,7 @@ drop table %1$s;
           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
           as
-          (as/fold #{} (fn [acc {:keys [a b]}]
+          (pg/fold #{} (fn [acc {:keys [a b]}]
                          (conj acc [a b])))
 
           res
@@ -1263,7 +1262,7 @@ drop table %1$s;
           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
           res
-          (pg/execute conn query nil {:as as/matrix})]
+          (pg/execute conn query nil {:as pg/matrix})]
 
       (is (= [[1 2]
               [3 4]
@@ -1279,7 +1278,7 @@ drop table %1$s;
           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
           res
-          (pg/execute conn query nil {:as as/first})]
+          (pg/execute conn query nil {:as pg/first})]
 
       (is (= {:a 1 :b 2} res)))))
 

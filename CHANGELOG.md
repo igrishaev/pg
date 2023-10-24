@@ -1,4 +1,11 @@
 
+## 0.1.10
+
+- changelog added
+- as/first
+- as docstrings
+- jdbc packages removed
+
 ## 0.1.9
 
 - COPY in/from operations
