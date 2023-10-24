@@ -13,7 +13,7 @@ Benefits:
 - Rich types mapping;
 - JSON support;
 - Joda Time support;
-- and more (lots of good things in todo).
+- and more (lots of good things in TODO).
 
 Documentation:
 

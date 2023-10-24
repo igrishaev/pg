@@ -2,16 +2,15 @@
 release docs
 - as/first
 - pg-params docs
+- so- prefix removed
+- pg.honey
 
 - add docs
 -- types
 -- json
 -- joda
 
-- remove so- for socket vars
 - batch queries
-- adopt honey-sql
-- query-first & execute first
 - protocol-message notice
 - error resp ex structure
 - config: read-only default

@@ -20,6 +20,7 @@
    [pg.client :as pg]
    [pg.client.conn :as conn]
    [pg.client.func :as func]
+   [pg.honey :as pgh]
    [pg.integration :as pgi :refer [*CONFIG*]]
    [pg.json]
    [pg.oid :as oid]))
@@ -160,12 +161,12 @@
 
   (pg/with-connection [conn (update *CONFIG* :socket assoc
                                     :tcp-no-delay? false
-                                    :so-keep-alive? false
-                                    :so-reuse-addr? false
-                                    :so-rcv-buf 1234
-                                    :so-snd-buf 4567
-                                    :so-timeout 5000
-                                    :so-oob-inline? true)]
+                                    :keep-alive? false
+                                    :reuse-addr? false
+                                    :rcv-buf 1234
+                                    :snd-buf 4567
+                                    :timeout 5000
+                                    :oob-inline? true)]
 
     (let [res1
           (pg/query conn "select 1 as foo")]
@@ -2048,3 +2049,50 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
     (let [arr [1 2 3]
           res (pg/execute conn "select 2 = ANY ($1) as in_array" [arr])]
       (is (= [{:in_array true}] res)))))
+
+
+(deftest test-honey-query
+
+  (pg/with-connection [conn *CONFIG*]
+    (let [res
+          (pgh/query conn
+                     {:select [[[:inline "string"] :foo]]}
+                     {:pretty true
+                      :as pg/first})]
+      (is (= {:foo "string"} res)))))
+
+
+(deftest test-honey-execute
+
+  (pg/with-connection [conn *CONFIG*]
+
+
+    (let [table
+          (gen-table)
+
+          query
+          (format "create temp table %s (id serial, title text)" table)
+
+          _
+          (pg/execute conn query)
+
+          res1
+          (pgh/execute conn
+                       {:insert-into (keyword table)
+                        :values [{:id 1 :title "test1"}
+                                 {:id 2 :title "test2"}
+                                 {:id 3 :title "test3"}]}
+                       {:pretty true})
+
+          res2
+          (pgh/execute conn
+                       {:select [:id :title]
+                        :from [(keyword table)]
+                        :where [:and
+                                [:= :id 2]
+                                [:= :title [:param :title]]]}
+                       {:pretty true
+                        :params {:title "test2"}})]
+
+      (is (= 3 res1))
+      (is (= [{:id 2, :title "test2"}] res2)))))

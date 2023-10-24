@@ -36,13 +36,12 @@
    :binary-decode? false
    :ssl? false
    :ssl-context nil
-   ;; TODO: remove so-
    :socket {:tcp-no-delay? true
-            :so-keep-alive? true
-            :so-reuse-addr? true
-            :so-reuse-port? true
-            :so-rcv-buf nil
-            :so-snd-buf nil}})
+            :keep-alive? true
+            :reuse-addr? true
+            :reuse-port? true
+            :rcv-buf nil
+            :snd-buf nil}})
 
 
 (defn get-id [conn]
@@ -404,33 +403,33 @@
 
 (defn set-socket-opts
   [^Socket socket {:keys [tcp-no-delay?
-                          so-timeout
-                          so-keep-alive?
-                          so-oob-inline?
-                          so-reuse-addr?
-                          so-rcv-buf
-                          so-snd-buf]}]
+                          timeout
+                          keep-alive?
+                          oob-inline?
+                          reuse-addr?
+                          rcv-buf
+                          snd-buf]}]
 
   (when (some? tcp-no-delay?)
     (.setTcpNoDelay socket tcp-no-delay?))
 
-  (when (some? so-oob-inline?)
-    (.setOOBInline socket so-oob-inline?))
+  (when (some? oob-inline?)
+    (.setOOBInline socket oob-inline?))
 
-  (when (some? so-keep-alive?)
-    (.setKeepAlive socket so-keep-alive?))
+  (when (some? keep-alive?)
+    (.setKeepAlive socket keep-alive?))
 
-  (when (some? so-reuse-addr?)
-    (.setReuseAddress socket so-reuse-addr?))
+  (when (some? reuse-addr?)
+    (.setReuseAddress socket reuse-addr?))
 
-  (when (some? so-rcv-buf)
-    (.setReceiveBufferSize socket so-rcv-buf))
+  (when (some? rcv-buf)
+    (.setReceiveBufferSize socket rcv-buf))
 
-  (when (some? so-snd-buf)
-    (.setSendBufferSize socket so-snd-buf))
+  (when (some? snd-buf)
+    (.setSendBufferSize socket snd-buf))
 
-  (when (some? so-timeout)
-    (.setSoTimeout socket so-timeout)))
+  (when (some? timeout)
+    (.setSoTimeout socket timeout)))
 
 
 (defn ssl-requested? ^Boolean [^Connection conn]

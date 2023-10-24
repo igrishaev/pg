@@ -40,6 +40,7 @@
    "pg-json"
    "pg-client"
    "pg-pool"
+   "pg-honey"
    "pg-ssl"
    "pg-integration"]
 
@@ -50,10 +51,12 @@
    [com.github.igrishaev/pg-json :version]
    [com.github.igrishaev/pg-client :version]
    [com.github.igrishaev/pg-ssl :version]
+   [com.github.igrishaev/pg-honey :version]
    [com.github.igrishaev/pg-integration :version]
 
    [joda-time/joda-time "2.12.5"]
    [clj-time "0.15.2"]
+   [com.github.seancorfield/honeysql "2.4.1078"]
    [less-awful-ssl "1.0.6"]
    [com.github.seancorfield/next.jdbc "1.2.796"]
    [org.postgresql/postgresql "42.2.18"]

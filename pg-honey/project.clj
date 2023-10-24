@@ -1,14 +1,14 @@
-(defproject com.github.igrishaev/pg-client "0.1.9"
+(defproject com.github.igrishaev/pg-honey "0.1.9"
 
   :description
-  "Postgres client in pure Clojure (no JDBC)"
+  "HoneySQL wrapper for PG"
 
   :plugins
   [[lein-parent "0.3.8"]]
 
   :dependencies
-  [[com.github.igrishaev/pg-common]
-   [com.github.igrishaev/pg-types]]
+  [[com.github.igrishaev/pg-client]
+   [com.github.seancorfield/honeysql]]
 
   :parent-project
   {:path "../project.clj"
@@ -24,8 +24,4 @@
   :profiles
   {:test
    {:dependencies
-    [[com.github.igrishaev/pg-json]
-     [com.github.igrishaev/pg-integration]
-     [com.github.igrishaev/pg-ssl]
-     [com.github.igrishaev/pg-honey]
-     [org.clojure/data.csv]]}})
+    []}})
