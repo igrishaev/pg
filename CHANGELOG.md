@@ -2,9 +2,14 @@
 ## 0.1.10
 
 - changelog added
-- as/first
-- as docstrings
-- jdbc packages removed
+- `first` reducer added
+- reducers refactored
+- docstrings for reducers
+- pg-copy package removed
+- pg-copy-jdbc package removed
+- so- prefix for socket options removed
+- pg-params added to docs
+- pg.honey package
 
 ## 0.1.9
 

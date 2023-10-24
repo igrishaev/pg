@@ -1,10 +1,4 @@
 
-release docs
-- as/first
-- pg-params docs
-- so- prefix removed
-- pg.honey
-
 - add docs
 -- types
 -- json
