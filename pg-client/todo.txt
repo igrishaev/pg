@@ -1,13 +1,14 @@
 
+- release
+as/first
+
 - add docs
 -- types
 -- json
 -- joda
 
-- as/first?
 - as functions -> pg
 - unite the pg- packages?
-- drop pg-copy and pg-copy-jdbc
 - adopt honey-sql
 - query-first & execute first
 - pg-params docs
@@ -37,4 +38,3 @@ perf:
 - Copy (general)
 - Copy with JDBC.Next
 - Full package list
-- Changelog

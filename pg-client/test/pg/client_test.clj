@@ -1271,6 +1271,19 @@ drop table %1$s;
              res)))))
 
 
+(deftest test-acc-as-first
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (let [query
+          "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
+
+          res
+          (pg/execute conn query nil {:as as/first})]
+
+      (is (= {:a 1 :b 2} res)))))
+
+
 (deftest test-conn-opt
   (pg/with-connection [conn *CONFIG*]
     (let [opt (conn/get-opt conn)]

@@ -36,8 +36,6 @@
   :sub
   ["pg-common"
    "pg-types"
-   "pg-copy"
-   "pg-copy-jdbc"
    "pg-joda-time"
    "pg-json"
    "pg-client"
@@ -48,8 +46,6 @@
   :managed-dependencies
   [[com.github.igrishaev/pg-common :version]
    [com.github.igrishaev/pg-types :version]
-   [com.github.igrishaev/pg-copy :version]
-   [com.github.igrishaev/pg-copy-jdbc :version]
    [com.github.igrishaev/pg-joda-time :version]
    [com.github.igrishaev/pg-json :version]
    [com.github.igrishaev/pg-client :version]

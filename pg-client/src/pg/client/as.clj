@@ -1,16 +1,26 @@
 (ns pg.client.as
-  (:refer-clojure :exclude [group-by])
+  (:refer-clojure :exclude [group-by first])
   (:require
    [pg.client.func :as func])
   (:import
    java.util.ArrayList
-   java.util.HashMap))
+   java.util.HashMap
+   clojure.lang.PersistentVector))
 
 
 (def default
   {:fn-init #(transient [])
    :fn-reduce conj!
    :fn-finalize persistent!})
+
+
+(def first
+  {:fn-init (fn [] [])
+   :fn-reduce (fn [^PersistentVector acc x]
+                (if (.isEmpty acc)
+                  (conj acc x)
+                  acc))
+   :fn-finalize clojure.core/first})
 
 
 (def java
@@ -64,6 +74,5 @@
 
 (defn fold [init fn-reduce]
   {:fn-init (constantly init)
-   :fn-reduce (fn [acc row]
-                (fn-reduce acc row))
+   :fn-reduce fn-reduce
    :fn-finalize identity})
