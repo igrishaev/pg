@@ -7,9 +7,7 @@ The latest version is **0.1.9**.
 | Short Name | Full Name & Version                        | Description                                                                           |
 |------------|--------------------------------------------|---------------------------------------------------------------------------------------|
 | pg-common  | `[com.github.igrishaev/pg-common "0.1.9"]` | Keeps the registry of all the known PostgreSQL OIDs; bytes utilities; codecs; macros. |
-| pg-types   |                                            |                                                                                       |
-|            |                                            |                                                                                       |
-|            |                                            |                                                                                       |
+| pg-types   | `[com.github.igrishaev/pg-types "0.1.9"]`  | Implements text and binary encoding and decoding of Clojure and PG types.             |
 
 ## Benefits
 
