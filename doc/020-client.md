@@ -339,7 +339,7 @@ Or pass it as a "bundle":
 ~~~clojure
 (require '[pg.client.as :as as])
 
-(pg/query conn "select 42 as the_answer" {:as as/kebab-keys})
+(pg/query conn "select 42 as the_answer" {:as pg/kebab-keys})
 
 [{:the-answer 42}]
 ~~~
@@ -377,7 +377,9 @@ This behaviour stacks with the `fn-column` parameter: the `fn-column` gets
 applied after the column names have been transformed.
 
 ~~~clojure
-(pg/query conn "SELECT 1 as val, true as val, 'dunno' as val" {:as as/kebab-keys})
+(pg/query conn
+          "SELECT 1 as val, true as val, 'dunno' as val"
+          {:as pg/kebab-keys})
 
 [{:val 1, :val-1 true, :val-2 "dunno"}]
 ~~~
@@ -392,13 +394,14 @@ As you've seen before, the result of `pg/query` or `pg/execute` is a vector of
 maps. Although it is most likely what you want by default, there are other ways
 to obtain the result in another shape.
 
-There is a `pg.client.as` namespace that carries "bundles": named maps with
-predefined parameters, mostly functions. Passing these maps into the optional
-`:as` field when querying data affects how the rows will be processed.
+The `pg.client` namespace carries some reducers. These are names maps with
+predefined parameters, mostly functions. Passing such a map into the optional
+`:as` field when querying data or executing a query affects how the rows will be
+processed.
 
 ### First
 
-The `as/first` reducer keeps only the first data row obtained from the
+The `first` reducer keeps only the first data row obtained from the
 network. All the further rows are just ignored. It's much faster rather than
 collection all the rows into a vector and then take its first item.
 
@@ -414,11 +417,11 @@ collection all the rows into a vector and then take its first item.
 
 ### Java
 
-The `as/java` bundle builds an `ArrayList` of mutable `HashMap`s. Both the
+The `java` bundle builds an `ArrayList` of mutable `HashMap`s. Both the
 top-level set of rows and its children are mutable:
 
 ~~~clojure
-(def res (pg/query conn "SELECT 42 as the_answer" {:as as/java}))
+(def res (pg/query conn "SELECT 42 as the_answer" {:as pg/java}))
 
 (.add res :someting)
 (.put (.get res 0) :some-key "A")
@@ -432,17 +435,17 @@ The `kebab-keys` bundle we have already seen in action: it just transforms the
 keys from `:foo_bar` to `:foo-bar`:
 
 ~~~clojure
-(pg/query conn "SELECT 42 as the_answer" {:as as/kebab-keys})
+(pg/query conn "SELECT 42 as the_answer" {:as pg/kebab-keys})
 
 [{:the-answer 42}]
 ~~~
 
 ### Matrix
 
-The `as/matrix` bundle is useful for getting values without names:
+The `matrix` bundle is useful for getting values without names:
 
 ~~~clojure
-(pg/query conn "SELECT 1, false, 'hello'" {:as as/matrix})
+(pg/query conn "SELECT 1, false, 'hello'" {:as pg/matrix})
 
 [[1 false "hello"]]
 ~~~
@@ -473,12 +476,12 @@ That would be great of course to do that not once *you have read* the rows from
 the database but *as you're reading* the rows. That would save the lines of code
 and resources.
 
-The `as/index-by` reducer does it for you. It's a function that takes a row
+The `index-by` reducer does it for you. It's a function that takes a row
 function and returns a bundle:
 
 ~~~clojure
-(pg/query conn "select * from users" {:as (as/index-by :id)})
-p
+(pg/query conn "select * from users" {:as (pg/index-by :id)})
+
 {1 {:id 1, :name "Ivan", :age 37},
  2 {:id 2, :name "Juan", :age 38}}
 ~~~
@@ -488,7 +491,7 @@ complex than an ordinary keyword. It can be a call of `juxt` if you need to
 group rows by several keys:
 
 ~~~clojure
-(pg/query conn "select * from users" {:as (as/index-by (juxt :id :name))})
+(pg/query conn "select * from users" {:as (pg/index-by (juxt :id :name))})
 
 {[1 "Ivan"] {:id 1, :name "Ivan", :age 37},
  [2 "Juan"] {:id 2, :name "Juan", :age 38}}
@@ -496,16 +499,16 @@ group rows by several keys:
 
 ### Group by
 
-The `as/group-by` reducer acts like the standard `group-by` function. It
-collects a map where a key is a result of `(f row)`, and the value is a vector
-of matched rows. The main difference is, that it fills the result on the fly as
-the data arrives from the server.
+The `group-by` reducer acts like the standard `group-by` function. It collects a
+map where a key is a result of `(f row)`, and the value is a vector of matched
+rows. The main difference is, that it fills the result on the fly as the data
+arrives from the server.
 
 Imagine there are more users named Ivan and Juan in our database. Here is how we
 can select and group them by name:
 
 ~~~clojure
-(pg/query conn "select * from users" {:as (as/group-by :name)})
+(pg/query conn "select * from users" {:as (pg/group-by :name)})
 
 {"Ivan" [{:id 1, :name "Ivan", :age 37}
          {:id 3, :name "Ivan", :age 37}],
@@ -516,18 +519,18 @@ can select and group them by name:
 ### Key-value
 
 There is a `kv` reducer that allows you to build *any map* you want. It takes
-two parameters: a key function (fk) and a value function (fv). The result will
-be a map like this:
+two parameters: a key function (`fk`) and a value function (`fv`). The result
+will be a map like this:
 
 ~~~clojure
 {(fk row) (fv row)}
 ~~~
 
-The `as/kv` reducer is useful when you want to get a map from rows, for example,
-a mapping from the id to the name:
+The `kv` reducer is useful when you want to get a map from rows, for example, a
+mapping from the id to the name:
 
 ~~~clojure
-(pg/query conn "select * from users" {:as (as/kv :id :name)})
+(pg/query conn "select * from users" {:as (pg/kv :id :name)})
 
 {1 "Ivan", 2 "Juan", 3 "Ivan", 4 "Juan"}
 ~~~
@@ -538,7 +541,7 @@ The `run` reducer executes a certain function for each row. The result would be
 the number of times the function was called:
 
 ~~~clojure
-(pg/query conn "select * from users" {:as (as/run println)})
+(pg/query conn "select * from users" {:as (pg/run println)})
 
 ;; {... row1}
 ;; {... row2}
@@ -558,7 +561,7 @@ must return a new accumulator, usually with `assoc`, `conj`, and similar.
       "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
       as
-      (as/fold #{} (fn [acc {:keys [a b]}]
+      (pg/fold #{} (fn [acc {:keys [a b]}]
                      (conj acc [a b])))]
 
   (pg/execute conn query nil {:as as}))
