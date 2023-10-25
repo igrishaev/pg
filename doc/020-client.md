@@ -9,7 +9,8 @@
 - [Processing result with :fn-result](#processing-result-with-fn-result)
 - [Column names](#column-names)
 - [Column duplicates](#column-duplicates)
-- [Reducers and bundles](#reducers-and-bundles)
+- [Reducers](#reducers)
+  * [First](#first)
   * [Java](#java)
   * [Kebab-keys](#kebab-keys)
   * [Matrix](#matrix)
@@ -385,7 +386,7 @@ The function which is responsible for column duplicate processing is called
 `:fn-unify`. It takes a vector of strings and must return a vector of something
 (strings, keywords, symbols).
 
-## Reducers and bundles
+## Reducers
 
 As you've seen before, the result of `pg/query` or `pg/execute` is a vector of
 maps. Although it is most likely what you want by default, there are other ways
@@ -394,6 +395,22 @@ to obtain the result in another shape.
 There is a `pg.client.as` namespace that carries "bundles": named maps with
 predefined parameters, mostly functions. Passing these maps into the optional
 `:as` field when querying data affects how the rows will be processed.
+
+### First
+
+The `as/first` reducer keeps only the first data row obtained from the
+network. All the further rows are just ignored. It's much faster rather than
+collection all the rows into a vector and then take its first item.
+
+~~~clojure
+(def query
+  "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo")
+
+(def res
+  (pg/execute conn query nil {:as pg/first}))
+
+;; {:a 1 :b 2}
+~~~
 
 ### Java
 
