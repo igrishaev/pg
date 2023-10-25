@@ -8,6 +8,7 @@
 - [JSON extension](#json-extension)
 - [Joda Time extension](#joda-time-extension)
 - [SSL Context extension](#ssl-context-extension)
+- [HoneySQL support](#honeysql-support)
 
 <!-- tocstop -->
 
@@ -117,7 +118,7 @@ Deps:
 {com.github.igrishaev/pg-ssl {:mvn/version "0.1.9"}}
 ~~~
 
-### HoneySQL support
+## HoneySQL support
 
 A helper package to use `query` and `execute` functions with Clojure maps that
 get rendered into SQL expressions.
