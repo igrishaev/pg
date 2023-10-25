@@ -36,10 +36,9 @@ Lein users may specify a global `pg-version` variable on top of the
 ;; project.clj
 (def pg-version "0.1.9")
 
-(defproject ...
+(defproject some.cool/project "100.500"
   :dependencies
-  [...
-   [com.github.igrishaev/pg-client ~pg-version]
+  [[com.github.igrishaev/pg-client ~pg-version]
    [com.github.igrishaev/pg-pool ~pg-version]])
 ~~~
 
@@ -116,4 +115,19 @@ Deps:
 
 ~~~clojure
 {com.github.igrishaev/pg-ssl {:mvn/version "0.1.9"}}
+~~~
+
+### HoneySQL support
+
+A helper package to use `query` and `execute` functions with Clojure maps that
+get rendered into SQL expressions.
+
+~~~clojure
+[com.github.igrishaev/pg-honey "0.1.9"]
+~~~
+
+Deps:
+
+~~~clojure
+{com.github.igrishaev/pg-honey {:mvn/version "0.1.9"}}
 ~~~
