@@ -1,6 +1,17 @@
 # PG: a Postgres Driver in Pure Clojure
 
-Benefits:
+The latest version is **0.1.9**.
+
+## Package index
+
+| Short Name | Full Name & Version                        | Description                                                                           |
+|------------|--------------------------------------------|---------------------------------------------------------------------------------------|
+| pg-common  | `[com.github.igrishaev/pg-common "0.1.9"]` | Keeps the registry of all the known PostgreSQL OIDs; bytes utilities; codecs; macros. |
+| pg-types   |                                            |                                                                                       |
+|            |                                            |                                                                                       |
+|            |                                            |                                                                                       |
+
+## Benefits
 
 - Implements both simple and extended Postgres protocols;
 - Supports both text and binary encoding and decoding;
@@ -13,9 +24,10 @@ Benefits:
 - Rich types mapping;
 - JSON support;
 - Joda Time support;
+- Easy integration with HoneySQL;
 - and more (lots of good things in TODO).
 
-Documentation:
+## Documentation
 
 - [About](doc/000-about.md)
 - [Installation](doc/010-installation.md)
@@ -28,3 +40,4 @@ Documentation:
 - [Arrays](doc/070-arrays.md)
 - [SSL](doc/080-ssl.md)
 - [COPY functions](doc/090-copy.md)
+- [HoneySQL](doc/100-honey.md)

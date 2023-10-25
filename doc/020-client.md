@@ -825,31 +825,32 @@ A config map that you pass to `pg/connect` has various fields. Most of them are
 not necessary and are derived from the default map. Below, please find a list of
 parameters and their defaults.
 
-| Field               | Default                          | Comment                                            |
-|---------------------|----------------------------------|----------------------------------------------------|
-| `:host`             | `"127.0.0.1"`                    | Host                                               |
-| `:port`             | `5432`                           | Port                                               |
-| `:database`         | -                                | Database                                           |
-| `:user`             | -                                | Username                                           |
-| `:password`         | -                                | Password                                           |
-| `:protocol-version` | `196608` (declared in constants) | PG protocol version                                |
-| `:binary-encode?`   | `false`                          | Use binary protocol to write data                  |
-| `:binary-decode?`   | `false`                          | Use binary protocol to read data                   |
-| `:fn-notice`        | `pg.client.conn/fn-notice`       | 1-arg function to handle notices (see below)       |
-| `:fn-notification`  | `pg.client.conn/fn-notification` | 1-arg function to handle notifications (see below) |
-| `:socket`           | (see below)                      | A nested map with socket options                   |
+| Field               | Default                          | Comment                                                             |
+|---------------------|----------------------------------|---------------------------------------------------------------------|
+| `:host`             | `"127.0.0.1"`                    | Host                                                                |
+| `:port`             | `5432`                           | Port                                                                |
+| `:database`         | -                                | Database                                                            |
+| `:user`             | -                                | Username                                                            |
+| `:password`         | -                                | Password                                                            |
+| `:protocol-version` | `196608` (declared in constants) | PG protocol version                                                 |
+| `:binary-encode?`   | `false`                          | Use binary protocol to *write* data                                 |
+| `:binary-decode?`   | `false`                          | Use binary protocol to *read* data                                  |
+| `:fn-notice`        | `pg.client.conn/fn-notice`       | 1-arg function to handle notices (see below)                        |
+| `:fn-notification`  | `pg.client.conn/fn-notification` | 1-arg function to handle notifications (see below)                  |
+| `:pg-params`        | -                                | A `{String => String}` map of PostgreSQL params for this connection |
+| `:socket`           | (see below)                      | A nested map with socket options                                    |
 
 The `:socket` map has the following sub-options:
 
-| Field             | Default | Comment                                                   |
-|-------------------|---------|-----------------------------------------------------------|
-| `:tcp-no-delay?`  | `true`  | Set `TCP_NODELAY` socket boolean property                 |
-| `:so-timeout`     | -       | Set `SO_TIMEOUT` socket timeout property, in milliseconds |
-| `:so-keep-alive?` | `true`  | Set `SO_KEEPALIVE` socket boolean property                |
-| `:so-reuse-addr?` | `true`  | Set `SO_REUSEADDR` socket boolean property                |
-| `:so-oob-inline?` | -       | Set `SO_OOBINLINE` socket boolean property                |
-| `:so-rcv-buf`     | -       | Set `SO_RCVBUF` socket size, an integer                   |
-| `:so-snd-buf`     | -       | Set `SO_SNDBUF` socket size, an integer                   |
+| Field            | Default | Comment                                                   |
+|------------------|---------|-----------------------------------------------------------|
+| `:tcp-no-delay?` | `true`  | Set `TCP_NODELAY` socket boolean property                 |
+| `:timeout`       | -       | Set `SO_TIMEOUT` socket timeout property, in milliseconds |
+| `:keep-alive?`   | `true`  | Set `SO_KEEPALIVE` socket boolean property                |
+| `:reuse-addr?`   | `true`  | Set `SO_REUSEADDR` socket boolean property                |
+| `:oob-inline?`   | -       | Set `SO_OOBINLINE` socket boolean property                |
+| `:rcv-buf`       | -       | Set `SO_RCVBUF` socket size, an integer                   |
+| `:snd-buf`       | -       | Set `SO_SNDBUF` socket size, an integer                   |
 
 Here is an example of the configuration:
 
@@ -864,14 +865,22 @@ Here is an example of the configuration:
  :protocol-version const/PROTOCOL_VERSION
  :binary-encode? true
  :binary-decode? true
+ :pg-params {"application_name" "Clojure"
+             "DateStyle" "ISO, MDY"
+             "enable_async_append" "true"}
  :socket {:tcp-no-delay? true
-          :so-keep-alive? true
-          :so-reuse-addr? true
-          :so-rcv-buf 1234
-          :so-snd-buf 5678
-          :so-oob-inline? false
-          :so-timeout 5000}}
+          :keep-alive? true
+          :reuse-addr? true
+          :rcv-buf 1234
+          :snd-buf 5678
+          :oob-inline? false
+          :timeout 5000}}
 ~~~
+
+[runtime-config]: https://www.postgresql.org/docs/current/runtime-config.html
+
+For a list of runtime PostgreSQL parameters that you can pass to the
+`:pg-params` maps, see the [official documentation][runtime-config].
 
 ## Authorization
 

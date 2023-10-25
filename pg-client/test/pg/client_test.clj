@@ -446,7 +446,8 @@
 (deftest test-client-wrong-startup-params
 
   (let [config
-        (assoc *CONFIG* :pg-params {"application_name" "Clojure"})]
+        (assoc *CONFIG* :pg-params {"application_name" "Clojure"
+                                    "DateStyle" "ISO, MDY"})]
 
     (pg/with-connection [conn config]
       (let [param
