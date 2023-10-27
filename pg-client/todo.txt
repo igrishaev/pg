@@ -1,10 +1,12 @@
 
+release
+- fix the as/ docs
+
 - add docs
 -- types
 -- json
 -- joda
 
-- rename result to flow
 - pool config the pool submap
 - application_name default
 - batch queries

@@ -8,6 +8,7 @@
 - pg-copy package removed
 - pg-copy-jdbc package removed
 - so- prefix for socket options removed
+- result ns renamed to flow
 - pg-params added to docs
 - pg.honey package
 

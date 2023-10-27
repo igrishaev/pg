@@ -1,4 +1,4 @@
-(ns pg.client.result
+(ns pg.client.flow
   (:import
    java.io.OutputStream
    java.util.ArrayList
@@ -7,6 +7,7 @@
    java.util.Map)
   (:require
    [clojure.string :as str]
+   [pg.client.as :as as]
    [pg.client.conn :as conn]
    [pg.client.func :as func]
    [pg.client.md5 :as md5]
@@ -16,6 +17,12 @@
    [pg.const :as const]
    [pg.decode.bin :as bin]
    [pg.decode.txt :as txt]))
+
+
+(def default
+  {:fn-unify func/unify-idx
+   :fn-keyval zipmap
+   :fn-column keyword})
 
 
 (defn tag->amount [^String tag]
@@ -34,20 +41,8 @@
       nil)))
 
 
-(def result-defaults
-  {:fn-unify func/unify-idx
-   :fn-keyval zipmap
-   :fn-column keyword})
-
-
-(def as-default
-  {:fn-init #(transient [])
-   :fn-reduce conj!
-   :fn-finalize persistent!})
-
-
 (defn remap-as [this]
-  (let [as (get this :as as-default)]
+  (let [as (get this :as as/default)]
     (-> this
         (merge as)
         (dissoc :as))))
@@ -59,7 +54,7 @@
 
 (defn make-result ^Map [phase init]
   (doto (new HashMap)
-    (.putAll result-defaults)
+    (.putAll default)
     (.putAll (remap-as init))
     (.put :nodes (doto (new ArrayList)
                    (.add (make-node))))

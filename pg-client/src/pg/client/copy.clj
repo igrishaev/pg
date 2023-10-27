@@ -8,7 +8,7 @@
    [pg.bytes :as bytes]
    [pg.out :as out]
    [pg.client.conn :as conn]
-   [pg.client.result :as res]
+   [pg.client.flow :as flow]
    [pg.encode.txt :as txt]
    [pg.encode.bin :as bin]))
 
@@ -144,7 +144,7 @@
       (throw (new Exception "wrong COPY format")))
 
     (conn/send-copy-done conn)
-    (res/interact conn :copy-in nil)))
+    (flow/interact conn :copy-in nil)))
 
 
 (defn maps->keys [maps]
@@ -186,4 +186,4 @@
           (recur))))
 
     (conn/send-copy-done conn)
-    (res/interact conn :copy-in nil)))
+    (flow/interact conn :copy-in nil)))
