@@ -51,6 +51,8 @@ each other and will be download automatically.
 The `pg-client` module ships a client access to Postgres. Since the connection
 pool depends on logging facility, it's shipped in a separate package.
 
+Lein:
+
 ~~~clojure
 [com.github.igrishaev/pg-client "0.1.9"]
 ~~~
@@ -64,6 +66,8 @@ Deps:
 ## Connection Pool
 
 The client depends on pool so there is no need to specify it explicitly.
+
+Lein:
 
 ~~~clojure
 [com.github.igrishaev/pg-pool "0.1.9"]
@@ -79,6 +83,8 @@ Deps:
 
 A package that extends the client with reading and writing JSON objects.
 
+Lein:
+
 ~~~clojure
 [com.github.igrishaev/pg-json "0.1.9"]
 ~~~
@@ -92,6 +98,8 @@ Deps:
 ## Joda Time extension
 
 Extends the client with Joda Time support.
+
+Lein:
 
 ~~~clojure
 [com.github.igrishaev/pg-joda-time "0.1.9"]
@@ -108,6 +116,8 @@ Deps:
 A helper to build a custom instance of `SSLContext` out from your local key and
 certificates.
 
+Lein:
+
 ~~~clojure
 [com.github.igrishaev/pg-ssl "0.1.9"]
 ~~~
@@ -122,6 +132,8 @@ Deps:
 
 A helper package to use `query` and `execute` functions with Clojure maps that
 get rendered into SQL expressions.
+
+Lein:
 
 ~~~clojure
 [com.github.igrishaev/pg-honey "0.1.9"]
