@@ -7,6 +7,8 @@ release
 -- json
 -- joda
 
+- as/xform
+- as/map
 - pool config the pool submap
 - application_name default
 - batch queries
