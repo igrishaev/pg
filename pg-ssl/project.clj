@@ -1,4 +1,4 @@
-(defproject com.github.igrishaev/pg-ssl "0.1.9"
+(defproject com.github.igrishaev/pg-ssl "0.1.10-SNAPSHOT"
 
   :description
   "SSL-related utils"
