@@ -20,14 +20,14 @@ Clojars. For example:
 Lein:
 
 ~~~clojure
-[com.github.igrishaev/pg-client "0.1.9"]
-[com.github.igrishaev/pg-pool "0.1.9"]
+[com.github.igrishaev/pg-client "0.1.10"]
+[com.github.igrishaev/pg-pool "0.1.10"]
 ~~~
 
 Deps:
 
 ~~~clojure
-{com.github.igrishaev/pg-client {:mvn/version "0.1.9"}}
+{com.github.igrishaev/pg-client {:mvn/version "0.1.10"}}
 ~~~
 
 Lein users may specify a global `pg-version` variable on top of the
@@ -35,7 +35,7 @@ Lein users may specify a global `pg-version` variable on top of the
 
 ~~~clojure
 ;; project.clj
-(def pg-version "0.1.9")
+(def pg-version "0.1.10")
 
 (defproject some.cool/project "100.500"
   :dependencies
@@ -54,13 +54,13 @@ pool depends on logging facility, it's shipped in a separate package.
 Lein:
 
 ~~~clojure
-[com.github.igrishaev/pg-client "0.1.9"]
+[com.github.igrishaev/pg-client "0.1.10"]
 ~~~
 
 Deps:
 
 ~~~clojure
-{com.github.igrishaev/pg-client {:mvn/version "0.1.9"}}
+{com.github.igrishaev/pg-client {:mvn/version "0.1.10"}}
 ~~~
 
 ## Connection Pool
@@ -70,13 +70,13 @@ The client depends on pool so there is no need to specify it explicitly.
 Lein:
 
 ~~~clojure
-[com.github.igrishaev/pg-pool "0.1.9"]
+[com.github.igrishaev/pg-pool "0.1.10"]
 ~~~
 
 Deps:
 
 ~~~clojure
-{com.github.igrishaev/pg-pool {:mvn/version "0.1.9"}}
+{com.github.igrishaev/pg-pool {:mvn/version "0.1.10"}}
 ~~~
 
 ## JSON extension
@@ -86,13 +86,13 @@ A package that extends the client with reading and writing JSON objects.
 Lein:
 
 ~~~clojure
-[com.github.igrishaev/pg-json "0.1.9"]
+[com.github.igrishaev/pg-json "0.1.10"]
 ~~~
 
 Deps:
 
 ~~~clojure
-{com.github.igrishaev/pg-json {:mvn/version "0.1.9"}}
+{com.github.igrishaev/pg-json {:mvn/version "0.1.10"}}
 ~~~
 
 ## Joda Time extension
@@ -102,13 +102,13 @@ Extends the client with Joda Time support.
 Lein:
 
 ~~~clojure
-[com.github.igrishaev/pg-joda-time "0.1.9"]
+[com.github.igrishaev/pg-joda-time "0.1.10"]
 ~~~
 
 Deps:
 
 ~~~clojure
-{com.github.igrishaev/pg-joda-time {:mvn/version "0.1.9"}}
+{com.github.igrishaev/pg-joda-time {:mvn/version "0.1.10"}}
 ~~~
 
 ## SSL Context extension
@@ -119,13 +119,13 @@ certificates.
 Lein:
 
 ~~~clojure
-[com.github.igrishaev/pg-ssl "0.1.9"]
+[com.github.igrishaev/pg-ssl "0.1.10"]
 ~~~
 
 Deps:
 
 ~~~clojure
-{com.github.igrishaev/pg-ssl {:mvn/version "0.1.9"}}
+{com.github.igrishaev/pg-ssl {:mvn/version "0.1.10"}}
 ~~~
 
 ## HoneySQL support
@@ -136,11 +136,11 @@ get rendered into SQL expressions.
 Lein:
 
 ~~~clojure
-[com.github.igrishaev/pg-honey "0.1.9"]
+[com.github.igrishaev/pg-honey "0.1.10"]
 ~~~
 
 Deps:
 
 ~~~clojure
-{com.github.igrishaev/pg-honey {:mvn/version "0.1.9"}}
+{com.github.igrishaev/pg-honey {:mvn/version "0.1.10"}}
 ~~~

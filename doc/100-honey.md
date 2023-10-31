@@ -30,13 +30,13 @@ Install the `pg-honey` package as follows.
 Lein:
 
 ~~~clojure
-[com.github.igrishaev/pg-honey "0.1.9"]
+[com.github.igrishaev/pg-honey "0.1.10"]
 ~~~
 
 Deps:
 
 ~~~clojure
-{com.github.igrishaev/pg-honey {:mvn/version "0.1.9"}}
+{com.github.igrishaev/pg-honey {:mvn/version "0.1.10"}}
 ~~~
 
 ## Usage

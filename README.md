@@ -1,20 +1,20 @@
 # PG: a Postgres Driver in Pure Clojure
 
-The latest version is **0.1.9**.
+The latest version is **0.1.10**.
 
 ## Package index
 
-| Short Name     | Full Name & Version                           | Description                                                                           |
-|----------------|-----------------------------------------------|---------------------------------------------------------------------------------------|
-| pg-common      | `[com.github.igrishaev/pg-common "0.1.9"]`    | Keeps the registry of all the known PostgreSQL OIDs; bytes utilities; codecs; macros. |
-| pg-types       | `[com.github.igrishaev/pg-types "0.1.9"]`     | Implements text and binary encoding and decoding of Clojure and PG types.             |
-| pg-client      | `[com.github.igrishaev/pg-client "0.1.9"]`    | The client library through which you connect to the database.                         |
-| pg-pool        | `[com.github.igrishaev/pg-pool "0.1.9"]`      | The connection pool for the client.                                                   |
-| pg-ssl         | `[com.github.igrishaev/pg-ssl "0.1.9"]`       | Custom SSL context for secure connection.                                             |
-| pg-json        | `[com.github.igrishaev/pg-json "0.1.9"]`      | Extends `pg-types` with JSON encoding and decoding.                                   |
-| pg-joda-time   | `[com.github.igrishaev/pg-joda-time "0.1.9"]` | Extends `pg-types` with Joda Time encoding and decoding.                              |
-| pg-honey       | `[com.github.igrishaev/pg-honey "0.1.9"]`     | Integration with HoneySQL.                                                            |
-| pg-integration | `[com.github.igrishaev/ "0.1.9"]`             | Utilities for integration tests (dev purpose only).                                   |
+| Short Name     | Full Name & Version                            | Description                                                                           |
+|----------------|------------------------------------------------|---------------------------------------------------------------------------------------|
+| pg-common      | `[com.github.igrishaev/pg-common "0.1.10"]`    | Keeps the registry of all the known PostgreSQL OIDs; bytes utilities; codecs; macros. |
+| pg-types       | `[com.github.igrishaev/pg-types "0.1.10"]`     | Implements text and binary encoding and decoding of Clojure and PG types.             |
+| pg-client      | `[com.github.igrishaev/pg-client "0.1.10"]`    | The client library through which you connect to the database.                         |
+| pg-pool        | `[com.github.igrishaev/pg-pool "0.1.10"]`      | The connection pool for the client.                                                   |
+| pg-ssl         | `[com.github.igrishaev/pg-ssl "0.1.10"]`       | Custom SSL context for secure connection.                                             |
+| pg-json        | `[com.github.igrishaev/pg-json "0.1.10"]`      | Extends `pg-types` with JSON encoding and decoding.                                   |
+| pg-joda-time   | `[com.github.igrishaev/pg-joda-time "0.1.10"]` | Extends `pg-types` with Joda Time encoding and decoding.                              |
+| pg-honey       | `[com.github.igrishaev/pg-honey "0.1.10"]`     | Integration with HoneySQL.                                                            |
+| pg-integration | `[com.github.igrishaev/ "0.1.10"]`             | Utilities for integration tests (dev purpose only).                                   |
 
 ## Benefits
 
