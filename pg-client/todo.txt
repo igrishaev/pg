@@ -7,6 +7,8 @@ release
 -- json
 -- joda
 
+- pg all-in package
+- as reducible?
 - as/xform
 - as/map
 - pool config the pool submap
