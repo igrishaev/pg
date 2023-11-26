@@ -1,5 +1,8 @@
 (ns pg.client.flow
   (:import
+   com.github.igrishaev.Connection)
+
+  (:import
    java.io.OutputStream
    java.util.ArrayList
    java.util.HashMap
@@ -70,9 +73,9 @@
 
 
 (defn handle-BackendKeyData
-  [result conn {:keys [pid secret-key]}]
-  (conn/set-pid conn pid)
-  (conn/set-secret-key conn secret-key)
+  [result ^Connection conn {:keys [pid secret-key]}]
+  (.setPid conn pid)
+  (.setPrivateKey conn secret-key)
   result)
 
 
@@ -84,16 +87,16 @@
 
 
 (defn handle-ParameterStatus
-  [result conn {:keys [param value]}]
-  (conn/set-parameter conn param value)
+  [result ^Connection conn {:keys [param value]}]
+  (.setParam conn param value)
   (conn/rebuild-opt conn param value)
   result)
 
 
 (defn handle-BackendKeyData
-  [result conn {:keys [pid secret-key]}]
-  (conn/set-pid conn pid)
-  (conn/set-secret-key conn secret-key)
+  [result ^Connection conn {:keys [pid secret-key]}]
+  (.setPid conn pid)
+  (.setPrivateKey conn secret-key)
   result)
 
 
@@ -116,13 +119,13 @@
 
 
 (defn handle-AuthenticationMD5Password
-  [result conn {:keys [salt]}]
+  [result ^Connection conn {:keys [salt]}]
 
   (let [user
-        (conn/get-user conn)
+        (.getUser conn)
 
         password
-        (conn/get-password conn)
+        (.getPassword conn)
 
         hashed
         (md5/hash-password user password salt)]
@@ -140,13 +143,13 @@
 
 
 (defn handle-SCRAM_SHA_256
-  [^Map result conn AuthenticationSASL]
+  [^Map result ^Connection conn AuthenticationSASL]
 
   (let [user
-        (conn/get-user conn)
+        (.getUser conn)
 
         password
-        (conn/get-password conn)
+        (.getPassword conn)
 
         SASL
         (scram-sha-256/step1-client-first-message user password)

@@ -1,4 +1,8 @@
 (ns pg.client
+
+  (:import
+   com.github.igrishaev.Connection)
+
   (:refer-clojure :exclude [group-by first])
   (:require
    [clojure.string :as str]
@@ -14,8 +18,7 @@
    clojure.lang.Keyword
    java.util.HashMap
    java.util.List
-   java.util.Map
-   pg.client.conn.Connection))
+   java.util.Map))
 
 
 (defn status
@@ -63,8 +66,8 @@
   "
   Get the connection PID as an Integer.
   "
-  ^Integer [conn]
-  (conn/get-pid conn))
+  ^Integer [^Connection conn]
+  (.getPid Connection))
 
 
 (defn prepare-statement
@@ -224,16 +227,16 @@
   "
   Get a unique symbol assigned to a connection.
   "
-  [conn]
-  (conn/get-id conn))
+  [^Connection conn]
+  (.-id conn))
 
 
 (defn created-at
   "
   Return the connection created time in milliseconds.
   "
-  ^Long [conn]
-  (conn/get-created-at conn))
+  ^Long [^Connection conn]
+  (.-createdAt conn))
 
 
 (defn query

@@ -10,6 +10,8 @@
   [[com.github.igrishaev/pg-common]
    [com.github.igrishaev/pg-types]]
 
+  :java-source-paths ["java"]
+
   :parent-project
   {:path "../project.clj"
    :inherit [:deploy-repositories

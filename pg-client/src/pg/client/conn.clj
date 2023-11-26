@@ -1,4 +1,8 @@
 (ns pg.client.conn
+
+  (:import
+   com.github.igrishaev.Connection)
+
   (:import
    java.io.Closeable
    java.io.InputStream
@@ -44,14 +48,6 @@
             :snd-buf nil}})
 
 
-(defn get-id [conn]
-  (:id conn))
-
-
-(defn get-created-at [conn]
-  (:created-at conn))
-
-
 (defn handle-notification [conn NotificationResponse]
   (when-let [fn-notification
              (-> conn :config :fn-notification)]
@@ -64,32 +60,13 @@
     (fn-notice NoticeResponse)))
 
 
-(defn set-pid
-  [{:as conn :keys [^Map state]}
-   ^Integer pid]
-  (.put state "pid" pid)
-  conn)
-
-
 (defn get-ssl? [{:as conn :keys [^Map state]}]
   (.get state "ssl"))
-
-
-(defn get-pid
-  [{:keys [^Map state]}]
-  (.get state "pid"))
 
 
 (defn closed?
   ^Boolean [{:as conn :keys [^Socket socket]}]
   (.isClosed socket))
-
-
-(defn set-secret-key
-  [{:as conn :keys [^Map state]}
-   ^Integer secret-key]
-  (.put state "secret-key" secret-key)
-  conn)
 
 
 (defn get-secret-key
@@ -130,14 +107,6 @@
   (get-in conn [:params "client_encoding"] "UTF-8"))
 
 
-(defn get-password [conn]
-  (-> conn :config :password))
-
-
-(defn get-user [conn]
-  (-> conn :config :user))
-
-
 (defn get-database [conn]
   (-> conn :config :database))
 
@@ -151,11 +120,15 @@
 
 
 (defn send-message
-  [{:as conn :keys [^OutputStream out-stream
-                    opt]}
-   message]
+  [^Connection conn message]
   (debug/debug-message message " ->")
-  (let [bb (msg/encode-message message opt)]
+
+  (let [out-stream
+        (.getOutputStream conn)
+
+        bb
+        (msg/encode-message message {})]
+
     (.write out-stream (bb/array bb)))
   conn)
 
@@ -184,10 +157,15 @@
 
 
 (defn read-message
-  [{:keys [^InputStream in-stream
-           opt]}]
+  [^Connection conn]
 
-  (let [buf-header
+  (let [in-stream
+        (.getInputStream conn)
+
+        opt
+        nil
+
+        buf-header
         (.readNBytes in-stream 5)
 
         bb-head
@@ -213,13 +191,13 @@
     message))
 
 
-(defn authenticate [conn]
+(defn authenticate [^Connection conn]
 
   (let [user
-        (get-user conn)
+        (.getUser conn)
 
         database
-        (get-database conn)
+        (.getDatabase conn)
 
         params
         (get-pg-params conn)
@@ -366,6 +344,7 @@
   (:opt conn))
 
 
+#_
 (defrecord Connection
     [^String id
      ^Long created-at
@@ -450,44 +429,49 @@
     conn))
 
 
-(defn connect [config]
+(defn connect ^Connection [config]
 
   (let [config-full
         (coll/deep-merge config-defaults config)
 
-        {:keys [^String host
-                ^Integer port]
-         socket-opt :socket}
-        config-full
+        ;; {:keys [^String host
+        ;;         ^Integer port]
+        ;;  socket-opt :socket}
+        ;; config-full
 
-        socket
-        (new Socket host port true)
+        ;; socket
+        ;; (new Socket host port true)
 
-        in-stream
-        (.getInputStream socket)
+        ;; in-stream
+        ;; (.getInputStream socket)
 
-        out-stream
-        (.getOutputStream socket)
+        ;; out-stream
+        ;; (.getOutputStream socket)
 
-        id
-        (gensym "pg")
+        ;; id
+        ;; (gensym "pg")
 
-        created-at
-        (System/currentTimeMillis)
+        ;; created-at
+        ;; (System/currentTimeMillis)
 
-        _
-        (set-socket-opts socket socket-opt)
+        ;; _
+        ;; (set-socket-opts socket socket-opt)
 
-        conn
-        (new Connection
-             id
-             created-at
-             config-full
-             socket
-             in-stream
-             out-stream
-             (new HashMap)
-             (new HashMap)
-             (new HashMap))]
+        ;; conn
+        ;; (new Connection
+        ;;      id
+        ;;      created-at
+        ;;      config-full
+        ;;      socket
+        ;;      in-stream
+        ;;      out-stream
+        ;;      (new HashMap)
+        ;;      (new HashMap)
+        ;;      (new HashMap))
 
+]
+
+    (new Connection config-full)
+
+#_
     (pre-ssl-stage conn)))
