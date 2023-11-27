@@ -4,6 +4,7 @@ import java.io.Closeable;
 import clojure.lang.Keyword;
 import java.io.IOException;
 import java.util.Map;
+import java.util.HashMap;
 import java.net.Socket;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -19,8 +20,8 @@ public class Connection implements Closeable {
 
     public final String id;
     public final long createdAt;
-    private Boolean isSSL = false;
 
+    private Boolean isSSL = false;
     private int pid;
     private int secretKey;
     private Keyword txStatus;
@@ -74,10 +75,14 @@ public class Connection implements Closeable {
         return inStream;
     }
 
-    public Connection(Map<Keyword, Object> config) {
-        this.config = config;
+    public Connection(Map<Keyword, Object> cljConfig) {
+        config = cljConfig;
+        params = new HashMap();
+
+        // TODO
         id = "pg123";
         createdAt = 123123123;
+
         connect();
     }
 
