@@ -130,6 +130,14 @@
          (close-statement conn# ~bind)))))
 
 
+(defn connection?
+  "
+  Check if a given object is a Connection.
+  "
+  [x]
+  (instance? Connection x))
+
+
 (defn authenticate
   "
   Run the authentication pipeline for a given connection.

@@ -158,6 +158,7 @@
       (is (= [{:bar "hello"}] res2)))))
 
 
+;; TODO: socket options!
 (deftest test-client-socket-opt
 
   (pg/with-connection [conn (update *CONFIG* :socket assoc
@@ -198,7 +199,7 @@
 (deftest test-client-with-tx-syntax-issue
   (pg/with-connection [conn *CONFIG*]
     (pg/with-tx [conn]
-      (is (map? conn)))))
+      (is (pg/connection? conn)))))
 
 
 (deftest test-client-with-transaction-ok

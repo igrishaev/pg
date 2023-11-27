@@ -144,9 +144,9 @@ public class Connection implements Closeable {
     public String toString () {
         return String.format(
             "<PG connection %s@%s:%s/%s>",
+            getUser(),
             getHost(),
             getPort(),
-            getUser(),
             getDatabase()
         );
     }
