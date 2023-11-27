@@ -67,8 +67,8 @@
 
 
 (defn handle-ReadyForQuery
-  [result conn {:keys [tx-status]}]
-  (conn/set-tx-status conn tx-status)
+  [result ^Connection conn {:keys [tx-status]}]
+  (.setTxStatus conn tx-status)
   result)
 
 
@@ -89,7 +89,6 @@
 (defn handle-ParameterStatus
   [result ^Connection conn {:keys [param value]}]
   (.setParam conn param value)
-  (conn/rebuild-opt conn param value)
   result)
 
 
@@ -136,8 +135,8 @@
 
 
 (defn handle-AuthenticationCleartextPassword
-  [result conn message]
-  (let [password (conn/get-password conn)]
+  [result ^Connection conn message]
+  (let [password (.getPassword conn)]
     (conn/send-password conn password))
   result)
 
@@ -288,7 +287,7 @@
           RowDescription
 
           opt
-          (conn/get-opt conn)
+          {}
 
           values-decoded
           (coll/for-n [i (count values)]

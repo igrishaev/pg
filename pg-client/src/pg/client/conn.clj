@@ -48,75 +48,41 @@
             :snd-buf nil}})
 
 
-(defn handle-notification [conn NotificationResponse]
+(defn handle-notification
+  [^Connection conn NotificationResponse]
   (when-let [fn-notification
-             (-> conn :config :fn-notification)]
+             (-> conn (.getConfig) :fn-notification)]
     (fn-notification NotificationResponse)))
 
 
-(defn handle-notice [conn NoticeResponse]
+(defn handle-notice [^Connection conn NoticeResponse]
   (when-let [fn-notice
-             (-> conn :config :fn-notice)]
+             (-> conn (.getConfig) :fn-notice)]
     (fn-notice NoticeResponse)))
 
 
-(defn get-ssl? [{:as conn :keys [^Map state]}]
-  (.get state "ssl"))
-
-
-(defn closed?
-  ^Boolean [{:as conn :keys [^Socket socket]}]
-  (.isClosed socket))
-
-
-(defn get-secret-key
-  [{:keys [^Map state]}]
-  (.get state "secret-key"))
-
-
-(defn set-tx-status
-  [{:as conn :keys [^Map state]} tx-status]
-  (.put state "tx-status" tx-status)
-  conn)
-
-
-(defn get-tx-status
-  [{:as conn :keys [^Map state]}]
-  (.get state "tx-status"))
-
-
-(defn set-parameter
-  [{:as conn :keys [^Map params]}
-   ^String param
-   ^String value]
-  (.put params param value)
-  conn)
-
-
-(defn get-parameter
-  [{:keys [^Map params]}
-   ^String param]
-  (.get params param))
+(defn get-opt [conn]
+  {})
 
 
 (defn get-server-encoding ^String [conn]
+  "UTF-8"
+  #_
   (get-in conn [:params "server_encoding"] "UTF-8"))
 
 
 (defn get-client-encoding ^String [conn]
+  "UTF-8"
+  #_
   (get-in conn [:params "client_encoding"] "UTF-8"))
 
 
-(defn get-database [conn]
-  (-> conn :config :database))
+(defn get-pg-params [^Connection conn]
+  (-> conn (.getConfig) :pg-params))
 
 
-(defn get-pg-params [conn]
-  (-> conn :config :pg-params))
-
-
-(defn get-protocol-version [conn]
-  (-> conn :config :protocol-version))
+(defn get-protocol-version [^Connection conn]
+  (-> conn (.getConfig) :protocol-version))
 
 
 (defn send-message
@@ -140,9 +106,9 @@
 
 
 (defn terminate
-  [conn]
+  [^Connection conn]
   (send-message conn (msg/make-Terminate))
-  (-> conn ^Socket (get :socket) .close)
+  (.close conn)
   conn)
 
 
@@ -162,8 +128,9 @@
   (let [in-stream
         (.getInputStream conn)
 
+        ;; TODO:
         opt
-        nil
+        {}
 
         buf-header
         (.readNBytes in-stream 5)
@@ -233,10 +200,10 @@
     statement))
 
 
-(defn send-bind [conn statement params oids]
+(defn send-bind [^Connection conn statement params oids]
 
-  (let [{:keys [config]}
-        conn
+  (let [config
+        (.getConfig conn)
 
         {:keys [binary-encode?
                 binary-decode?]}
@@ -321,63 +288,6 @@
   (let [msg (msg/make-Describe \P portal)]
     (send-message conn msg)))
 
-
-(defn rebuild-opt [{:keys [^Map opt]} param value]
-  (case param
-
-    "server_encoding"
-    (.put opt :server-encoding value)
-
-    "client_encoding"
-    (.put opt :client-encoding value)
-
-    "DateStyle"
-    (.put opt :date-style value)
-
-    "TimeZone"
-    (.put opt :time-zone value)
-
-    nil))
-
-
-(defn get-opt [conn]
-  (:opt conn))
-
-
-#_
-(defrecord Connection
-    [^String id
-     ^Long created-at
-     ^Map config
-     ^Socket socket
-     ^InputStream in-stream
-     ^OutputStream out-stream
-     ^Map params
-     ^Map state
-     ^Map opt]
-
-    Closeable
-
-    (close [this]
-      (terminate this))
-
-    Object
-
-    (toString [_]
-
-      (let [{:keys [host
-                    port
-                    user
-                    database]}
-            config]
-
-        (format "<PG connection %s@%s:%s/%s>"
-                user host port database))))
-
-
-(defmethod print-method Connection
-  [conn ^Writer w]
-  (.write w (str conn)))
 
 
 (defn set-socket-opts

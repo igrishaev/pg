@@ -1,5 +1,6 @@
 package com.github.igrishaev;
 
+import java.io.Closeable;
 import clojure.lang.Keyword;
 import java.io.IOException;
 import java.util.Map;
@@ -8,7 +9,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 
-public class Connection {
+public class Connection implements Closeable {
 
     private static Keyword KW_PORT = Keyword.intern("port");
     private static Keyword KW_HOST = Keyword.intern("host");
@@ -18,9 +19,11 @@ public class Connection {
 
     public final String id;
     public final long createdAt;
+    private Boolean isSSL = false;
 
     private int pid;
     private int secretKey;
+    private Keyword txStatus;
     private Map<Keyword, Object> config;
     private Socket socket;
     private InputStream inStream;
@@ -35,6 +38,26 @@ public class Connection {
     //     out_stream.write(bytes);
     // }
 
+    public void close () {
+        closeSocket();
+    }
+
+    public Boolean getSSL () {
+        return isSSL;
+    }
+
+    public Map getConfig () {
+        return config;
+    }
+
+    public Keyword getTxStatus () {
+        return txStatus;
+    }
+
+    public void setTxStatus (Keyword status) {
+        txStatus = status;
+    }
+
     public void setPrivateKey (int key) {
         secretKey = key;
     }
@@ -42,7 +65,6 @@ public class Connection {
     public int getPrivateKey () {
         return secretKey;
     }
-
 
     public OutputStream getOutputStream () {
         return outStream;
@@ -65,6 +87,19 @@ public class Connection {
 
     public void setPid (int pid) {
         this.pid = pid;
+    }
+
+    public Boolean isClosed () {
+        return socket.isClosed();
+    }
+
+    private void closeSocket () {
+        try {
+            socket.close();
+        }
+        catch (IOException e) {
+            throw new PGError(e, "could not close the socket");
+        }
     }
 
     public String getParam (String param) {

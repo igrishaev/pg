@@ -25,8 +25,8 @@
   "
   Get the current status of the connection as a keyword.
   "
-  ^Keyword [conn]
-  (conn/get-tx-status conn))
+  ^Keyword [^Connection conn]
+  (.getTxStatus conn))
 
 
 (defn idle?
@@ -58,8 +58,8 @@
   Return a value of a connection parameter by its name
   (.e.g 'integer_datetimes', 'application_name', etc).
   "
-  ^String [{:keys [^Map params]} ^String param]
-  (.get params param))
+  ^String [^Connection conn ^String param]
+  (.getParam conn param))
 
 
 (defn pid
@@ -67,7 +67,7 @@
   Get the connection PID as an Integer.
   "
   ^Integer [^Connection conn]
-  (.getPid Connection))
+  (.getPid conn))
 
 
 (defn prepare-statement
@@ -145,16 +145,16 @@
   "
   True if a connection has been closed.
   "
-  ^Boolean [conn]
-  (conn/closed? conn))
+  ^Boolean [^Connection conn]
+  (.isClosed conn))
 
 
 (defn ssl?
   "
   True if the connection is encrypted with SSL.
   "
-  ^Boolean [conn]
-  (conn/get-ssl? conn))
+  ^Boolean [^Connection conn]
+  (.getSSL conn))
 
 
 (defn connect
@@ -205,18 +205,18 @@
   Cancels a hanging query using a dedicated connection.
   A cancelled query will end up with an error response.
   "
-  [conn]
+  [^Connection conn]
 
   (let [master-conn
         (-> conn
-            (get :config)
+            (.getConfig)
             (conn/connect))
 
         pid
-        (conn/get-pid conn)
+        (.getPid conn)
 
         secret-key
-        (conn/get-secret-key conn)]
+        (.getPrivateKey conn)]
 
     (conn/cancel-request master-conn pid secret-key)
     (terminate master-conn)
