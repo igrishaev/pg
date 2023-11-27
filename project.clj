@@ -54,6 +54,7 @@
    [com.github.igrishaev/pg-honey :version]
    [com.github.igrishaev/pg-integration :version]
 
+   [org.clojure/clojure "1.11.1"]
    [joda-time/joda-time "2.12.5"]
    [clj-time "0.15.2"]
    [com.github.seancorfield/honeysql "2.4.1078"]
@@ -71,7 +72,7 @@
    {:source-paths ["./env/dev/src"]
     :resource-paths ["./env/dev/resources"]
     :dependencies
-    [[org.clojure/clojure "1.11.1"]]
+    [[org.clojure/clojure]]
 
     :global-vars
     {*warn-on-reflection* true

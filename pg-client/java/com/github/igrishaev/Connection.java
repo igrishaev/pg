@@ -1,13 +1,14 @@
 package com.github.igrishaev;
 
-import java.io.Closeable;
 import clojure.lang.Keyword;
+import clojure.lang.RT;
+import java.io.Closeable;
 import java.io.IOException;
-import java.util.Map;
-import java.util.HashMap;
-import java.net.Socket;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class Connection implements Closeable {
@@ -76,12 +77,12 @@ public class Connection implements Closeable {
     }
 
     public Connection(Map<Keyword, Object> cljConfig) {
+
         config = cljConfig;
         params = new HashMap();
 
-        // TODO
-        id = "pg123";
-        createdAt = 123123123;
+        id = String.format("pg%d", RT.nextID());
+        createdAt = System.currentTimeMillis();
 
         connect();
     }

@@ -105,6 +105,7 @@
   conn)
 
 
+;; TODO: fix it
 (defn terminate
   [^Connection conn]
   (send-message conn (msg/make-Terminate))
@@ -385,3 +386,8 @@
 
 #_
     (pre-ssl-stage conn)))
+
+
+(defmethod print-method Connection
+  [conn ^Writer w]
+  (.write w (str conn)))
