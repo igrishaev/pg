@@ -9,11 +9,6 @@ public class BBWrapper {
     private String serverEncoding = "UTF-8";
     private String clientEncoding = "UTF-8";
 
-    public BBWrapper (String serverEncoding, String clientEncoding) {
-        this.serverEncoding = serverEncoding;
-        this.clientEncoding = clientEncoding;
-    }
-
     public void setServerEncoding(String encoding) {
         this.serverEncoding = encoding;
     }
@@ -37,7 +32,7 @@ public class BBWrapper {
             return new String(buf.array(), pos, len, serverEncoding);
         }
         catch (UnsupportedEncodingException e) {
-            throw new Error("aaa");
+            throw new PGError(e, "cannot decode a C-string");
         }
 
     }
@@ -47,7 +42,7 @@ public class BBWrapper {
     }
 
     public ByteBuffer slice (ByteBuffer buf, int offset) {
-        skip(buf, offset + 1);
+        skip(buf, offset);
         return buf.slice(buf.position(), offset);
     }
 

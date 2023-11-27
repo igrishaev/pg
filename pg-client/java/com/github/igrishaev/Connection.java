@@ -22,6 +22,8 @@ public class Connection implements Closeable {
     public final String id;
     public final long createdAt;
 
+    private BBWrapper bbw;
+
     private Boolean isSSL = false;
     private int pid;
     private int secretKey;
@@ -80,6 +82,7 @@ public class Connection implements Closeable {
 
         config = cljConfig;
         params = new HashMap();
+        bbw = new BBWrapper();
 
         id = String.format("pg%d", RT.nextID());
         createdAt = System.currentTimeMillis();
@@ -114,16 +117,23 @@ public class Connection implements Closeable {
 
     public void setParam (String param, String value) {
         params.put(param, value);
+
+        switch (param) {
+
+            case "server_encoding":
+                bbw.setServerEncoding(value);
+                break;
+
+            case "client_encoding":
+                bbw.setClientEncoding(value);
+                break;
+
+        }
     }
 
     public Integer getPort () {
         Long port = (Long) config.get(KW_PORT);
-        if (port == null) {
-            throw new PGError("port is null");
-        }
-        else {
-            return port.intValue();
-        }
+        return port.intValue();
     }
 
     public String getHost () {
