@@ -69,13 +69,6 @@
   result)
 
 
-(defn handle-BackendKeyData
-  [result conn {:keys [pid secret-key]}]
-  (conn/set-pid conn pid)
-  (conn/set-secret-key conn secret-key)
-  result)
-
-
 (defn handle-ErrorResponse
   [{:as result :keys [^List errors]}
    message]
