@@ -148,11 +148,8 @@ public class Connection implements Closeable {
 
     private void connect () {
 
-        // Integer port = getPort();
-        // String host = getHost();
-
-        Integer port = 15432;
-        String host = "localhost";
+        Integer port = getPort();
+        String host = getHost();
 
         try {
             socket = new Socket(host, port, true);
