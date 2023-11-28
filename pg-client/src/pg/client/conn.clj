@@ -107,16 +107,6 @@
   conn)
 
 
-(defn send-sync [conn]
-  (send-message conn (msg/make-Sync))
-  conn)
-
-
-(defn send-flush [conn]
-  (send-message conn (msg/make-Flush))
-  conn)
-
-
 (defn read-message
   [^Connection conn]
 

@@ -214,6 +214,15 @@ public class Connection implements Closeable {
         sendMessage(new PasswordMessage(password));
     }
 
+    public void sendSync () {
+        sendMessage(new Sync());
+    }
+
+    public void sendFlush () {
+        sendMessage(new Flush());
+    }
+
+
     // public void sendParse (String query, Map oids) {
     //     String name = "aaa";
     //     Parse msg = new Parse(name, query, oids);

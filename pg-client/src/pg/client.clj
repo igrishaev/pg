@@ -88,10 +88,10 @@
     (name, columns, params, etc).
   "
 
-  (^Map [conn sql]
+  (^Map [^Connection conn sql]
    (prepare-statement conn sql []))
 
-  (^Map [conn sql oids]
+  (^Map [^Connection conn sql oids]
    (let [statement
          (conn/send-parse conn sql oids)
 
@@ -99,7 +99,8 @@
          {:statement statement}]
 
      (conn/describe-statement conn statement)
-     (conn/send-sync conn)
+     (.sendSync conn)
+     (.sendFlush conn)
      (flow/interact conn :prepare init))))
 
 
@@ -107,11 +108,12 @@
   "
   Close a previously prepared statement on the server side.
   "
-  [conn stmt]
+  [^Connection conn stmt]
   (let [{:keys [statement]}
         stmt]
     (conn/close-statement conn statement))
-  (conn/send-sync conn)
+  (.sendSync conn)
+  (.sendFlush conn)
   (flow/interact conn :close-statement))
 
 
@@ -289,13 +291,13 @@
     which means all rows.
   "
 
-  ([conn stmt]
+  ([^Connection conn stmt]
    (execute-statement conn stmt nil nil))
 
-  ([conn stmt params]
+  ([^Connection conn stmt params]
    (execute-statement conn stmt params nil))
 
-  ([conn stmt params opt]
+  ([^Connection conn stmt params opt]
 
    (let [rows
          (get opt :rows 0)
@@ -313,7 +315,8 @@
      (conn/describe-portal conn portal)
      (conn/send-execute conn portal rows)
      (conn/close-portal conn portal)
-     (conn/send-sync conn)
+     (.sendSync conn)
+     (.sendFlush conn)
      (flow/interact conn :execute opt))))
 
 
