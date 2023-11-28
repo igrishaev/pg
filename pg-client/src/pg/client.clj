@@ -188,7 +188,7 @@
   "
   [conn]
   (when-not (closed? conn)
-    (conn/terminate conn)))
+    (.close conn)))
 
 
 (defmacro with-connection

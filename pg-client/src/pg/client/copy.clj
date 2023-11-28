@@ -145,7 +145,7 @@
       ;; else
       (throw (new Exception "wrong COPY format")))
 
-    (conn/send-copy-done conn)
+    (.sendCopyDone conn)
     (flow/interact conn :copy-in nil)))
 
 
@@ -187,5 +187,5 @@
               (.sendCopyData conn slice)))
           (recur))))
 
-    (conn/send-copy-done conn)
+    (.sendCopyDone conn)
     (flow/interact conn :copy-in nil)))

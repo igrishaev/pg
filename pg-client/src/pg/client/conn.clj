@@ -99,14 +99,6 @@
   conn)
 
 
-;; TODO: fix it
-(defn terminate
-  [^Connection conn]
-  (send-message conn (msg/make-Terminate))
-  (.close conn)
-  conn)
-
-
 (defn read-message
   [^Connection conn]
 
@@ -166,26 +158,6 @@
     (send-message conn msg)
 
     portal))
-
-
-(defn send-copy-done [conn]
-  (let [msg (msg/make-CopyDone)]
-    (send-message conn msg)))
-
-
-(defn send-copy-fail
-  ([conn]
-   (let [msg (msg/make-CopyFail)]
-     (send-message conn msg)))
-
-  ([conn message]
-   (let [msg (msg/make-CopyFail message)]
-    (send-message conn msg))))
-
-
-(defn send-ssl-request [conn]
-  (let [msg (msg/make-SSLRequest const/SSL_CODE)]
-    (send-message conn msg)))
 
 
 (defn read-ssl-response ^Character [conn]
@@ -261,11 +233,11 @@
 (defn pre-ssl-stage ^Connection [^Connection conn]
   (if (ssl-requested? conn)
     (do
-      (send-ssl-request conn)
+      (.sendSSLRequest conn)
       (case (read-ssl-response conn)
         \N
         (do
-          (terminate conn)
+          (.close conn)
           (throw (new Exception "SSL connection is not supported by the server")))
         \S
         (ssl/wrap-ssl conn)))

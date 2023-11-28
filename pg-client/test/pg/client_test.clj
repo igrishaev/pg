@@ -1883,6 +1883,8 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
              res-query)))))
 
 
+;; TODO: test copy fail
+
 (deftest test-copy-in-maps-ok-bin
 
   (pg/with-connection [conn *CONFIG*]

@@ -23,6 +23,9 @@ public class Connection implements Closeable {
     private static Keyword KW_PG_PARAMS = Keyword.intern("pg-params");
     private static Keyword KW_PROTO_VER = Keyword.intern("protocol-version");
 
+    private static String COPY_FAIL_MSG = "COPY has been interrupted by the client";
+    private static Integer SSL_CODE = 80877103;
+
     public final String id;
     public final long createdAt;
 
@@ -45,6 +48,7 @@ public class Connection implements Closeable {
     // }
 
     public void close () {
+        sendTerminate();
         closeSocket();
     }
 
@@ -231,6 +235,18 @@ public class Connection implements Closeable {
         sendMessage(new CopyData(buf));
     }
 
+    public void sendCopyDone () {
+        sendMessage(new CopyDone());
+    }
+
+    public void sendCopyFail () {
+        sendCopyFail(COPY_FAIL_MSG);
+    }
+
+    public void sendCopyFail (String errorMessage) {
+        sendMessage(new CopyFail(errorMessage));
+    }
+
     public void sendQuery (String query) {
         sendMessage(new Query(query));
     }
@@ -247,6 +263,13 @@ public class Connection implements Closeable {
         sendMessage(new Flush());
     }
 
+    public void sendTerminate () {
+        sendMessage(new Terminate());
+    }
+
+    public void sendSSLRequest () {
+        sendMessage(new SSLRequest(SSL_CODE));
+    }
 
     // public void sendParse (String query, Map oids) {
     //     String name = "aaa";
