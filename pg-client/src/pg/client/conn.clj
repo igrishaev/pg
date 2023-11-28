@@ -143,19 +143,6 @@
     message))
 
 
-(defn send-parse [conn query oids]
-
-  (let [statement
-        (name (gensym "statement_"))
-
-        msg
-        (msg/make-Parse statement query oids)]
-
-    (send-message conn msg)
-
-    statement))
-
-
 (defn send-bind [^Connection conn statement params oids]
 
   (let [config

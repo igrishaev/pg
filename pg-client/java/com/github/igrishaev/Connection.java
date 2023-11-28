@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -79,12 +80,16 @@ public class Connection implements Closeable {
         return inStream;
     }
 
+    public Integer nextID () {
+        return RT.nextID();
+    }
+
     public Connection(Map<Keyword, Object> cljConfig) {
 
         config = cljConfig;
         params = new HashMap();
 
-        id = String.format("pg%d", RT.nextID());
+        id = String.format("pg%d", nextID());
         createdAt = System.currentTimeMillis();
 
         connect();
@@ -195,6 +200,18 @@ public class Connection implements Closeable {
         catch (IOException e) {
             throw new PGError(e, "could not write bb to the out stream");
         }
+    }
+
+    public String generateStatement () {
+        return String.format("statement%d", nextID());
+    }
+
+    public String generatePortal () {
+        return String.format("portal%d", nextID());
+    }
+
+    public void sendParse (String statement, String query, List<Long> oids) {
+        sendMessage(new Parse(statement, query, oids));
     }
 
     public void sendStartupMessage () {

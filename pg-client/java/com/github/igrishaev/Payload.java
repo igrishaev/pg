@@ -1,8 +1,10 @@
 package com.github.igrishaev;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
+
 
 public class Payload {
 
@@ -29,6 +31,17 @@ public class Payload {
     public Payload addByte(Byte b) {
         size += 1;
         items.add(b);
+        return this;
+    }
+
+    public Payload addUnsignedShort (Integer i) {
+        size += 2;
+
+        ByteBuffer buf = ByteBuffer.allocate(4);
+        buf.putInt(i);
+
+        byte[] bytes = Arrays.copyOfRange(buf.array(), 2, 4);
+        items.add(bytes);
         return this;
     }
 

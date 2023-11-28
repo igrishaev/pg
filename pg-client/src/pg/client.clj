@@ -93,7 +93,10 @@
 
   (^Map [^Connection conn sql oids]
    (let [statement
-         (conn/send-parse conn sql oids)
+         (.generateStatement conn)
+
+         _
+         (.sendParse conn statement sql oids)
 
          init
          {:statement statement}]
