@@ -168,11 +168,6 @@
     portal))
 
 
-(defn send-copy-data [conn buffer]
-  (let [msg (msg/make-CopyData buffer)]
-    (send-message conn msg)))
-
-
 (defn send-copy-done [conn]
   (let [msg (msg/make-CopyDone)]
     (send-message conn msg)))

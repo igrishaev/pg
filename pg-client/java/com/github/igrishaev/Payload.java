@@ -34,6 +34,12 @@ public class Payload {
         return this;
     }
 
+    public Payload addBytes(byte[] buf) {
+        size += buf.length;
+        items.add(buf);
+        return this;
+    }
+
     public Payload addUnsignedShort (Integer i) {
         size += 2;
 

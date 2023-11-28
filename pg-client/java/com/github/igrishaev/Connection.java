@@ -227,6 +227,10 @@ public class Connection implements Closeable {
         sendMessage(new Execute(portal, rowCount));
     }
 
+    public void sendCopyData (byte[] buf) {
+        sendMessage(new CopyData(buf));
+    }
+
     public void sendQuery (String query) {
         sendMessage(new Query(query));
     }

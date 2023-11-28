@@ -75,7 +75,7 @@
     (out/array out)))
 
 
-(defn copy-in-csv [conn rows oids sep end null]
+(defn copy-in-csv [^Connection conn rows oids sep end null]
 
   (let [iter
         (RT/iter rows)
@@ -98,11 +98,11 @@
               buf
               (.getBytes line encoding)]
 
-          (conn/send-copy-data conn buf)
+          (.sendCopyData conn buf)
           (recur))))))
 
 
-(defn copy-in-bin [conn rows oids]
+(defn copy-in-bin [^Connection conn rows oids]
 
   (let [iter
         (RT/iter rows)
@@ -113,16 +113,16 @@
         encoding
         (conn/get-client-encoding conn)]
 
-    (conn/send-copy-data conn BUF_HEADER)
+    (.sendCopyData conn BUF_HEADER)
 
     (loop []
       (when (.hasNext iter)
         (let [row (.next iter)
               buf (bin-encode row oids opt)]
-          (conn/send-copy-data conn buf))
+          (.sendCopyData conn buf))
         (recur)))
 
-    (conn/send-copy-data conn bytes/-one16)))
+    (.sendCopyData conn bytes/-one16)))
 
 
 (defn copy-in-rows [^Connection conn ^String sql rows format oids sep end null]
@@ -153,7 +153,7 @@
   (some-> maps first keys vec))
 
 
-(defn copy-in-maps [conn sql maps keys format oids sep end null]
+(defn copy-in-maps [^Connection conn sql maps keys format oids sep end null]
   (let [keys
         (or keys (maps->keys maps))
 
@@ -182,9 +182,9 @@
       (let [read (.read input-stream buf)]
         (when-not (neg? read)
           (if (= read buffer-size)
-            (conn/send-copy-data conn buf)
+            (.sendCopyData conn buf)
             (let [slice (bytes/slice buf 0 read)]
-              (conn/send-copy-data conn slice)))
+              (.sendCopyData conn slice)))
           (recur))))
 
     (conn/send-copy-done conn)
