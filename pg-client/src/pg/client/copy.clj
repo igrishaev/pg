@@ -1,5 +1,7 @@
 (ns pg.client.copy
   (:import
+   com.github.igrishaev.Connection)
+  (:import
    clojure.lang.RT
    java.io.InputStream
    java.util.Iterator)
@@ -123,7 +125,7 @@
     (conn/send-copy-data conn bytes/-one16)))
 
 
-(defn copy-in-rows [conn sql rows format oids sep end null]
+(defn copy-in-rows [^Connection conn ^String sql rows format oids sep end null]
 
   (let [opt
         (conn/get-opt conn)
@@ -131,7 +133,7 @@
         encoding
         (conn/get-client-encoding conn)]
 
-    (conn/send-query conn sql)
+    (.sendQuery conn sql)
 
     (case format
       :csv
@@ -170,9 +172,9 @@
 
 
 (defn copy-in-stream
-  [conn sql ^InputStream input-stream buffer-size]
+  [^Connection conn ^String sql ^InputStream input-stream buffer-size]
 
-  (conn/send-query conn sql)
+  (.sendQuery conn sql)
 
   (let [buf (byte-array buffer-size)]
 

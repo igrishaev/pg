@@ -262,11 +262,11 @@
   https://postgrespro.com/docs/postgrespro/14/protocol-flow#id-1.10.5.7.4
   "
 
-  ([conn sql]
+  ([^Connection conn ^String sql]
    (query conn sql nil))
 
-  ([conn sql opt]
-   (conn/send-query conn sql)
+  ([^Connection conn ^String sql opt]
+   (.sendQuery conn sql)
    (flow/interact conn :query opt)))
 
 

@@ -159,11 +159,6 @@
     message))
 
 
-(defn send-query [conn sql]
-  (let [msg (msg/make-Query sql)]
-    (send-message conn msg)))
-
-
 (defn send-parse [conn query oids]
 
   (let [statement

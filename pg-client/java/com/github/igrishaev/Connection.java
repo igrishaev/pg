@@ -188,7 +188,7 @@ public class Connection implements Closeable {
     }
 
     public void sendMessage (AMessage message) {
-        ByteBuffer buf = message.encode("UTF-8");
+        ByteBuffer buf = message.encode("UTF-8"); // TODO
         try {
             outStream.write(buf.array());
         }
@@ -199,11 +199,15 @@ public class Connection implements Closeable {
 
     public void sendStartupMessage () {
         StartupMessage msg =
-            new StartupMessage(196608, //getProtocolVersion(),
+            new StartupMessage(196608, //getProtocolVersion(), // TODO
                                getUser(),
                                getDatabase(),
                                getPgParams());
         sendMessage(msg);
+    }
+
+    public void sendQuery (String query) {
+        sendMessage(new Query(query));
     }
 
     // public void sendParse (String query, Map oids) {
