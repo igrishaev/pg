@@ -143,7 +143,7 @@
   Run the authentication pipeline for a given connection.
   Returns the connection.
   "
-  [conn]
+  [^Connection conn]
   (.sendStartupMessage conn)
   (flow/interact conn :auth)
   conn)

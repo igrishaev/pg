@@ -133,8 +133,8 @@ public class Connection implements Closeable {
     }
 
     private Integer getProtocolVersion () {
-        // TODO: to Integer
-        return (Integer) config.get(KW_PROTO_VER);
+        Long proto = (Long) config.get(KW_PROTO_VER);
+        return proto.intValue();
     }
 
     private Map<String, String> getPgParams () {
@@ -199,7 +199,7 @@ public class Connection implements Closeable {
 
     public void sendStartupMessage () {
         StartupMessage msg =
-            new StartupMessage(196608, //getProtocolVersion(), // TODO
+            new StartupMessage(getProtocolVersion(),
                                getUser(),
                                getDatabase(),
                                getPgParams());
