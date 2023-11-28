@@ -168,11 +168,6 @@
     portal))
 
 
-(defn send-execute [conn portal row-count]
-  (let [msg (msg/make-Execute portal row-count)]
-    (send-message conn msg)))
-
-
 (defn send-copy-data [conn buffer]
   (let [msg (msg/make-CopyData buffer)]
     (send-message conn msg)))

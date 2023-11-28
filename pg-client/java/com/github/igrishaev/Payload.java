@@ -42,6 +42,20 @@ public class Payload {
 
         byte[] bytes = Arrays.copyOfRange(buf.array(), 2, 4);
         items.add(bytes);
+
+        return this;
+    }
+
+    public Payload addUnsignedInteger (Long l) {
+
+        size += 4;
+
+        ByteBuffer buf = ByteBuffer.allocate(8);
+        buf.putLong(l);
+
+        byte[] bytes = Arrays.copyOfRange(buf.array(), 4, 8);
+        items.add(bytes);
+
         return this;
     }
 

@@ -316,7 +316,7 @@
          (conn/send-bind conn statement params param-oids)]
 
      (conn/describe-portal conn portal)
-     (conn/send-execute conn portal rows)
+     (.sendExecute conn portal rows)
      (conn/close-portal conn portal)
      (.sendSync conn)
      (.sendFlush conn)

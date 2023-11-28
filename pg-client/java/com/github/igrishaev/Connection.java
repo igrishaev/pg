@@ -223,6 +223,10 @@ public class Connection implements Closeable {
         sendMessage(msg);
     }
 
+    public void sendExecute (String portal, Long rowCount) {
+        sendMessage(new Execute(portal, rowCount));
+    }
+
     public void sendQuery (String query) {
         sendMessage(new Query(query));
     }
