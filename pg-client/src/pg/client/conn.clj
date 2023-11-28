@@ -159,30 +159,6 @@
     message))
 
 
-(defn authenticate [^Connection conn]
-
-  (let [user
-        (.getUser conn)
-
-        database
-        (.getDatabase conn)
-
-        params
-        (get-pg-params conn)
-
-        protocol-version
-        (get-protocol-version conn)
-
-        msg
-        (msg/make-StartupMessage
-         protocol-version
-         user
-         database
-         params)]
-
-    (send-message conn msg)))
-
-
 (defn send-query [conn sql]
   (let [msg (msg/make-Query sql)]
     (send-message conn msg)))

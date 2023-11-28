@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,11 +19,11 @@ public class Connection implements Closeable {
     private static Keyword KW_USER = Keyword.intern("user");
     private static Keyword KW_DB = Keyword.intern("database");
     private static Keyword KW_PASS = Keyword.intern("password");
+    private static Keyword KW_PG_PARAMS = Keyword.intern("pg-params");
+    private static Keyword KW_PROTO_VER = Keyword.intern("protocol-version");
 
     public final String id;
     public final long createdAt;
-
-    private BBWrapper bbw;
 
     private Boolean isSSL = false;
     private int pid;
@@ -82,7 +83,6 @@ public class Connection implements Closeable {
 
         config = cljConfig;
         params = new HashMap();
-        bbw = new BBWrapper();
 
         id = String.format("pg%d", RT.nextID());
         createdAt = System.currentTimeMillis();
@@ -117,18 +117,6 @@ public class Connection implements Closeable {
 
     public void setParam (String param, String value) {
         params.put(param, value);
-
-        switch (param) {
-
-            case "server_encoding":
-                bbw.setServerEncoding(value);
-                break;
-
-            case "client_encoding":
-                bbw.setClientEncoding(value);
-                break;
-
-        }
     }
 
     public Integer getPort () {
@@ -142,6 +130,15 @@ public class Connection implements Closeable {
 
     public String getUser () {
         return (String) config.get(KW_USER);
+    }
+
+    private Integer getProtocolVersion () {
+        // TODO: to Integer
+        return (Integer) config.get(KW_PROTO_VER);
+    }
+
+    private Map<String, String> getPgParams () {
+        return (Map<String, String>) config.get(KW_PG_PARAMS);
     }
 
     public String getPassword () {
@@ -188,6 +185,25 @@ public class Connection implements Closeable {
             throw new PGError(e, "Cannot get an output stream");
         }
 
+    }
+
+    public void sendMessage (AMessage message) {
+        ByteBuffer buf = message.encode("UTF-8");
+        try {
+            outStream.write(buf.array());
+        }
+        catch (IOException e) {
+            throw new PGError(e, "could not write bb to the out stream");
+        }
+    }
+
+    public void sendStartupMessage () {
+        StartupMessage msg =
+            new StartupMessage(196608, //getProtocolVersion(),
+                               getUser(),
+                               getDatabase(),
+                               getPgParams());
+        sendMessage(msg);
     }
 
     // public void sendParse (String query, Map oids) {

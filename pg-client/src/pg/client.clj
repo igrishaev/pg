@@ -144,7 +144,7 @@
   Returns the connection.
   "
   [conn]
-  (conn/authenticate conn)
+  (.sendStartupMessage conn)
   (flow/interact conn :auth)
   conn)
 
