@@ -159,13 +159,11 @@ public class Connection implements Closeable {
     }
 
     public String toString () {
-        return String.format(
-            "<PG connection %s@%s:%s/%s>",
-            getUser(),
-            getHost(),
-            getPort(),
-            getDatabase()
-        );
+        return String.format("<PG connection %s@%s:%s/%s>",
+                             getUser(),
+                             getHost(),
+                             getPort(),
+                             getDatabase());
     }
 
     private void connect () {
@@ -271,88 +269,70 @@ public class Connection implements Closeable {
         sendMessage(new SSLRequest(SSL_CODE));
     }
 
-    // public void sendParse (String query, Map oids) {
-    //     String name = "aaa";
-    //     Parse msg = new Parse(name, query, oids);
-    //     ByteBuffer buf = msg.encode();
-    //     socket.write(buf);
-    // }
+    private byte[] readNBytes (int len) {
+        try {
+            return inStream.readNBytes(len);
+        }
+        catch (IOException e) {
+            throw new PGError("Could not read %s byte(s)", len);
+        }
+    }
 
-    // public void sendPassword (String password) {
-    //     PasswordMessage msg = new PasswordMessage(password);
-    //     ByteBuffer buf = msg.encode();
-    //     socket.write(buf);
-    // }
+    public Object readMessage () {
 
-    // public void sendFlush () {
-    //     Flush msg = new Flush();
-    //     ByteBuffer buf  = msg.encode();
-    //     socket.write(buf);
-    // }
+        byte[] bufHeader = readNBytes(5);
+        ByteBuffer bbHeader = ByteBuffer.wrap(bufHeader);
 
-    // public void sendQuery (String sql) {
-    //     Query msg = new Query(sql);
-    //     ByteBuffer buf  = msg.encode();
-    //     socket.write(buf);
-    // }
+        byte bTag = bbHeader.get();
+        Integer bodySize = bbHeader.getInt() - 4;
 
-    // public Object readMessage () {
+        byte[] bufBody = readNBytes(bodySize);
+        ByteBuffer bbBody = ByteBuffer.wrap(bufBody);
 
-    //     ByteBuffer bbHeader = ByteBuffer.allocate(5);
-    //     socket.read(bbHeader);
+        switch ((char) bTag) {
 
-    //     byte tag = bbHeader.get();
-    //     int len = bbHeader.getInt();
+        case 'R':
+            AuthenticationResponse authResp = new AuthenticationResponse(bbBody);
 
-    //     ByteBuffer bbBody = ByteBuffer.allocate(len - 4);
-    //     socket.read(bbBody);
+            switch (authResp.status) {
 
-    //     switch (tag) {
+            case  0: return new AuthenticationOk();
+            case  3: return new AuthenticationCleartextPassword();
+            case  5: return new AuthenticationMD5Password(bbBody);
+            case 10: return new AuthenticationSASL(bbBody);
 
-    //     case 1:
-    //         return new DataRow(bbBody);
+            default:
+                throw new PGError("Unknown auth response message: %s, status: %s",
+                                  bTag, authResp.status);
+            }
 
-    //     case 2:
-    //         return new FooBar(bbBody);
+        default:
+            throw new PGError("Unknown message: %s", bTag);
+        }
 
-    //     default:
-    //         throw new PGError("AAAAAA");
-    //     }
+    }
 
-    // }
+    public void handleMessage(Object msg, Result res) {
+        throw new PGError("Cannot handle a message: %s", msg);
+    }
 
-    // public Result query (String sql) {
-    //     sendQuery(sql);
-    //     return interact();
-    // }
+    public void handleMessage(AuthenticationOk msg, Result res) {
+    }
 
-    // public handleDataRow(Result result, DataRow msg) {
+    public void handleMessage(AuthenticationCleartextPassword msg, Result res) {
+        sendPassword(getPassword());
+    }
 
-    // }
+    public Result interact() {
+        Result res = new Result();
 
+        while (true) {
+            Object msg = readMessage();
+            handleMessage(msg, res);
+            break;
+        }
 
-
-    // public Result interact(String phase) {
-    //     Object msg;
-    //     Result = new Result();
-
-    //     while (true) {
-    //         msg = readMessage();
-    //         switch (msg) {
-
-    //         case DataRow msg ->
-    //             handleDataRow(result, msg);
-
-    //         case RowDescription msg ->
-    //             handleRowDescription(result, msg);
-
-    //         }
-
-    //     }
-
-    // }
-
-
-
+        return res;
+    }
 
 }

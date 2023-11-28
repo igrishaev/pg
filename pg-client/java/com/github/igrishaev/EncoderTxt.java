@@ -14,7 +14,7 @@ public class EncoderTxt {
 
     public String encode(Symbol x, Integer oid) {
 
-        if (oid == null || oid == OID.text || oid == OID.varchar) {
+        if (oid == null || oid == OID.TEXT || oid == OID.VARCHAR) {
             return x.toString();
         }
         else {
@@ -40,7 +40,12 @@ public class EncoderTxt {
     }
 
     public String encode(Long x, Integer oid) {
-        return "100500";
+        if (oid == null || oid == OID.INT2 || oid == OID.INT4 || oid == OID.INT8) {
+            return x.toString();
+        }
+        else {
+            throw new PGError("Encoding error, value: %s, oid:", x, oid);
+        }
     }
 
     //
@@ -80,7 +85,7 @@ public class EncoderTxt {
 
     public String encode(Boolean x, Integer oid) {
 
-        if (oid == OID.bool || oid == null) {
+        if (oid == OID.BOOL || oid == null) {
             if (x) {
                 return "t";
             }
