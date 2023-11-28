@@ -99,12 +99,6 @@
   conn)
 
 
-(defn send-password [conn ^String password]
-  (let [msg (msg/make-PasswordMessage password)]
-    (send-message conn msg))
-  conn)
-
-
 ;; TODO: fix it
 (defn terminate
   [^Connection conn]

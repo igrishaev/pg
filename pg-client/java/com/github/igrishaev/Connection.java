@@ -210,6 +210,10 @@ public class Connection implements Closeable {
         sendMessage(new Query(query));
     }
 
+    public void sendPassword (String password) {
+        sendMessage(new PasswordMessage(password));
+    }
+
     // public void sendParse (String query, Map oids) {
     //     String name = "aaa";
     //     Parse msg = new Parse(name, query, oids);

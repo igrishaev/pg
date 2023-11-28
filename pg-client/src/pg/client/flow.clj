@@ -129,7 +129,7 @@
         hashed
         (md5/hash-password user password salt)]
 
-    (conn/send-password conn hashed))
+    (.sendPassword conn hashed))
 
   result)
 
@@ -137,7 +137,7 @@
 (defn handle-AuthenticationCleartextPassword
   [result ^Connection conn message]
   (let [password (.getPassword conn)]
-    (conn/send-password conn password))
+    (.sendPassword conn password))
   result)
 
 
