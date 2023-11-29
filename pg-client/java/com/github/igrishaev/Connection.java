@@ -312,27 +312,4 @@ public class Connection implements Closeable {
 
     }
 
-    public void handleMessage(Object msg, Result res) {
-        throw new PGError("Cannot handle a message: %s", msg);
-    }
-
-    public void handleMessage(AuthenticationOk msg, Result res) {
-    }
-
-    public void handleMessage(AuthenticationCleartextPassword msg, Result res) {
-        sendPassword(getPassword());
-    }
-
-    public Result interact(String phase) {
-        Result res = new Result(phase, null);
-
-        while (true) {
-            Object msg = readMessage();
-            handleMessage(msg, res);
-            break;
-        }
-
-        return res;
-    }
-
 }
