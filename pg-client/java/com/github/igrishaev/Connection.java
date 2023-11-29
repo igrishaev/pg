@@ -323,8 +323,8 @@ public class Connection implements Closeable {
         sendPassword(getPassword());
     }
 
-    public Result interact() {
-        Result res = new Result();
+    public Result interact(String phase) {
+        Result res = new Result(phase, null);
 
         while (true) {
             Object msg = readMessage();
