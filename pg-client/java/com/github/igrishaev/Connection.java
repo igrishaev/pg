@@ -300,6 +300,7 @@ public class Connection implements Closeable {
             case  3: return new AuthenticationCleartextPassword();
             case  5: return new AuthenticationMD5Password(bbBody);
             case 10: return new AuthenticationSASL(bbBody);
+            case 11: return new AuthenticationSASLContinue(bbBody);
 
             default:
                 throw new PGError("Unknown auth response message: %s, status: %s",

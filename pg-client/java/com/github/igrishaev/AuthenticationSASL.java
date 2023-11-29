@@ -12,6 +12,11 @@ public class AuthenticationSASL {
 
         SASLtypes = new HashSet<String>();
 
+        while (!BBUtil.isEnd(buf)) {
+            String type = BBUtil.getCString(buf, "UTF-8"); // TODO:
+            SASLtypes.add(type);
+        }
+
     }
 
 }
