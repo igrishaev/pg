@@ -46,9 +46,4 @@ public class BBUtil {
         buf.position(buf.position() + offset);
     }
 
-    public static ByteBuffer slice (ByteBuffer buf, int offset) {
-        skip(buf, offset);
-        return buf.slice(buf.position(), offset);
-    }
-
 }

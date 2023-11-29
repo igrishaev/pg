@@ -42,11 +42,6 @@ public class Connection implements Closeable {
     // private Map<String, Object> state;
     // private Map<String, Object> opt;
 
-    // public void sendMessage(Message message) {
-    //     bytes byte[] = message.encode();
-    //     out_stream.write(bytes);
-    // }
-
     public void close () {
         sendTerminate();
         closeSocket();
@@ -301,11 +296,30 @@ public class Connection implements Closeable {
             case  5: return new AuthenticationMD5Password(bbBody);
             case 10: return new AuthenticationSASL(bbBody);
             case 11: return new AuthenticationSASLContinue(bbBody);
+            case 12: return new AuthenticationSASLFinal(bbBody);
 
             default:
                 throw new PGError("Unknown auth response message: %s, status: %s",
                                   bTag, authResp.status);
             }
+
+        case 'S':
+            return new ParameterStatus(bbBody);
+
+        case 'Z':
+            return new ReadyForQuery(bbBody);
+
+        case 'C':
+            return new CommandComplete(bbBody);
+
+        case 'T':
+            return new RowDescription(bbBody);
+
+        case 'D':
+            return new DataRow(bbBody);
+
+        case 'E':
+            return new ErrorResponse(bbBody);
 
         default:
             throw new PGError("Unknown message: %s", bTag);

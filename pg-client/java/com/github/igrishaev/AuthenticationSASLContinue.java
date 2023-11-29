@@ -6,7 +6,7 @@ import java.util.HashSet;
 public class AuthenticationSASLContinue {
 
     public static Integer status = 11;
-    public String serverFirstMessage;
+    public final String serverFirstMessage;
 
     public AuthenticationSASLContinue(ByteBuffer buf) {
         serverFirstMessage = BBUtil.getRestString(buf);
