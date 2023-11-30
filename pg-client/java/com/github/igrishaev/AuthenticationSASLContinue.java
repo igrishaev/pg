@@ -1,15 +1,11 @@
 package com.github.igrishaev;
 
 import java.nio.ByteBuffer;
-import java.util.HashSet;
 
-public class AuthenticationSASLContinue {
-
+public record AuthenticationSASLContinue (String serverFirstMessage) {
     public static Integer status = 11;
-    public final String serverFirstMessage;
-
     public AuthenticationSASLContinue(ByteBuffer buf) {
-        serverFirstMessage = BBUtil.getRestString(buf);
+        this(BBUtil.getRestString(buf));
     }
 
 }

@@ -3,20 +3,13 @@ package com.github.igrishaev;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
 
-public class AuthenticationSASL {
-
+public record AuthenticationSASL (HashSet<String> SASLTypes) {
     public static Integer status = 10;
-    public final HashSet<String> SASLtypes;
-
     public AuthenticationSASL(ByteBuffer buf) {
-
-        SASLtypes = new HashSet<String>();
-
+        this(new HashSet<>());
         while (!BBUtil.isEnd(buf)) {
             String type = BBUtil.getCString(buf, "UTF-8"); // TODO:
-            SASLtypes.add(type);
+            SASLTypes.add(type);
         }
-
     }
-
 }

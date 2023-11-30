@@ -2,13 +2,9 @@ package com.github.igrishaev;
 
 import java.nio.ByteBuffer;
 
-public class AuthenticationSASLFinal {
-
+public record AuthenticationSASLFinal (String serverFinalMessage) {
     public static Integer status = 12;
-    public final String serverFinalMessage;
-
     public AuthenticationSASLFinal(ByteBuffer buf) {
-        serverFinalMessage = BBUtil.getRestString(buf);
+        this(BBUtil.getRestString(buf));
     }
-
 }
