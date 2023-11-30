@@ -2,37 +2,22 @@ package com.github.igrishaev;
 
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.ArrayList;
 
-public class Parse extends AMessage {
+public record Parse (String statement,
+                     String query,
+                     List<Long> OIDs)
+        implements IMessage {
 
-    public final String statement;
-    public final String query;
-    public final Integer oidCount;
-    public final List<Long> oids;
-
-    public Parse (String statement, String query, List<Long> oids) {
-
-        this.statement = statement;
-        this.query = query;
-
-        if (oids == null) {
-            this.oidCount = 0;
-            this.oids = new ArrayList<Long>();
-        }
-        else {
-            this.oids = oids;
-            this.oidCount = oids.size();
-        }
-
+    public int getOIDCount() {
+        return (OIDs == null) ? 0 : OIDs.size();
     }
-
     public ByteBuffer encode(String encoding) {
+        int OIDCount = getOIDCount();
 
-        if (oidCount > 0xFFFF) {
+        if (OIDCount > 0xFFFF) {
             throw new PGError("Too many OIDs! OID count: %s, query: %s",
-                              oidCount,
-                              query);
+                    OIDCount,
+                    query);
         }
 
         Payload payload = new Payload();
@@ -40,11 +25,13 @@ public class Parse extends AMessage {
         payload
             .addCString(statement, encoding)
             .addCString(query, encoding)
-            .addUnsignedShort(oidCount);
+            .addUnsignedShort(OIDCount);
 
         // TODO: fix oid types
-        for(Long oid: oids) {
-            payload.addInteger(oid.intValue());
+        if (OIDs != null) {
+            for(Long oid: OIDs) {
+               payload.addInteger(oid.intValue());
+            }
         }
 
         return payload.toByteBuffer('P');

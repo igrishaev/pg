@@ -2,8 +2,7 @@ package com.github.igrishaev;
 
 import java.nio.ByteBuffer;
 
-public class Flush extends AMessage {
-
+public record Flush () implements IMessage {
     public ByteBuffer encode(String encoding) {
         return new Payload().toByteBuffer('H');
     }

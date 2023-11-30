@@ -9,11 +9,11 @@ import java.util.Arrays;
 public class Payload {
 
     private Integer size;
-    private ArrayList<Object> items;
+    private final ArrayList<Object> items;
 
     public Payload() {
         size = 0;
-        items = new ArrayList<Object>();
+        items = new ArrayList<>();
     }
 
     public Payload addInteger(Integer i) {
@@ -81,7 +81,6 @@ public class Payload {
         catch (UnsupportedEncodingException e) {
             throw new PGError(e, "cannot get bytes for a C-string");
         }
-
     }
 
     public ByteBuffer toByteBuffer(Character tag) {
@@ -98,29 +97,21 @@ public class Payload {
         bb.putInt(size + 4);
 
         for(Object item: items) {
-
-            if (item instanceof Integer) {
-                bb.putInt((int) item);
-
-            } else if (item instanceof Short) {
-                bb.putShort((short) item);
-
-            } else if (item instanceof Byte) {
-                bb.put((byte) item);
-
-            } else if (item instanceof Long) {
-                bb.putLong((long) item);
-
-            } else if (item instanceof byte[]) {
-                bb.put((byte[]) item);
-
-            } else {
-                throw new PGError("unsupported item: %s", item);
+            switch (item) {
+                case Integer i:
+                    bb.putInt(i); break;
+                case Short s:
+                    bb.putShort(s); break;
+                case Byte b:
+                    bb.put(b); break;
+                case Long l:
+                    bb.putLong(l); break;
+                case byte[] bs:
+                    bb.put(bs); break;
+                default:
+                    throw new PGError("unsupported item: %s", item);
             }
         }
-
         return bb;
-
     }
-
 }

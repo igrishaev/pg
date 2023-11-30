@@ -15,16 +15,16 @@ import java.util.Map;
 
 public class Connection implements Closeable {
 
-    private static Keyword KW_PORT = Keyword.intern("port");
-    private static Keyword KW_HOST = Keyword.intern("host");
-    private static Keyword KW_USER = Keyword.intern("user");
-    private static Keyword KW_DB = Keyword.intern("database");
-    private static Keyword KW_PASS = Keyword.intern("password");
-    private static Keyword KW_PG_PARAMS = Keyword.intern("pg-params");
-    private static Keyword KW_PROTO_VER = Keyword.intern("protocol-version");
+    private static final Keyword KW_PORT = Keyword.intern("port");
+    private static final Keyword KW_HOST = Keyword.intern("host");
+    private static final Keyword KW_USER = Keyword.intern("user");
+    private static final Keyword KW_DB = Keyword.intern("database");
+    private static final Keyword KW_PASS = Keyword.intern("password");
+    private static final Keyword KW_PG_PARAMS = Keyword.intern("pg-params");
+    private static final Keyword KW_PROTO_VER = Keyword.intern("protocol-version");
 
-    private static String COPY_FAIL_MSG = "COPY has been interrupted by the client";
-    private static Integer SSL_CODE = 80877103;
+    private static final String COPY_FAIL_MSG = "COPY has been interrupted by the client";
+    private static final Integer SSL_CODE = 80877103;
 
     public final String id;
     public final long createdAt;
@@ -38,9 +38,6 @@ public class Connection implements Closeable {
     private InputStream inStream;
     private OutputStream outStream;
     private Map<String, String> params;
-
-    // private Map<String, Object> state;
-    // private Map<String, Object> opt;
 
     public void close () {
         sendTerminate();
@@ -189,10 +186,8 @@ public class Connection implements Closeable {
 
     }
 
-    public void sendMessage (AMessage msg) {
-
+    public void sendMessage (IMessage msg) {
         System.out.println(msg);
-
         ByteBuffer buf = msg.encode("UTF-8"); // TODO
         try {
             outStream.write(buf.array());
@@ -276,57 +271,43 @@ public class Connection implements Closeable {
         }
     }
 
+    public Object parseAuthResponse(ByteBuffer bbBody) {
+        AuthenticationResponse authResp = new AuthenticationResponse(bbBody);
+        return switch (authResp.status) {
+            case  0 -> new AuthenticationOk();
+            case  3 -> new AuthenticationCleartextPassword();
+            case  5 -> new AuthenticationMD5Password(bbBody);
+            case 10 -> new AuthenticationSASL(bbBody);
+            case 11 -> new AuthenticationSASLContinue(bbBody);
+            case 12 -> new AuthenticationSASLFinal(bbBody);
+            default -> throw new PGError(
+                    "Unknown auth response message, status: %s",
+                    authResp.status
+            );
+        };
+    }
+
     public Object readMessage () {
 
         byte[] bufHeader = readNBytes(5);
         ByteBuffer bbHeader = ByteBuffer.wrap(bufHeader);
 
         byte bTag = bbHeader.get();
-        Integer bodySize = bbHeader.getInt() - 4;
+        int bodySize = bbHeader.getInt() - 4;
 
         byte[] bufBody = readNBytes(bodySize);
         ByteBuffer bbBody = ByteBuffer.wrap(bufBody);
 
-        switch ((char) bTag) {
-
-        case 'R':
-            AuthenticationResponse authResp = new AuthenticationResponse(bbBody);
-
-            switch (authResp.status) {
-
-            case  0: return new AuthenticationOk();
-            case  3: return new AuthenticationCleartextPassword();
-            case  5: return new AuthenticationMD5Password(bbBody);
-            case 10: return new AuthenticationSASL(bbBody);
-            case 11: return new AuthenticationSASLContinue(bbBody);
-            case 12: return new AuthenticationSASLFinal(bbBody);
-
-            default:
-                throw new PGError("Unknown auth response message: %s, status: %s",
-                                  bTag, authResp.status);
-            }
-
-        case 'S':
-            return new ParameterStatus(bbBody);
-
-        case 'Z':
-            return new ReadyForQuery(bbBody);
-
-        case 'C':
-            return new CommandComplete(bbBody);
-
-        case 'T':
-            return new RowDescription(bbBody);
-
-        case 'D':
-            return new DataRow(bbBody);
-
-        case 'E':
-            return new ErrorResponse(bbBody);
-
-        default:
-            throw new PGError("Unknown message: %s", bTag);
-        }
+        return switch ((char) bTag) {
+            case 'R' -> parseAuthResponse(bbBody);
+            case 'S' -> new ParameterStatus(bbBody);
+            case 'Z' -> new ReadyForQuery(bbBody);
+            case 'C' -> new CommandComplete(bbBody);
+            case 'T' -> new RowDescription(bbBody);
+            case 'D' -> new DataRow(bbBody);
+            case 'E' -> new ErrorResponse(bbBody);
+            default -> throw new PGError("Unknown message: %s", bTag);
+        };
 
     }
 

@@ -4,5 +4,4 @@ import java.nio.ByteBuffer;
 
 public interface IMessage {
     ByteBuffer encode(String encoding);
-
 }
