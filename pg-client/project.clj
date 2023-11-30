@@ -13,6 +13,9 @@
 
   :java-source-paths ["java"]
 
+  :java-cmd "/Users/wzhivga/work/jdk-21.jdk/Contents/Home/bin/java"
+  ;; :javac-options ["--enable-preview" "--release" "20"]
+
   :parent-project
   {:path "../project.clj"
    :inherit [:deploy-repositories
@@ -31,4 +34,8 @@
      [com.github.igrishaev/pg-integration]
      [com.github.igrishaev/pg-ssl]
      [com.github.igrishaev/pg-honey]
+
+     [org.postgresql/postgresql]
+     [com.github.seancorfield/next.jdbc]
+
      [org.clojure/data.csv]]}})

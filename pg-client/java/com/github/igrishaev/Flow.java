@@ -17,7 +17,7 @@ public class Flow {
         Result res = new Result(phase, reducer);
         while (true) {
             Object msg = conn.readMessage();
-            System.out.println(msg);
+            //System.out.println(msg);
             handleMessage(msg, res, conn);
             if (isEnough(msg, phase)) {
                 break;

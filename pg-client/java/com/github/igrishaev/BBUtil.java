@@ -2,6 +2,7 @@ package com.github.igrishaev;
 
 import java.nio.ByteBuffer;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 
 public class BBUtil {
@@ -37,15 +38,10 @@ public class BBUtil {
     }
 
     public static String getRestString (ByteBuffer buf) {
-        try {
-            return new String(buf.array(),
-                              buf.position(),
-                              buf.remaining(),
-                              "UTF-8");
-        }
-        catch (UnsupportedEncodingException e) {
-            throw new PGError(e, "cannot get the rest string");
-        }
+        return new String(buf.array(),
+                          buf.position(),
+                          buf.remaining(),
+                StandardCharsets.UTF_8);
     }
 
     public static void skip (ByteBuffer buf, int offset) {

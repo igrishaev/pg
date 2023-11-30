@@ -10,17 +10,17 @@ public record DataRow (short valueCount, ArrayList<ByteBuffer> values) {
                 new ArrayList<>()
         );
 
-        for (int i = 0; i < valueCount; i++) {
-            int len = buf.getInt();
-            if (len == -1) {
-                values.add(null);
-            }
-            else {
-                ByteBuffer bufValue = buf.slice();
-                bufValue.limit(len);
-                BBUtil.skip(buf, len);
-                values.add(bufValue);
-            }
-        }
+        //for (int i = 0; i < valueCount; i++) {
+        //   int len = buf.getInt();
+        //  if (len == -1) {
+        //      values.add(null);
+        //  }
+        //  else {
+        //      ByteBuffer bufValue = buf.slice();
+        //      bufValue.limit(len);
+        //      BBUtil.skip(buf, len);
+        //      values.add(bufValue);
+        //  }
+        //}
     }
 }

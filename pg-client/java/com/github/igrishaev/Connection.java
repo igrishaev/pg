@@ -39,6 +39,8 @@ public class Connection implements Closeable {
     private OutputStream outStream;
     private Map<String, String> params;
 
+    public DecoderTxt decoderTxr;
+
     public void close () {
         sendTerminate();
         closeSocket();
@@ -83,7 +85,9 @@ public class Connection implements Closeable {
     public Connection(Map<Keyword, Object> cljConfig) {
 
         config = cljConfig;
-        params = new HashMap();
+        params = new HashMap<>();
+
+        decoderTxr = new DecoderTxt();
 
         id = String.format("pg%d", nextID());
         createdAt = System.currentTimeMillis();
@@ -187,7 +191,7 @@ public class Connection implements Closeable {
     }
 
     public void sendMessage (IMessage msg) {
-        System.out.println(msg);
+        //System.out.println(msg);
         ByteBuffer buf = msg.encode("UTF-8"); // TODO
         try {
             outStream.write(buf.array());

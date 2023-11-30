@@ -32,17 +32,44 @@
 
 (comment
 
+  (require '[next.jdbc :as jdbc])
+
+  ;; 8000.900308
+  (time
+   (let [conn (jdbc/get-connection {:dbtype "postgres"
+                                    :port 15432
+                                    :dbname "wzhivga"
+                                    :user "wzhivga"
+                                    :password "wzhivga"})]
+
+     (jdbc/execute! conn ["select * from generate_series(1,5000000)"])
+     nil))
+
   (def ^Connection -c (pg/connect {:port 15432
                                    :user "wzhivga"
                                    :password "wzhivga"
                                    :database "wzhivga"}))
 
+  (.sendQuery -c "select * from generate_series(1,5000000) as x")
 
-  (.sendQuery -c "select 1 as foo")
+  (time
+   (do
+     (pg.client.flow/interact -c :query {})
+     nil))
 
-  (pg.client.flow/interact -c :query {})
 
-  (Flow/interact -c "query")
+  ;; 11387.622
+  (time
+   (loop [i 0]
+     (let [msg (.readMessage -c)]
+       (if (not= i 5000000)
+         (recur (inc i))))))
+
+
+  (time
+   (do
+     (Flow/interact -c "query")
+     nil))
 
   (type -c)
 
