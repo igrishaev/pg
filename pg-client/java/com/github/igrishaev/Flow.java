@@ -29,83 +29,66 @@ public class Flow {
     static void handleMessage(Object msg, Result res, Connection conn) {
 
         switch (msg) {
-            case AuthenticationOk x:
-                handleMessage(x, res, conn);
+            case AuthenticationOk ignored:
                 break;
-            case AuthenticationCleartextPassword x:
-                handleMessage(x, res, conn);
+            case AuthenticationCleartextPassword ignored:
+                handleMessage(conn);
                 break;
             case ParameterStatus x:
-                handleMessage(x, res, conn);
+                handleMessage(x, conn);
                 break;
             case RowDescription x:
-                handleMessage(x, res, conn);
+                handleMessage(x, res);
                 break;
             case DataRow x:
-                handleMessage(x, res, conn);
+                handleMessage(x, res);
                 break;
             case ReadyForQuery x:
-                handleMessage(x, res, conn);
+                handleMessage(x, conn);
                 break;
             case CommandComplete x:
-                handleMessage(x, res, conn);
+                handleMessage(x, res);
                 break;
             case ErrorResponse x:
-                handleMessage(x, res, conn);
+                handleMessage(x, res);
                 break;
 
             default: throw new PGError("Cannot handle this message: %s", msg);
         }
     }
 
-    static void handleMessage(AuthenticationOk msg, Result res, Connection conn) {
-
-    }
-
-    static void handleMessage(AuthenticationCleartextPassword msg, Result res, Connection conn) {
+    static void handleMessage(Connection conn) {
         conn.sendPassword(conn.getPassword());
     }
 
-    static void handleMessage(ParameterStatus msg, Result res, Connection conn) {
+    static void handleMessage(ParameterStatus msg, Connection conn) {
         conn.setParam(msg.param(), msg.value());
     }
 
-    static void handleMessage(RowDescription msg, Result res, Connection conn) {
+    static void handleMessage(RowDescription msg, Result res) {
         res.addRowDescription(msg);
     }
 
-    static void handleMessage(DataRow msg, Result res, Connection conn) {
+    static void handleMessage(DataRow msg, Result res) {
         res.addDataRow(msg);
     }
 
-    static void handleMessage(ReadyForQuery msg, Result res, Connection conn) {
-
-        switch ((char)msg.txStatus()) {
-
-            case 'I':
-                conn.setTxStatus(Keyword.intern("I"));
-                break;
-
-            case 'T':
-                conn.setTxStatus(Keyword.intern("T"));
-                break;
-
-            case 'E':
-                conn.setTxStatus(Keyword.intern("E"));
-                break;
-
-            default:
-                throw new PGError("unknown tx status: %s", msg.txStatus());
-
-        }
-
+    static void handleMessage(ReadyForQuery msg, Connection conn) {
+        char tag = (char)msg.txStatus();
+        Keyword txStatus = switch (tag) {
+            case 'I' -> (Keyword.intern("I"));
+            case 'E' -> (Keyword.intern("E"));
+            case 'T' -> (Keyword.intern("T"));
+            default -> throw new PGError("unknown tx status: %s", tag);
+        };
+        conn.setTxStatus(txStatus);
     }
 
-    static void handleMessage(CommandComplete msg, Result res, Connection conn) {
+    static void handleMessage(CommandComplete msg, Result res) {
         res.addCommandComplete(msg);
     }
 
-    static void handleMessage(ErrorResponse msg, Result res, Connection conn) {
+    static void handleMessage(ErrorResponse msg, Result res) {
         res.addErrorResponse(msg);
     }
 
