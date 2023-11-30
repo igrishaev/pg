@@ -5,61 +5,57 @@ import clojure.lang.Keyword;
 public class Flow {
 
     static Boolean isEnough (Object msg, String phase) {
-        return (msg instanceof ReadyForQuery) || ((msg instanceof ReadyForQuery) && phase == "auth");
+        return switch (msg) {
+            case ReadyForQuery ignored -> true;
+            case ErrorResponse ignored -> phase.equals("auth");
+            default -> false;
+        };
     }
 
     public static Object interact(Connection conn, String phase) {
-
         CljReducer reducer = new CljReducer();
-
         Result res = new Result(phase, reducer);
-
         while (true) {
             Object msg = conn.readMessage();
-
             System.out.println(msg);
-
             handleMessage(msg, res, conn);
-
             if (isEnough(msg, phase)) {
                 break;
             }
-
         }
-
         return res.getResults();
     }
 
     static void handleMessage(Object msg, Result res, Connection conn) {
 
-        if (msg instanceof AuthenticationOk) {
-            handleMessage((AuthenticationOk) msg, res, conn);
+        switch (msg) {
+            case AuthenticationOk x:
+                handleMessage(x, res, conn);
+                break;
+            case AuthenticationCleartextPassword x:
+                handleMessage(x, res, conn);
+                break;
+            case ParameterStatus x:
+                handleMessage(x, res, conn);
+                break;
+            case RowDescription x:
+                handleMessage(x, res, conn);
+                break;
+            case DataRow x:
+                handleMessage(x, res, conn);
+                break;
+            case ReadyForQuery x:
+                handleMessage(x, res, conn);
+                break;
+            case CommandComplete x:
+                handleMessage(x, res, conn);
+                break;
+            case ErrorResponse x:
+                handleMessage(x, res, conn);
+                break;
 
-        } else if (msg instanceof AuthenticationCleartextPassword) {
-            handleMessage((AuthenticationCleartextPassword) msg, res, conn);
-
-        } else if (msg instanceof ParameterStatus) {
-            handleMessage((ParameterStatus) msg, res, conn);
-
-        } else if (msg instanceof RowDescription) {
-            handleMessage((RowDescription) msg, res, conn);
-
-        } else if (msg instanceof DataRow) {
-            handleMessage((DataRow) msg, res, conn);
-
-        } else if (msg instanceof ReadyForQuery) {
-            handleMessage((ReadyForQuery) msg, res, conn);
-
-        } else if (msg instanceof CommandComplete) {
-            handleMessage((CommandComplete) msg, res, conn);
-
-        } else if (msg instanceof ErrorResponse) {
-            handleMessage((ErrorResponse) msg, res, conn);
-
-        } else {
-            throw new PGError("Cannot handle this message: %s", msg);
+            default: throw new PGError("Cannot handle this message: %s", msg);
         }
-
     }
 
     static void handleMessage(AuthenticationOk msg, Result res, Connection conn) {
@@ -71,7 +67,7 @@ public class Flow {
     }
 
     static void handleMessage(ParameterStatus msg, Result res, Connection conn) {
-        conn.setParam(msg.param, msg.value);
+        conn.setParam(msg.param(), msg.value());
     }
 
     static void handleMessage(RowDescription msg, Result res, Connection conn) {
@@ -84,7 +80,7 @@ public class Flow {
 
     static void handleMessage(ReadyForQuery msg, Result res, Connection conn) {
 
-        switch ((char)msg.txStatus) {
+        switch ((char)msg.txStatus()) {
 
             case 'I':
                 conn.setTxStatus(Keyword.intern("I"));
@@ -99,7 +95,7 @@ public class Flow {
                 break;
 
             default:
-                throw new PGError("unknown tx status: %s", msg.txStatus);
+                throw new PGError("unknown tx status: %s", msg.txStatus());
 
         }
 
