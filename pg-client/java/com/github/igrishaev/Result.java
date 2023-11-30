@@ -19,7 +19,21 @@ public class Result {
     public SubResult current;
     public IReducer reducer;
 
+    public Result (String phase, IReducer reducer) {
+        this.phase = phase;
+        this.reducer = reducer;
+        subResults = new ArrayList<SubResult>();
+        errorResponses = new ArrayList<ErrorResponse>();
+        addSubResult();
+    }
+
     public ArrayList<Object> getResults () {
+
+        if (errorResponses.size() > 0) {
+            ErrorResponse errRes = errorResponses.get(0);
+            throw new PGError("Error response: %s", errRes);
+        }
+
         ArrayList<Object> results = new ArrayList<Object>();
 
         for (SubResult subRes: subResults) {
@@ -29,11 +43,8 @@ public class Result {
         return results;
     }
 
-    public Result (String phase, IReducer reducer) {
-        this.phase = phase;
-        this.reducer = reducer;
-        errorResponses = new ArrayList<ErrorResponse>();
-        addSubResult();
+    public void addErrorResponse (ErrorResponse msg) {
+        errorResponses.add(msg);
     }
 
     public void addDataRow (DataRow msg) {

@@ -4,21 +4,62 @@ import clojure.lang.Keyword;
 
 public class Flow {
 
-    static Object interact(Connection conn, String phase) {
+    static Boolean isEnough (Object msg, String phase) {
+        return (msg instanceof ReadyForQuery) || ((msg instanceof ReadyForQuery) && phase == "auth");
+    }
 
-        Result res = new Result(phase, null);
+    public static Object interact(Connection conn, String phase) {
+
+        CljReducer reducer = new CljReducer();
+
+        Result res = new Result(phase, reducer);
 
         while (true) {
             Object msg = conn.readMessage();
+
+            System.out.println(msg);
+
             handleMessage(msg, res, conn);
-            break;
+
+            if (isEnough(msg, phase)) {
+                break;
+            }
+
         }
 
         return res.getResults();
     }
 
     static void handleMessage(Object msg, Result res, Connection conn) {
-        throw new PGError("Cannot handle this message: %s", msg);
+
+        if (msg instanceof AuthenticationOk) {
+            handleMessage((AuthenticationOk) msg, res, conn);
+
+        } else if (msg instanceof AuthenticationCleartextPassword) {
+            handleMessage((AuthenticationCleartextPassword) msg, res, conn);
+
+        } else if (msg instanceof ParameterStatus) {
+            handleMessage((ParameterStatus) msg, res, conn);
+
+        } else if (msg instanceof RowDescription) {
+            handleMessage((RowDescription) msg, res, conn);
+
+        } else if (msg instanceof DataRow) {
+            handleMessage((DataRow) msg, res, conn);
+
+        } else if (msg instanceof ReadyForQuery) {
+            handleMessage((ReadyForQuery) msg, res, conn);
+
+        } else if (msg instanceof CommandComplete) {
+            handleMessage((CommandComplete) msg, res, conn);
+
+        } else if (msg instanceof ErrorResponse) {
+            handleMessage((ErrorResponse) msg, res, conn);
+
+        } else {
+            throw new PGError("Cannot handle this message: %s", msg);
+        }
+
     }
 
     static void handleMessage(AuthenticationOk msg, Result res, Connection conn) {
@@ -68,5 +109,8 @@ public class Flow {
         res.addCommandComplete(msg);
     }
 
+    static void handleMessage(ErrorResponse msg, Result res, Connection conn) {
+        res.addErrorResponse(msg);
+    }
 
 }

@@ -1,5 +1,8 @@
 (ns pg.client-test
   (:import
+   com.github.igrishaev.Connection
+   com.github.igrishaev.Flow)
+  (:import
    java.io.ByteArrayInputStream
    java.io.ByteArrayOutputStream
    java.time.Instant
@@ -25,6 +28,29 @@
    [pg.integration :as pgi :refer [*CONFIG*]]
    [pg.json]
    [pg.oid :as oid]))
+
+
+(comment
+
+  (def ^Connection -c (pg/connect {:port 15432
+                                   :user "wzhivga"
+                                   :password "wzhivga"
+                                   :database "wzhivga"}))
+
+
+  (.sendQuery -c "select 1 as foo")
+
+  (pg.client.flow/interact -c :query {})
+
+  (Flow/interact -c "query")
+
+  (type -c)
+
+  (Flow/isEnough 42 "query")
+
+
+
+  )
 
 
 (use-fixtures :each pgi/fix-multi-version)

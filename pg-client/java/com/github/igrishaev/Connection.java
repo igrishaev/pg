@@ -189,8 +189,11 @@ public class Connection implements Closeable {
 
     }
 
-    public void sendMessage (AMessage message) {
-        ByteBuffer buf = message.encode("UTF-8"); // TODO
+    public void sendMessage (AMessage msg) {
+
+        System.out.println(msg);
+
+        ByteBuffer buf = msg.encode("UTF-8"); // TODO
         try {
             outStream.write(buf.array());
         }
