@@ -1,6 +1,7 @@
 package com.github.igrishaev;
 
 import java.nio.ByteBuffer;
+import java.text.Normalizer;
 
 public record RowDescription (
         short columnCount,
@@ -15,7 +16,7 @@ public record RowDescription (
             OID typeOid,
             short typeLen,
             int typeMod,
-            short format) {
+            Format format) {
     }
 
     public static RowDescription fromByteBuffer(ByteBuffer buf) {
@@ -29,7 +30,7 @@ public record RowDescription (
                     OID.ofInt(buf.getInt()),
                     buf.getShort(),
                     buf.getInt(),
-                    buf.getShort());
+                    Format.ofShort(buf.getShort()));
             columns[i] = col;
         }
         return new RowDescription(size, columns);

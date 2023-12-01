@@ -6,6 +6,7 @@ import java.util.UUID;
 import java.math.BigDecimal;
 
 public class DecoderTxt {
+
     private String encoding = "UTF-8";
     public void setEncoding (String encoding) {
         this.encoding = encoding;
@@ -29,7 +30,6 @@ public class DecoderTxt {
             case INT8 -> Long.parseLong(getString(buf));
 
             case BYTEA -> buf.array();
-            case TEXT, VARCHAR -> getString(buf);
             case CHAR -> buf.getChar();
 
             case UUID -> UUID.fromString(getString(buf));
@@ -44,7 +44,7 @@ public class DecoderTxt {
                 yield switch ((char) b) {
                     case 't' -> true;
                     case 'f' -> false;
-                    default -> throw new PGError("aaa");
+                    default -> throw new PGError("wrong boolean value: %s", b);
                 };
             }
             default -> getString(buf);

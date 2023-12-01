@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.io.BufferedInputStream;
-
+import java.io.BufferedOutputStream;
 
 public class Connection implements Closeable {
 
@@ -121,8 +121,12 @@ public class Connection implements Closeable {
         return params.get(param);
     }
 
-    public void setParam (String param, String value) {
+    private void setParam (String param, String value) {
         params.put(param, value);
+        switch (param) {
+            case "server_encoding":
+                decoderTxr.setEncoding(value);
+        }
     }
 
     public Integer getPort () {
@@ -169,7 +173,7 @@ public class Connection implements Closeable {
         final String host = getHost();
 
         try {
-            socket = new Socket(host, port, true);
+            socket = new Socket(host, port);
         }
         catch (IOException e) {
             throw new PGError(e, "Cannot connect to a socket");
@@ -184,7 +188,7 @@ public class Connection implements Closeable {
         }
 
         try {
-            outStream = socket.getOutputStream();
+            outStream = new BufferedOutputStream(socket.getOutputStream(), 0xFFFF);
         }
         catch (IOException e) {
             throw new PGError(e, "Cannot get an output stream");
@@ -203,11 +207,11 @@ public class Connection implements Closeable {
         }
     }
 
-    public String generateStatement () {
+    private String generateStatement () {
         return String.format("statement%d", nextID());
     }
 
-    public String generatePortal () {
+    private String generatePortal () {
         return String.format("portal%d", nextID());
     }
 
@@ -260,11 +264,11 @@ public class Connection implements Closeable {
         sendMessage(new Flush());
     }
 
-    public void sendTerminate () {
+    private void sendTerminate () {
         sendMessage(new Terminate());
     }
 
-    public void sendSSLRequest () {
+    private void sendSSLRequest () {
         sendMessage(new SSLRequest(SSL_CODE));
     }
 
@@ -305,10 +309,10 @@ public class Connection implements Closeable {
     public synchronized Object query(String sql) {
         sendQuery(sql);
         final CljReducer reducer = new CljReducer();
-        return interact("query", reducer);
+        return interact(Phase.AUTH, reducer);
     }
 
-    private <I, R> List<R> interact(String phase, IReducer<I, R> reducer) {
+    private <I, R> List<R> interact(Phase phase, IReducer<I, R> reducer) {
         final Result<I, R> res = new Result<>(phase, reducer);
         while (true) {
             final Object msg = readMessage();
@@ -364,25 +368,33 @@ public class Connection implements Closeable {
     }
 
     static <I,R> void handleMessage(RowDescription msg, Result<I,R> res) {
+        res.setRowDescription(msg);
         short size = msg.columnCount();
-        OID[] oids = new OID[size];
         Object[] keys = new Object[size];
-        for (short i = 0; i < size; i++) {
-            RowDescription.Column col = msg.columns()[i];
-            keys[i] = col.name();
-            oids[i] = col.typeOid();
+        for (short i = 0; i < size; i ++) {
+            keys[i] = msg.columns()[i].name();
         }
         res.setCurrentKeys(keys);
-        res.setCurrentOIDs(oids);
     }
 
     private <I,R> void handleMessage(DataRow msg, Result<I,R> res) {
         short size = msg.valueCount();
-        OID[] oids = res.getCurrentOIDs();
-        ByteBuffer[] buffers = msg.values();
+        RowDescription.Column[] cols = res.getRowDescription().columns();
+        ByteBuffer[] bufs = msg.values();
         Object[] values = new Object[size];
         for (short i = 0; i < size; i++) {
-            values[i] = decoderTxr.decode(buffers[i], oids[i]);
+            ByteBuffer buf = bufs[i];
+            if (buf == null) {
+                values[i] = null;
+                continue;
+            }
+            RowDescription.Column col = cols[i];
+            switch (col.format()) {
+                case TXT:
+                    values[i] = decoderTxr.decode(buf, col.typeOid());
+                case BIN:
+                    throw new PGError("binary decoding is not implemented");
+            }
         }
         res.setCurrentValues(values);
     }
@@ -398,7 +410,7 @@ public class Connection implements Closeable {
     }
 
     static <I, R> void handleMessage(CommandComplete msg, Result<I, R> res) {
-        res.addCommandComplete(msg);
+        res.setCommandComplete(msg);
     }
 
     static <I, R> void handleMessage(ErrorResponse msg, Result<I,R> res) {
@@ -410,10 +422,10 @@ public class Connection implements Closeable {
         setPrivateKey(msg.secretKey());
     }
 
-    static Boolean isEnough (Object msg, String phase) {
+    static Boolean isEnough (Object msg, Phase phase) {
         return switch (msg) {
             case ReadyForQuery ignored -> true;
-            case ErrorResponse ignored -> phase.equals("auth");
+            case ErrorResponse ignored -> phase == Phase.AUTH;
             default -> false;
         };
     }
