@@ -3,7 +3,9 @@ package com.github.igrishaev;
 import java.nio.ByteBuffer;
 
 public record BackendKeyData (int pid, int secretKey) {
-    public BackendKeyData (ByteBuffer buf) {
-        this(buf.getInt(), buf.getInt());
+    public static BackendKeyData fromByteBuffer(ByteBuffer buf) {
+        int pid = buf.getInt();
+        int key = buf.getInt();
+        return new BackendKeyData(pid, key);
     }
 }

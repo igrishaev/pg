@@ -4,8 +4,9 @@ import java.nio.ByteBuffer;
 
 public record AuthenticationMD5Password (byte[] salt) {
     public static Integer status = 5;
-    public AuthenticationMD5Password (ByteBuffer buf) {
-        this(BBUtil.getNBytes(buf, 4));
+    public static AuthenticationMD5Password fromByteBuffer(ByteBuffer buf) {
+        byte[] salt = new byte[4];
+        buf.get(salt);
+        return new AuthenticationMD5Password(salt);
     }
-
 }

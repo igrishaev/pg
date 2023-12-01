@@ -4,8 +4,8 @@ import java.nio.ByteBuffer;
 
 public record AuthenticationSASLContinue (String serverFirstMessage) {
     public static Integer status = 11;
-    public AuthenticationSASLContinue(ByteBuffer buf) {
-        this(BBUtil.getRestString(buf));
+    public static AuthenticationSASLContinue fromByteBuffer(ByteBuffer buf) {
+        String message = BBUtil.getRestString(buf);
+        return new AuthenticationSASLContinue(message);
     }
-
 }

@@ -5,7 +5,7 @@ import java.util.HashMap;
 
 public record ErrorResponse (HashMap<String, String> fields) {
 
-    public String parseTag (byte tag) {
+    public static String parseTag (byte tag) {
         return switch ((char) tag) {
             case 'S' -> "severity";
             case 'V' -> "verbosity";
@@ -29,9 +29,8 @@ public record ErrorResponse (HashMap<String, String> fields) {
         };
     }
 
-    public ErrorResponse (ByteBuffer buf) {
-        this(new HashMap<>());
-
+    public static ErrorResponse fromByteBuffer(ByteBuffer buf) {
+        HashMap<String, String> fields = new HashMap<>();
         while (true) {
             byte tag = buf.get();
             if (tag == 0) {
@@ -41,10 +40,8 @@ public record ErrorResponse (HashMap<String, String> fields) {
                 String field = parseTag(tag);
                 String message = BBUtil.getCString(buf, "UTF-8");
                 fields.put(field, message);
-            }
-
-        }
-
+            };
+        };
+        return new ErrorResponse(fields);
     }
-
 }

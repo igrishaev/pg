@@ -211,8 +211,8 @@ public class Connection implements Closeable {
         return String.format("portal%d", nextID());
     }
 
-    public void sendParse (String statement, String query, List<Long> oids) {
-        sendMessage(new Parse(statement, query, oids));
+    public void sendParse (String statement, String query, List<Long> OIDs) {
+        sendMessage(new Parse(statement, query, OIDs));
     }
 
     public void sendStartupMessage () {
@@ -277,23 +277,7 @@ public class Connection implements Closeable {
         }
     }
 
-    public Object parseAuthResponse(ByteBuffer bbBody) {
-        AuthenticationResponse authResp = new AuthenticationResponse(bbBody);
-        return switch (authResp.status) {
-            case  0 -> new AuthenticationOk();
-            case  3 -> new AuthenticationCleartextPassword();
-            case  5 -> new AuthenticationMD5Password(bbBody);
-            case 10 -> new AuthenticationSASL(bbBody);
-            case 11 -> new AuthenticationSASLContinue(bbBody);
-            case 12 -> new AuthenticationSASLFinal(bbBody);
-            default -> throw new PGError(
-                    "Unknown auth response message, status: %s",
-                    authResp.status
-            );
-        };
-    }
-
-    public Object readMessage () {
+    private Object readMessage () {
 
         byte[] bufHeader = readNBytes(5);
         ByteBuffer bbHeader = ByteBuffer.wrap(bufHeader);
@@ -305,14 +289,14 @@ public class Connection implements Closeable {
         ByteBuffer bbBody = ByteBuffer.wrap(bufBody);
 
         return switch ((char) bTag) {
-            case 'R' -> parseAuthResponse(bbBody);
+            case 'R' -> AuthenticationResponse.fromByteBuffer(bbBody).parseResponse(bbBody);
             case 'S' -> ParameterStatus.fromByteBuffer(bbBody);
-            case 'Z' -> new ReadyForQuery(bbBody);
-            case 'C' -> new CommandComplete(bbBody);
+            case 'Z' -> ReadyForQuery.fromByteBuffer(bbBody);
+            case 'C' -> CommandComplete.fromByteBuffer(bbBody);
             case 'T' -> RowDescription.fromByteBuffer(bbBody);
             case 'D' -> DataRow.fromByteBuffer(bbBody);
-            case 'E' -> new ErrorResponse(bbBody);
-            case 'K' -> new BackendKeyData(bbBody);
+            case 'E' -> ErrorResponse.fromByteBuffer(bbBody);
+            case 'K' -> BackendKeyData.fromByteBuffer(bbBody);
             default -> throw new PGError("Unknown message: %s", bTag);
         };
 
@@ -320,6 +304,102 @@ public class Connection implements Closeable {
 
     public synchronized Object query(String sql) {
         sendQuery(sql);
-        return Flow.interact(this, "query");
+        return interact("query");
     }
+
+    private Object interact(String phase) {
+        CljReducer reducer = new CljReducer();
+        Result res = new Result(phase, reducer);
+        while (true) {
+            Object msg = readMessage();
+            System.out.println(msg);
+            handleMessage(msg, res);
+            if (isEnough(msg, phase)) {
+                break;
+            }
+        }
+        return res.getResults();
+    }
+
+    private void handleMessage(Object msg, Result res) {
+
+        switch (msg) {
+            case AuthenticationOk ignored:
+                break;
+            case AuthenticationCleartextPassword ignored:
+                handleMessage();
+                break;
+            case ParameterStatus x:
+                handleMessage(x);
+                break;
+            case RowDescription x:
+                handleMessage(x, res);
+                break;
+            case DataRow x:
+                handleMessage(x, res);
+                break;
+            case ReadyForQuery x:
+                handleMessage(x);
+                break;
+            case CommandComplete x:
+                handleMessage(x, res);
+                break;
+            case ErrorResponse x:
+                handleMessage(x, res);
+                break;
+            case BackendKeyData x:
+                handleMessage(x);
+                break;
+
+            default: throw new PGError("Cannot handle this message: %s", msg);
+        }
+    }
+
+    private void handleMessage() {
+        sendPassword(getPassword());
+    }
+
+    private void handleMessage(ParameterStatus msg) {
+        setParam(msg.param(), msg.value());
+    }
+
+    static void handleMessage(RowDescription msg, Result res) {
+        res.addRowDescription(msg);
+    }
+
+    static void handleMessage(DataRow msg, Result res) {
+        res.addDataRow(msg);
+    }
+
+    private void handleMessage(ReadyForQuery msg) {
+        char tag = (char)msg.txStatus();
+        txStatus = switch (tag) {
+            case 'I' -> (Keyword.intern("I"));
+            case 'E' -> (Keyword.intern("E"));
+            case 'T' -> (Keyword.intern("T"));
+            default -> throw new PGError("unknown tx status: %s", tag);
+        };
+    }
+
+    static void handleMessage(CommandComplete msg, Result res) {
+        res.addCommandComplete(msg);
+    }
+
+    static void handleMessage(ErrorResponse msg, Result res) {
+        res.addErrorResponse(msg);
+    }
+
+    public void handleMessage(BackendKeyData msg) {
+        setPid(msg.pid());
+        setPrivateKey(msg.secretKey());
+    }
+
+    static Boolean isEnough (Object msg, String phase) {
+        return switch (msg) {
+            case ReadyForQuery ignored -> true;
+            case ErrorResponse ignored -> phase.equals("auth");
+            default -> false;
+        };
+    }
+
 }

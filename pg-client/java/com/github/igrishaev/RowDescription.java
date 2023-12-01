@@ -1,8 +1,6 @@
 package com.github.igrishaev;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-
 
 public record RowDescription (
         short columnCount,
@@ -33,7 +31,7 @@ public record RowDescription (
                     buf.getInt(),
                     buf.getShort());
             columns[i] = col;
-        };
+        }
         return new RowDescription(size, columns);
     }
 }

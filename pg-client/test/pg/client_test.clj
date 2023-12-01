@@ -2167,3 +2167,24 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
 
       (is (= 3 res1))
       (is (= [{:id 2, :title "test2"}] res2)))))
+
+
+(defprotocol IProto
+  (some-action [this]))
+
+(def a
+  (reify IProto
+    (some-action [this]
+      (println "I'm A"))))
+
+(def b
+  (reify IProto
+    (some-action [this]
+      (println "I'm B"))))
+
+(defn make-c [a b]
+  (reify IProto
+    (some-action [this]
+      (println "I'm C"
+               (some-action a)
+               (some-action b)))))
