@@ -12,15 +12,13 @@ public class Result {
         private RowDescription _RowDescription;
         private CommandComplete _CommandComplete;
         private Object acc;
-        private ArrayList<Object> acc2;
-
     }
 
     public final String phase;
     public ArrayList<SubResult> subResults;
     public ArrayList<ErrorResponse> errorResponses;
     public SubResult current;
-    public IReducer<Object,Object> reducer;
+    public IReducer reducer;
 
     public Result (String phase, IReducer reducer) {
         this.phase = phase;
@@ -40,9 +38,8 @@ public class Result {
         ArrayList<Object> results = new ArrayList<>();
 
         for (SubResult subRes: subResults) {
-            // Object result = reducer.finalize(subRes.acc);
-            // results.add(result);
-            results.add(subRes.acc2);
+            Object result = reducer.finalize(subRes.acc);
+            results.add(result);
         }
 
         return results;
@@ -69,9 +66,7 @@ public class Result {
             String field = columns[i].name();
             row.put(field, value);
         }
-
-        current.acc2.add(row);
-        // current.acc = reducer.append(current.acc, row);
+        current.acc = reducer.append(current.acc, new Object[1], new Object[1]);
     }
 
     public ParameterDescription getParameterDescription () {
@@ -89,7 +84,6 @@ public class Result {
     public void addSubResult () {
         current = new SubResult();
         current.acc = reducer.initiate();
-        current.acc2 = new ArrayList<Object>();
         subResults.add(current);
     }
 

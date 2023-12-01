@@ -1,7 +1,7 @@
 package com.github.igrishaev;
 
-public interface IReducer<InitType, FinalType> {
-    InitType initiate();
-    InitType append(InitType acc, Object row);
-    FinalType finalize(InitType acc);
+public interface IReducer<T, R> {
+    T initiate();
+    T append(T acc, Object[] keys, Object[] values);
+    R finalize(T acc);
 }
