@@ -11,6 +11,7 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.io.BufferedInputStream;
 
 
 public class Connection implements Closeable {
@@ -175,7 +176,8 @@ public class Connection implements Closeable {
         }
 
         try {
-            inStream = socket.getInputStream();
+            inStream = new BufferedInputStream(socket.getInputStream(), 0xFFFF);
+            // inStream = socket.getInputStream();
         }
         catch (IOException e) {
             throw new PGError(e, "Cannot get an input stream");
@@ -304,15 +306,20 @@ public class Connection implements Closeable {
 
         return switch ((char) bTag) {
             case 'R' -> parseAuthResponse(bbBody);
-            case 'S' -> new ParameterStatus(bbBody);
+            case 'S' -> ParameterStatus.fromByteBuffer(bbBody);
             case 'Z' -> new ReadyForQuery(bbBody);
             case 'C' -> new CommandComplete(bbBody);
-            case 'T' -> new RowDescription(bbBody);
-            case 'D' -> new DataRow(bbBody);
+            case 'T' -> RowDescription.fromByteBuffer(bbBody);
+            case 'D' -> DataRow.fromByteBuffer(bbBody);
             case 'E' -> new ErrorResponse(bbBody);
+            case 'K' -> new BackendKeyData(bbBody);
             default -> throw new PGError("Unknown message: %s", bTag);
         };
 
     }
 
+    public synchronized Object query(String sql) {
+        sendQuery(sql);
+        return Flow.interact(this, "query");
+    }
 }

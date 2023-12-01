@@ -1,7 +1,8 @@
 (ns pg.client
 
   (:import
-   com.github.igrishaev.Connection)
+   com.github.igrishaev.Connection
+   com.github.igrishaev.Flow)
 
   (:refer-clojure :exclude [group-by first])
   (:require
@@ -150,7 +151,7 @@
   "
   [^Connection conn]
   (.sendStartupMessage conn)
-  (flow/interact conn :auth)
+  (Flow/interact conn "auth")
   conn)
 
 

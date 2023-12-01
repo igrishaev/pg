@@ -6,7 +6,8 @@ import java.util.ArrayList;
 
 public record RowDescription (
         short columnCount,
-        ArrayList<Column> columns) {
+        Column[] columns
+) {
 
     public record Column (
             int index,
@@ -19,24 +20,20 @@ public record RowDescription (
             short format) {
     }
 
-    public RowDescription (ByteBuffer buf) {
-        this(
-                buf.getShort(),
-                new ArrayList<>()
-        );
-
-        for (int i = 0; i < columnCount; i++) {
+    public static RowDescription fromByteBuffer(ByteBuffer buf) {
+        short size = buf.getShort();
+        Column[] columns = new Column[size];
+        for (short i = 0; i < size; i++) {
             Column col = new Column(i,
-                                    BBUtil.getCString(buf, "UTF-8"),
-                                    buf.getInt(),
-                                    buf.getShort(),
-                                    buf.getInt(),
-                                    buf.getShort(),
-                                    buf.getInt(),
-                                    buf.getShort());
-            columns.add(col);
-        }
-
+                    BBUtil.getCString(buf, "UTF-8"),
+                    buf.getInt(),
+                    buf.getShort(),
+                    buf.getInt(),
+                    buf.getShort(),
+                    buf.getInt(),
+                    buf.getShort());
+            columns[i] = col;
+        };
+        return new RowDescription(size, columns);
     }
-
 }

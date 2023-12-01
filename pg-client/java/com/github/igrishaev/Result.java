@@ -40,8 +40,9 @@ public class Result {
         ArrayList<Object> results = new ArrayList<>();
 
         for (SubResult subRes: subResults) {
-            Object result = reducer.finalize(subRes.acc);
-            results.add(result);
+            // Object result = reducer.finalize(subRes.acc);
+            // results.add(result);
+            results.add(subRes.acc2);
         }
 
         return results;
@@ -53,21 +54,23 @@ public class Result {
 
     public void addDataRow (DataRow msg) {
 
-        //RowDescription rd = current._RowDescription;
-        //short valueCount = rd.columnCount();
+        RowDescription rd = current._RowDescription;
+        short valueCount = rd.columnCount();
+        RowDescription.Column[] columns = rd.columns();
+        ByteBuffer[] values = msg.values();
 
-        //HashMap<String, Integer> row = new HashMap<>();
+        HashMap<String, Integer> row = new HashMap<>();
 
-        //for (short i = 0; i < valueCount; i++) {
-        //  ByteBuffer buf = msg.values().get(i);
-        //  // String payload = "123123";
-        //  // int value = Integer.parseInt(payload);
-        //  int value = 1;
-        //  String field = rd.columns().get(i).name();
-        //  row.put(field, value);
-        //}
+        for (short i = 0; i < valueCount; i++) {
+            ByteBuffer buf = values[i];
+            String payload = "123123";
+            int value = Integer.parseInt(payload);
+            // int value = 1;
+            String field = columns[i].name();
+            row.put(field, value);
+        }
 
-        current.acc2.add(1);
+        current.acc2.add(row);
         // current.acc = reducer.append(current.acc, row);
     }
 

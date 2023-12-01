@@ -50,11 +50,17 @@
                                    :password "wzhivga"
                                    :database "wzhivga"}))
 
-  (.sendQuery -c "select * from generate_series(1,5000000) as x")
 
   (time
    (do
-     (pg.client.flow/interact -c :query {})
+     (.query -c "select * from generate_series(1,5000000)")
+     nil))
+
+
+  (time
+   (do
+     (.sendQuery -c "select * from generate_series(1,5000000)")
+     (Flow/interact -c "query")
      nil))
 
 
@@ -62,8 +68,14 @@
   (time
    (loop [i 0]
      (let [msg (.readMessage -c)]
-       (if (not= i 5000000)
+       (when-not (instance? com.github.igrishaev.ReadyForQuery msg)
          (recur (inc i))))))
+
+  #_
+  (time
+   (do
+     (pg.client.flow/interact -c :query {})
+     nil))
 
 
   (time

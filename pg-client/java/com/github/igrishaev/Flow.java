@@ -52,6 +52,9 @@ public class Flow {
             case ErrorResponse x:
                 handleMessage(x, res);
                 break;
+            case BackendKeyData x:
+                handleMessage(x, conn);
+                break;
 
             default: throw new PGError("Cannot handle this message: %s", msg);
         }
@@ -90,6 +93,11 @@ public class Flow {
 
     static void handleMessage(ErrorResponse msg, Result res) {
         res.addErrorResponse(msg);
+    }
+
+    static void handleMessage(BackendKeyData msg, Connection conn) {
+        conn.setPid(msg.pid());
+        conn.setPrivateKey(msg.secretKey());
     }
 
 }
