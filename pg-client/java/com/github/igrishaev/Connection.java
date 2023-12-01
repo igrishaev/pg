@@ -193,7 +193,7 @@ public class Connection implements Closeable {
     }
 
     public void sendMessage (IMessage msg) {
-        //System.out.println(msg);
+        System.out.println(msg);
         ByteBuffer buf = msg.encode("UTF-8"); // TODO
         try {
             outStream.write(buf.array());
@@ -304,14 +304,14 @@ public class Connection implements Closeable {
 
     public synchronized Object query(String sql) {
         sendQuery(sql);
-        return interact("query");
+        final CljReducer reducer = new CljReducer();
+        return interact("query", reducer);
     }
 
-    private Object interact(String phase) {
-        CljReducer reducer = new CljReducer();
-        Result res = new Result(phase, reducer);
+    private <I, R> List<R> interact(String phase, IReducer<I, R> reducer) {
+        final Result<I, R> res = new Result<>(phase, reducer);
         while (true) {
-            Object msg = readMessage();
+            final Object msg = readMessage();
             System.out.println(msg);
             handleMessage(msg, res);
             if (isEnough(msg, phase)) {
@@ -321,7 +321,7 @@ public class Connection implements Closeable {
         return res.getResults();
     }
 
-    private void handleMessage(Object msg, Result res) {
+    private <I,R> void handleMessage(Object msg, Result<I,R> res) {
 
         switch (msg) {
             case AuthenticationOk ignored:
@@ -363,7 +363,7 @@ public class Connection implements Closeable {
         setParam(msg.param(), msg.value());
     }
 
-    static void handleMessage(RowDescription msg, Result res) {
+    static <I,R> void handleMessage(RowDescription msg, Result<I,R> res) {
         res.addRowDescription(msg);
     }
 
@@ -385,7 +385,7 @@ public class Connection implements Closeable {
         res.addCommandComplete(msg);
     }
 
-    static void handleMessage(ErrorResponse msg, Result res) {
+    static <I, R> void handleMessage(ErrorResponse msg, Result<I,R> res) {
         res.addErrorResponse(msg);
     }
 

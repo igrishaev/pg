@@ -3,24 +3,24 @@ package com.github.igrishaev;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import com.github.igrishaev.IReducer;
 
-public class Result {
+public class Result<I, R> {
 
-     public static class SubResult {
-
-        private ParameterDescription _ParameterDescription;
-        private RowDescription _RowDescription;
-        private CommandComplete _CommandComplete;
-        private Object acc;
+     public class SubResult {
+         public ParameterDescription _ParameterDescription;
+         public RowDescription _RowDescription;
+         public CommandComplete _CommandComplete;
+         public I acc;
     }
 
     public final String phase;
     public ArrayList<SubResult> subResults;
     public ArrayList<ErrorResponse> errorResponses;
     public SubResult current;
-    public IReducer reducer;
+    public IReducer<I, R> reducer;
 
-    public Result (String phase, IReducer reducer) {
+    public Result (String phase, IReducer<I, R> reducer) {
         this.phase = phase;
         this.reducer = reducer;
         subResults = new ArrayList<>();
@@ -28,20 +28,16 @@ public class Result {
         addSubResult();
     }
 
-    public ArrayList<Object> getResults () {
-
+    public ArrayList<R> getResults () {
         if (!errorResponses.isEmpty()) {
             ErrorResponse errRes = errorResponses.get(0);
             throw new PGError("Error response: %s", errRes);
         }
-
-        ArrayList<Object> results = new ArrayList<>();
-
+        final ArrayList<R> results = new ArrayList<>();
         for (SubResult subRes: subResults) {
-            Object result = reducer.finalize(subRes.acc);
+            R result = reducer.finalize(subRes.acc);
             results.add(result);
         }
-
         return results;
     }
 
