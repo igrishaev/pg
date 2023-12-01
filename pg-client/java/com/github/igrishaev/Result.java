@@ -31,7 +31,7 @@ public class Result<I, R> {
     public ArrayList<R> getResults () {
         if (!errorResponses.isEmpty()) {
             ErrorResponse errRes = errorResponses.get(0);
-            throw new PGError("Error response: %s", errRes);
+            throw new PGError("Error response: %s", errRes.fields());
         }
         final ArrayList<R> results = new ArrayList<>();
         for (SubResult subRes: subResults) {

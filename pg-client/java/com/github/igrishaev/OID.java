@@ -1,199 +1,229 @@
 package com.github.igrishaev;
+import java.util.HashMap;
+import java.util.Map;
 
-public class OID {
+public enum OID {
+    BOOL                         (  16),
+    _BOOL                        (1000),
+    BYTEA                        (  17),
+    _BYTEA                       (1001),
+    CHAR                         (  18),
+    _CHAR                        (1002),
+    NAME                         (  19),
+    _NAME                        (1003),
+    INT8                         (  20),
+    _INT8                        (1016),
+    INT2                         (  21),
+    _INT2                        (1005),
+    INT2VECTOR                   (  22),
+    _INT2VECTOR                  (1006),
+    INT4                         (  23),
+    _INT4                        (1007),
+    REGPROC                      (  24),
+    _REGPROC                     (1008),
+    TEXT                         (  25),
+    _TEXT                        (1009),
+    OID                          (  26),
+    _OID                         (1028),
+    TID                          (  27),
+    _TID                         (1010),
+    XID                          (  28),
+    _XID                         (1011),
+    CID                          (  29),
+    _CID                         (1012),
+    OIDVECTOR                    (  30),
+    _OIDVECTOR                   (1013),
+    PG_TYPE                      (  71),
+    _PG_TYPE                     ( 210),
+    PG_ATTRIBUTE                 (  75),
+    _PG_ATTRIBUTE                ( 270),
+    PG_PROC                      (  81),
+    _PG_PROC                     ( 272),
+    PG_CLASS                     (  83),
+    _PG_CLASS                    ( 273),
+    JSON                         ( 114),
+    _JSON                        ( 199),
+    XML                          ( 142),
+    _XML                         ( 143),
+    PG_NODE_TREE                 ( 194),
+    PG_NDISTINCT                 (3361),
+    PG_DEPENDENCIES              (3402),
+    PG_MCV_LIST                  (5017),
+    PG_DDL_COMMAND               (  32),
+    XID8                         (5069),
+    _XID8                        ( 271),
+    POINT                        ( 600),
+    _POINT                       (1017),
+    LSEG                         ( 601),
+    _LSEG                        (1018),
+    PATH                         ( 602),
+    _PATH                        (1019),
+    BOX                          ( 603),
+    _BOX                         (1020),
+    POLYGON                      ( 604),
+    _POLYGON                     (1027),
+    LINE                         ( 628),
+    _LINE                        ( 629),
+    FLOAT4                       ( 700),
+    _FLOAT4                      (1021),
+    FLOAT8                       ( 701),
+    _FLOAT8                      (1022),
+    UNKNOWN                      ( 705),
+    CIRCLE                       ( 718),
+    _CIRCLE                      ( 719),
+    MONEY                        ( 790),
+    _MONEY                       ( 791),
+    MACADDR                      ( 829),
+    _MACADDR                     (1040),
+    INET                         ( 869),
+    _INET                        (1041),
+    CIDR                         ( 650),
+    _CIDR                        ( 651),
+    MACADDR8                     ( 774),
+    _MACADDR8                    ( 775),
+    ACLITEM                      (1033),
+    _ACLITEM                     (1034),
+    BPCHAR                       (1042),
+    _BPCHAR                      (1014),
+    VARCHAR                      (1043),
+    _VARCHAR                     (1015),
+    DATE                         (1082),
+    _DATE                        (1182),
+    TIME                         (1083),
+    _TIME                        (1183),
+    TIMESTAMP                    (1114),
+    _TIMESTAMP                   (1115),
+    TIMESTAMPTZ                  (1184),
+    _TIMESTAMPTZ                 (1185),
+    INTERVAL                     (1186),
+    _INTERVAL                    (1187),
+    TIMETZ                       (1266),
+    _TIMETZ                      (1270),
+    BIT                          (1560),
+    _BIT                         (1561),
+    VARBIT                       (1562),
+    _VARBIT                      (1563),
+    NUMERIC                      (1700),
+    _NUMERIC                     (1231),
+    REFCURSOR                    (1790),
+    _REFCURSOR                   (2201),
+    REGPROCEDURE                 (2202),
+    _REGPROCEDURE                (2207),
+    REGOPER                      (2203),
+    _REGOPER                     (2208),
+    REGOPERATOR                  (2204),
+    _REGOPERATOR                 (2209),
+    REGCLASS                     (2205),
+    _REGCLASS                    (2210),
+    REGCOLLATION                 (4191),
+    _REGCOLLATION                (4192),
+    REGTYPE                      (2206),
+    _REGTYPE                     (2211),
+    REGROLE                      (4096),
+    _REGROLE                     (4097),
+    REGNAMESPACE                 (4089),
+    _REGNAMESPACE                (4090),
+    UUID                         (2950),
+    _UUID                        (2951),
+    PG_LSN                       (3220),
+    _PG_LSN                      (3221),
+    TSVECTOR                     (3614),
+    _TSVECTOR                    (3643),
+    GTSVECTOR                    (3642),
+    _GTSVECTOR                   (3644),
+    TSQUERY                      (3615),
+    _TSQUERY                     (3645),
+    REGCONFIG                    (3734),
+    _REGCONFIG                   (3735),
+    REGDICTIONARY                (3769),
+    _REGDICTIONARY               (3770),
+    JSONB                        (3802),
+    _JSONB                       (3807),
+    JSONPATH                     (4072),
+    _JSONPATH                    (4073),
+    TXID_SNAPSHOT                (2970),
+    _TXID_SNAPSHOT               (2949),
+    PG_SNAPSHOT                  (5038),
+    _PG_SNAPSHOT                 (5039),
+    INT4RANGE                    (3904),
+    _INT4RANGE                   (3905),
+    NUMRANGE                     (3906),
+    _NUMRANGE                    (3907),
+    TSRANGE                      (3908),
+    _TSRANGE                     (3909),
+    TSTZRANGE                    (3910),
+    _TSTZRANGE                   (3911),
+    DATERANGE                    (3912),
+    _DATERANGE                   (3913),
+    INT8RANGE                    (3926),
+    _INT8RANGE                   (3927),
+    INT4MULTIRANGE               (4451),
+    _INT4MULTIRANGE              (6150),
+    NUMMULTIRANGE                (4532),
+    _NUMMULTIRANGE               (6151),
+    TSMULTIRANGE                 (4533),
+    _TSMULTIRANGE                (6152),
+    TSTZMULTIRANGE               (4534),
+    _TSTZMULTIRANGE              (6153),
+    DATEMULTIRANGE               (4535),
+    _DATEMULTIRANGE              (6155),
+    INT8MULTIRANGE               (4536),
+    _INT8MULTIRANGE              (6157),
+    RECORD                       (2249),
+    _RECORD                      (2287),
+    CSTRING                      (2275),
+    _CSTRING                     (1263),
+    ANY                          (2276),
+    ANYARRAY                     (2277),
+    VOID                         (2278),
+    TRIGGER                      (2279),
+    EVENT_TRIGGER                (3838),
+    LANGUAGE_HANDLER             (2280),
+    INTERNAL                     (2281),
+    ANYELEMENT                   (2283),
+    ANYNONARRAY                  (2776),
+    ANYENUM                      (3500),
+    FDW_HANDLER                  (3115),
+    INDEX_AM_HANDLER             ( 325),
+    TSM_HANDLER                  (3310),
+    TABLE_AM_HANDLER             ( 269),
+    ANYRANGE                     (3831),
+    ANYCOMPATIBLE                (5077),
+    ANYCOMPATIBLEARRAY           (5078),
+    ANYCOMPATIBLENONARRAY        (5079),
+    ANYCOMPATIBLERANGE           (5080),
+    ANYMULTIRANGE                (4537),
+    ANYCOMPATIBLEMULTIRANGE      (4538),
+    PG_BRIN_BLOOM_SUMMARY        (4600),
+    PG_BRIN_MINMAX_MULTI_SUMMARY (4601);
 
-    public static int BOOL                         =   16;
-    public static int _BOOL                        = 1000;
-    public static int BYTEA                        =   17;
-    public static int _BYTEA                       = 1001;
-    public static int CHAR                         =   18;
-    public static int _CHAR                        = 1002;
-    public static int NAME                         =   19;
-    public static int _NAME                        = 1003;
-    public static int INT8                         =   20;
-    public static int _INT8                        = 1016;
-    public static int INT2                         =   21;
-    public static int _INT2                        = 1005;
-    public static int INT2VECTOR                   =   22;
-    public static int _INT2VECTOR                  = 1006;
-    public static int INT4                         =   23;
-    public static int _INT4                        = 1007;
-    public static int REGPROC                      =   24;
-    public static int _REGPROC                     = 1008;
-    public static int TEXT                         =   25;
-    public static int _TEXT                        = 1009;
-    public static int OID                          =   26;
-    public static int _OID                         = 1028;
-    public static int TID                          =   27;
-    public static int _TID                         = 1010;
-    public static int XID                          =   28;
-    public static int _XID                         = 1011;
-    public static int CID                          =   29;
-    public static int _CID                         = 1012;
-    public static int OIDVECTOR                    =   30;
-    public static int _OIDVECTOR                   = 1013;
-    public static int PG_TYPE                      =   71;
-    public static int _PG_TYPE                     =  210;
-    public static int PG_ATTRIBUTE                 =   75;
-    public static int _PG_ATTRIBUTE                =  270;
-    public static int PG_PROC                      =   81;
-    public static int _PG_PROC                     =  272;
-    public static int PG_CLASS                     =   83;
-    public static int _PG_CLASS                    =  273;
-    public static int JSON                         =  114;
-    public static int _JSON                        =  199;
-    public static int XML                          =  142;
-    public static int _XML                         =  143;
-    public static int PG_NODE_TREE                 =  194;
-    public static int PG_NDISTINCT                 = 3361;
-    public static int PG_DEPENDENCIES              = 3402;
-    public static int PG_MCV_LIST                  = 5017;
-    public static int PG_DDL_COMMAND               =   32;
-    public static int XID8                         = 5069;
-    public static int _XID8                        =  271;
-    public static int POINT                        =  600;
-    public static int _POINT                       = 1017;
-    public static int LSEG                         =  601;
-    public static int _LSEG                        = 1018;
-    public static int PATH                         =  602;
-    public static int _PATH                        = 1019;
-    public static int BOX                          =  603;
-    public static int _BOX                         = 1020;
-    public static int POLYGON                      =  604;
-    public static int _POLYGON                     = 1027;
-    public static int LINE                         =  628;
-    public static int _LINE                        =  629;
-    public static int FLOAT4                       =  700;
-    public static int _FLOAT4                      = 1021;
-    public static int FLOAT8                       =  701;
-    public static int _FLOAT8                      = 1022;
-    public static int UNKNOWN                      =  705;
-    public static int CIRCLE                       =  718;
-    public static int _CIRCLE                      =  719;
-    public static int MONEY                        =  790;
-    public static int _MONEY                       =  791;
-    public static int MACADDR                      =  829;
-    public static int _MACADDR                     = 1040;
-    public static int INET                         =  869;
-    public static int _INET                        = 1041;
-    public static int CIDR                         =  650;
-    public static int _CIDR                        =  651;
-    public static int MACADDR8                     =  774;
-    public static int _MACADDR8                    =  775;
-    public static int ACLITEM                      = 1033;
-    public static int _ACLITEM                     = 1034;
-    public static int BPCHAR                       = 1042;
-    public static int _BPCHAR                      = 1014;
-    public static int VARCHAR                      = 1043;
-    public static int _VARCHAR                     = 1015;
-    public static int DATE                         = 1082;
-    public static int _DATE                        = 1182;
-    public static int TIME                         = 1083;
-    public static int _TIME                        = 1183;
-    public static int TIMESTAMP                    = 1114;
-    public static int _TIMESTAMP                   = 1115;
-    public static int TIMESTAMPTZ                  = 1184;
-    public static int _TIMESTAMPTZ                 = 1185;
-    public static int INTERVAL                     = 1186;
-    public static int _INTERVAL                    = 1187;
-    public static int TIMETZ                       = 1266;
-    public static int _TIMETZ                      = 1270;
-    public static int BIT                          = 1560;
-    public static int _BIT                         = 1561;
-    public static int VARBIT                       = 1562;
-    public static int _VARBIT                      = 1563;
-    public static int NUMERIC                      = 1700;
-    public static int _NUMERIC                     = 1231;
-    public static int REFCURSOR                    = 1790;
-    public static int _REFCURSOR                   = 2201;
-    public static int REGPROCEDURE                 = 2202;
-    public static int _REGPROCEDURE                = 2207;
-    public static int REGOPER                      = 2203;
-    public static int _REGOPER                     = 2208;
-    public static int REGOPERATOR                  = 2204;
-    public static int _REGOPERATOR                 = 2209;
-    public static int REGCLASS                     = 2205;
-    public static int _REGCLASS                    = 2210;
-    public static int REGCOLLATION                 = 4191;
-    public static int _REGCOLLATION                = 4192;
-    public static int REGTYPE                      = 2206;
-    public static int _REGTYPE                     = 2211;
-    public static int REGROLE                      = 4096;
-    public static int _REGROLE                     = 4097;
-    public static int REGNAMESPACE                 = 4089;
-    public static int _REGNAMESPACE                = 4090;
-    public static int UUID                         = 2950;
-    public static int _UUID                        = 2951;
-    public static int PG_LSN                       = 3220;
-    public static int _PG_LSN                      = 3221;
-    public static int TSVECTOR                     = 3614;
-    public static int _TSVECTOR                    = 3643;
-    public static int GTSVECTOR                    = 3642;
-    public static int _GTSVECTOR                   = 3644;
-    public static int TSQUERY                      = 3615;
-    public static int _TSQUERY                     = 3645;
-    public static int REGCONFIG                    = 3734;
-    public static int _REGCONFIG                   = 3735;
-    public static int REGDICTIONARY                = 3769;
-    public static int _REGDICTIONARY               = 3770;
-    public static int JSONB                        = 3802;
-    public static int _JSONB                       = 3807;
-    public static int JSONPATH                     = 4072;
-    public static int _JSONPATH                    = 4073;
-    public static int TXID_SNAPSHOT                = 2970;
-    public static int _TXID_SNAPSHOT               = 2949;
-    public static int PG_SNAPSHOT                  = 5038;
-    public static int _PG_SNAPSHOT                 = 5039;
-    public static int INT4RANGE                    = 3904;
-    public static int _INT4RANGE                   = 3905;
-    public static int NUMRANGE                     = 3906;
-    public static int _NUMRANGE                    = 3907;
-    public static int TSRANGE                      = 3908;
-    public static int _TSRANGE                     = 3909;
-    public static int TSTZRANGE                    = 3910;
-    public static int _TSTZRANGE                   = 3911;
-    public static int DATERANGE                    = 3912;
-    public static int _DATERANGE                   = 3913;
-    public static int INT8RANGE                    = 3926;
-    public static int _INT8RANGE                   = 3927;
-    public static int INT4MULTIRANGE               = 4451;
-    public static int _INT4MULTIRANGE              = 6150;
-    public static int NUMMULTIRANGE                = 4532;
-    public static int _NUMMULTIRANGE               = 6151;
-    public static int TSMULTIRANGE                 = 4533;
-    public static int _TSMULTIRANGE                = 6152;
-    public static int TSTZMULTIRANGE               = 4534;
-    public static int _TSTZMULTIRANGE              = 6153;
-    public static int DATEMULTIRANGE               = 4535;
-    public static int _DATEMULTIRANGE              = 6155;
-    public static int INT8MULTIRANGE               = 4536;
-    public static int _INT8MULTIRANGE              = 6157;
-    public static int RECORD                       = 2249;
-    public static int _RECORD                      = 2287;
-    public static int CSTRING                      = 2275;
-    public static int _CSTRING                     = 1263;
-    public static int ANY                          = 2276;
-    public static int ANYARRAY                     = 2277;
-    public static int VOID                         = 2278;
-    public static int TRIGGER                      = 2279;
-    public static int EVENT_TRIGGER                = 3838;
-    public static int LANGUAGE_HANDLER             = 2280;
-    public static int INTERNAL                     = 2281;
-    public static int ANYELEMENT                   = 2283;
-    public static int ANYNONARRAY                  = 2776;
-    public static int ANYENUM                      = 3500;
-    public static int FDW_HANDLER                  = 3115;
-    public static int INDEX_AM_HANDLER             =  325;
-    public static int TSM_HANDLER                  = 3310;
-    public static int TABLE_AM_HANDLER             =  269;
-    public static int ANYRANGE                     = 3831;
-    public static int ANYCOMPATIBLE                = 5077;
-    public static int ANYCOMPATIBLEARRAY           = 5078;
-    public static int ANYCOMPATIBLENONARRAY        = 5079;
-    public static int ANYCOMPATIBLERANGE           = 5080;
-    public static int ANYMULTIRANGE                = 4537;
-    public static int ANYCOMPATIBLEMULTIRANGE      = 4538;
-    public static int PG_BRIN_BLOOM_SUMMARY        = 4600;
-    public static int PG_BRIN_MINMAX_MULTI_SUMMARY = 4601;
+    private final int code;
+
+    private final static Map<Integer, OID> intToItem;
+
+    static {
+        intToItem = new HashMap<>();
+        for (OID oid: values()) {
+            intToItem.put(oid.code, oid);
+        }
+    }
+
+    OID(int code) {
+        this.code = code;
+    }
+
+    public static OID ofInt (int code) {
+        final OID result = intToItem.get(code);
+        if (result == null) {
+            throw new PGError("unknown OID, code: %s", code);
+        }
+        else {
+            return result;
+        }
+    }
+
+    public int toInt() {
+        return code;
+    }
 
 }

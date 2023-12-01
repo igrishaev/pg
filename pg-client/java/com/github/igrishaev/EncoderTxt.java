@@ -12,7 +12,7 @@ public class EncoderTxt {
         return encode(x, null);
     }
 
-    public String encode(Symbol x, Integer oid) {
+    public String encode(Symbol x, OID oid) {
 
         if (oid == null || oid == OID.TEXT || oid == OID.VARCHAR) {
             return x.toString();
@@ -39,7 +39,7 @@ public class EncoderTxt {
         return encode(x, null);
     }
 
-    public String encode(Long x, Integer oid) {
+    public String encode(Long x, OID oid) {
         if (oid == null || oid == OID.INT2 || oid == OID.INT4 || oid == OID.INT8) {
             return x.toString();
         }
@@ -83,20 +83,11 @@ public class EncoderTxt {
         return encode(x, null);
     }
 
-    public String encode(Boolean x, Integer oid) {
-
-        if (oid == OID.BOOL || oid == null) {
-            if (x) {
-                return "t";
-            }
-            else {
-                return "f";
-            }
-        }
-        else {
-            throw new PGError("Encoding error, value: %s, oid:", x, oid);
-        }
-
+    public String encode(Boolean x, OID oid) {
+        return switch (oid) {
+            case OID.BOOL -> x ? "t" : "f";
+            default -> throw new PGError("Encoding error, value: %s, oid:", x, oid);
+        };
     }
 
     //

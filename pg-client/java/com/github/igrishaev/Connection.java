@@ -165,8 +165,8 @@ public class Connection implements Closeable {
 
     private void connect () {
 
-        Integer port = getPort();
-        String host = getHost();
+        final int port = getPort();
+        final String host = getHost();
 
         try {
             socket = new Socket(host, port, true);

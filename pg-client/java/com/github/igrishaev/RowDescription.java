@@ -12,7 +12,7 @@ public record RowDescription (
             String name,
             int tableOid,
             int columnOid,
-            int typeOid,
+            OID typeOid,
             short typeLen,
             int typeMod,
             short format) {
@@ -26,7 +26,7 @@ public record RowDescription (
                     BBUtil.getCString(buf, "UTF-8"),
                     buf.getInt(),
                     buf.getShort(),
-                    buf.getInt(),
+                    OID.ofInt(buf.getInt()),
                     buf.getShort(),
                     buf.getInt(),
                     buf.getShort());

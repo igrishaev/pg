@@ -14,14 +14,13 @@ public class EncoderBin {
         return encode(x, null);
     }
 
-    public ByteBuffer encode(Symbol x, Integer oid) {
+    public ByteBuffer encode(Symbol x, OID oid) {
 
-        if (oid == null || oid == OID.TEXT || oid == OID.VARCHAR) {
-            return ByteBuffer.allocate(4);
-        }
-        else {
-            throw new PGError("Encoding error, value: %s, oid:", x, oid);
-        }
+        return switch (oid) {
+            case TEXT, VARCHAR -> ByteBuffer.allocate(4);
+            case null -> ByteBuffer.allocate(4);
+            default -> throw new PGError("Encoding error, value: %s, oid:", x, oid);
+        };
 
     }
 
