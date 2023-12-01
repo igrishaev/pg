@@ -67,14 +67,6 @@ public class Connection implements Closeable {
         secretKey = key;
     }
 
-    public int getPrivateKey () {
-        return secretKey;
-    }
-
-    public OutputStream getOutputStream () {
-        return outStream;
-    }
-
     public InputStream getInputStream () {
         return inStream;
     }
@@ -96,12 +88,8 @@ public class Connection implements Closeable {
         connect();
     }
 
-    public int getPid () {
+    public synchronized int getPid () {
         return pid;
-    }
-
-    public void setPid (int pid) {
-        this.pid = pid;
     }
 
     public Boolean isClosed () {
@@ -167,7 +155,7 @@ public class Connection implements Closeable {
                              getDatabase());
     }
 
-    private void connect () {
+    private synchronized void connect () {
 
         final int port = getPort();
         final String host = getHost();
@@ -194,6 +182,8 @@ public class Connection implements Closeable {
             throw new PGError(e, "Cannot get an output stream");
         }
 
+        sendStartupMessage();
+        interact(Phase.AUTH, null);
     }
 
     public void sendMessage (IMessage msg) {
@@ -309,11 +299,11 @@ public class Connection implements Closeable {
     public synchronized Object query(String sql) {
         sendQuery(sql);
         final CljReducer reducer = new CljReducer();
-        return interact(Phase.AUTH, reducer);
+        return interact(Phase.QUERY, reducer).getResults();
     }
 
-    private <I, R> List<R> interact(Phase phase, IReducer<I, R> reducer) {
-        final Result<I, R> res = new Result<>(phase, reducer);
+    private <I, R> Result<I, R> interact(Phase phase, IReducer<I, R> reducer) {
+        Result<I, R> res = new Result<>(phase, reducer);
         while (true) {
             final Object msg = readMessage();
             System.out.println(msg);
@@ -322,7 +312,7 @@ public class Connection implements Closeable {
                 break;
             }
         }
-        return res.getResults();
+        return res;
     }
 
     private <I,R> void handleMessage(Object msg, Result<I,R> res) {
@@ -418,8 +408,8 @@ public class Connection implements Closeable {
     }
 
     public void handleMessage(BackendKeyData msg) {
-        setPid(msg.pid());
-        setPrivateKey(msg.secretKey());
+        pid = msg.pid();
+        secretKey = msg.secretKey();
     }
 
     static Boolean isEnough (Object msg, Phase phase) {
