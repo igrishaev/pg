@@ -40,7 +40,7 @@ public class Connection implements Closeable {
     private OutputStream outStream;
     private Map<String, String> params;
 
-    public DecoderTxt decoderTxr;
+    private final DecoderTxt decoderTxr;
 
     public void close () {
         sendTerminate();
@@ -364,11 +364,27 @@ public class Connection implements Closeable {
     }
 
     static <I,R> void handleMessage(RowDescription msg, Result<I,R> res) {
-        res.addRowDescription(msg);
+        short size = msg.columnCount();
+        OID[] oids = new OID[size];
+        Object[] keys = new Object[size];
+        for (short i = 0; i < size; i++) {
+            RowDescription.Column col = msg.columns()[i];
+            keys[i] = col.name();
+            oids[i] = col.typeOid();
+        }
+        res.setCurrentKeys(keys);
+        res.setCurrentOIDs(oids);
     }
 
-    static void handleMessage(DataRow msg, Result res) {
-        res.addDataRow(msg);
+    private <I,R> void handleMessage(DataRow msg, Result<I,R> res) {
+        short size = msg.valueCount();
+        OID[] oids = res.getCurrentOIDs();
+        ByteBuffer[] buffers = msg.values();
+        Object[] values = new Object[size];
+        for (short i = 0; i < size; i++) {
+            values[i] = decoderTxr.decode(buffers[i], oids[i]);
+        }
+        res.setCurrentValues(values);
     }
 
     private void handleMessage(ReadyForQuery msg) {
@@ -381,7 +397,7 @@ public class Connection implements Closeable {
         };
     }
 
-    static void handleMessage(CommandComplete msg, Result res) {
+    static <I, R> void handleMessage(CommandComplete msg, Result<I, R> res) {
         res.addCommandComplete(msg);
     }
 

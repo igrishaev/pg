@@ -2,6 +2,8 @@ package com.github.igrishaev;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.util.UUID;
+import java.math.BigDecimal;
 
 public class DecoderTxt {
     private String encoding = "UTF-8";
@@ -20,12 +22,23 @@ public class DecoderTxt {
 
     public Object decode(ByteBuffer buf, OID oid) {
 
-        String payload = getString(buf);
-
         return switch (oid) {
-            case INT2 -> Short.parseShort(payload);
-            case INT4 -> Integer.parseInt(payload);
-            case INT8 -> Long.parseLong(payload);
+
+            case INT2 -> Short.parseShort(getString(buf));
+            case INT4, OID -> Integer.parseInt(getString(buf));
+            case INT8 -> Long.parseLong(getString(buf));
+
+            case BYTEA -> buf.array();
+            case TEXT, VARCHAR -> getString(buf);
+            case CHAR -> buf.getChar();
+
+            case UUID -> UUID.fromString(getString(buf));
+
+            case FLOAT4 -> Float.parseFloat(getString(buf));
+            case FLOAT8 -> Double.parseDouble(getString(buf));
+
+            case NUMERIC -> new BigDecimal(getString(buf));
+
             case BOOL -> {
                 byte b = buf.get();
                 yield switch ((char) b) {
@@ -34,7 +47,7 @@ public class DecoderTxt {
                     default -> throw new PGError("aaa");
                 };
             }
-            default -> throw new PGError("cannot decode");
+            default -> getString(buf);
         };
     }
 

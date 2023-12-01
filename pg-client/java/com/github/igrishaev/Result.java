@@ -9,8 +9,9 @@ public class Result<I, R> {
 
      public class SubResult {
          public ParameterDescription _ParameterDescription;
-         public RowDescription _RowDescription;
          public CommandComplete _CommandComplete;
+         public Object[] keys;
+         public OID[] oids;
          public I acc;
     }
 
@@ -45,32 +46,12 @@ public class Result<I, R> {
         errorResponses.add(msg);
     }
 
-    public void addDataRow (DataRow msg) {
-
-        RowDescription rd = current._RowDescription;
-        short valueCount = rd.columnCount();
-        RowDescription.Column[] columns = rd.columns();
-        ByteBuffer[] values = msg.values();
-
-        HashMap<String, Integer> row = new HashMap<>();
-
-        for (short i = 0; i < valueCount; i++) {
-            ByteBuffer buf = values[i];
-            String payload = "123123";
-            int value = Integer.parseInt(payload);
-            // int value = 1;
-            String field = columns[i].name();
-            row.put(field, value);
-        }
-        current.acc = reducer.append(current.acc, new Object[1], new Object[1]);
+    public void setCurrentValues (Object[] values) {
+        current.acc = reducer.append(current.acc, current.keys, values);
     }
 
     public ParameterDescription getParameterDescription () {
         return current._ParameterDescription;
-    }
-
-    public RowDescription getRowDescription () {
-        return current._RowDescription;
     }
 
     public CommandComplete getCommandComplete () {
@@ -87,8 +68,16 @@ public class Result<I, R> {
         current._ParameterDescription = msg;
     }
 
-    public void addRowDescription (RowDescription msg) {
-        current._RowDescription = msg;
+    public OID[] getCurrentOIDs () {
+        return current.oids;
+    }
+
+    public void setCurrentOIDs (OID[] oids) {
+        current.oids = oids;
+    }
+
+    public void setCurrentKeys (Object[] keys) {
+        current.keys = keys;
     }
 
     public void addCommandComplete (CommandComplete msg) {
