@@ -1,6 +1,5 @@
 package com.github.igrishaev;
 
-import clojure.lang.Keyword;
 import clojure.lang.RT;
 import java.io.Closeable;
 import java.io.IOException;
@@ -16,25 +15,13 @@ import java.io.BufferedOutputStream;
 
 public class Connection implements Closeable {
 
-    private static final Keyword KW_PORT = Keyword.intern("port");
-    private static final Keyword KW_HOST = Keyword.intern("host");
-    private static final Keyword KW_USER = Keyword.intern("user");
-    private static final Keyword KW_DB = Keyword.intern("database");
-    private static final Keyword KW_PASS = Keyword.intern("password");
-    private static final Keyword KW_PG_PARAMS = Keyword.intern("pg-params");
-    private static final Keyword KW_PROTO_VER = Keyword.intern("protocol-version");
-
-    private static final String COPY_FAIL_MSG = "COPY has been interrupted by the client";
-    private static final Integer SSL_CODE = 80877103;
-
+    private final Config config;
     public final String id;
     public final long createdAt;
 
-    private Boolean isSSL = false;
     private int pid;
     private int secretKey;
-    private Keyword txStatus;
-    private Map<Keyword, Object> config;
+    private TXStatus txStatus;
     private Socket socket;
     private InputStream inStream;
     private OutputStream outStream;
@@ -47,44 +34,24 @@ public class Connection implements Closeable {
         closeSocket();
     }
 
-    public Boolean getSSL () {
-        return isSSL;
-    }
-
-    public Map getConfig () {
-        return config;
-    }
-
-    public Keyword getTxStatus () {
+    public TXStatus getTxStatus () {
         return txStatus;
     }
 
-    public void setTxStatus (Keyword status) {
-        txStatus = status;
-    }
-
-    public void setPrivateKey (int key) {
-        secretKey = key;
-    }
-
-    public InputStream getInputStream () {
-        return inStream;
-    }
-
-    public Integer nextID () {
+    private Integer nextID () {
         return RT.nextID();
     }
 
-    public Connection(Map<Keyword, Object> cljConfig) {
+    public Connection(String user, String database) {
+        this(new Config.Builder(user, database).build());
+    }
 
-        config = cljConfig;
-        params = new HashMap<>();
-
-        decoderTxr = new DecoderTxt();
-
-        id = String.format("pg%d", nextID());
-        createdAt = System.currentTimeMillis();
-
+    public Connection(Config config) {
+        this.config = config;
+        this.params = new HashMap<>();
+        this.decoderTxr = new DecoderTxt();
+        this.id = String.format("pg%d", nextID());
+        this.createdAt = System.currentTimeMillis();
         connect();
     }
 
@@ -111,40 +78,34 @@ public class Connection implements Closeable {
 
     private void setParam (String param, String value) {
         params.put(param, value);
-        switch (param) {
+        switch (param.toLowerCase()) {
+            // client_encoding
+            // datestyle
+            // timezone
             case "server_encoding":
                 decoderTxr.setEncoding(value);
         }
     }
 
     public Integer getPort () {
-        Long port = (Long) config.get(KW_PORT);
-        return port.intValue();
+        return config.port();
     }
 
     public String getHost () {
-        return (String) config.get(KW_HOST);
+        return config.host();
     }
 
     public String getUser () {
-        return (String) config.get(KW_USER);
-    }
-
-    private Integer getProtocolVersion () {
-        Long proto = (Long) config.get(KW_PROTO_VER);
-        return proto.intValue();
+        return config.user();
     }
 
     private Map<String, String> getPgParams () {
-        return (Map<String, String>) config.get(KW_PG_PARAMS);
+        return config.pgParams();
     }
 
-    public String getPassword () {
-        return (String) config.get(KW_PASS);
-    }
 
     public String getDatabase () {
-        return (String) config.get(KW_DB);
+        return config.database();
     }
 
     public String toString () {
@@ -153,6 +114,11 @@ public class Connection implements Closeable {
                              getHost(),
                              getPort(),
                              getDatabase());
+    }
+
+    private void authenticate () {
+        sendStartupMessage();
+        interact(Phase.AUTH, null);
     }
 
     private synchronized void connect () {
@@ -181,8 +147,7 @@ public class Connection implements Closeable {
             throw new PGError(e, "Cannot get an output stream");
         }
 
-        sendStartupMessage();
-        interact(Phase.AUTH, null);
+        authenticate();
     }
 
     public void sendMessage (IMessage msg) {
@@ -210,10 +175,12 @@ public class Connection implements Closeable {
 
     public void sendStartupMessage () {
         StartupMessage msg =
-            new StartupMessage(getProtocolVersion(),
-                               getUser(),
-                               getDatabase(),
-                               getPgParams());
+            new StartupMessage(
+                    config.protocolVersion(),
+                    config.user(),
+                    config.database(),
+                    config.pgParams()
+            );
         sendMessage(msg);
     }
 
@@ -230,7 +197,7 @@ public class Connection implements Closeable {
     }
 
     public void sendCopyFail () {
-        sendCopyFail(COPY_FAIL_MSG);
+        sendCopyFail(Const.COPY_FAIL_MSG);
     }
 
     public void sendCopyFail (String errorMessage) {
@@ -258,7 +225,7 @@ public class Connection implements Closeable {
     }
 
     private void sendSSLRequest () {
-        sendMessage(new SSLRequest(SSL_CODE));
+        sendMessage(new SSLRequest(Const.SSL_CODE));
     }
 
     private byte[] readNBytes (int len) {
@@ -350,7 +317,7 @@ public class Connection implements Closeable {
     }
 
     private void handleMessage() {
-        sendPassword(getPassword());
+        sendPassword(config.password());
     }
 
     private void handleMessage(ParameterStatus msg) {
@@ -390,13 +357,7 @@ public class Connection implements Closeable {
     }
 
     private void handleMessage(ReadyForQuery msg) {
-        char tag = (char)msg.txStatus();
-        txStatus = switch (tag) {
-            case 'I' -> (Keyword.intern("I"));
-            case 'E' -> (Keyword.intern("E"));
-            case 'T' -> (Keyword.intern("T"));
-            default -> throw new PGError("unknown tx status: %s", tag);
-        };
+        txStatus = msg.txStatus();
     }
 
     static <I, R> void handleMessage(CommandComplete msg, Result<I, R> res) {

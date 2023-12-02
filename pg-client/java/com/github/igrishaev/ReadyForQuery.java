@@ -2,9 +2,9 @@ package com.github.igrishaev;
 
 import java.nio.ByteBuffer;
 
-public record ReadyForQuery (byte txStatus) {
+public record ReadyForQuery (TXStatus txStatus) {
     public static ReadyForQuery fromByteBuffer(ByteBuffer buf) {
-        byte status = buf.get();
+        TXStatus status = TXStatus.ofChar((char) buf.get());
         return new ReadyForQuery(status);
     }
 }
