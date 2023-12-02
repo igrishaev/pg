@@ -1,8 +1,7 @@
 (ns pg.client
 
   (:import
-   com.github.igrishaev.Connection
-   com.github.igrishaev.Flow)
+   com.github.igrishaev.Connection)
 
   (:refer-clojure :exclude [group-by first])
   (:require
@@ -94,8 +93,7 @@
 
   (^Map [^Connection conn sql oids]
    (let [statement
-         (.generateStatement conn)
-
+         "aaa"
          _
          (.sendParse conn statement sql oids)
 
@@ -150,8 +148,6 @@
   Returns the connection.
   "
   [^Connection conn]
-  (.sendStartupMessage conn)
-  (Flow/interact conn "auth")
   conn)
 
 
@@ -187,7 +183,7 @@
   "
   Terminate a connection.
   "
-  [conn]
+  [^Connection conn]
   (when-not (closed? conn)
     (.close conn)))
 

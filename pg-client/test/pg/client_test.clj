@@ -1,7 +1,6 @@
 (ns pg.client-test
   (:import
-   com.github.igrishaev.Connection
-   com.github.igrishaev.Flow)
+   com.github.igrishaev.Connection)
   (:import
    java.io.ByteArrayInputStream
    java.io.ByteArrayOutputStream
@@ -38,29 +37,35 @@
   (time
    (let [conn (jdbc/get-connection {:dbtype "postgres"
                                     :port 15432
-                                    :dbname "wzhivga"
-                                    :user "wzhivga"
-                                    :password "wzhivga"})]
+                                    :dbname "ivan"
+                                    :user "ivan"
+                                    :password "ivan"})]
 
-     (jdbc/execute! conn ["select * from generate_series(1,5000000)"])
+     (jdbc/execute! conn ["select * from generate_series(1,5)"])
      nil))
 
   (def ^Connection -c (pg/connect {:port 15432
-                                   :user "wzhivga"
-                                   :password "wzhivga"
-                                   :database "wzhivga"}))
+                                   :user "ivan"
+                                   :password "ivan"
+                                   :database "ivan"}))
+
+
+  (def ^Connection -c
+    (new Connection
+         "127.0.0.1"
+         (int 15432)
+         "ivan"
+         "ivan"
+         "ivan"))
+
+  ;; (.sendStartupMessage -c)
+  ;; (.readMessage -c)
+  ;; (.close -c)
 
 
   (time
    (do
-     (.query -c "select * from generate_series(1,5000000)")
-     nil))
-
-
-  (time
-   (do
-     (.sendQuery -c "select * from generate_series(1,5000000)")
-     (Flow/interact -c "query")
+     (.query -c "select * from generate_series(1,5)")
      nil))
 
 

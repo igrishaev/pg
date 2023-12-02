@@ -41,6 +41,15 @@ public class Result<I, R> {
         return results;
     }
 
+    public R getResult () {
+        if (subResults.isEmpty()) {
+            return null;
+        }
+        else {
+            return reducer.finalize(subResults.get(0).acc);
+        }
+    }
+
     public void addErrorResponse (ErrorResponse msg) {
         errorResponses.add(msg);
     }
@@ -51,7 +60,9 @@ public class Result<I, R> {
 
     public void addSubResult () {
         current = new SubResult();
-        current.acc = reducer.initiate();
+        if (reducer != null) {
+            current.acc = reducer.initiate();
+        }
         subResults.add(current);
     }
 

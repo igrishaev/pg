@@ -59,3 +59,22 @@
   - fn-init
   - fn-reduce
   - fn-finalize
+
+
+StartupMessage[protocolVersion=196608, user=ivan, database=ivan, options={}]
+AuthenticationOk[]
+ParameterStatus[param=application_name, value=]
+ParameterStatus[param=client_encoding, value=UTF8]
+ParameterStatus[param=DateStyle, value=ISO, MDY]
+ParameterStatus[param=default_transaction_read_only, value=off]
+ParameterStatus[param=in_hot_standby, value=off]
+ParameterStatus[param=integer_datetimes, value=on]
+ParameterStatus[param=IntervalStyle, value=postgres]
+ParameterStatus[param=is_superuser, value=on]
+ParameterStatus[param=server_encoding, value=UTF8]
+ParameterStatus[param=server_version, value=14.5]
+ParameterStatus[param=session_authorization, value=ivan]
+ParameterStatus[param=standard_conforming_strings, value=on]
+ParameterStatus[param=TimeZone, value=Europe/Moscow]
+BackendKeyData[pid=42940, secretKey=843350714]
+ReadyForQuery[txStatus=IDLE]

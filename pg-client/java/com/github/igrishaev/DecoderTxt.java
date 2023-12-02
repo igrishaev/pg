@@ -25,7 +25,7 @@ public class DecoderTxt {
 
     private String getString(ByteBuffer buf) {
         try {
-            return new String(buf.array(), encoding);
+            return new String(buf.array(), buf.position(), buf.limit(), encoding);
         }
         catch (UnsupportedEncodingException e) {
             throw new PGError(e, "could not get a string");

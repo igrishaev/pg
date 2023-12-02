@@ -3,10 +3,10 @@ package com.github.igrishaev;
 import clojure.lang.RT;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.util.Collections;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,8 +23,8 @@ public class Connection implements Closeable {
     private int secretKey;
     private TXStatus txStatus;
     private Socket socket;
-    private InputStream inStream;
-    private OutputStream outStream;
+    private BufferedInputStream inStream;
+    private BufferedOutputStream outStream;
     private Map<String, String> params;
 
     private final DecoderTxt decoderTxt;
@@ -80,16 +80,19 @@ public class Connection implements Closeable {
         return params.get(param);
     }
 
+    public synchronized Map<String, String> getParams () {
+        return Collections.unmodifiableMap(params);
+    }
+
     private void setParam (String param, String value) {
-        String paramLower = param.toLowerCase();
-        params.put(paramLower, value);
-        switch (paramLower) {
+        params.put(param, value);
+        switch (param) {
             // client_encoding
             case "server_encoding":
                 decoderTxt.setEncoding(value);
-            case "datestyle":
+            case "DateStyle":
                 decoderTxt.setDateStyle(value);
-            case "timezone":
+            case "TimeZone":
                 decoderTxt.setTimeZone(value);
         }
     }
@@ -131,7 +134,7 @@ public class Connection implements Closeable {
                              getDatabase());
     }
 
-    private void authenticate () {
+    public void authenticate () {
         sendStartupMessage();
         interact(Phase.AUTH, null);
     }
@@ -176,6 +179,7 @@ public class Connection implements Closeable {
         ByteBuffer buf = msg.encode(getClientEncoding());
         try {
             outStream.write(buf.array());
+            outStream.flush();
         }
         catch (IOException e) {
             throw new PGError(e, "could not write bb to the out stream");
@@ -258,16 +262,20 @@ public class Connection implements Closeable {
         }
     }
 
-    private Object readMessage () {
+    public Object readMessage () {
 
         byte[] bufHeader = readNBytes(5);
         ByteBuffer bbHeader = ByteBuffer.wrap(bufHeader);
+
+        // System.out.println(Arrays.toString(bufHeader));
 
         byte bTag = bbHeader.get();
         int bodySize = bbHeader.getInt() - 4;
 
         byte[] bufBody = readNBytes(bodySize);
         ByteBuffer bbBody = ByteBuffer.wrap(bufBody);
+
+        // System.out.println(Arrays.toString(bufBody));
 
         return switch ((char) bTag) {
             case 'R' -> AuthenticationResponse.fromByteBuffer(bbBody).parseResponse(bbBody);
@@ -289,7 +297,7 @@ public class Connection implements Closeable {
         return interact(Phase.QUERY, reducer).getResults();
     }
 
-    private <I, R> Result<I, R> interact(Phase phase, IReducer<I, R> reducer) {
+    public <I, R> Result<I, R> interact(Phase phase, IReducer<I, R> reducer) {
         Result<I, R> res = new Result<>(phase, reducer);
         while (true) {
             final Object msg = readMessage();
