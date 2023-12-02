@@ -32,6 +32,7 @@
 (comment
 
   (require '[next.jdbc :as jdbc])
+  (require '[next.jdbc.result-set :as jdbc.rs])
 
   ;; 8000.900308
   (time
@@ -41,7 +42,8 @@
                                     :user "ivan"
                                     :password "ivan"})]
 
-     (jdbc/execute! conn ["select * from generate_series(1,5000000)"])
+     (jdbc/execute! conn ["select * from generate_series(1,500000)"]
+                    {:as jdbc.rs/as-unqualified-maps})
      nil))
 
   (def ^Connection -c (pg/connect {:port 15432
@@ -65,7 +67,7 @@
 
   (time
    (do
-     (.query -c "select * from generate_series(1,5000000)")
+     (.query -c "select * from generate_series(1,500000)")
      nil))
 
 
