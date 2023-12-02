@@ -3,7 +3,6 @@ package com.github.igrishaev;
 import java.util.ArrayList;
 
 public class Result<I, R> {
-
      public class SubResult {
          private RowDescription rowDescription;
          public CommandComplete commandComplete;
@@ -34,10 +33,6 @@ public class Result<I, R> {
     }
 
     public ArrayList<R> getResults () {
-        if (!errorResponses.isEmpty()) {
-            ErrorResponse errRes = errorResponses.get(0);
-            throw new PGError("Error response: %s", errRes.fields());
-        }
         final ArrayList<R> results = new ArrayList<>();
         for (SubResult subRes: subResults) {
             R result = reducer.finalize(subRes.acc);
@@ -68,4 +63,10 @@ public class Result<I, R> {
         current.commandComplete = msg;
     }
 
+    public void throwErrorResponse () {
+        if (!errorResponses.isEmpty()) {
+            ErrorResponse errRes = errorResponses.get(0);
+            throw new PGError("Error response: %s", errRes.fields());
+        }
+    }
 }

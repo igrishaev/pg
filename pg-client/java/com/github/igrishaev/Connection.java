@@ -169,7 +169,6 @@ public class Connection implements Closeable {
 
         try {
             inStream = new BufferedInputStream(socket.getInputStream(), 0xFFFF);
-            // inStream = socket.getInputStream();
         }
         catch (IOException e) {
             throw new PGError(e, "Cannot get an input stream");
@@ -312,6 +311,7 @@ public class Connection implements Closeable {
                 break;
             }
         }
+        res.throwErrorResponse();
         return res;
     }
 
