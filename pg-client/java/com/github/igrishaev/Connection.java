@@ -77,14 +77,23 @@ public class Connection implements Closeable {
     }
 
     private void setParam (String param, String value) {
-        params.put(param, value);
-        switch (param.toLowerCase()) {
+        String paramLower = param.toLowerCase();
+        params.put(paramLower, value);
+        switch (paramLower) {
             // client_encoding
             // datestyle
             // timezone
             case "server_encoding":
                 decoderTxr.setEncoding(value);
         }
+    }
+
+    private String getServerEncoding() {
+        return params.getOrDefault("server_encoding", Const.UTF8);
+    }
+
+    private String getClientEncoding() {
+        return params.getOrDefault("client_encoding", Const.UTF8);
     }
 
     public Integer getPort () {
@@ -134,14 +143,20 @@ public class Connection implements Closeable {
         }
 
         try {
-            inStream = new BufferedInputStream(socket.getInputStream(), 0xFFFF);
+            inStream = new BufferedInputStream(
+                    socket.getInputStream(),
+                    config.inStreamBufSize()
+            );
         }
         catch (IOException e) {
             throw new PGError(e, "Cannot get an input stream");
         }
 
         try {
-            outStream = new BufferedOutputStream(socket.getOutputStream(), 0xFFFF);
+            outStream = new BufferedOutputStream(
+                    socket.getOutputStream(),
+                    config.outStreamBufSize()
+            );
         }
         catch (IOException e) {
             throw new PGError(e, "Cannot get an output stream");
@@ -152,7 +167,7 @@ public class Connection implements Closeable {
 
     public void sendMessage (IMessage msg) {
         System.out.println(msg);
-        ByteBuffer buf = msg.encode("UTF-8"); // TODO
+        ByteBuffer buf = msg.encode(getClientEncoding());
         try {
             outStream.write(buf.array());
         }

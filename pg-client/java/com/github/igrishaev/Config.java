@@ -17,7 +17,10 @@ public record Config (
         boolean binaryDecode,
         boolean iseSSL,
         boolean SOKeepAlive,
-        boolean SOTCPnoDelay
+        boolean SOTCPnoDelay,
+        int inStreamBufSize,
+        int outStreamBufSize
+
 ) {
 
     public static class Builder {
@@ -33,6 +36,8 @@ public record Config (
         private boolean useSSL = false;
         private boolean SOKeepAlive = true;
         private boolean SOTCPnoDelay = true;
+        private int inStreamBufSize = Const.IN_STREAM_BUF_SIZE;
+        private int outStreamBufSize = Const.OUT_STREAM_BUF_SIZE;
 
         public Builder(String user, String database) {
             this.user = user;
@@ -93,6 +98,16 @@ public record Config (
             return this;
         }
 
+        public Builder inStreamBufSize(int inStreamBufSize) {
+            this.inStreamBufSize = inStreamBufSize;
+            return this;
+        }
+
+        public Builder outStreamBufSize(int outStreamBufSize) {
+            this.outStreamBufSize = outStreamBufSize;
+            return this;
+        }
+
         public Config build() {
             return new Config(
                     this.user,
@@ -106,7 +121,9 @@ public record Config (
                     this.binaryDecode,
                     this.useSSL,
                     this.SOKeepAlive,
-                    this.SOTCPnoDelay
+                    this.SOTCPnoDelay,
+                    this.inStreamBufSize,
+                    this.outStreamBufSize
             );
         }
     }
