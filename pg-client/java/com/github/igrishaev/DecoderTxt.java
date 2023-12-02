@@ -7,9 +7,20 @@ import java.math.BigDecimal;
 
 public class DecoderTxt {
 
-    private String encoding = "UTF-8";
+    private String encoding = Const.UTF8;
+    private String dateStyle;
+    private String timeZone;
+
     public void setEncoding (String encoding) {
         this.encoding = encoding;
+    }
+
+    public void setDateStyle (String dateStyle) {
+        this.dateStyle = dateStyle;
+    }
+
+    public void setTimeZone (String timeZone) {
+        this.timeZone = timeZone;
     }
 
     private String getString(ByteBuffer buf) {

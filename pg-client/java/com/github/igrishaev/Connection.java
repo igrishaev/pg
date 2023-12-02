@@ -27,29 +27,25 @@ public class Connection implements Closeable {
     private OutputStream outStream;
     private Map<String, String> params;
 
-    private final DecoderTxt decoderTxr;
+    private final DecoderTxt decoderTxt;
 
     public void close () {
         sendTerminate();
         closeSocket();
     }
 
-    public TXStatus getTxStatus () {
-        return txStatus;
-    }
-
-    private Integer nextID () {
-        return RT.nextID();
-    }
-
-    public Connection(String user, String database) {
-        this(new Config.Builder(user, database).build());
+    public Connection(String host, int port, String user, String password, String database) {
+        this(new Config.Builder(user, database)
+                .host(host)
+                .port(port)
+                .password(password)
+                .build());
     }
 
     public Connection(Config config) {
         this.config = config;
         this.params = new HashMap<>();
-        this.decoderTxr = new DecoderTxt();
+        this.decoderTxt = new DecoderTxt();
         this.id = String.format("pg%d", nextID());
         this.createdAt = System.currentTimeMillis();
         connect();
@@ -59,8 +55,16 @@ public class Connection implements Closeable {
         return pid;
     }
 
-    public Boolean isClosed () {
+    public synchronized Boolean isClosed () {
         return socket.isClosed();
+    }
+
+    public synchronized TXStatus getTxStatus () {
+        return txStatus;
+    }
+
+    private Integer nextID () {
+        return RT.nextID();
     }
 
     private void closeSocket () {
@@ -72,7 +76,7 @@ public class Connection implements Closeable {
         }
     }
 
-    public String getParam (String param) {
+    public synchronized String getParam (String param) {
         return params.get(param);
     }
 
@@ -81,10 +85,12 @@ public class Connection implements Closeable {
         params.put(paramLower, value);
         switch (paramLower) {
             // client_encoding
-            // datestyle
-            // timezone
             case "server_encoding":
-                decoderTxr.setEncoding(value);
+                decoderTxt.setEncoding(value);
+            case "datestyle":
+                decoderTxt.setDateStyle(value);
+            case "timezone":
+                decoderTxt.setTimeZone(value);
         }
     }
 
@@ -363,7 +369,7 @@ public class Connection implements Closeable {
             RowDescription.Column col = cols[i];
             switch (col.format()) {
                 case TXT:
-                    values[i] = decoderTxr.decode(buf, col.typeOid());
+                    values[i] = decoderTxt.decode(buf, col.typeOid());
                 case BIN:
                     throw new PGError("binary decoding is not implemented");
             }
