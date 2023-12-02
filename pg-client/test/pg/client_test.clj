@@ -41,7 +41,7 @@
                                     :user "ivan"
                                     :password "ivan"})]
 
-     (jdbc/execute! conn ["select * from generate_series(1,5)"])
+     (jdbc/execute! conn ["select * from generate_series(1,5000000)"])
      nil))
 
   (def ^Connection -c (pg/connect {:port 15432
@@ -65,7 +65,7 @@
 
   (time
    (do
-     (.query -c "select * from generate_series(1,5)")
+     (.query -c "select * from generate_series(1,5000000)")
      nil))
 
 

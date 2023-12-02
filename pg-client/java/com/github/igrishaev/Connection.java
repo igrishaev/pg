@@ -294,14 +294,14 @@ public class Connection implements Closeable {
     public synchronized Object query(String sql) {
         sendQuery(sql);
         final CljReducer reducer = new CljReducer();
-        return interact(Phase.QUERY, reducer).getResults();
+        return interact(Phase.QUERY, reducer).getResult();
     }
 
     public <I, R> Result<I, R> interact(Phase phase, IReducer<I, R> reducer) {
         Result<I, R> res = new Result<>(phase, reducer);
         while (true) {
             final Object msg = readMessage();
-            System.out.println(msg);
+            // System.out.println(msg);
             handleMessage(msg, res);
             if (isEnough(msg, phase)) {
                 break;
@@ -378,8 +378,11 @@ public class Connection implements Closeable {
             switch (col.format()) {
                 case TXT:
                     values[i] = decoderTxt.decode(buf, col.typeOid());
+                    break;
                 case BIN:
                     throw new PGError("binary decoding is not implemented");
+                default:
+                    throw new PGError("unknown format: %s", col.format());
             }
         }
         res.setCurrentValues(values);
