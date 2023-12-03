@@ -4,6 +4,9 @@ import clojure.lang.Symbol;
 import com.github.igrishaev.PGError;
 import com.github.igrishaev.enums.OID;
 import java.util.UUID;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import clojure.lang.BigInt;
 
 public class EncoderTxt extends ACodec {
 
@@ -85,31 +88,28 @@ public class EncoderTxt extends ACodec {
                 }
             }
 
+            case BigDecimal bd -> {
+                switch (oid) {
+                    case NUMERIC, FLOAT4, FLOAT8: yield bd.toString();
+                    default: yield encodingError(x, oid);
+                }
+            }
+
+            case BigInteger bi -> {
+                switch (oid) {
+                    case INT2, INT4, INT8: yield bi.toString();
+                    default: yield encodingError(x, oid);
+                }
+            }
+
+            case BigInt bi -> {
+                switch (oid) {
+                    case INT2, INT4, INT8: yield bi.toString();
+                    default: yield encodingError(x, oid);
+                }
+            }
+
             default -> encodingError(x, oid);
         };
     }
-
-
-    //
-    // BigDecimal
-    //
-
-    //
-    // BigInteger
-    //
-
-    //
-    // BigInt
-    //
-    
-    //
-    // OID
-    //
-
-    //
-    // Name
-    //
-
-
-
 }

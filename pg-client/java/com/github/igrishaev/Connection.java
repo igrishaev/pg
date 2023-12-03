@@ -1,21 +1,16 @@
 package com.github.igrishaev;
 
 import com.github.igrishaev.codec.DecoderTxt;
-import com.github.igrishaev.enums.OID;
-import com.github.igrishaev.enums.Phase;
-import com.github.igrishaev.enums.SourceType;
-import com.github.igrishaev.enums.TXStatus;
+import com.github.igrishaev.codec.EncoderTxt;
+import com.github.igrishaev.enums.*;
 import com.github.igrishaev.msg.*;
 import com.github.igrishaev.reducer.CljReducer;
 import com.github.igrishaev.reducer.IReducer;
 
-import java.io.Closeable;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Connection implements Closeable {
@@ -34,6 +29,7 @@ public class Connection implements Closeable {
     private Map<String, String> params;
 
     private final DecoderTxt decoderTxt;
+    private final EncoderTxt encoderTxt;
 
     public Connection(String host, int port, String user, String password, String database) {
         this(new Config.Builder(user, database)
@@ -47,6 +43,7 @@ public class Connection implements Closeable {
         this.config = config;
         this.params = new HashMap<>();
         this.decoderTxt = new DecoderTxt();
+        this.encoderTxt = new EncoderTxt();
         this.id = UUID.randomUUID();
         this.createdAt = System.currentTimeMillis();
         this.aInt = new AtomicInteger();
@@ -94,13 +91,19 @@ public class Connection implements Closeable {
     private void setParam (String param, String value) {
         params.put(param, value);
         switch (param) {
-            // client_encoding
+            case "client_encoding":
+                encoderTxt.setEncoding(value);
             case "server_encoding":
                 decoderTxt.setEncoding(value);
+                break;
             case "DateStyle":
                 decoderTxt.setDateStyle(value);
+                encoderTxt.setDateStyle(value);
+                break;
             case "TimeZone":
                 decoderTxt.setTimeZone(value);
+                encoderTxt.setTimeZone(value);
+                break;
         }
     }
 
@@ -314,11 +317,11 @@ public class Connection implements Closeable {
         return interact(Phase.QUERY, reducer).getResults();
     }
 
-    public PreparedStatement prepare(String sql) {
+    public synchronized PreparedStatement prepare(String sql) {
         return prepare(sql, Collections.emptyList());
     }
 
-    public synchronized <I,V> PreparedStatement prepare(String sql, List<OID> OIDs) {
+    public synchronized <I,V> PreparedStatement prepare (String sql, List<OID> OIDs) {
         String statement = generateStatement();
         Parse parse = new Parse(statement, sql, OIDs);
         sendMessage(parse);
@@ -328,6 +331,51 @@ public class Connection implements Closeable {
         Result<I,V> res = interact(Phase.PREPARE, null);
         ParameterDescription paramDesc = res.getParameterDescription();
         return new PreparedStatement(parse, paramDesc);
+    }
+
+    private void sendBind (String portal, String statement, List<Object> params, OID[] OIDs) {
+        Format paramsFormat = config.binaryEncode() ? Format.BIN : Format.TXT;
+        Format columnFormat = config.binaryDecode() ? Format.BIN : Format.TXT;
+        byte[][] values = new byte[OIDs.length][];
+        String encoding = getClientEncoding();
+        for (int i = 0; i < OIDs.length; i++) {
+            Object param = params.get(i);
+            OID oid = OIDs[i];
+            switch (paramsFormat) {
+                case BIN:
+                    throw new PGError("binary encoding is not implemented yet");
+                case TXT:
+                    String value = encoderTxt.encode(param, oid);
+                    try {
+                        values[i] = value.getBytes(encoding);
+                    } catch (UnsupportedEncodingException e) {
+                        throw new PGError(e, "could not encode a string, encoding: %s", encoding);
+                    }
+                    break;
+                default:
+                    throw new PGError("unknown format: %s", paramsFormat);
+            }
+        }
+        Bind msg = new Bind(
+                portal,
+                statement,
+                values,
+                OIDs,
+                paramsFormat,
+                columnFormat
+        );
+        sendMessage(msg);
+    }
+
+    public synchronized Object executeStatement (PreparedStatement ps, List<Object> params) {
+        String portal = generatePortal();
+        String statement = ps.parse().statement();
+        OID[] OIDs = ps.parameterDescription().OIDs();
+        sendBind(portal, statement, params, OIDs);
+        sendDescribePortal(portal);
+        sendSync();
+        sendFlush();
+        return interact(Phase.EXECUTE, new CljReducer()).getResult();
     }
 
     private <I, R> Result<I, R> interact(Phase phase, IReducer<I, R> reducer) {
