@@ -1,5 +1,7 @@
 package com.github.igrishaev;
 
+import com.github.igrishaev.enums.SourceType;
+
 import java.util.Collections;
 
 public class Main {
@@ -10,5 +12,7 @@ public class Main {
 
         PreparedStatement ps = conn.prepare("select $1::int as foo", Collections.emptyList());
         System.out.println(ps);
+
+        // System.out.println(SourceType.STATEMENT.getCode());
     }
 }

@@ -3,6 +3,7 @@ package com.github.igrishaev;
 import com.github.igrishaev.codec.DecoderTxt;
 import com.github.igrishaev.enums.OID;
 import com.github.igrishaev.enums.Phase;
+import com.github.igrishaev.enums.SourceType;
 import com.github.igrishaev.enums.TXStatus;
 import com.github.igrishaev.msg.*;
 import com.github.igrishaev.reducer.CljReducer;
@@ -187,6 +188,7 @@ public class Connection implements Closeable {
     private void sendMessage (IMessage msg) {
         System.out.println(msg);
         ByteBuffer buf = msg.encode(getClientEncoding());
+        System.out.println(Arrays.toString(buf.array()));
         try {
             outStream.write(buf.array());
             outStream.flush();
@@ -301,6 +303,16 @@ public class Connection implements Closeable {
 
     }
 
+    private void sendDescribeStatement (String statement) {
+        Describe msg = new Describe(SourceType.STATEMENT, statement);
+        sendMessage(msg);
+    }
+
+    private void sendDescribePortal (String portal) {
+        Describe msg = new Describe(SourceType.PORTAL, portal);
+        sendMessage(msg);
+    }
+
     public synchronized Object query(String sql) {
         sendQuery(sql);
         final CljReducer reducer = new CljReducer();
@@ -311,6 +323,7 @@ public class Connection implements Closeable {
         String statement = generateStatement();
         Parse parse = new Parse(statement, sql, OIDs);
         sendMessage(parse);
+        sendDescribeStatement(statement);
         sendSync();
         sendFlush();
         Result<I,V> res = interact(Phase.PREPARE, null);

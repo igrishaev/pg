@@ -1,6 +1,7 @@
 package com.github.igrishaev;
 
 import java.io.UnsupportedEncodingException;
+import java.net.PasswordAuthentication;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -99,15 +100,20 @@ public class Payload {
         for(Object item: items) {
             switch (item) {
                 case Integer i:
-                    bb.putInt(i); break;
+                    bb.putInt(i);
+                    break;
                 case Short s:
-                    bb.putShort(s); break;
+                    bb.putShort(s);
+                    break;
                 case Byte b:
-                    bb.put(b); break;
+                    bb.put(b);
+                    break;
                 case Long l:
-                    bb.putLong(l); break;
+                    bb.putLong(l);
+                    break;
                 case byte[] bs:
-                    bb.put(bs); break;
+                    bb.put(bs);
+                    break;
                 default:
                     throw new PGError("unsupported item: %s", item);
             }
