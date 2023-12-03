@@ -11,6 +11,7 @@ import com.github.igrishaev.reducer.IReducer;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Arrays;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -183,7 +184,7 @@ public class Connection implements Closeable {
         authenticate();
     }
 
-    public void sendMessage (IMessage msg) {
+    private void sendMessage (IMessage msg) {
         System.out.println(msg);
         ByteBuffer buf = msg.encode(getClientEncoding());
         try {
@@ -203,11 +204,7 @@ public class Connection implements Closeable {
         return String.format("portal%d", nextInt());
     }
 
-    public void sendParse (String statement, String query, List<OID> OIDs) {
-        sendMessage(new Parse(statement, query, OIDs));
-    }
-
-    public void sendStartupMessage () {
+    private void sendStartupMessage () {
         StartupMessage msg =
             new StartupMessage(
                     config.protocolVersion(),
@@ -218,39 +215,39 @@ public class Connection implements Closeable {
         sendMessage(msg);
     }
 
-    public void sendExecute (String portal, Long rowCount) {
+    private void sendExecute (String portal, Long rowCount) {
         sendMessage(new Execute(portal, rowCount));
     }
 
-    public void sendCopyData (byte[] buf) {
+    private void sendCopyData (byte[] buf) {
         sendMessage(new CopyData(buf));
     }
 
-    public void sendCopyDone () {
+    private void sendCopyDone () {
         sendMessage(new CopyDone());
     }
 
-    public void sendCopyFail () {
+    private void sendCopyFail () {
         sendCopyFail(Const.COPY_FAIL_MSG);
     }
 
-    public void sendCopyFail (String errorMessage) {
+    private void sendCopyFail (String errorMessage) {
         sendMessage(new CopyFail(errorMessage));
     }
 
-    public void sendQuery (String query) {
+    private void sendQuery (String query) {
         sendMessage(new Query(query));
     }
 
-    public void sendPassword (String password) {
+    private void sendPassword (String password) {
         sendMessage(new PasswordMessage(password));
     }
 
-    public void sendSync () {
+    private void sendSync () {
         sendMessage(new Sync());
     }
 
-    public void sendFlush () {
+    private void sendFlush () {
         sendMessage(new Flush());
     }
 
@@ -271,12 +268,12 @@ public class Connection implements Closeable {
         }
     }
 
-    public Object readMessage () {
+    private Object readMessage () {
 
         byte[] bufHeader = readNBytes(5);
         ByteBuffer bbHeader = ByteBuffer.wrap(bufHeader);
 
-        // System.out.println(Arrays.toString(bufHeader));
+        System.out.println(Arrays.toString(bufHeader));
 
         byte bTag = bbHeader.get();
         int bodySize = bbHeader.getInt() - 4;
@@ -284,7 +281,7 @@ public class Connection implements Closeable {
         byte[] bufBody = readNBytes(bodySize);
         ByteBuffer bbBody = ByteBuffer.wrap(bufBody);
 
-        // System.out.println(Arrays.toString(bufBody));
+        System.out.println(Arrays.toString(bufBody));
 
         return switch ((char) bTag) {
             case 'R' -> AuthenticationResponse.fromByteBuffer(bbBody).parseResponse(bbBody);
@@ -310,11 +307,22 @@ public class Connection implements Closeable {
         return interact(Phase.QUERY, reducer).getResults();
     }
 
-    public <I, R> Result<I, R> interact(Phase phase, IReducer<I, R> reducer) {
+    public synchronized <I,V> PreparedStatement prepare(String sql, List<OID> OIDs) {
+        String statement = generateStatement();
+        Parse parse = new Parse(statement, sql, OIDs);
+        sendMessage(parse);
+        sendSync();
+        sendFlush();
+        Result<I,V> res = interact(Phase.PREPARE, null);
+        ParameterDescription paramDesc = res.getParameterDescription();
+        return new PreparedStatement(parse, paramDesc);
+    }
+
+    private <I, R> Result<I, R> interact(Phase phase, IReducer<I, R> reducer) {
         Result<I, R> res = new Result<>(phase, reducer);
         while (true) {
             final Object msg = readMessage();
-            // System.out.println(msg);
+            System.out.println(msg);
             handleMessage(msg, res);
             if (isEnough(msg, phase)) {
                 break;
@@ -355,9 +363,17 @@ public class Connection implements Closeable {
                 break;
             case ParameterDescription x:
                 handleParameterDescription(x, res);
+                break;
+            case ParseComplete x:
+                handleParseComplete(x, res);
+                break;
 
             default: throw new PGError("Cannot handle this message: %s", msg);
         }
+    }
+
+    private <I,R> void handleParseComplete(ParseComplete msg, Result<I,R> res) {
+        res.setParseComplete(msg);
     }
 
     private <I,R> void handleParameterDescription (ParameterDescription msg, Result<I,R> res) {
@@ -372,7 +388,7 @@ public class Connection implements Closeable {
         setParam(msg.param(), msg.value());
     }
 
-    static <I,R> void handleRowDescription(RowDescription msg, Result<I,R> res) {
+    private static <I,R> void handleRowDescription(RowDescription msg, Result<I,R> res) {
         res.setRowDescription(msg);
         short size = msg.columnCount();
         Object[] keys = new Object[size];
@@ -411,20 +427,20 @@ public class Connection implements Closeable {
         txStatus = msg.txStatus();
     }
 
-    static <I, R> void handleCommandComplete(CommandComplete msg, Result<I, R> res) {
+    private static <I, R> void handleCommandComplete(CommandComplete msg, Result<I, R> res) {
         res.setCommandComplete(msg);
     }
 
-    static <I, R> void handleErrorResponse(ErrorResponse msg, Result<I,R> res) {
+    private static <I, R> void handleErrorResponse(ErrorResponse msg, Result<I,R> res) {
         res.addErrorResponse(msg);
     }
 
-    public void handleBackendKeyData(BackendKeyData msg) {
+    private void handleBackendKeyData(BackendKeyData msg) {
         pid = msg.pid();
         secretKey = msg.secretKey();
     }
 
-    static Boolean isEnough (Object msg, Phase phase) {
+    private static Boolean isEnough (Object msg, Phase phase) {
         return switch (msg) {
             case ReadyForQuery ignored -> true;
             case ErrorResponse ignored -> phase == Phase.AUTH;
