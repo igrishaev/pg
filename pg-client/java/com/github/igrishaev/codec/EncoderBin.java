@@ -6,7 +6,7 @@ import com.github.igrishaev.PGError;
 import com.github.igrishaev.enums.OID;
 
 
-public class EncoderBin {
+public class EncoderBin extends ACodec {
 
     //
     // Symbol

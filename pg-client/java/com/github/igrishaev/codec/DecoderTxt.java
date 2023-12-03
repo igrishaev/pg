@@ -8,23 +8,7 @@ import java.nio.ByteBuffer;
 import java.util.UUID;
 import java.math.BigDecimal;
 
-public class DecoderTxt {
-
-    private String encoding = "UTF-8";
-    private String dateStyle;
-    private String timeZone;
-
-    public void setEncoding (String encoding) {
-        this.encoding = encoding;
-    }
-
-    public void setDateStyle (String dateStyle) {
-        this.dateStyle = dateStyle;
-    }
-
-    public void setTimeZone (String timeZone) {
-        this.timeZone = timeZone;
-    }
+public class DecoderTxt extends ACodec {
 
     private String getString(ByteBuffer buf) {
         int offset = buf.arrayOffset() + buf.position();

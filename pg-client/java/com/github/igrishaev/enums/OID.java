@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum OID {
+    DEFAULT                      (   0),
     BOOL                         (  16),
     _BOOL                        (1000),
     BYTEA                        (  17),

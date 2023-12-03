@@ -11,16 +11,11 @@ import com.github.igrishaev.reducer.IReducer;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Arrays;
+import java.util.*;
 import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Connection implements Closeable {
@@ -317,6 +312,10 @@ public class Connection implements Closeable {
         sendQuery(sql);
         final CljReducer reducer = new CljReducer();
         return interact(Phase.QUERY, reducer).getResults();
+    }
+
+    public PreparedStatement prepare(String sql) {
+        return prepare(sql, Collections.emptyList());
     }
 
     public synchronized <I,V> PreparedStatement prepare(String sql, List<OID> OIDs) {
