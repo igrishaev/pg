@@ -1,23 +1,32 @@
 package com.github.igrishaev;
 
-import clojure.lang.RT;
+import com.github.igrishaev.codec.DecoderTxt;
+import com.github.igrishaev.enums.OID;
+import com.github.igrishaev.enums.Phase;
+import com.github.igrishaev.enums.TXStatus;
+import com.github.igrishaev.msg.*;
+import com.github.igrishaev.reducer.CljReducer;
+import com.github.igrishaev.reducer.IReducer;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collections;
 import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Connection implements Closeable {
 
     private final Config config;
-    public final String id;
+    public final UUID id;
     public final long createdAt;
+    private final AtomicInteger aInt;
 
     private int pid;
     private int secretKey;
@@ -28,11 +37,6 @@ public class Connection implements Closeable {
     private Map<String, String> params;
 
     private final DecoderTxt decoderTxt;
-
-    public void close () {
-        sendTerminate();
-        closeSocket();
-    }
 
     public Connection(String host, int port, String user, String password, String database) {
         this(new Config.Builder(user, database)
@@ -46,9 +50,19 @@ public class Connection implements Closeable {
         this.config = config;
         this.params = new HashMap<>();
         this.decoderTxt = new DecoderTxt();
-        this.id = String.format("pg%d", nextID());
+        this.id = UUID.randomUUID();
         this.createdAt = System.currentTimeMillis();
+        this.aInt = new AtomicInteger();
         connect();
+    }
+
+    public void close () {
+        sendTerminate();
+        closeSocket();
+    }
+
+    private int nextInt() {
+        return aInt.incrementAndGet();
     }
 
     public synchronized int getPid () {
@@ -61,10 +75,6 @@ public class Connection implements Closeable {
 
     public synchronized TXStatus getTxStatus () {
         return txStatus;
-    }
-
-    private Integer nextID () {
-        return RT.nextID();
     }
 
     private void closeSocket () {
@@ -120,7 +130,6 @@ public class Connection implements Closeable {
     private Map<String, String> getPgParams () {
         return config.pgParams();
     }
-
 
     public String getDatabase () {
         return config.database();
@@ -187,14 +196,14 @@ public class Connection implements Closeable {
     }
 
     private String generateStatement () {
-        return String.format("statement%d", nextID());
+        return String.format("statement%d", nextInt());
     }
 
     private String generatePortal () {
-        return String.format("portal%d", nextID());
+        return String.format("portal%d", nextInt());
     }
 
-    public void sendParse (String statement, String query, List<Long> OIDs) {
+    public void sendParse (String statement, String query, List<OID> OIDs) {
         sendMessage(new Parse(statement, query, OIDs));
     }
 
@@ -286,6 +295,10 @@ public class Connection implements Closeable {
             case 'D' -> DataRow.fromByteBuffer(bbBody);
             case 'E' -> ErrorResponse.fromByteBuffer(bbBody);
             case 'K' -> BackendKeyData.fromByteBuffer(bbBody);
+            case '1' -> new ParseComplete();
+            case '2' -> new BindComplete();
+            case '3' -> new CloseComplete();
+            case 't' -> ParameterDescription.fromByteBuffer(bbBody);
             default -> throw new PGError("Unknown message: %s", bTag);
         };
 
@@ -317,43 +330,49 @@ public class Connection implements Closeable {
             case AuthenticationOk ignored:
                 break;
             case AuthenticationCleartextPassword ignored:
-                handleMessage();
+                handleAuthenticationCleartextPassword();
                 break;
             case ParameterStatus x:
-                handleMessage(x);
+                handleParameterStatus(x);
                 break;
             case RowDescription x:
-                handleMessage(x, res);
+                handleRowDescription(x, res);
                 break;
             case DataRow x:
-                handleMessage(x, res);
+                handleDataRow(x, res);
                 break;
             case ReadyForQuery x:
-                handleMessage(x);
+                handleReadyForQuery(x);
                 break;
             case CommandComplete x:
-                handleMessage(x, res);
+                handleCommandComplete(x, res);
                 break;
             case ErrorResponse x:
-                handleMessage(x, res);
+                handleErrorResponse(x, res);
                 break;
             case BackendKeyData x:
-                handleMessage(x);
+                handleBackendKeyData(x);
                 break;
+            case ParameterDescription x:
+                handleParameterDescription(x, res);
 
             default: throw new PGError("Cannot handle this message: %s", msg);
         }
     }
 
-    private void handleMessage() {
+    private <I,R> void handleParameterDescription (ParameterDescription msg, Result<I,R> res) {
+        res.setParameterDescription(msg);
+    }
+
+    private void handleAuthenticationCleartextPassword() {
         sendPassword(config.password());
     }
 
-    private void handleMessage(ParameterStatus msg) {
+    private void handleParameterStatus(ParameterStatus msg) {
         setParam(msg.param(), msg.value());
     }
 
-    static <I,R> void handleMessage(RowDescription msg, Result<I,R> res) {
+    static <I,R> void handleRowDescription(RowDescription msg, Result<I,R> res) {
         res.setRowDescription(msg);
         short size = msg.columnCount();
         Object[] keys = new Object[size];
@@ -363,7 +382,7 @@ public class Connection implements Closeable {
         res.setCurrentKeys(keys);
     }
 
-    private <I,R> void handleMessage(DataRow msg, Result<I,R> res) {
+    private <I,R> void handleDataRow(DataRow msg, Result<I,R> res) {
         short size = msg.valueCount();
         RowDescription.Column[] cols = res.getRowDescription().columns();
         ByteBuffer[] bufs = msg.values();
@@ -388,19 +407,19 @@ public class Connection implements Closeable {
         res.setCurrentValues(values);
     }
 
-    private void handleMessage(ReadyForQuery msg) {
+    private void handleReadyForQuery(ReadyForQuery msg) {
         txStatus = msg.txStatus();
     }
 
-    static <I, R> void handleMessage(CommandComplete msg, Result<I, R> res) {
+    static <I, R> void handleCommandComplete(CommandComplete msg, Result<I, R> res) {
         res.setCommandComplete(msg);
     }
 
-    static <I, R> void handleMessage(ErrorResponse msg, Result<I,R> res) {
+    static <I, R> void handleErrorResponse(ErrorResponse msg, Result<I,R> res) {
         res.addErrorResponse(msg);
     }
 
-    public void handleMessage(BackendKeyData msg) {
+    public void handleBackendKeyData(BackendKeyData msg) {
         pid = msg.pid();
         secretKey = msg.secretKey();
     }

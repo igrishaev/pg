@@ -1,11 +1,19 @@
 package com.github.igrishaev;
 
+import com.github.igrishaev.enums.Phase;
+import com.github.igrishaev.msg.CommandComplete;
+import com.github.igrishaev.msg.ErrorResponse;
+import com.github.igrishaev.msg.ParameterDescription;
+import com.github.igrishaev.msg.RowDescription;
+import com.github.igrishaev.reducer.IReducer;
+
 import java.util.ArrayList;
 
 public class Result<I, R> {
      public class SubResult {
          private RowDescription rowDescription;
          public CommandComplete commandComplete;
+         public ParameterDescription parameterDescription;
          public Object[] keys;
          public I acc;
     }
@@ -26,6 +34,14 @@ public class Result<I, R> {
 
     public void setRowDescription(RowDescription msg) {
         current.rowDescription = msg;
+    }
+
+    public void setParameterDescription(ParameterDescription msg) {
+        current.parameterDescription = msg;
+    }
+
+    public ParameterDescription getParameterDescription() {
+        return current.parameterDescription;
     }
 
     public RowDescription getRowDescription () {

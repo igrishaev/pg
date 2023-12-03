@@ -75,7 +75,7 @@
   (time
    (loop [i 0]
      (let [msg (.readMessage -c)]
-       (when-not (instance? com.github.igrishaev.ReadyForQuery msg)
+       (when-not (instance? com.github.igrishaev.msg.ReadyForQuery msg)
          (recur (inc i))))))
 
   #_
