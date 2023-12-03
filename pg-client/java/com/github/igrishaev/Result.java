@@ -51,8 +51,10 @@ public class Result<I, R> {
     public ArrayList<R> getResults () {
         final ArrayList<R> results = new ArrayList<>();
         for (SubResult subRes: subResults) {
-            R result = reducer.finalize(subRes.acc);
-            results.add(result);
+            if (subRes.commandComplete != null) {
+                R result = reducer.finalize(subRes.acc);
+                results.add(result);
+            }
         }
         return results;
     }
@@ -62,7 +64,13 @@ public class Result<I, R> {
             return null;
         }
         else {
-            return reducer.finalize(subResults.get(0).acc);
+            SubResult subRes = subResults.get(0);
+            if (subRes.commandComplete != null) {
+                return reducer.finalize(subRes.acc);
+            }
+            else {
+                return null;
+            }
         }
     }
 
@@ -88,6 +96,7 @@ public class Result<I, R> {
 
     public void setCommandComplete (CommandComplete msg) {
         current.commandComplete = msg;
+        addSubResult();
     }
 
     public void throwErrorResponse () {

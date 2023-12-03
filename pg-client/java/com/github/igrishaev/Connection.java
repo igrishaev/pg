@@ -307,7 +307,7 @@ public class Connection implements Closeable {
     public synchronized Object query(String sql) {
         sendQuery(sql);
         final CljReducer reducer = new CljReducer();
-        return interact(Phase.QUERY, reducer).getResult();
+        return interact(Phase.QUERY, reducer).getResults();
     }
 
     public <I, R> Result<I, R> interact(Phase phase, IReducer<I, R> reducer) {
