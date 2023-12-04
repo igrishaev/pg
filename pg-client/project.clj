@@ -1,4 +1,4 @@
-(defproject com.github.igrishaev/pg-client "0.1.11"
+(defproject com.github.igrishaev/pg-client "0.1.12-SNAPSHOT"
 
   :description
   "Postgres client in pure Clojure (no JDBC)"
