@@ -1,6 +1,7 @@
 (ns pg.client.conn
   (:import
    java.io.Closeable
+   java.io.BufferedInputStream
    java.io.InputStream
    java.io.OutputStream
    java.io.Writer
@@ -13,7 +14,6 @@
    [pg.client.msg :as msg]
    [pg.client.ssl :as ssl]
    [pg.coll :as coll]
-   [pg.const :as const]
    [pg.const :as const]))
 
 
@@ -464,7 +464,9 @@
         (new Socket host port true)
 
         in-stream
-        (.getInputStream socket)
+        (-> socket
+            (.getInputStream)
+            (BufferedInputStream. const/IN_STREAM_BUF_SIZE))
 
         out-stream
         (.getOutputStream socket)

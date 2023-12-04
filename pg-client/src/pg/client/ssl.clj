@@ -1,5 +1,8 @@
 (ns pg.client.ssl
+  (:require
+   [pg.const :as const])
   (:import
+   java.io.BufferedInputStream
    java.net.Socket
    java.util.Map
    javax.net.ssl.SSLContext
@@ -38,7 +41,9 @@
         (.getOutputStream ssl-socket)
 
         ssl-in-stream
-        (.getInputStream ssl-socket)]
+        (-> ssl-socket
+            (.getInputStream)
+            (BufferedInputStream. const/IN_STREAM_BUF_SIZE))]
 
     (doto ssl-socket
       (.setUseClientMode true)

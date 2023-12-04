@@ -1,4 +1,9 @@
 
+## 0.1.11
+
+- BufferedInputStream wrapper
+- deps & ns cleanup
+
 ## 0.1.10
 
 - changelog added

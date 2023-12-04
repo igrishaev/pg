@@ -52,3 +52,5 @@
 (def COPY_FORMAT_TXT :txt)
 (def COPY_FORMAT_CSV :csv)
 (def COPY_FORMAT_BIN :bin)
+
+(def IN_STREAM_BUF_SIZE 0xFFFF)

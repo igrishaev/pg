@@ -13,7 +13,9 @@
 (def P16 10160)
 
 (def PORT_SSL
-  (some-> (System/getenv "PG_PORT_SSL") Integer/parseInt))
+  (some-> "PG_PORT_SSL"
+          System/getenv
+          Integer/parseInt))
 
 
 (def OVERRIDES
