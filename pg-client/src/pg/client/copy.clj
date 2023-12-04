@@ -1,7 +1,5 @@
 (ns pg.client.copy
   (:import
-   com.github.igrishaev.Connection)
-  (:import
    clojure.lang.RT
    java.io.InputStream
    java.util.Iterator)
@@ -75,7 +73,7 @@
     (out/array out)))
 
 
-(defn copy-in-csv [^Connection conn rows oids sep end null]
+(defn copy-in-csv [conn rows oids sep end null]
 
   (let [iter
         (RT/iter rows)
@@ -98,11 +96,11 @@
               buf
               (.getBytes line encoding)]
 
-          (.sendCopyData conn buf)
+          (conn/send-copy-data conn buf)
           (recur))))))
 
 
-(defn copy-in-bin [^Connection conn rows oids]
+(defn copy-in-bin [conn rows oids]
 
   (let [iter
         (RT/iter rows)
@@ -113,19 +111,19 @@
         encoding
         (conn/get-client-encoding conn)]
 
-    (.sendCopyData conn BUF_HEADER)
+    (conn/send-copy-data conn BUF_HEADER)
 
     (loop []
       (when (.hasNext iter)
         (let [row (.next iter)
               buf (bin-encode row oids opt)]
-          (.sendCopyData conn buf))
+          (conn/send-copy-data conn buf))
         (recur)))
 
-    (.sendCopyData conn bytes/-one16)))
+    (conn/send-copy-data conn bytes/-one16)))
 
 
-(defn copy-in-rows [^Connection conn ^String sql rows format oids sep end null]
+(defn copy-in-rows [conn sql rows format oids sep end null]
 
   (let [opt
         (conn/get-opt conn)
@@ -133,7 +131,7 @@
         encoding
         (conn/get-client-encoding conn)]
 
-    (.sendQuery conn sql)
+    (conn/send-query conn sql)
 
     (case format
       :csv
@@ -145,7 +143,7 @@
       ;; else
       (throw (new Exception "wrong COPY format")))
 
-    (.sendCopyDone conn)
+    (conn/send-copy-done conn)
     (flow/interact conn :copy-in nil)))
 
 
@@ -153,7 +151,7 @@
   (some-> maps first keys vec))
 
 
-(defn copy-in-maps [^Connection conn sql maps keys format oids sep end null]
+(defn copy-in-maps [conn sql maps keys format oids sep end null]
   (let [keys
         (or keys (maps->keys maps))
 
@@ -172,9 +170,9 @@
 
 
 (defn copy-in-stream
-  [^Connection conn ^String sql ^InputStream input-stream buffer-size]
+  [conn sql ^InputStream input-stream buffer-size]
 
-  (.sendQuery conn sql)
+  (conn/send-query conn sql)
 
   (let [buf (byte-array buffer-size)]
 
@@ -182,10 +180,10 @@
       (let [read (.read input-stream buf)]
         (when-not (neg? read)
           (if (= read buffer-size)
-            (.sendCopyData conn buf)
+            (conn/send-copy-data conn buf)
             (let [slice (bytes/slice buf 0 read)]
-              (.sendCopyData conn slice)))
+              (conn/send-copy-data conn slice)))
           (recur))))
 
-    (.sendCopyDone conn)
+    (conn/send-copy-done conn)
     (flow/interact conn :copy-in nil)))

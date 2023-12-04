@@ -1,8 +1,5 @@
 (ns pg.client.flow
   (:import
-   com.github.igrishaev.Connection)
-
-  (:import
    java.io.OutputStream
    java.util.ArrayList
    java.util.HashMap
@@ -67,15 +64,8 @@
 
 
 (defn handle-ReadyForQuery
-  [result ^Connection conn {:keys [tx-status]}]
-  (.setTxStatus conn tx-status)
-  result)
-
-
-(defn handle-BackendKeyData
-  [result ^Connection conn {:keys [pid secret-key]}]
-  (.setPid conn pid)
-  (.setPrivateKey conn secret-key)
+  [result conn {:keys [tx-status]}]
+  (conn/set-tx-status conn tx-status)
   result)
 
 
@@ -87,15 +77,16 @@
 
 
 (defn handle-ParameterStatus
-  [result ^Connection conn {:keys [param value]}]
-  (.setParam conn param value)
+  [result conn {:keys [param value]}]
+  (conn/set-parameter conn param value)
+  (conn/rebuild-opt conn param value)
   result)
 
 
 (defn handle-BackendKeyData
-  [result ^Connection conn {:keys [pid secret-key]}]
-  (.setPid conn pid)
-  (.setPrivateKey conn secret-key)
+  [result conn {:keys [pid secret-key]}]
+  (conn/set-pid conn pid)
+  (conn/set-secret-key conn secret-key)
   result)
 
 
@@ -118,37 +109,37 @@
 
 
 (defn handle-AuthenticationMD5Password
-  [result ^Connection conn {:keys [salt]}]
+  [result conn {:keys [salt]}]
 
   (let [user
-        (.getUser conn)
+        (conn/get-user conn)
 
         password
-        (.getPassword conn)
+        (conn/get-password conn)
 
         hashed
         (md5/hash-password user password salt)]
 
-    (.sendPassword conn hashed))
+    (conn/send-password conn hashed))
 
   result)
 
 
 (defn handle-AuthenticationCleartextPassword
-  [result ^Connection conn message]
-  (let [password (.getPassword conn)]
-    (.sendPassword conn password))
+  [result conn message]
+  (let [password (conn/get-password conn)]
+    (conn/send-password conn password))
   result)
 
 
 (defn handle-SCRAM_SHA_256
-  [^Map result ^Connection conn AuthenticationSASL]
+  [^Map result conn AuthenticationSASL]
 
   (let [user
-        (.getUser conn)
+        (conn/get-user conn)
 
         password
-        (.getPassword conn)
+        (conn/get-password conn)
 
         SASL
         (scram-sha-256/step1-client-first-message user password)
@@ -287,7 +278,7 @@
           RowDescription
 
           opt
-          {}
+          (conn/get-opt conn)
 
           values-decoded
           (coll/for-n [i (count values)]

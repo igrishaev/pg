@@ -1,8 +1,4 @@
 (ns pg.client.conn
-
-  (:import
-   com.github.igrishaev.Connection)
-
   (:import
    java.io.Closeable
    java.io.InputStream
@@ -48,68 +44,150 @@
             :snd-buf nil}})
 
 
-(defn handle-notification
-  [^Connection conn NotificationResponse]
+(defn get-id [conn]
+  (:id conn))
+
+
+(defn get-created-at [conn]
+  (:created-at conn))
+
+
+(defn handle-notification [conn NotificationResponse]
   (when-let [fn-notification
-             (-> conn (.getConfig) :fn-notification)]
+             (-> conn :config :fn-notification)]
     (fn-notification NotificationResponse)))
 
 
-(defn handle-notice [^Connection conn NoticeResponse]
+(defn handle-notice [conn NoticeResponse]
   (when-let [fn-notice
-             (-> conn (.getConfig) :fn-notice)]
+             (-> conn :config :fn-notice)]
     (fn-notice NoticeResponse)))
 
 
-(defn get-opt [conn]
-  {})
+(defn set-pid
+  [{:as conn :keys [^Map state]}
+   ^Integer pid]
+  (.put state "pid" pid)
+  conn)
+
+
+(defn get-ssl? [{:as conn :keys [^Map state]}]
+  (.get state "ssl"))
+
+
+(defn get-pid
+  [{:keys [^Map state]}]
+  (.get state "pid"))
+
+
+(defn closed?
+  ^Boolean [{:as conn :keys [^Socket socket]}]
+  (.isClosed socket))
+
+
+(defn set-secret-key
+  [{:as conn :keys [^Map state]}
+   ^Integer secret-key]
+  (.put state "secret-key" secret-key)
+  conn)
+
+
+(defn get-secret-key
+  [{:keys [^Map state]}]
+  (.get state "secret-key"))
+
+
+(defn set-tx-status
+  [{:as conn :keys [^Map state]} tx-status]
+  (.put state "tx-status" tx-status)
+  conn)
+
+
+(defn get-tx-status
+  [{:as conn :keys [^Map state]}]
+  (.get state "tx-status"))
+
+
+(defn set-parameter
+  [{:as conn :keys [^Map params]}
+   ^String param
+   ^String value]
+  (.put params param value)
+  conn)
+
+
+(defn get-parameter
+  [{:keys [^Map params]}
+   ^String param]
+  (.get params param))
 
 
 (defn get-server-encoding ^String [conn]
-  "UTF-8"
-  #_
   (get-in conn [:params "server_encoding"] "UTF-8"))
 
 
 (defn get-client-encoding ^String [conn]
-  "UTF-8"
-  #_
   (get-in conn [:params "client_encoding"] "UTF-8"))
 
 
-(defn get-pg-params [^Connection conn]
-  (-> conn (.getConfig) :pg-params))
+(defn get-password [conn]
+  (-> conn :config :password))
 
 
-(defn get-protocol-version [^Connection conn]
-  (-> conn (.getConfig) :protocol-version))
+(defn get-user [conn]
+  (-> conn :config :user))
+
+
+(defn get-database [conn]
+  (-> conn :config :database))
+
+
+(defn get-pg-params [conn]
+  (-> conn :config :pg-params))
+
+
+(defn get-protocol-version [conn]
+  (-> conn :config :protocol-version))
 
 
 (defn send-message
-  [^Connection conn message]
+  [{:as conn :keys [^OutputStream out-stream
+                    opt]}
+   message]
   (debug/debug-message message " ->")
-
-  (let [out-stream
-        (.getOutputStream conn)
-
-        bb
-        (msg/encode-message message {})]
-
+  (let [bb (msg/encode-message message opt)]
     (.write out-stream (bb/array bb)))
   conn)
 
 
+(defn send-password [conn ^String password]
+  (let [msg (msg/make-PasswordMessage password)]
+    (send-message conn msg))
+  conn)
+
+
+(defn terminate
+  [conn]
+  (send-message conn (msg/make-Terminate))
+  (-> conn ^Socket (get :socket) .close)
+  conn)
+
+
+(defn send-sync [conn]
+  (send-message conn (msg/make-Sync))
+  conn)
+
+
+(defn send-flush [conn]
+  (send-message conn (msg/make-Flush))
+  conn)
+
+
 (defn read-message
-  [^Connection conn]
+  [{:keys [^InputStream in-stream
+           opt]}]
 
-  (let [in-stream
-        (.getInputStream conn)
-
-        ;; TODO:
-        opt
-        {}
-
-        buf-header
+  (let [buf-header
         (.readNBytes in-stream 5)
 
         bb-head
@@ -135,10 +213,52 @@
     message))
 
 
-(defn send-bind [^Connection conn statement params oids]
+(defn authenticate [conn]
 
-  (let [config
-        (.getConfig conn)
+  (let [user
+        (get-user conn)
+
+        database
+        (get-database conn)
+
+        params
+        (get-pg-params conn)
+
+        protocol-version
+        (get-protocol-version conn)
+
+        msg
+        (msg/make-StartupMessage
+         protocol-version
+         user
+         database
+         params)]
+
+    (send-message conn msg)))
+
+
+(defn send-query [conn sql]
+  (let [msg (msg/make-Query sql)]
+    (send-message conn msg)))
+
+
+(defn send-parse [conn query oids]
+
+  (let [statement
+        (name (gensym "statement_"))
+
+        msg
+        (msg/make-Parse statement query oids)]
+
+    (send-message conn msg)
+
+    statement))
+
+
+(defn send-bind [conn statement params oids]
+
+  (let [{:keys [config]}
+        conn
 
         {:keys [binary-encode?
                 binary-decode?]}
@@ -158,6 +278,36 @@
     (send-message conn msg)
 
     portal))
+
+
+(defn send-execute [conn portal row-count]
+  (let [msg (msg/make-Execute portal row-count)]
+    (send-message conn msg)))
+
+
+(defn send-copy-data [conn buffer]
+  (let [msg (msg/make-CopyData buffer)]
+    (send-message conn msg)))
+
+
+(defn send-copy-done [conn]
+  (let [msg (msg/make-CopyDone)]
+    (send-message conn msg)))
+
+
+(defn send-copy-fail
+  ([conn]
+   (let [msg (msg/make-CopyFail)]
+     (send-message conn msg)))
+
+  ([conn message]
+   (let [msg (msg/make-CopyFail message)]
+    (send-message conn msg))))
+
+
+(defn send-ssl-request [conn]
+  (let [msg (msg/make-SSLRequest const/SSL_CODE)]
+    (send-message conn msg)))
 
 
 (defn read-ssl-response ^Character [conn]
@@ -193,6 +343,62 @@
   (let [msg (msg/make-Describe \P portal)]
     (send-message conn msg)))
 
+
+(defn rebuild-opt [{:keys [^Map opt]} param value]
+  (case param
+
+    "server_encoding"
+    (.put opt :server-encoding value)
+
+    "client_encoding"
+    (.put opt :client-encoding value)
+
+    "DateStyle"
+    (.put opt :date-style value)
+
+    "TimeZone"
+    (.put opt :time-zone value)
+
+    nil))
+
+
+(defn get-opt [conn]
+  (:opt conn))
+
+
+(defrecord Connection
+    [^String id
+     ^Long created-at
+     ^Map config
+     ^Socket socket
+     ^InputStream in-stream
+     ^OutputStream out-stream
+     ^Map params
+     ^Map state
+     ^Map opt]
+
+    Closeable
+
+    (close [this]
+      (terminate this))
+
+    Object
+
+    (toString [_]
+
+      (let [{:keys [host
+                    port
+                    user
+                    database]}
+            config]
+
+        (format "<PG connection %s@%s:%s/%s>"
+                user host port database))))
+
+
+(defmethod print-method Connection
+  [conn ^Writer w]
+  (.write w (str conn)))
 
 
 (defn set-socket-opts
@@ -233,65 +439,55 @@
 (defn pre-ssl-stage ^Connection [^Connection conn]
   (if (ssl-requested? conn)
     (do
-      (.sendSSLRequest conn)
+      (send-ssl-request conn)
       (case (read-ssl-response conn)
         \N
         (do
-          (.close conn)
+          (terminate conn)
           (throw (new Exception "SSL connection is not supported by the server")))
         \S
         (ssl/wrap-ssl conn)))
     conn))
 
 
-(defn connect ^Connection [config]
+(defn connect [config]
 
   (let [config-full
         (coll/deep-merge config-defaults config)
 
-        ;; {:keys [^String host
-        ;;         ^Integer port]
-        ;;  socket-opt :socket}
-        ;; config-full
+        {:keys [^String host
+                ^Integer port]
+         socket-opt :socket}
+        config-full
 
-        ;; socket
-        ;; (new Socket host port true)
+        socket
+        (new Socket host port true)
 
-        ;; in-stream
-        ;; (.getInputStream socket)
+        in-stream
+        (.getInputStream socket)
 
-        ;; out-stream
-        ;; (.getOutputStream socket)
+        out-stream
+        (.getOutputStream socket)
 
-        ;; id
-        ;; (gensym "pg")
+        id
+        (gensym "pg")
 
-        ;; created-at
-        ;; (System/currentTimeMillis)
+        created-at
+        (System/currentTimeMillis)
 
-        ;; _
-        ;; (set-socket-opts socket socket-opt)
+        _
+        (set-socket-opts socket socket-opt)
 
-        ;; conn
-        ;; (new Connection
-        ;;      id
-        ;;      created-at
-        ;;      config-full
-        ;;      socket
-        ;;      in-stream
-        ;;      out-stream
-        ;;      (new HashMap)
-        ;;      (new HashMap)
-        ;;      (new HashMap))
+        conn
+        (new Connection
+             id
+             created-at
+             config-full
+             socket
+             in-stream
+             out-stream
+             (new HashMap)
+             (new HashMap)
+             (new HashMap))]
 
-]
-
-    (new Connection config-full)
-
-#_
     (pre-ssl-stage conn)))
-
-
-(defmethod print-method Connection
-  [conn ^Writer w]
-  (.write w (str conn)))

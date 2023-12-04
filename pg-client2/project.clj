@@ -1,14 +1,18 @@
-(defproject com.github.igrishaev/pg-client "0.1.11-SNAPSHOT"
+(defproject com.github.igrishaev/pg-client2 "0.1.11-SNAPSHOT"
 
   :description
-  "Postgres client in pure Clojure (no JDBC)"
+  "Postgres client in pure Clojure^W Java (no JDBC)"
 
   :plugins
   [[lein-parent "0.3.8"]]
 
   :dependencies
-  [[com.github.igrishaev/pg-common]
-   [com.github.igrishaev/pg-types]]
+  [[org.clojure/clojure]]
+
+  :java-source-paths ["src"]
+
+  :java-cmd "/Users/ivan/work/jdk-21.jdk/Contents/Home/bin/java"
+  ;; :javac-options ["--enable-preview" "--release" "20"]
 
   :parent-project
   {:path "../project.clj"
@@ -24,8 +28,4 @@
   :profiles
   {:test
    {:dependencies
-    [[com.github.igrishaev/pg-json]
-     [com.github.igrishaev/pg-integration]
-     [com.github.igrishaev/pg-ssl]
-     [com.github.igrishaev/pg-honey]
-     [org.clojure/data.csv]]}})
+    []}})

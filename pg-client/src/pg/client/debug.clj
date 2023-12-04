@@ -1,8 +1,7 @@
 (ns pg.client.debug)
 
 
-(def DEBUG? false
-  #_
+(def DEBUG?
   (some?
    (or (System/getenv "PG_DEBUG")
        (System/getProperty "pg.debug"))))

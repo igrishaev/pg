@@ -1,7 +1,5 @@
 (ns pg.client-test
   (:import
-   com.github.igrishaev.Connection)
-  (:import
    java.io.ByteArrayInputStream
    java.io.ByteArrayOutputStream
    java.time.Instant
@@ -27,76 +25,6 @@
    [pg.integration :as pgi :refer [*CONFIG*]]
    [pg.json]
    [pg.oid :as oid]))
-
-
-(comment
-
-  (require '[next.jdbc :as jdbc])
-  (require '[next.jdbc.result-set :as jdbc.rs])
-
-  ;; 8000.900308
-  (time
-   (let [conn (jdbc/get-connection {:dbtype "postgres"
-                                    :port 15432
-                                    :dbname "ivan"
-                                    :user "ivan"
-                                    :password "ivan"})]
-
-     (jdbc/execute! conn ["select * from generate_series(1,500000)"]
-                    {:as jdbc.rs/as-unqualified-maps})
-     nil))
-
-  (def ^Connection -c (pg/connect {:port 15432
-                                   :user "ivan"
-                                   :password "ivan"
-                                   :database "ivan"}))
-
-
-  (def ^Connection -c
-    (new Connection
-         "127.0.0.1"
-         (int 15432)
-         "ivan"
-         "ivan"
-         "ivan"))
-
-  ;; (.sendStartupMessage -c)
-  ;; (.readMessage -c)
-  ;; (.close -c)
-
-
-  (time
-   (do
-     (.query -c "select * from generate_series(1,500000)")
-     nil))
-
-
-  ;; 11387.622
-  (time
-   (loop [i 0]
-     (let [msg (.readMessage -c)]
-       (when-not (instance? com.github.igrishaev.msg.ReadyForQuery msg)
-         (recur (inc i))))))
-
-  #_
-  (time
-   (do
-     (pg.client.flow/interact -c :query {})
-     nil))
-
-
-  (time
-   (do
-     (Flow/interact -c "query")
-     nil))
-
-  (type -c)
-
-  (Flow/isEnough 42 "query")
-
-
-
-  )
 
 
 (use-fixtures :each pgi/fix-multi-version)
@@ -230,7 +158,6 @@
       (is (= [{:bar "hello"}] res2)))))
 
 
-;; TODO: socket options!
 (deftest test-client-socket-opt
 
   (pg/with-connection [conn (update *CONFIG* :socket assoc
@@ -271,7 +198,7 @@
 (deftest test-client-with-tx-syntax-issue
   (pg/with-connection [conn *CONFIG*]
     (pg/with-tx [conn]
-      (is (pg/connection? conn)))))
+      (is (map? conn)))))
 
 
 (deftest test-client-with-transaction-ok
@@ -1359,8 +1286,6 @@ drop table %1$s;
       (is (= {:a 1 :b 2} res)))))
 
 
-;; TODO: fix it
-#_
 (deftest test-conn-opt
   (pg/with-connection [conn *CONFIG*]
     (let [opt (conn/get-opt conn)]
@@ -1955,8 +1880,6 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
              res-query)))))
 
 
-;; TODO: test copy fail
-
 (deftest test-copy-in-maps-ok-bin
 
   (pg/with-connection [conn *CONFIG*]
@@ -2145,6 +2068,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
 
   (pg/with-connection [conn *CONFIG*]
 
+
     (let [table
           (gen-table)
 
@@ -2174,24 +2098,3 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
 
       (is (= 3 res1))
       (is (= [{:id 2, :title "test2"}] res2)))))
-
-
-(defprotocol IProto
-  (some-action [this]))
-
-(def a
-  (reify IProto
-    (some-action [this]
-      (println "I'm A"))))
-
-(def b
-  (reify IProto
-    (some-action [this]
-      (println "I'm B"))))
-
-(defn make-c [a b]
-  (reify IProto
-    (some-action [this]
-      (println "I'm C"
-               (some-action a)
-               (some-action b)))))

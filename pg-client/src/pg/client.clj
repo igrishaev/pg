@@ -1,8 +1,4 @@
 (ns pg.client
-
-  (:import
-   com.github.igrishaev.Connection)
-
   (:refer-clojure :exclude [group-by first])
   (:require
    [clojure.string :as str]
@@ -18,15 +14,16 @@
    clojure.lang.Keyword
    java.util.HashMap
    java.util.List
-   java.util.Map))
+   java.util.Map
+   pg.client.conn.Connection))
 
 
 (defn status
   "
   Get the current status of the connection as a keyword.
   "
-  ^Keyword [^Connection conn]
-  (.getTxStatus conn))
+  ^Keyword [conn]
+  (conn/get-tx-status conn))
 
 
 (defn idle?
@@ -58,16 +55,16 @@
   Return a value of a connection parameter by its name
   (.e.g 'integer_datetimes', 'application_name', etc).
   "
-  ^String [^Connection conn ^String param]
-  (.getParam conn param))
+  ^String [{:keys [^Map params]} ^String param]
+  (.get params param))
 
 
 (defn pid
   "
   Get the connection PID as an Integer.
   "
-  ^Integer [^Connection conn]
-  (.getPid conn))
+  ^Integer [conn]
+  (conn/get-pid conn))
 
 
 (defn prepare-statement
@@ -88,21 +85,18 @@
     (name, columns, params, etc).
   "
 
-  (^Map [^Connection conn sql]
+  (^Map [conn sql]
    (prepare-statement conn sql []))
 
-  (^Map [^Connection conn sql oids]
+  (^Map [conn sql oids]
    (let [statement
-         "aaa"
-         _
-         (.sendParse conn statement sql oids)
+         (conn/send-parse conn sql oids)
 
          init
          {:statement statement}]
 
      (conn/describe-statement conn statement)
-     (.sendSync conn)
-     (.sendFlush conn)
+     (conn/send-sync conn)
      (flow/interact conn :prepare init))))
 
 
@@ -110,12 +104,11 @@
   "
   Close a previously prepared statement on the server side.
   "
-  [^Connection conn stmt]
+  [conn stmt]
   (let [{:keys [statement]}
         stmt]
     (conn/close-statement conn statement))
-  (.sendSync conn)
-  (.sendFlush conn)
+  (conn/send-sync conn)
   (flow/interact conn :close-statement))
 
 
@@ -134,20 +127,14 @@
          (close-statement conn# ~bind)))))
 
 
-(defn connection?
-  "
-  Check if a given object is a Connection.
-  "
-  [x]
-  (instance? Connection x))
-
-
 (defn authenticate
   "
   Run the authentication pipeline for a given connection.
   Returns the connection.
   "
-  [^Connection conn]
+  [conn]
+  (conn/authenticate conn)
+  (flow/interact conn :auth)
   conn)
 
 
@@ -155,16 +142,16 @@
   "
   True if a connection has been closed.
   "
-  ^Boolean [^Connection conn]
-  (.isClosed conn))
+  ^Boolean [conn]
+  (conn/closed? conn))
 
 
 (defn ssl?
   "
   True if the connection is encrypted with SSL.
   "
-  ^Boolean [^Connection conn]
-  (.getSSL conn))
+  ^Boolean [conn]
+  (conn/get-ssl? conn))
 
 
 (defn connect
@@ -183,9 +170,9 @@
   "
   Terminate a connection.
   "
-  [^Connection conn]
+  [conn]
   (when-not (closed? conn)
-    (.close conn)))
+    (conn/terminate conn)))
 
 
 (defmacro with-connection
@@ -215,18 +202,18 @@
   Cancels a hanging query using a dedicated connection.
   A cancelled query will end up with an error response.
   "
-  [^Connection conn]
+  [conn]
 
   (let [master-conn
         (-> conn
-            (.getConfig)
+            (get :config)
             (conn/connect))
 
         pid
-        (.getPid conn)
+        (conn/get-pid conn)
 
         secret-key
-        (.getPrivateKey conn)]
+        (conn/get-secret-key conn)]
 
     (conn/cancel-request master-conn pid secret-key)
     (terminate master-conn)
@@ -237,16 +224,16 @@
   "
   Get a unique symbol assigned to a connection.
   "
-  [^Connection conn]
-  (.-id conn))
+  [conn]
+  (conn/get-id conn))
 
 
 (defn created-at
   "
   Return the connection created time in milliseconds.
   "
-  ^Long [^Connection conn]
-  (.-createdAt conn))
+  ^Long [conn]
+  (conn/get-created-at conn))
 
 
 (defn query
@@ -264,11 +251,11 @@
   https://postgrespro.com/docs/postgrespro/14/protocol-flow#id-1.10.5.7.4
   "
 
-  ([^Connection conn ^String sql]
+  ([conn sql]
    (query conn sql nil))
 
-  ([^Connection conn ^String sql opt]
-   (.sendQuery conn sql)
+  ([conn sql opt]
+   (conn/send-query conn sql)
    (flow/interact conn :query opt)))
 
 
@@ -291,13 +278,13 @@
     which means all rows.
   "
 
-  ([^Connection conn stmt]
+  ([conn stmt]
    (execute-statement conn stmt nil nil))
 
-  ([^Connection conn stmt params]
+  ([conn stmt params]
    (execute-statement conn stmt params nil))
 
-  ([^Connection conn stmt params opt]
+  ([conn stmt params opt]
 
    (let [rows
          (get opt :rows 0)
@@ -313,10 +300,9 @@
          (conn/send-bind conn statement params param-oids)]
 
      (conn/describe-portal conn portal)
-     (.sendExecute conn portal rows)
+     (conn/send-execute conn portal rows)
      (conn/close-portal conn portal)
-     (.sendSync conn)
-     (.sendFlush conn)
+     (conn/send-sync conn)
      (flow/interact conn :execute opt))))
 
 
