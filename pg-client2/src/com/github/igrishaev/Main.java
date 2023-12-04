@@ -12,7 +12,7 @@ public class Main {
         ArrayList<Object> params = new ArrayList<>();
         params.add(1);
         Object res = conn.executeStatement(ps, params);
-        System.out.println(ps);
+        System.out.println(res);
 
         // System.out.println(SourceType.STATEMENT.getCode());
     }

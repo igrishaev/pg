@@ -311,6 +311,11 @@ public class Connection implements Closeable {
         sendMessage(msg);
     }
 
+    private void sendExecute (String portal, long rowCount) {
+        Execute msg = new Execute(portal, rowCount);
+        sendMessage(msg);
+    }
+
     public synchronized Object query(String sql) {
         sendQuery(sql);
         final CljReducer reducer = new CljReducer();
@@ -367,12 +372,21 @@ public class Connection implements Closeable {
         sendMessage(msg);
     }
 
+    public Object executeStatement (PreparedStatement ps) {
+        return executeStatement(ps, Collections.emptyList(), 0);
+    }
+
     public synchronized Object executeStatement (PreparedStatement ps, List<Object> params) {
+        return executeStatement(ps, params, 0);
+    }
+
+    public synchronized Object executeStatement (PreparedStatement ps, List<Object> params, long rowCount) {
         String portal = generatePortal();
         String statement = ps.parse().statement();
         OID[] OIDs = ps.parameterDescription().OIDs();
         sendBind(portal, statement, params, OIDs);
         sendDescribePortal(portal);
+        sendExecute(portal, rowCount);
         sendSync();
         sendFlush();
         return interact(Phase.EXECUTE, new CljReducer()).getResult();
@@ -395,6 +409,8 @@ public class Connection implements Closeable {
     private <I,R> void handleMessage(Object msg, Result<I,R> res) {
 
         switch (msg) {
+            case BindComplete ignored:
+                break;
             case AuthenticationOk ignored:
                 break;
             case AuthenticationCleartextPassword ignored:
