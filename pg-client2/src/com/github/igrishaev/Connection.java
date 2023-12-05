@@ -333,8 +333,8 @@ public class Connection implements Closeable {
         sendDescribeStatement(statement);
         sendSync();
         sendFlush();
-        Result<I,V> res = interact(Phase.PREPARE, null);
-        ParameterDescription paramDesc = res.getParameterDescription();
+        Accum<I,V> res = interact(Phase.PREPARE, null);
+        ParameterDescription paramDesc = res.current.parameterDescription;
         return new PreparedStatement(parse, paramDesc);
     }
 
@@ -392,8 +392,8 @@ public class Connection implements Closeable {
         return interact(Phase.EXECUTE, new CljReducer()).getResult();
     }
 
-    private <I, R> Result<I, R> interact(Phase phase, IReducer<I, R> reducer) {
-        Result<I, R> res = new Result<>(phase, reducer);
+    private <I, R> Accum<I, R> interact(Phase phase, IReducer<I, R> reducer) {
+        Accum<I, R> res = new Accum<>(phase, reducer);
         while (true) {
             final Object msg = readMessage();
             System.out.println(msg);
@@ -406,7 +406,7 @@ public class Connection implements Closeable {
         return res;
     }
 
-    private <I,R> void handleMessage(Object msg, Result<I,R> res) {
+    private <I,R> void handleMessage(Object msg, Accum<I,R> res) {
 
         switch (msg) {
             case BindComplete ignored:
@@ -448,12 +448,12 @@ public class Connection implements Closeable {
         }
     }
 
-    private <I,R> void handleParseComplete(ParseComplete msg, Result<I,R> res) {
-        res.setParseComplete(msg);
+    private <I,R> void handleParseComplete(ParseComplete msg, Accum<I,R> acc) {
+        acc.current.parseComplete = msg;
     }
 
-    private <I,R> void handleParameterDescription (ParameterDescription msg, Result<I,R> res) {
-        res.setParameterDescription(msg);
+    private <I,R> void handleParameterDescription (ParameterDescription msg, Accum<I,R> acc) {
+        acc.current.parameterDescription = msg;
     }
 
     private void handleAuthenticationCleartextPassword() {
@@ -464,19 +464,19 @@ public class Connection implements Closeable {
         setParam(msg.param(), msg.value());
     }
 
-    private static <I,R> void handleRowDescription(RowDescription msg, Result<I,R> res) {
-        res.setRowDescription(msg);
+    private static <I,R> void handleRowDescription(RowDescription msg, Accum<I,R> acc) {
+        acc.current.rowDescription = msg;
         short size = msg.columnCount();
         Object[] keys = new Object[size];
         for (short i = 0; i < size; i ++) {
             keys[i] = msg.columns()[i].name();
         }
-        res.setCurrentKeys(keys);
+        acc.current.keys = keys;
     }
 
-    private <I,R> void handleDataRow(DataRow msg, Result<I,R> res) {
+    private <I,R> void handleDataRow(DataRow msg, Accum<I,R> res) {
         short size = msg.valueCount();
-        RowDescription.Column[] cols = res.getRowDescription().columns();
+        RowDescription.Column[] cols = res.current.rowDescription.columns();
         ByteBuffer[] bufs = msg.values();
         Object[] values = new Object[size];
         for (short i = 0; i < size; i++) {
@@ -503,12 +503,13 @@ public class Connection implements Closeable {
         txStatus = msg.txStatus();
     }
 
-    private static <I, R> void handleCommandComplete(CommandComplete msg, Result<I, R> res) {
-        res.setCommandComplete(msg);
+    private static <I, R> void handleCommandComplete(CommandComplete msg, Accum<I, R> res) {
+        res.current.commandComplete = msg;
+        res.addNode();
     }
 
-    private static <I, R> void handleErrorResponse(ErrorResponse msg, Result<I,R> res) {
-        res.addErrorResponse(msg);
+    private static <I, R> void handleErrorResponse(ErrorResponse msg, Accum<I,R> acc) {
+        acc.errorResponses.add(msg);
     }
 
     private void handleBackendKeyData(BackendKeyData msg) {
