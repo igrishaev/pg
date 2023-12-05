@@ -14,40 +14,22 @@ public class Accum<I, R> {
          public ParameterDescription parameterDescription;
          public Object[] keys;
          public I acc;
+         public R res;
 
          public Result toResult() {
 
-             int selectedCount = 0;
-             int insertedCount = 0;
-             int updatedCount = 0;
-             int deletedCount = 0;
-             int copyCount = 0;
-
-             String[] parts = commandComplete.tag().split("\s+");
+             String[] parts = commandComplete.tag().split(" +");
              String lead = parts[0];
-             switch (lead) {
-                 case "INSERT":
-                     insertedCount = Integer.parseInt(parts[2]);
-                     break;
-                 case "UPDATE":
-                     updatedCount = Integer.parseInt(parts[1]);
-                     break;
-                 case "DELETE":
-                     deletedCount = Integer.parseInt(parts[1]);
-                 case "SELECT":
-                     selectedCount = Integer.parseInt(parts[1]);
-                 case "COPY":
-                     copyCount = Integer.parseInt(parts[1]);
-             }
+             int rowsProcessed = switch (lead) {
+                 case "INSERT" -> Integer.parseInt(parts[2]);
+                 case "UPDATE", "DELETE", "SELECT", "COPY" -> Integer.parseInt(parts[1]);
+                 default -> 0;
+             };
 
              return new Result(
                      commandComplete.tag(),
-                     selectedCount,
-                     insertedCount,
-                     updatedCount,
-                     deletedCount,
-                     copyCount,
-                     acc
+                     rowsProcessed,
+                     res
              );
          }
     }
@@ -66,30 +48,19 @@ public class Accum<I, R> {
         addNode();
     }
 
-    public ArrayList<R> getResults () {
-        final ArrayList<R> results = new ArrayList<>();
-        for (Node subRes: nodes) {
-            if (subRes.commandComplete != null) {
-                R result = reducer.finalize(subRes.acc);
-                results.add(result);
+    public ArrayList<Result> getResults () {
+        final ArrayList<Result> results = new ArrayList<>();
+        for (Node node: nodes) {
+            if (node.commandComplete != null) {
+                node.res = reducer.finalize(node.acc);
+                results.add(node.toResult());
             }
         }
         return results;
     }
 
-    public R getResult () {
-        if (nodes.isEmpty()) {
-            return null;
-        }
-        else {
-            Node subRes = nodes.get(0);
-            if (subRes.commandComplete != null) {
-                return reducer.finalize(subRes.acc);
-            }
-            else {
-                return null;
-            }
-        }
+    public Result getResult () {
+        return getResults().get(0);
     }
 
     public void setCurrentValues (Object[] values) {

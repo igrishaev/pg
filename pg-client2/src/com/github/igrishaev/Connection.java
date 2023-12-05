@@ -316,7 +316,7 @@ public class Connection implements Closeable {
         sendMessage(msg);
     }
 
-    public synchronized Object query(String sql) {
+    public synchronized List<Result> query(String sql) {
         sendQuery(sql);
         final CljReducer reducer = new CljReducer();
         return interact(Phase.QUERY, reducer).getResults();
@@ -380,7 +380,7 @@ public class Connection implements Closeable {
         return executeStatement(ps, params, 0);
     }
 
-    public synchronized Object executeStatement (PreparedStatement ps, List<Object> params, long rowCount) {
+    public synchronized Result executeStatement (PreparedStatement ps, List<Object> params, long rowCount) {
         String portal = generatePortal();
         String statement = ps.parse().statement();
         OID[] OIDs = ps.parameterDescription().OIDs();
