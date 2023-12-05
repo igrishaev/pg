@@ -11,7 +11,7 @@
 
   :java-source-paths ["src"]
 
-  :java-cmd "/Users/ivan/work/jdk-21.jdk/Contents/Home/bin/java"
+  :java-cmd "/Users/wzhivga/work/jdk-21.jdk/Contents/Home/bin/java"
   ;; :javac-options ["--enable-preview" "--release" "20"]
 
   :parent-project
