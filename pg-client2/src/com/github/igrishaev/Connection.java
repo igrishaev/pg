@@ -1,5 +1,6 @@
 package com.github.igrishaev;
 
+import com.github.igrishaev.codec.DecoderBin;
 import com.github.igrishaev.codec.DecoderTxt;
 import com.github.igrishaev.codec.EncoderTxt;
 import com.github.igrishaev.enums.*;
@@ -26,10 +27,11 @@ public class Connection implements Closeable {
     private Socket socket;
     private BufferedInputStream inStream;
     private BufferedOutputStream outStream;
-    private Map<String, String> params;
+    private final Map<String, String> params;
 
     private final DecoderTxt decoderTxt;
     private final EncoderTxt encoderTxt;
+    private final DecoderBin decoderBin;
 
     public Connection(String host, int port, String user, String password, String database) {
         this(new Config.Builder(user, database)
@@ -44,6 +46,7 @@ public class Connection implements Closeable {
         this.params = new HashMap<>();
         this.decoderTxt = new DecoderTxt();
         this.encoderTxt = new EncoderTxt();
+        this.decoderBin = new DecoderBin();
         this.id = UUID.randomUUID();
         this.createdAt = System.currentTimeMillis();
         this.aInt = new AtomicInteger();
@@ -95,14 +98,17 @@ public class Connection implements Closeable {
                 encoderTxt.setEncoding(value);
             case "server_encoding":
                 decoderTxt.setEncoding(value);
+                decoderBin.setEncoding(value);
                 break;
             case "DateStyle":
                 decoderTxt.setDateStyle(value);
                 encoderTxt.setDateStyle(value);
+                decoderBin.setDateStyle(value);
                 break;
             case "TimeZone":
                 decoderTxt.setTimeZone(value);
                 encoderTxt.setTimeZone(value);
+                decoderBin.setTimeZone(value);
                 break;
         }
     }
@@ -322,7 +328,7 @@ public class Connection implements Closeable {
         return interact(Phase.QUERY, reducer).getResults();
     }
 
-    public synchronized PreparedStatement prepare(String sql) {
+    public synchronized PreparedStatement prepare (String sql) {
         return prepare(sql, Collections.emptyList());
     }
 
@@ -393,6 +399,46 @@ public class Connection implements Closeable {
         return interact(Phase.EXECUTE, new Default()).getResult();
     }
 
+    public synchronized Result execute (String sql) {
+        return execute(sql, Collections.emptyList(), Collections.emptyList(), 0);
+    }
+
+    public synchronized Result execute (String sql, List<Object> params) {
+        return execute(sql, params, Collections.emptyList(), 0);
+    }
+
+    public synchronized Result execute (String sql, List<Object> params, List<OID> OIDs) {
+        return execute(sql, params, OIDs, 0);
+    }
+
+    public synchronized Result execute (String sql, List<Object> params, List<OID> OIDs, int rowCount) {
+        PreparedStatement ps = prepare(sql, OIDs);
+        Result res = executeStatement(ps, params, rowCount);
+        closeStatement(ps);
+        return res;
+    }
+
+    private void sendCloseStatement (String statement) {
+        Close msg = new Close(SourceType.STATEMENT, statement);
+        sendMessage(msg);
+    }
+
+    private void sendClosePortal (String portal) {
+        Close msg = new Close(SourceType.PORTAL, portal);
+        sendMessage(msg);
+    }
+
+    public synchronized void closeStatement (PreparedStatement statement) {
+        closeStatement(statement.parse().statement());
+    }
+
+    public synchronized void closeStatement (String statement) {
+        sendCloseStatement(statement);
+        sendSync();
+        sendFlush();
+        interact(Phase.CLOSE, null);
+    }
+
     private Accum interact(Phase phase, IReducer reducer) {
         Accum res = new Accum(phase, reducer);
         while (true) {
@@ -410,6 +456,8 @@ public class Connection implements Closeable {
     private void handleMessage(Object msg, Accum res) {
 
         switch (msg) {
+            case CloseComplete ignored:
+                break;
             case BindComplete ignored:
                 break;
             case AuthenticationOk ignored:
@@ -494,7 +542,8 @@ public class Connection implements Closeable {
                     values[i] = decoderTxt.decode(buf, col.typeOid());
                     break;
                 case BIN:
-                    throw new PGError("binary decoding is not implemented");
+                    values[i] = decoderBin.decode(buf, col.typeOid());
+                    break;
                 default:
                     throw new PGError("unknown format: %s", col.format());
             }
