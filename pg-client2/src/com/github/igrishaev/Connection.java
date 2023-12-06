@@ -4,7 +4,7 @@ import com.github.igrishaev.codec.DecoderTxt;
 import com.github.igrishaev.codec.EncoderTxt;
 import com.github.igrishaev.enums.*;
 import com.github.igrishaev.msg.*;
-import com.github.igrishaev.reducer.CljReducer;
+import com.github.igrishaev.reducer.PVecPMap;
 import com.github.igrishaev.reducer.IReducer;
 
 import java.io.*;
@@ -318,7 +318,7 @@ public class Connection implements Closeable {
 
     public synchronized List<Result> query(String sql) {
         sendQuery(sql);
-        final CljReducer reducer = new CljReducer();
+        final PVecPMap reducer = new PVecPMap();
         return interact(Phase.QUERY, reducer).getResults();
     }
 
@@ -326,14 +326,15 @@ public class Connection implements Closeable {
         return prepare(sql, Collections.emptyList());
     }
 
-    public synchronized <I,V> PreparedStatement prepare (String sql, List<OID> OIDs) {
+    public synchronized PreparedStatement prepare (String sql, List<OID> OIDs) {
         String statement = generateStatement();
         Parse parse = new Parse(statement, sql, OIDs);
         sendMessage(parse);
         sendDescribeStatement(statement);
         sendSync();
         sendFlush();
-        Accum<I,V> res = interact(Phase.PREPARE, null);
+        final PVecPMap reducer = new PVecPMap();
+        Accum res = interact(Phase.PREPARE, reducer);
         ParameterDescription paramDesc = res.current.parameterDescription;
         return new PreparedStatement(parse, paramDesc);
     }
@@ -389,11 +390,11 @@ public class Connection implements Closeable {
         sendExecute(portal, rowCount);
         sendSync();
         sendFlush();
-        return interact(Phase.EXECUTE, new CljReducer()).getResult();
+        return interact(Phase.EXECUTE, new PVecPMap()).getResult();
     }
 
-    private <I, R> Accum<I, R> interact(Phase phase, IReducer<I, R> reducer) {
-        Accum<I, R> res = new Accum<>(phase, reducer);
+    private Accum interact(Phase phase, IReducer reducer) {
+        Accum res = new Accum(phase, reducer);
         while (true) {
             final Object msg = readMessage();
             System.out.println(msg);
@@ -406,7 +407,7 @@ public class Connection implements Closeable {
         return res;
     }
 
-    private <I,R> void handleMessage(Object msg, Accum<I,R> res) {
+    private void handleMessage(Object msg, Accum res) {
 
         switch (msg) {
             case BindComplete ignored:
@@ -448,11 +449,11 @@ public class Connection implements Closeable {
         }
     }
 
-    private <I,R> void handleParseComplete(ParseComplete msg, Accum<I,R> acc) {
+    private void handleParseComplete(ParseComplete msg, Accum acc) {
         acc.current.parseComplete = msg;
     }
 
-    private <I,R> void handleParameterDescription (ParameterDescription msg, Accum<I,R> acc) {
+    private void handleParameterDescription (ParameterDescription msg, Accum acc) {
         acc.current.parameterDescription = msg;
     }
 
@@ -464,17 +465,19 @@ public class Connection implements Closeable {
         setParam(msg.param(), msg.value());
     }
 
-    private static <I,R> void handleRowDescription(RowDescription msg, Accum<I,R> acc) {
+    private static void handleRowDescription(RowDescription msg, Accum acc) {
         acc.current.rowDescription = msg;
+        IReducer reducer = acc.reducer;
         short size = msg.columnCount();
         Object[] keys = new Object[size];
         for (short i = 0; i < size; i ++) {
-            keys[i] = msg.columns()[i].name();
+            String key = msg.columns()[i].name();
+            keys[i] = reducer.transformKey(key);
         }
         acc.current.keys = keys;
     }
 
-    private <I,R> void handleDataRow(DataRow msg, Accum<I,R> res) {
+    private void handleDataRow(DataRow msg, Accum res) {
         short size = msg.valueCount();
         RowDescription.Column[] cols = res.current.rowDescription.columns();
         ByteBuffer[] bufs = msg.values();
@@ -503,12 +506,12 @@ public class Connection implements Closeable {
         txStatus = msg.txStatus();
     }
 
-    private static <I, R> void handleCommandComplete(CommandComplete msg, Accum<I, R> res) {
-        res.current.commandComplete = msg;
-        res.addNode();
+    private static void handleCommandComplete(CommandComplete msg, Accum acc) {
+        acc.current.commandComplete = msg;
+        acc.addNode();
     }
 
-    private static <I, R> void handleErrorResponse(ErrorResponse msg, Accum<I,R> acc) {
+    private static void handleErrorResponse(ErrorResponse msg, Accum acc) {
         acc.errorResponses.add(msg);
     }
 

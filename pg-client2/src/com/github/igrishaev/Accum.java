@@ -6,15 +6,16 @@ import com.github.igrishaev.reducer.IReducer;
 
 import java.util.ArrayList;
 
-public class Accum<I, R> {
-     public class Node {
+public class Accum {
+
+     public static class Node {
          public RowDescription rowDescription;
          public CommandComplete commandComplete;
          public ParseComplete parseComplete;
          public ParameterDescription parameterDescription;
          public Object[] keys;
-         public I acc;
-         public R res;
+         public Object acc;
+         public Object res;
 
          public Result toResult() {
 
@@ -38,9 +39,9 @@ public class Accum<I, R> {
     public ArrayList<Node> nodes;
     public ArrayList<ErrorResponse> errorResponses;
     public Node current;
-    public IReducer<I, R> reducer;
+    public IReducer reducer;
 
-    public Accum(Phase phase, IReducer<I, R> reducer) {
+    public Accum(Phase phase, IReducer reducer) {
         this.phase = phase;
         this.reducer = reducer;
         nodes = new ArrayList<>();
@@ -64,7 +65,8 @@ public class Accum<I, R> {
     }
 
     public void setCurrentValues (Object[] values) {
-        current.acc = reducer.append(current.acc, current.keys, values);
+        Object row = reducer.compose(current.keys, values);
+        current.acc = reducer.append(current.acc, row);
     }
 
     public void addNode() {

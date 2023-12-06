@@ -1,17 +1,12 @@
 
 package com.github.igrishaev.reducer;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.HashMap;
+import clojure.core$assoc_BANG_;
+import clojure.core$persistent_BANG_;
 import clojure.lang.PersistentHashMap;
-import clojure.lang.ITransientCollection;
 import clojure.lang.IFn;
-import clojure.lang.RT;
-import clojure.lang.IPersistentCollection;
-import clojure.lang.ITransientAssociative;
 
-public class IndexBy implements IReducer<ITransientAssociative, IPersistentCollection> {
+public class IndexBy extends PMapMixin implements IReducer {
 
     private final IFn f;
 
@@ -19,16 +14,15 @@ public class IndexBy implements IReducer<ITransientAssociative, IPersistentColle
         this.f = f;
     }
 
-    public ITransientAssociative initiate () {
+    public Object initiate () {
         return PersistentHashMap.EMPTY.asTransient();
     }
 
-    public ITransientAssociative append (ITransientAssociative acc, Object[] keys, Object[] vals) {
-        Object row = new Object();
-        return acc.assoc(f.invoke(row), row);
+    public Object append (Object acc, Object row) {
+        return core$assoc_BANG_.invokeStatic(acc, f.invoke(row), row);
     }
 
-    public IPersistentCollection finalize (ITransientAssociative acc) {
-        return acc.persistent();
+    public Object finalize (Object acc) {
+        return core$persistent_BANG_.invokeStatic(acc);
     }
 }
