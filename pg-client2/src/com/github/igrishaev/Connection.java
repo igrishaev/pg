@@ -4,7 +4,7 @@ import com.github.igrishaev.codec.DecoderTxt;
 import com.github.igrishaev.codec.EncoderTxt;
 import com.github.igrishaev.enums.*;
 import com.github.igrishaev.msg.*;
-import com.github.igrishaev.reducer.PVecPMap;
+import com.github.igrishaev.reducer.Default;
 import com.github.igrishaev.reducer.IReducer;
 
 import java.io.*;
@@ -318,7 +318,7 @@ public class Connection implements Closeable {
 
     public synchronized List<Result> query(String sql) {
         sendQuery(sql);
-        final PVecPMap reducer = new PVecPMap();
+        final Default reducer = new Default();
         return interact(Phase.QUERY, reducer).getResults();
     }
 
@@ -333,7 +333,7 @@ public class Connection implements Closeable {
         sendDescribeStatement(statement);
         sendSync();
         sendFlush();
-        final PVecPMap reducer = new PVecPMap();
+        final Default reducer = new Default();
         Accum res = interact(Phase.PREPARE, reducer);
         ParameterDescription paramDesc = res.current.parameterDescription;
         return new PreparedStatement(parse, paramDesc);
@@ -390,7 +390,7 @@ public class Connection implements Closeable {
         sendExecute(portal, rowCount);
         sendSync();
         sendFlush();
-        return interact(Phase.EXECUTE, new PVecPMap()).getResult();
+        return interact(Phase.EXECUTE, new Default()).getResult();
     }
 
     private Accum interact(Phase phase, IReducer reducer) {

@@ -6,7 +6,7 @@ import clojure.core$persistent_BANG_;
 import clojure.lang.PersistentHashMap;
 import clojure.lang.IFn;
 
-public class IndexBy extends PMapMixin implements IReducer {
+public class IndexBy extends MapMixin implements IReducer {
 
     private final IFn f;
 

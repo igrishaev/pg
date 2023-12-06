@@ -4,7 +4,12 @@ import clojure.core$persistent_BANG_;
 import clojure.core$conj_BANG_;
 import clojure.lang.PersistentVector;
 
-public class PVecPMap extends PMapMixin implements IReducer {
+public class Matrix extends MapMixin implements IReducer {
+
+    @Override
+    public Object compose(Object[] keys, Object[] vals) {
+        return PersistentVector.create(vals);
+    }
 
     public Object initiate() {
         return PersistentVector.EMPTY.asTransient();
