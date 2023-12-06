@@ -65,7 +65,8 @@
    [ch.qos.logback/logback-classic "1.4.5"]
    [com.stuartsierra/component "1.1.0"]
    [org.clojure/data.csv "1.0.1"]
-   [cheshire "5.11.0"]]
+   [cheshire "5.11.0"]
+   [criterium "0.4.6"]]
 
   :profiles
   {:dev
