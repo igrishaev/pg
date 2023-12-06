@@ -7,7 +7,8 @@
   [[lein-parent "0.3.8"]]
 
   :dependencies
-  [[org.clojure/clojure]]
+  [[org.clojure/clojure]
+   [metosin/jsonista]]
 
   :java-source-paths ["src"]
 
