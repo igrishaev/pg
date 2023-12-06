@@ -28,4 +28,5 @@
   :profiles
   {:test
    {:dependencies
-    []}})
+    [[com.github.seancorfield/next.jdbc]
+     [org.postgresql/postgresql]]}})

@@ -184,9 +184,9 @@ public class Connection implements Closeable {
     }
 
     private void sendMessage (IMessage msg) {
-        System.out.println(msg);
+        // System.out.println(msg);
         ByteBuffer buf = msg.encode(getClientEncoding());
-        System.out.println(Arrays.toString(buf.array()));
+        // System.out.println(Arrays.toString(buf.array()));
         try {
             outStream.write(buf.array());
             outStream.flush();
@@ -273,7 +273,7 @@ public class Connection implements Closeable {
         byte[] bufHeader = readNBytes(5);
         ByteBuffer bbHeader = ByteBuffer.wrap(bufHeader);
 
-        System.out.println(Arrays.toString(bufHeader));
+        // System.out.println(Arrays.toString(bufHeader));
 
         byte bTag = bbHeader.get();
         int bodySize = bbHeader.getInt() - 4;
@@ -281,7 +281,7 @@ public class Connection implements Closeable {
         byte[] bufBody = readNBytes(bodySize);
         ByteBuffer bbBody = ByteBuffer.wrap(bufBody);
 
-        System.out.println(Arrays.toString(bufBody));
+        // System.out.println(Arrays.toString(bufBody));
 
         return switch ((char) bTag) {
             case 'R' -> AuthenticationResponse.fromByteBuffer(bbBody).parseResponse(bbBody);
@@ -397,7 +397,7 @@ public class Connection implements Closeable {
         Accum res = new Accum(phase, reducer);
         while (true) {
             final Object msg = readMessage();
-            System.out.println(msg);
+            // System.out.println(msg);
             handleMessage(msg, res);
             if (isEnough(msg, phase)) {
                 break;
