@@ -16,3 +16,5 @@
 - notification handler
 - notice handler
 - protocol handler
+- connection pool
+- clojure tests
