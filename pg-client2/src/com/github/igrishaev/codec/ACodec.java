@@ -1,6 +1,7 @@
 package com.github.igrishaev.codec;
 
 import com.github.igrishaev.PGError;
+import com.github.igrishaev.enums.OID;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -38,6 +39,21 @@ abstract class ACodec {
         byte[] bytes = new byte[size];
         buf.get(bytes);
         return bytes;
+    }
+    public byte[] getBytes (String string) {
+        try {
+            return string.getBytes(encoding);
+        } catch (UnsupportedEncodingException e) {
+            throw new PGError(e, "could not get bytes from a string");
+        }
+    }
+
+    public String txtEncodingError(Object x, OID oid) {
+        throw new PGError("cannot text-encode a value: %s, OID: %s", x, oid);
+    }
+
+    public ByteBuffer binEncodingError(Object x, OID oid) {
+        throw new PGError("cannot binary-encode a value: %s, OID: %s", x, oid);
     }
 
 }

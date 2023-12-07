@@ -2,6 +2,7 @@ package com.github.igrishaev;
 
 import com.github.igrishaev.codec.DecoderBin;
 import com.github.igrishaev.codec.DecoderTxt;
+import com.github.igrishaev.codec.EncoderBin;
 import com.github.igrishaev.codec.EncoderTxt;
 import com.github.igrishaev.enums.*;
 import com.github.igrishaev.msg.*;
@@ -32,6 +33,7 @@ public class Connection implements Closeable {
     private final DecoderTxt decoderTxt;
     private final EncoderTxt encoderTxt;
     private final DecoderBin decoderBin;
+    private final EncoderBin encoderBin;
 
     public Connection(String host, int port, String user, String password, String database) {
         this(new Config.Builder(user, database)
@@ -47,6 +49,7 @@ public class Connection implements Closeable {
         this.decoderTxt = new DecoderTxt();
         this.encoderTxt = new EncoderTxt();
         this.decoderBin = new DecoderBin();
+        this.encoderBin = new EncoderBin();
         this.id = UUID.randomUUID();
         this.createdAt = System.currentTimeMillis();
         this.aInt = new AtomicInteger();
@@ -95,6 +98,7 @@ public class Connection implements Closeable {
         params.put(param, value);
         switch (param) {
             case "client_encoding":
+                encoderBin.setEncoding(value);
                 encoderTxt.setEncoding(value);
             case "server_encoding":
                 decoderTxt.setEncoding(value);
@@ -104,11 +108,13 @@ public class Connection implements Closeable {
                 decoderTxt.setDateStyle(value);
                 encoderTxt.setDateStyle(value);
                 decoderBin.setDateStyle(value);
+                encoderBin.setDateStyle(value);
                 break;
             case "TimeZone":
                 decoderTxt.setTimeZone(value);
                 encoderTxt.setTimeZone(value);
                 decoderBin.setTimeZone(value);
+                encoderBin.setTimeZone(value);
                 break;
         }
     }
@@ -355,7 +361,8 @@ public class Connection implements Closeable {
             OID oid = OIDs[i];
             switch (paramsFormat) {
                 case BIN:
-                    throw new PGError("binary encoding is not implemented yet");
+                    ByteBuffer buf = encoderBin.encode(param, oid);
+                    values[i] = buf.array();
                 case TXT:
                     String value = encoderTxt.encode(param, oid);
                     try {

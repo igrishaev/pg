@@ -1,7 +1,6 @@
 package com.github.igrishaev.codec;
 
 import clojure.lang.Symbol;
-import com.github.igrishaev.PGError;
 import com.github.igrishaev.enums.OID;
 import java.util.UUID;
 import java.math.BigDecimal;
@@ -10,106 +9,78 @@ import clojure.lang.BigInt;
 
 public class EncoderTxt extends ACodec {
 
-    public String encodingError(Object x, OID oid) {
-        throw new PGError("cannot text-encode a value: %s, OID: %s", x, oid);
-    }
-
     public String encode(Object x, OID oid) {
         return switch (x) {
 
-            case Symbol s -> {
-                switch (oid) {
-                    case TEXT, VARCHAR: yield s.toString();
-                    default: yield encodingError(x, oid);
-                }
-            }
+            case Symbol s -> switch (oid) {
+                case TEXT, VARCHAR -> s.toString();
+                default -> txtEncodingError(x, oid);
+            };
+            
+            case String s -> switch (oid) {
+                case TEXT, VARCHAR -> s;
+                default -> txtEncodingError(x, oid);
+            };
+            
+            case Short s -> switch (oid) {
+                case INT2 -> String.valueOf(s);
+                case INT4 -> String.valueOf(s.intValue());
+                case INT8 -> String.valueOf(s.longValue());
+                default -> txtEncodingError(x, oid);
+            };
 
-            case String s -> {
-                switch (oid) {
-                    case TEXT, VARCHAR: yield s;
-                    default: yield encodingError(x, oid);
-                }
-            }
+            case Integer i -> switch (oid) {
+                case INT2 -> String.valueOf(i.shortValue());
+                case INT4 -> String.valueOf(i);
+                case INT8 -> String.valueOf(i.longValue());
+                default -> txtEncodingError(x, oid);
+            };
 
-            case Short s -> {
-                switch (oid) {
-                    case INT2: yield String.valueOf(s);
-                    case INT4: yield String.valueOf(s.intValue());
-                    case INT8: yield String.valueOf(s.longValue());
-                    default: yield encodingError(x, oid);
-                }
-            }
+            case Long l -> switch (oid) {
+                case INT2 -> String.valueOf(l.shortValue());
+                case INT4 -> String.valueOf(l.intValue());
+                case INT8 -> String.valueOf(l);
+                default -> txtEncodingError(x, oid);
+            };
 
-            case Integer i -> {
-                switch (oid) {
-                    case INT2: yield String.valueOf(i.shortValue());
-                    case INT4: yield String.valueOf(i);
-                    case INT8: yield String.valueOf(i.longValue());
-                    default: yield encodingError(x, oid);
-                }
-            }
+            case Float f -> switch (oid) {
+                case FLOAT4 -> String.valueOf(f);
+                case FLOAT8 -> String.valueOf(f.doubleValue());
+                default -> txtEncodingError(x, oid);
+            };
 
-            case Long l -> {
-                switch (oid) {
-                    case INT2: yield String.valueOf(l.shortValue());
-                    case INT4: yield String.valueOf(l.intValue());
-                    case INT8: yield String.valueOf(l);
-                    default: yield encodingError(x, oid);
-                }
-            }
+            case Double d -> switch (oid) {
+                case FLOAT4 -> String.valueOf(d.floatValue());
+                case FLOAT8 -> String.valueOf(d);
+                default -> txtEncodingError(x, oid);
+            };
 
-            case Float f -> {
-                switch (oid) {
-                    case FLOAT4: yield String.valueOf(f);
-                    case FLOAT8: yield String.valueOf(f.doubleValue());
-                    default: yield encodingError(x, oid);
-                }
-            }
+            case UUID u -> switch (oid) {
+                case TEXT, VARCHAR -> String.valueOf(u);
+                default -> txtEncodingError(x, oid);
+            };
 
-            case Double d -> {
-                switch (oid) {
-                    case FLOAT4: yield String.valueOf(d.floatValue());
-                    case FLOAT8: yield String.valueOf(d);
-                    default: yield encodingError(x, oid);
-                }
-            }
+            case Boolean b -> switch (oid) {
+                case BOOL -> b ? "t" : "f";
+                default -> txtEncodingError(x, oid);
+            };
 
-            case UUID u -> {
-                switch (oid) {
-                    case TEXT, VARCHAR: yield String.valueOf(u);
-                    default: yield encodingError(x, oid);
-                }
-            }
+            case BigDecimal bd -> switch (oid) {
+                case NUMERIC, FLOAT4, FLOAT8 -> bd.toString();
+                default -> txtEncodingError(x, oid);
+            };
 
-            case Boolean b -> {
-                switch (oid) {
-                    case BOOL: yield b ? "t" : "f";
-                    default: yield encodingError(x, oid);
-                }
-            }
+            case BigInteger bi -> switch (oid) {
+                case INT2, INT4, INT8 -> bi.toString();
+                default -> txtEncodingError(x, oid);
+            };
 
-            case BigDecimal bd -> {
-                switch (oid) {
-                    case NUMERIC, FLOAT4, FLOAT8: yield bd.toString();
-                    default: yield encodingError(x, oid);
-                }
-            }
+            case BigInt bi -> switch (oid) {
+                case INT2, INT4, INT8 -> bi.toString();
+                default -> txtEncodingError(x, oid);
+            };
 
-            case BigInteger bi -> {
-                switch (oid) {
-                    case INT2, INT4, INT8: yield bi.toString();
-                    default: yield encodingError(x, oid);
-                }
-            }
-
-            case BigInt bi -> {
-                switch (oid) {
-                    case INT2, INT4, INT8: yield bi.toString();
-                    default: yield encodingError(x, oid);
-                }
-            }
-
-            default -> encodingError(x, oid);
+            default -> txtEncodingError(x, oid);
         };
     }
 }

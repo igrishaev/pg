@@ -1,0 +1,15 @@
+- 4-byte messages
+- JSON support
+- pass reducer into query, execute, execute statement
+- id and status as methods
+- idle? tx-error? transaction? methods
+- copy out
+- copy in: stream, maps, rows
+- set socket options
+- SSL support
+- clone connection
+- cancel query
+- begin, commit, rollback methods
+- listen, unlisten methods
+- notify method
+- check TODOs
