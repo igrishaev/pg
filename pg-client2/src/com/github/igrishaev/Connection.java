@@ -7,6 +7,7 @@ import com.github.igrishaev.codec.EncoderTxt;
 import com.github.igrishaev.enums.*;
 import com.github.igrishaev.msg.*;
 import com.github.igrishaev.reducer.Default;
+import com.github.igrishaev.reducer.Dummy;
 import com.github.igrishaev.reducer.IReducer;
 
 import java.io.*;
@@ -18,8 +19,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Connection implements Closeable {
 
     private final Config config;
-    public final UUID id;
-    public final long createdAt;
+    private final UUID id;
+    private final long createdAt;
     private final AtomicInteger aInt;
 
     private int pid;
@@ -34,6 +35,8 @@ public class Connection implements Closeable {
     private final EncoderTxt encoderTxt;
     private final DecoderBin decoderBin;
     private final EncoderBin encoderBin;
+
+    private final IReducer dummyReducer;
 
     private OutputStream copyOutputStream;
 
@@ -52,6 +55,7 @@ public class Connection implements Closeable {
         this.encoderTxt = new EncoderTxt();
         this.decoderBin = new DecoderBin();
         this.encoderBin = new EncoderBin();
+        this.dummyReducer = new Dummy();
         this.id = UUID.randomUUID();
         this.createdAt = System.currentTimeMillis();
         this.aInt = new AtomicInteger();
@@ -69,6 +73,14 @@ public class Connection implements Closeable {
 
     public synchronized int getPid () {
         return pid;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public long getCreatedAt() {
+        return createdAt;
     }
 
     public synchronized Boolean isClosed () {
@@ -159,7 +171,7 @@ public class Connection implements Closeable {
 
     public void authenticate () {
         sendStartupMessage();
-        interact(Phase.AUTH, null);
+        interact(Phase.AUTH, dummyReducer);
     }
 
     private synchronized void connect () {
@@ -407,9 +419,11 @@ public class Connection implements Closeable {
         sendBind(portal, statement, params, OIDs);
         sendDescribePortal(portal);
         sendExecute(portal, rowCount);
+        sendClosePortal(portal);
         sendSync();
         sendFlush();
-        return interact(Phase.EXECUTE, new Default()).getResult();
+        IReducer reducer = new Default();
+        return interact(Phase.EXECUTE, reducer).getResult();
     }
 
     public synchronized Result execute (String sql) {
@@ -449,7 +463,7 @@ public class Connection implements Closeable {
         sendCloseStatement(statement);
         sendSync();
         sendFlush();
-        interact(Phase.CLOSE, null);
+        interact(Phase.CLOSE, dummyReducer);
     }
 
     private Accum interact(Phase phase, IReducer reducer) {
@@ -511,10 +525,10 @@ public class Connection implements Closeable {
                 handleCopyOutResponse(x, acc);
                 break;
             case CopyData x:
-                handleCopyData(x, acc);
+                handleCopyData(x);
                 break;
-            case CopyDone x:
-                handleCopyDone(x, acc);
+            case CopyDone ignored:
+                handleCopyDone();
                 break;
 
             default: throw new PGError("Cannot handle this message: %s", msg);
@@ -525,7 +539,7 @@ public class Connection implements Closeable {
         acc.current.copyOutResponse = msg;
     }
 
-    private void handleCopyData(CopyData msg, Accum acc) {
+    private void handleCopyData(CopyData msg) {
         if (copyOutputStream == null) {
             throw new PGError("You're going to COPY OUT the data but didn't supply an output stream. Use the `copyOut` method instead.");
         }
@@ -536,7 +550,7 @@ public class Connection implements Closeable {
         }
     }
 
-    private void handleCopyDone(CopyDone msg, Accum acc) {
+    private void handleCopyDone() {
         try {
             copyOutputStream.close();
         } catch (IOException e) {
@@ -549,7 +563,7 @@ public class Connection implements Closeable {
     public synchronized Result copyOut (String sql, OutputStream outputStream) {
         copyOutputStream = outputStream;
         sendQuery(sql);
-        Accum acc = interact(Phase.COPY, null);
+        Accum acc = interact(Phase.COPY, dummyReducer);
         return acc.getResult();
     }
 
