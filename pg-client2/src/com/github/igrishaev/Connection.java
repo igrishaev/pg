@@ -643,4 +643,15 @@ public class Connection implements Closeable {
         };
     }
 
+    public static Connection clone(Connection conn) {
+        return new Connection(conn.config);
+    }
+
+    public static void cancelRequest(Connection conn) {
+        CancelRequest msg = new CancelRequest(Const.CANCEL_CODE, conn.pid, conn.secretKey);
+        Connection temp = clone(conn);
+        temp.sendMessage(msg);
+        temp.close();
+    }
+
 }

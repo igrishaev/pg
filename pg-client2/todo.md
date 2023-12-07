@@ -6,8 +6,6 @@
 - copy in: stream, maps, rows
 - set socket options
 - SSL support
-- clone connection
-- cancel query
 - begin, commit, rollback methods
 - listen, unlisten methods
 - notify method
