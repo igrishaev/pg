@@ -9,6 +9,7 @@ import com.github.igrishaev.msg.*;
 import com.github.igrishaev.reducer.Default;
 import com.github.igrishaev.reducer.Dummy;
 import com.github.igrishaev.reducer.IReducer;
+import com.github.igrishaev.util.DummyOutputStream;
 
 import java.io.*;
 import java.util.*;
@@ -37,7 +38,6 @@ public class Connection implements Closeable {
     private final EncoderBin encoderBin;
 
     private final IReducer dummyReducer;
-
     private OutputStream copyOutputStream;
 
     public Connection(String host, int port, String user, String password, String database) {
@@ -59,6 +59,7 @@ public class Connection implements Closeable {
         this.id = UUID.randomUUID();
         this.createdAt = System.currentTimeMillis();
         this.aInt = new AtomicInteger();
+        this.copyOutputStream = new DummyOutputStream();
         connect();
     }
 
@@ -540,9 +541,6 @@ public class Connection implements Closeable {
     }
 
     private void handleCopyData(CopyData msg) {
-        if (copyOutputStream == null) {
-            throw new PGError("You're going to COPY OUT the data but didn't supply an output stream. Use the `copyOut` method instead.");
-        }
         try {
             copyOutputStream.write(msg.bytes());
         } catch (IOException e) {
@@ -556,7 +554,7 @@ public class Connection implements Closeable {
         } catch (IOException e) {
             throw new PGError(e, "could not close the COPY output stream");
         } finally {
-            copyOutputStream = null;
+            copyOutputStream = new DummyOutputStream();
         }
     }
 
