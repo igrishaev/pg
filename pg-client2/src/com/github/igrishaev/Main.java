@@ -1,5 +1,8 @@
 package com.github.igrishaev;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -17,7 +20,6 @@ public class Main {
                 .binaryDecode(true)
                 .build();
 
-
         // Connection conn = new Connection("127.0.0.1", 15432, user, user, user);
         Connection conn = new Connection(config);
 
@@ -34,8 +36,17 @@ public class Main {
         Object res3 = conn.execute("select $1::int8 as int8", params, Collections.emptyList(), 999);
         System.out.println(res3);
 
-        Object res4 = conn.query("copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT CSV)");
-        System.out.println(res4);
+        // Object res4 = conn.query("copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT CSV)");
+        // System.out.println(res4);
+
+        FileOutputStream out = null;
+        try {
+            out = new FileOutputStream(new File("foo.csv"));
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        Object res5 = conn.copyOut("copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT CSV)", out);
+        System.out.println(res5);
 
         // System.out.println(SourceType.STATEMENT.getCode());
     }

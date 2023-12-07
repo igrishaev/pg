@@ -3,6 +3,7 @@
 - pass reducer into query, execute, execute statement
 - id and status as methods
 - idle? tx-error? transaction? methods
+- empty reducer in Accum
 - copy out
 - copy in: stream, maps, rows
 - set socket options

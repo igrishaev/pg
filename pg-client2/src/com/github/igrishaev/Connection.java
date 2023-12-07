@@ -35,6 +35,8 @@ public class Connection implements Closeable {
     private final DecoderBin decoderBin;
     private final EncoderBin encoderBin;
 
+    private OutputStream copyOutputStream;
+
     public Connection(String host, int port, String user, String password, String database) {
         this(new Config.Builder(user, database)
                 .host(host)
@@ -466,6 +468,8 @@ public class Connection implements Closeable {
 
     private void handleMessage(Object msg, Accum acc) {
 
+        System.out.println(msg);
+
         switch (msg) {
             case CloseComplete ignored:
                 break;
@@ -517,22 +521,36 @@ public class Connection implements Closeable {
         }
     }
 
-    private void handleCopyData(CopyData msg, Accum acc) {
+    private void handleCopyOutResponse(CopyOutResponse msg, Accum acc) {
+        acc.current.copyOutResponse = msg;
+    }
 
+    private void handleCopyData(CopyData msg, Accum acc) {
+        if (copyOutputStream == null) {
+            throw new PGError("You're going to COPY OUT the data but didn't supply an output stream. Use the `copyOut` method instead.");
+        }
+        try {
+            copyOutputStream.write(msg.bytes());
+        } catch (IOException e) {
+            throw new PGError(e, "could not handle CopyData response");
+        }
     }
 
     private void handleCopyDone(CopyDone msg, Accum acc) {
-
+        try {
+            copyOutputStream.close();
+        } catch (IOException e) {
+            throw new PGError(e, "could not close the COPY output stream");
+        } finally {
+            copyOutputStream = null;
+        }
     }
 
-    public Result copyOut (String sql, OutputStream outputStream) {
+    public synchronized Result copyOut (String sql, OutputStream outputStream) {
+        copyOutputStream = outputStream;
         sendQuery(sql);
         Accum acc = interact(Phase.COPY, null);
         return acc.getResult();
-    }
-
-    private void handleCopyOutResponse(CopyOutResponse msg, Accum acc) {
-        acc.current.copyOutResponse = msg;
     }
 
     private void handleParseComplete(ParseComplete msg, Accum acc) {
