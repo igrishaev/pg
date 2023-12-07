@@ -654,4 +654,16 @@ public class Connection implements Closeable {
         temp.close();
     }
 
+    public synchronized void begin () {
+        query("BEGIN");
+    }
+
+    public synchronized void commit () {
+        query("COMMIT");
+    }
+
+    public synchronized void rollback () {
+        query("ROLLBACK");
+    }
+
 }

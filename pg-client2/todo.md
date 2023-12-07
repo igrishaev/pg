@@ -1,12 +1,13 @@
 - 4-byte messages
 - JSON support
+- clojure wrapper
+- clojure tests
 - pass reducer into query, execute, execute statement
 - idle? tx-error? transaction? methods
 - copy out error -> fast forward
 - copy in: stream, maps, rows
 - set socket options
 - SSL support
-- begin, commit, rollback methods
 - listen, unlisten methods
 - notify method
 - check TODOs
@@ -14,4 +15,6 @@
 - notice handler
 - protocol handler
 - connection pool
-- clojure tests
+- datetime
+- numeric
+- arrays
