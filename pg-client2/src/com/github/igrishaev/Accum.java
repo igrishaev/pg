@@ -3,12 +3,15 @@ package com.github.igrishaev;
 import com.github.igrishaev.enums.Phase;
 import com.github.igrishaev.msg.*;
 import com.github.igrishaev.reducer.IReducer;
+import java.io.OutputStream;
 
 import java.util.ArrayList;
 
 public class Accum {
 
      public static class Node {
+         public OutputStream outputStream;
+         public CopyOutResponse copyOutResponse;
          public RowDescription rowDescription;
          public CommandComplete commandComplete;
          public ParseComplete parseComplete;

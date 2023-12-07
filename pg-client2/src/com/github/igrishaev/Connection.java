@@ -287,7 +287,7 @@ public class Connection implements Closeable {
 
         // System.out.println(Arrays.toString(bufHeader));
 
-        byte bTag = bbHeader.get();
+        char tag = (char) bbHeader.get();
         int bodySize = bbHeader.getInt() - 4;
 
         byte[] bufBody = readNBytes(bodySize);
@@ -295,7 +295,7 @@ public class Connection implements Closeable {
 
         // System.out.println(Arrays.toString(bufBody));
 
-        return switch ((char) bTag) {
+        return switch (tag) {
             case 'R' -> AuthenticationResponse.fromByteBuffer(bbBody).parseResponse(bbBody);
             case 'S' -> ParameterStatus.fromByteBuffer(bbBody);
             case 'Z' -> ReadyForQuery.fromByteBuffer(bbBody);
@@ -308,7 +308,10 @@ public class Connection implements Closeable {
             case '2' -> new BindComplete();
             case '3' -> new CloseComplete();
             case 't' -> ParameterDescription.fromByteBuffer(bbBody);
-            default -> throw new PGError("Unknown message: %s", bTag);
+            case 'H' -> CopyOutResponse.fromByteBuffer(bbBody);
+            case 'd' -> CopyData.fromByteBuffer(bbBody);
+            case 'c' -> new CopyDone();
+            default -> throw new PGError("Unknown message: %s", tag);
         };
 
     }
@@ -363,6 +366,7 @@ public class Connection implements Closeable {
                 case BIN:
                     ByteBuffer buf = encoderBin.encode(param, oid);
                     values[i] = buf.array();
+                    break;
                 case TXT:
                     String value = encoderTxt.encode(param, oid);
                     try {
@@ -460,7 +464,7 @@ public class Connection implements Closeable {
         return res;
     }
 
-    private void handleMessage(Object msg, Accum res) {
+    private void handleMessage(Object msg, Accum acc) {
 
         switch (msg) {
             case CloseComplete ignored:
@@ -476,32 +480,59 @@ public class Connection implements Closeable {
                 handleParameterStatus(x);
                 break;
             case RowDescription x:
-                handleRowDescription(x, res);
+                handleRowDescription(x, acc);
                 break;
             case DataRow x:
-                handleDataRow(x, res);
+                handleDataRow(x, acc);
                 break;
             case ReadyForQuery x:
                 handleReadyForQuery(x);
                 break;
             case CommandComplete x:
-                handleCommandComplete(x, res);
+                handleCommandComplete(x, acc);
                 break;
             case ErrorResponse x:
-                handleErrorResponse(x, res);
+                handleErrorResponse(x, acc);
                 break;
             case BackendKeyData x:
                 handleBackendKeyData(x);
                 break;
             case ParameterDescription x:
-                handleParameterDescription(x, res);
+                handleParameterDescription(x, acc);
                 break;
             case ParseComplete x:
-                handleParseComplete(x, res);
+                handleParseComplete(x, acc);
+                break;
+            case CopyOutResponse x:
+                handleCopyOutResponse(x, acc);
+                break;
+            case CopyData x:
+                handleCopyData(x, acc);
+                break;
+            case CopyDone x:
+                handleCopyDone(x, acc);
                 break;
 
             default: throw new PGError("Cannot handle this message: %s", msg);
         }
+    }
+
+    private void handleCopyData(CopyData msg, Accum acc) {
+
+    }
+
+    private void handleCopyDone(CopyDone msg, Accum acc) {
+
+    }
+
+    public Result copyOut (String sql, OutputStream outputStream) {
+        sendQuery(sql);
+        Accum acc = interact(Phase.COPY, null);
+        return acc.getResult();
+    }
+
+    private void handleCopyOutResponse(CopyOutResponse msg, Accum acc) {
+        acc.current.copyOutResponse = msg;
     }
 
     private void handleParseComplete(ParseComplete msg, Accum acc) {
