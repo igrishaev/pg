@@ -13,3 +13,6 @@
 - listen, unlisten methods
 - notify method
 - check TODOs
+- notification handler
+- notice handler
+- protocol handler
