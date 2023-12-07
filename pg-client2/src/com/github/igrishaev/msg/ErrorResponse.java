@@ -1,6 +1,6 @@
 package com.github.igrishaev.msg;
 
-import com.github.igrishaev.BBUtil;
+import com.github.igrishaev.util.BBTool;
 import com.github.igrishaev.PGError;
 
 import java.nio.ByteBuffer;
@@ -41,7 +41,7 @@ public record ErrorResponse (HashMap<String, String> fields) {
             }
             else {
                 String field = parseTag(tag);
-                String message = BBUtil.getCString(buf, "UTF-8");
+                String message = BBTool.getCString(buf, "UTF-8");
                 fields.put(field, message);
             };
         };

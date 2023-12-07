@@ -36,8 +36,8 @@ public class Main {
         Object res3 = conn.execute("select $1::int8 as int8", params, Collections.emptyList(), 999);
         System.out.println(res3);
 
-        // Object res4 = conn.query("copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT CSV)");
-        // System.out.println(res4);
+        Object res4 = conn.query("copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT CSV)");
+        System.out.println(res4);
 
         FileOutputStream out = null;
         try {

@@ -38,7 +38,6 @@ public class Connection implements Closeable {
     private final EncoderBin encoderBin;
 
     private final IReducer dummyReducer;
-    private OutputStream copyOutputStream;
 
     public Connection(String host, int port, String user, String password, String database) {
         this(new Config.Builder(user, database)
@@ -59,7 +58,6 @@ public class Connection implements Closeable {
         this.id = UUID.randomUUID();
         this.createdAt = System.currentTimeMillis();
         this.aInt = new AtomicInteger();
-        this.copyOutputStream = new DummyOutputStream();
         connect();
     }
 
@@ -172,7 +170,7 @@ public class Connection implements Closeable {
 
     public void authenticate () {
         sendStartupMessage();
-        interact(Phase.AUTH, dummyReducer);
+        interact(Phase.AUTH);
     }
 
     private synchronized void connect () {
@@ -464,21 +462,33 @@ public class Connection implements Closeable {
         sendCloseStatement(statement);
         sendSync();
         sendFlush();
-        interact(Phase.CLOSE, dummyReducer);
+        interact(Phase.CLOSE);
     }
 
-    private Accum interact(Phase phase, IReducer reducer) {
-        Accum res = new Accum(phase, reducer);
+    private Accum interact(Phase phase, IReducer reducer, OutputStream outputStream) {
+        Accum acc = new Accum(phase, reducer, outputStream);
         while (true) {
             final Object msg = readMessage();
             // System.out.println(msg);
-            handleMessage(msg, res);
+            handleMessage(msg, acc);
             if (isEnough(msg, phase)) {
                 break;
             }
         }
-        res.throwErrorResponse();
-        return res;
+        acc.throwErrorResponse();
+        return acc;
+    }
+
+    private Accum interact(Phase phase, IReducer reducer) {
+        return interact(phase, reducer, new DummyOutputStream());
+    }
+
+    private Accum interact(Phase phase, OutputStream outputStream) {
+        return interact(phase, dummyReducer, outputStream);
+    }
+
+    private Accum interact(Phase phase) {
+        return interact(phase, dummyReducer, new DummyOutputStream());
     }
 
     private void handleMessage(Object msg, Accum acc) {
@@ -526,10 +536,9 @@ public class Connection implements Closeable {
                 handleCopyOutResponse(x, acc);
                 break;
             case CopyData x:
-                handleCopyData(x);
+                handleCopyData(x, acc);
                 break;
             case CopyDone ignored:
-                handleCopyDone();
                 break;
 
             default: throw new PGError("Cannot handle this message: %s", msg);
@@ -540,28 +549,17 @@ public class Connection implements Closeable {
         acc.current.copyOutResponse = msg;
     }
 
-    private void handleCopyData(CopyData msg) {
+    private void handleCopyData(CopyData msg, Accum acc) {
         try {
-            copyOutputStream.write(msg.bytes());
+            acc.outputStream.write(msg.bytes());
         } catch (IOException e) {
             throw new PGError(e, "could not handle CopyData response");
         }
     }
 
-    private void handleCopyDone() {
-        try {
-            copyOutputStream.close();
-        } catch (IOException e) {
-            throw new PGError(e, "could not close the COPY output stream");
-        } finally {
-            copyOutputStream = new DummyOutputStream();
-        }
-    }
-
     public synchronized Result copyOut (String sql, OutputStream outputStream) {
-        copyOutputStream = outputStream;
         sendQuery(sql);
-        Accum acc = interact(Phase.COPY, dummyReducer);
+        Accum acc = interact(Phase.COPY, outputStream);
         return acc.getResult();
     }
 

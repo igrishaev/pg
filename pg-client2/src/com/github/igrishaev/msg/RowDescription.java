@@ -1,6 +1,6 @@
 package com.github.igrishaev.msg;
 
-import com.github.igrishaev.BBUtil;
+import com.github.igrishaev.util.BBTool;
 import com.github.igrishaev.enums.Format;
 import com.github.igrishaev.enums.OID;
 
@@ -27,7 +27,7 @@ public record RowDescription (
         Column[] columns = new Column[size];
         for (short i = 0; i < size; i++) {
             Column col = new Column(i,
-                    BBUtil.getCString(buf, "UTF-8"),
+                    BBTool.getCString(buf, "UTF-8"),
                     buf.getInt(),
                     buf.getShort(),
                     OID.ofInt(buf.getInt()),

@@ -1,11 +1,13 @@
-package com.github.igrishaev;
+package com.github.igrishaev.util;
+
+import com.github.igrishaev.PGError;
 
 import java.nio.ByteBuffer;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 
 
-public class BBUtil {
+public class BBTool {
 
     public static String getCString (ByteBuffer buf, String encoding) {
 

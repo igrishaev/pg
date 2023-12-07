@@ -1,6 +1,6 @@
 package com.github.igrishaev.msg;
 
-import com.github.igrishaev.BBUtil;
+import com.github.igrishaev.util.BBTool;
 
 import java.nio.ByteBuffer;
 
@@ -17,7 +17,7 @@ public record DataRow (short valueCount, ByteBuffer[] values) {
             else {
                 ByteBuffer bufValue = buf.slice();
                 bufValue.limit(len);
-                BBUtil.skip(buf, len);
+                BBTool.skip(buf, len);
                 values[i] = bufValue;
             }
         }

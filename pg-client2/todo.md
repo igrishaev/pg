@@ -2,7 +2,6 @@
 - JSON support
 - pass reducer into query, execute, execute statement
 - idle? tx-error? transaction? methods
-- copy out
 - copy out error -> fast forward
 - copy in: stream, maps, rows
 - set socket options
