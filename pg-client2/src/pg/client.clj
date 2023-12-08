@@ -1,7 +1,9 @@
 (ns pg.client
   (:import
+   java.io.OutputStream
    java.util.UUID
-   java.lang.Keyword
+   java.util.Map
+   clojure.lang.Keyword
    com.github.igrishaev.Connection
    com.github.igrishaev.PreparedStatement
    com.github.igrishaev.Config$Builder
@@ -72,15 +74,15 @@
     nil nil))
 
 
-(defn idle? ^boolean [^Connection conn]
+(defn idle? ^Boolean [^Connection conn]
   (.isIdle conn))
 
 
-(defn transaction? ^boolean [^Connection conn]
+(defn transaction? ^Boolean [^Connection conn]
   (.isTransaction conn))
 
 
-(defn tx-error? ^boolean [^Connection conn]
+(defn tx-error? ^Boolean [^Connection conn]
   (.isTxError conn))
 
 
@@ -90,8 +92,8 @@
 
 
 (defn get-parameters
-  ^String [^Connection conn]
-  (.getParams conn param))
+  ^Map [^Connection conn]
+  (.getParams conn))
 
 
 (defn id ^UUID [^Connection conn]
@@ -121,6 +123,23 @@
   (.close conn))
 
 
+(defmacro with-connection
+  "
+  Execute a block of code binding a connection
+  to the `bind` symbol. Close the connection afterwards.
+  "
+  [[bind config] & body]
+  `(let [~bind (connect ~config)]
+     (try
+       ~@body
+       (finally
+         (close ~bind)))))
+
+
+(defn closed? [^Connection conn]
+  (.isClosed conn))
+
+
 (defn query [^Connection conn ^String sql]
   (.query conn sql))
 
@@ -135,3 +154,16 @@
 
 (defn rollback [^Connection conn]
   (.rollback conn))
+
+
+(defn clone ^Connection [^Connection conn]
+  (Connection/clone conn))
+
+
+(defn cancel-request [^Connection conn]
+  (Connection/cancelRequest conn))
+
+
+(defn copy-out
+  [^Connection conn ^String sql ^OutputStream out]
+  (.copyOut conn sql out))

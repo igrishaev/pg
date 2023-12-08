@@ -1,7 +1,5 @@
 package com.github.igrishaev;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collections;
@@ -38,7 +36,7 @@ public record Config (
         private int inStreamBufSize = Const.IN_STREAM_BUF_SIZE;
         private int outStreamBufSize = Const.OUT_STREAM_BUF_SIZE;
 
-        public Builder(@NotNull final String user, @NotNull final String database) {
+        public Builder(final String user, final String database) {
             this.user = user;
             this.database = database;
             this.pgParams.put("client_encoding", Const.CLIENT_ENCODING);
@@ -65,12 +63,12 @@ public record Config (
             return this;
         }
 
-        public Builder pgParams(@NotNull final Map<String, String> pgParams) {
+        public Builder pgParams(final Map<String, String> pgParams) {
             this.pgParams.putAll(pgParams);
             return this;
         }
 
-        public Builder pgParam(@NotNull final String param, @NotNull final String value) {
+        public Builder pgParam(final String param, final String value) {
             this.pgParams.put(param, value);
             return this;
         }
@@ -79,12 +77,12 @@ public record Config (
             return this;
         }
 
-        public Builder password (@NotNull final String password) {
+        public Builder password (final String password) {
             this.password = password;
             return this;
         }
 
-        public Builder host(@NotNull final String host) {
+        public Builder host(final String host) {
             this.host = host;
             return this;
         }
