@@ -1,15 +1,17 @@
+- clojure wrapper
+- query & execute params
+- pass reducer into query, execute, execute statement
+
 - 4-byte messages
   - terminate
   - flush
   - sync
   - copy done
-- clojure wrapper
 - clojure tests
 - Auth: plain password
 - Auth: md5
 - Auth: SASL
 - JSON buf size as a config param
-- pass reducer into query, execute, execute statement
 - idle? tx-error? transaction? methods
 - copy out error -> fast-forward
 - copy in: stream, maps, rows
