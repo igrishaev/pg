@@ -24,6 +24,12 @@ import java.util.Map;
 
 public class JSON {
 
+    public record Wrapper (Object value) {}
+
+    public static Wrapper wrap (Object value) {
+        return new Wrapper(value);
+    }
+
     static ObjectMapper mapper = new ObjectMapper();
 
     static {

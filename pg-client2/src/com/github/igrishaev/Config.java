@@ -19,9 +19,7 @@ public record Config (
         boolean SOKeepAlive,
         boolean SOTCPnoDelay,
         int inStreamBufSize,
-        int outStreamBufSize
-
-) {
+        int outStreamBufSize) {
 
     public static class Builder {
         private final String user;
@@ -30,7 +28,7 @@ public record Config (
         private int port = Const.PG_PORT;
         private String host = Const.PG_HOST;
         private int protocolVersion = Const.PROTOCOL_VERSION;
-        private Map<String, String> pgParams = new HashMap<>();
+        private final Map<String, String> pgParams = new HashMap<>();
         private boolean binaryEncode = false;
         private boolean binaryDecode = false;
         private boolean useSSL = false;
@@ -42,6 +40,8 @@ public record Config (
         public Builder(String user, String database) {
             this.user = user;
             this.database = database;
+            this.pgParams.put("client_encoding", Const.CLIENT_ENCODING);
+            this.pgParams.put("application_name", Const.APP_NAME);
         }
 
         public Builder protocolVersion(int protocolVersion) {

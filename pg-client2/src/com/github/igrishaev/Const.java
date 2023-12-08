@@ -12,4 +12,7 @@ public class Const {
     public static final int OUT_STREAM_BUF_SIZE = 0xFFFF;
     public static final String UTF8 = "UTF-8";
     public static long EXE_MAX_ROWS = 0xFFFFFFFFL;
+    public static int JSON_ENC_BUF_SIZE = 256;
+    public static String APP_NAME = "pg2";
+    public static String CLIENT_ENCODING = "UTF8";
 }

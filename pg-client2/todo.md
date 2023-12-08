@@ -1,15 +1,20 @@
 - 4-byte messages
-- JSON support
-- JSON wrapper
+  - terminate
+  - flush
+  - sync
+  - copy done
 - clojure wrapper
 - clojure tests
+- Auth: plain password
+- Auth: md5
+- Auth: SASL
 - pass reducer into query, execute, execute statement
 - idle? tx-error? transaction? methods
-- copy out error -> fast forward
+- copy out error -> fast-forward
 - copy in: stream, maps, rows
 - set socket options
 - SSL support
-- listen, unlisten methods
+- listen, un-listen methods
 - notify method
 - check TODOs
 - notification handler
@@ -17,5 +22,17 @@
 - protocol handler
 - connection pool
 - datetime
+  - decode txt
+  - decode bin
+  - encode txt
+  - encode bin
 - numeric
+  - decode txt
+  - decode bin
+  - encode txt
+  - encode bin
 - arrays
+  - decode txt
+  - decode bin
+  - encode txt
+  - encode bin
