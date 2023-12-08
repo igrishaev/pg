@@ -672,4 +672,16 @@ public class Connection implements Closeable {
         interact(Phase.QUERY);
     }
 
+    public synchronized boolean isIdle () {
+        return txStatus == TXStatus.IDLE;
+    }
+
+    public synchronized boolean isTxError () {
+        return txStatus == TXStatus.ERROR;
+    }
+
+    public synchronized boolean isTransaction () {
+        return txStatus == TXStatus.TRANSACTION;
+    }
+
 }

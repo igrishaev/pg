@@ -8,6 +8,7 @@
 - Auth: plain password
 - Auth: md5
 - Auth: SASL
+- JSON buf size as a config param
 - pass reducer into query, execute, execute statement
 - idle? tx-error? transaction? methods
 - copy out error -> fast-forward

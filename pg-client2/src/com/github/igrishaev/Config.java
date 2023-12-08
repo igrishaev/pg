@@ -1,9 +1,10 @@
 package com.github.igrishaev;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collections;
-import javax.net.ssl.SSLContext;
 
 public record Config (
         String user,
@@ -15,7 +16,7 @@ public record Config (
         Map<String, String> pgParams,
         boolean binaryEncode,
         boolean binaryDecode,
-        boolean iseSSL,
+        boolean useSSL,
         boolean SOKeepAlive,
         boolean SOTCPnoDelay,
         int inStreamBufSize,
@@ -37,39 +38,39 @@ public record Config (
         private int inStreamBufSize = Const.IN_STREAM_BUF_SIZE;
         private int outStreamBufSize = Const.OUT_STREAM_BUF_SIZE;
 
-        public Builder(String user, String database) {
+        public Builder(@NotNull final String user, @NotNull final String database) {
             this.user = user;
             this.database = database;
             this.pgParams.put("client_encoding", Const.CLIENT_ENCODING);
             this.pgParams.put("application_name", Const.APP_NAME);
         }
 
-        public Builder protocolVersion(int protocolVersion) {
+        public Builder protocolVersion(final int protocolVersion) {
             this.protocolVersion = protocolVersion;
             return this;
         }
 
-        public Builder binaryEncode(boolean binaryEncode) {
+        public Builder binaryEncode(final boolean binaryEncode) {
             this.binaryEncode = binaryEncode;
             return this;
         }
 
-        public Builder binaryDecode(boolean binaryDecode) {
+        public Builder binaryDecode(final boolean binaryDecode) {
             this.binaryDecode = binaryEncode;
             return this;
         }
 
-        public Builder useSSL(boolean useSSL) {
+        public Builder useSSL(final boolean useSSL) {
             this.useSSL = useSSL;
             return this;
         }
 
-        public Builder pgParams(Map<String, String> pgParams) {
+        public Builder pgParams(@NotNull final Map<String, String> pgParams) {
             this.pgParams.putAll(pgParams);
             return this;
         }
 
-        public Builder pgParam(String param, String value) {
+        public Builder pgParam(@NotNull final String param, @NotNull final String value) {
             this.pgParams.put(param, value);
             return this;
         }
@@ -78,32 +79,32 @@ public record Config (
             return this;
         }
 
-        public Builder password (String password) {
+        public Builder password (@NotNull final String password) {
             this.password = password;
             return this;
         }
 
-        public Builder host(String host) {
+        public Builder host(@NotNull final String host) {
             this.host = host;
             return this;
         }
 
-        public Builder SOKeepAlive(boolean SOKeepAlive) {
+        public Builder SOKeepAlive(final boolean SOKeepAlive) {
             this.SOKeepAlive = SOKeepAlive;
             return this;
         }
 
-        public Builder SOTCPnoDelay(boolean SOTCPnoDelay) {
+        public Builder SOTCPnoDelay(final boolean SOTCPnoDelay) {
             this.SOTCPnoDelay = SOTCPnoDelay;
             return this;
         }
 
-        public Builder inStreamBufSize(int inStreamBufSize) {
+        public Builder inStreamBufSize(final int inStreamBufSize) {
             this.inStreamBufSize = inStreamBufSize;
             return this;
         }
 
-        public Builder outStreamBufSize(int outStreamBufSize) {
+        public Builder outStreamBufSize(final int outStreamBufSize) {
             this.outStreamBufSize = outStreamBufSize;
             return this;
         }
