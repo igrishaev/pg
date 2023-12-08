@@ -3,7 +3,6 @@ package com.github.igrishaev;
 import com.github.igrishaev.enums.Phase;
 import com.github.igrishaev.msg.*;
 import com.github.igrishaev.reducer.IReducer;
-import com.github.igrishaev.util.DummyOutputStream;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -45,10 +44,6 @@ public class Accum {
     public ArrayList<ErrorResponse> errorResponses;
     public Node current;
     public IReducer reducer;
-
-    public Accum (Phase phase, IReducer reducer) {
-        new Accum(phase, reducer, new DummyOutputStream());
-    }
 
     public Accum(Phase phase, IReducer reducer, OutputStream outputStream) {
         this.phase = phase;

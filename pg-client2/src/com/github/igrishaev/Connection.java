@@ -37,6 +37,7 @@ public class Connection implements Closeable {
     private final DecoderBin decoderBin;
     private final EncoderBin encoderBin;
 
+    private final OutputStream dummyOutputStream;
     private final IReducer dummyReducer;
 
     public Connection(String host, int port, String user, String password, String database) {
@@ -55,6 +56,7 @@ public class Connection implements Closeable {
         this.decoderBin = new DecoderBin();
         this.encoderBin = new EncoderBin();
         this.dummyReducer = new Dummy();
+        this.dummyOutputStream = new DummyOutputStream();
         this.id = UUID.randomUUID();
         this.createdAt = System.currentTimeMillis();
         this.aInt = new AtomicInteger();
@@ -480,7 +482,7 @@ public class Connection implements Closeable {
     }
 
     private Accum interact(Phase phase, IReducer reducer) {
-        return interact(phase, reducer, new DummyOutputStream());
+        return interact(phase, reducer, dummyOutputStream);
     }
 
     private Accum interact(Phase phase, OutputStream outputStream) {
@@ -488,12 +490,12 @@ public class Connection implements Closeable {
     }
 
     private Accum interact(Phase phase) {
-        return interact(phase, dummyReducer, new DummyOutputStream());
+        return interact(phase, dummyReducer,  dummyOutputStream);
     }
 
     private void handleMessage(Object msg, Accum acc) {
 
-        System.out.println(msg);
+        // System.out.println(msg);
 
         switch (msg) {
             case CloseComplete ignored:
@@ -655,15 +657,19 @@ public class Connection implements Closeable {
     }
 
     public synchronized void begin () {
-        query("BEGIN");
+        sendQuery("BEGIN");
+        interact(Phase.QUERY);
     }
 
     public synchronized void commit () {
-        query("COMMIT");
+        sendQuery("COMMIT");
+        interact(Phase.QUERY);
+        query("");
     }
 
     public synchronized void rollback () {
-        query("ROLLBACK");
+        sendQuery("ROLLBACK");
+        interact(Phase.QUERY);
     }
 
 }

@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import com.github.igrishaev.PGError;
 import com.github.igrishaev.enums.OID;
+import com.github.igrishaev.util.JSON;
 
 
 public class DecoderBin extends ACodec {
@@ -30,6 +31,7 @@ public class DecoderBin extends ACodec {
                     default: throw new PGError("incorrect binary boolean value");
                 }
             }
+            case JSON, JSONB -> JSON.readValueBinary(buf);
             default -> getBytes(buf);
         };
     }

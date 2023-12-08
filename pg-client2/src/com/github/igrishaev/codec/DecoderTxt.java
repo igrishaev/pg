@@ -2,6 +2,7 @@ package com.github.igrishaev.codec;
 
 import com.github.igrishaev.PGError;
 import com.github.igrishaev.enums.OID;
+import com.github.igrishaev.util.JSON;
 
 import java.nio.ByteBuffer;
 import java.util.UUID;
@@ -30,6 +31,7 @@ public class DecoderTxt extends ACodec {
                     default -> throw new PGError("wrong boolean value: %s", b);
                 };
             }
+            case JSON, JSONB -> JSON.readValue(buf);
             default -> getString(buf);
         };
     }

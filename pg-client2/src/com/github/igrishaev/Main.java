@@ -48,6 +48,14 @@ public class Main {
         Object res5 = conn.copyOut("copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT CSV)", out);
         System.out.println(res5);
 
+        Object res6 = conn.query("select '[1, 2, 3, {\"foo/bar\": true}]'::jsonb");
+        System.out.println(res6);
+
+        Object res7 = conn.execute("select '[1, 2, 3, {\"foo/bar\": true}]'::jsonb");
+        System.out.println(res7);
+
+
+
         // System.out.println(SourceType.STATEMENT.getCode());
     }
 }
