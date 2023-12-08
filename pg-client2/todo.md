@@ -1,5 +1,6 @@
 - 4-byte messages
 - JSON support
+- JSON wrapper
 - clojure wrapper
 - clojure tests
 - pass reducer into query, execute, execute statement

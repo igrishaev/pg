@@ -48,11 +48,11 @@ abstract class ACodec {
         }
     }
 
-    public String txtEncodingError(Object x, OID oid) {
+    public static String txtEncodingError(Object x, OID oid) {
         throw new PGError("cannot text-encode a value: %s, OID: %s", x, oid);
     }
 
-    public ByteBuffer binEncodingError(Object x, OID oid) {
+    public static ByteBuffer binEncodingError(Object x, OID oid) {
         throw new PGError("cannot binary-encode a value: %s, OID: %s", x, oid);
     }
 

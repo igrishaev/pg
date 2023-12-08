@@ -1,11 +1,14 @@
 package com.github.igrishaev.codec;
 
+import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
+import clojure.lang.IPersistentMap;
 import clojure.lang.Symbol;
 import com.github.igrishaev.PGError;
 import com.github.igrishaev.enums.OID;
+import com.github.igrishaev.util.JSON;
 
 public class EncoderBin extends ACodec {
 
@@ -95,14 +98,16 @@ public class EncoderBin extends ACodec {
                 default -> binEncodingError(x, oid);
             };
 
-            case Boolean b -> switch (oid) {
-                case BOOL -> {
+            case Boolean b -> {
+                if (oid == OID.BOOL) {
                     ByteBuffer buf = ByteBuffer.allocate(1);
                     buf.put(b ? (byte)1 : (byte)0);
                     yield buf;
                 }
-                default -> binEncodingError(x, oid);
-            };
+                else {
+                    yield binEncodingError(x, oid);
+                }
+            }
 
             case UUID u -> switch (oid) {
                 case UUID -> {
@@ -151,6 +156,16 @@ public class EncoderBin extends ACodec {
                     ByteBuffer buf = ByteBuffer.allocate(8);
                     buf.putDouble(d);
                     yield buf;
+                }
+                default -> binEncodingError(x, oid);
+            };
+
+            case IPersistentMap m -> switch (oid) {
+                case JSON, JSONB -> {
+                    // TODO; guess the size?
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+                    JSON.writeValue(out, m);
+                    yield ByteBuffer.wrap(out.toByteArray());
                 }
                 default -> binEncodingError(x, oid);
             };

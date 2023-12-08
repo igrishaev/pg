@@ -1,11 +1,15 @@
 package com.github.igrishaev.codec;
 
+import clojure.lang.IPersistentMap;
 import clojure.lang.Symbol;
 import com.github.igrishaev.enums.OID;
+
+import java.io.StringWriter;
 import java.util.UUID;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import clojure.lang.BigInt;
+import com.github.igrishaev.util.JSON;
 
 public class EncoderTxt extends ACodec {
 
@@ -60,10 +64,14 @@ public class EncoderTxt extends ACodec {
                 default -> txtEncodingError(x, oid);
             };
 
-            case Boolean b -> switch (oid) {
-                case BOOL -> b ? "t" : "f";
-                default -> txtEncodingError(x, oid);
-            };
+            case Boolean b -> {
+                if (oid == OID.BOOL) {
+                    yield b ? "t" : "f";
+                }
+                else {
+                    yield txtEncodingError(x, oid);
+                }
+            }
 
             case BigDecimal bd -> switch (oid) {
                 case NUMERIC, FLOAT4, FLOAT8 -> bd.toString();
@@ -77,6 +85,17 @@ public class EncoderTxt extends ACodec {
 
             case BigInt bi -> switch (oid) {
                 case INT2, INT4, INT8 -> bi.toString();
+                default -> txtEncodingError(x, oid);
+            };
+
+            case IPersistentMap m -> switch (oid) {
+                case JSON, JSONB -> {
+                    // TODO: maybe return bytes?
+                    // TODO: guess the initial size?
+                    StringWriter writer = new StringWriter();
+                    JSON.writeValue(writer, m);
+                    yield writer.toString();
+                }
                 default -> txtEncodingError(x, oid);
             };
 
