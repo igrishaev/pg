@@ -7,7 +7,8 @@
    com.github.igrishaev.Connection
    com.github.igrishaev.PreparedStatement
    com.github.igrishaev.Config$Builder
-   com.github.igrishaev.enums.TXStatus))
+   com.github.igrishaev.enums.TXStatus
+   com.github.igrishaev.enums.TxLevel))
 
 
 (defn ->config ^Config$Builder [params]
@@ -167,3 +168,62 @@
 (defn copy-out
   [^Connection conn ^String sql ^OutputStream out]
   (.copyOut conn sql out))
+
+
+
+(defmacro with-safe [& body]
+  (try
+    [(do ~@body) nil]
+    (catch Throwable e#
+      [nil e#])))
+
+
+(defn ->tx-level ^TxLevel [^Keyword level]
+  (case level
+
+    :serializable
+    TxLevel/SERIALIZABLE
+
+    :repeatable-read
+    TxLevel/REPEATABLE_READ
+
+    :read-committed
+    TxLevel/READ_COMMITTED
+
+    :read-uncommitted
+    TxLevel/READ_UNCOMMITTED))
+
+
+(defmacro with-tx
+  [[conn {:as opt :keys [isolation-level
+                         read-only?
+                         rollback?]}]
+   & body]
+
+  `(let [conn#
+         ~conn
+
+         level#
+         (->tx-level ~isolation-level)]
+
+     (.begin conn#)
+
+     (when ~isolation-level
+       (.setTxLevel conn# level#))
+
+     (when ~read-only?
+       (.setTxReadOnly conn#))
+
+     (let [[result# e#]
+           (with-safe ~@body)]
+
+       (if e#
+         (do
+           (.rollback conn#)
+           (throw e#))
+
+         (do
+           ~(if rollback?
+              `(.rollback conn#)
+              `(.commit conn#))
+           result#)))))

@@ -10,8 +10,14 @@ import com.github.igrishaev.reducer.Default;
 import com.github.igrishaev.reducer.Dummy;
 import com.github.igrishaev.reducer.IReducer;
 import com.github.igrishaev.util.DummyOutputStream;
+import com.github.igrishaev.util.SQL;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.Closeable;
+import java.io.BufferedInputStream;
+import java.io.OutputStream;
+import java.io.BufferedOutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -347,8 +353,11 @@ public class Connection implements Closeable {
     }
 
     public synchronized List<Result> query(String sql) {
+        return query(sql, new Default());
+    }
+
+    public synchronized List<Result> query(String sql, IReducer reducer) {
         sendQuery(sql);
-        final Default reducer = new Default();
         return interact(Phase.QUERY, reducer).getResults();
     }
 
@@ -682,6 +691,16 @@ public class Connection implements Closeable {
 
     public synchronized boolean isTransaction () {
         return txStatus == TXStatus.TRANSACTION;
+    }
+
+    public void setTxLevel (TxLevel level) {
+        sendQuery(SQL.SQLSetTxLevel(level));
+        interact(Phase.QUERY);
+    }
+
+    public void setTxReadOnly () {
+        sendQuery(SQL.SQLSetTxReadOnly);
+        interact(Phase.QUERY);
     }
 
 }
