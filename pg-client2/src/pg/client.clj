@@ -74,14 +74,13 @@
    (new Connection host port user password database)))
 
 
-(defn status ^Keyword [^Connection conn]
-  (.getTxStatus conn)
-  #_
-  (case (.getTxStatus conn)
-    TXStatus/IDLE :I
-    TXStatus/TRANSACTION :T
-    TXStatus/ERROR :E
-    nil nil))
+(let [-mapping
+      {TXStatus/IDLE :I
+       TXStatus/TRANSACTION :T
+       TXStatus/ERROR :E}]
+
+  (defn status ^Keyword [^Connection conn]
+    (get -mapping (.getTxStatus conn))))
 
 
 (defn idle? ^Boolean [^Connection conn]

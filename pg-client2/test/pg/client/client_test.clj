@@ -1,4 +1,6 @@
 (ns pg.client.client-test
+  (:import
+   com.github.igrishaev.PGError)
   (:require
    [pg.client :as pg]
    [clojure.test :refer [deftest is use-fixtures testing]]))
@@ -18,30 +20,28 @@
 
     (is (= :I (pg/status conn)))
 
-    ;; (is (pg/idle? conn))
+    (is (pg/idle? conn))
 
-    ;; (pg/query conn "select 1")
+    (pg/query conn "select 1")
 
-    ;; (is (= :I (pg/status conn)))
+    (is (= :I (pg/status conn)))
 
-    ;; (pg/begin conn)
+    (pg/begin conn)
 
-    ;; (is (= :T (pg/status conn)))
+    (is (= :T (pg/status conn)))
 
-    ;; (is (pg/in-transaction? conn))
+    (is (pg/in-transaction? conn))
 
-    ;; (try
-    ;;   (pg/query conn "selekt 1")
-    ;;   (is false)
-    ;;   (catch Exception _
-    ;;     nil))
+    (try
+      (pg/query conn "selekt 1")
+      (is false)
+      (catch PGError _
+        nil))
 
-    ;; (is (= :E (pg/status conn)))
+    (is (= :E (pg/status conn)))
 
-    ;; (is (pg/tx-error? conn))
+    (is (pg/tx-error? conn))
 
-    ;; (pg/rollback conn)
+    (pg/rollback conn)
 
-    ;; (is (= :I (pg/status conn)))
-
-    ))
+    (is (= :I (pg/status conn)))))
