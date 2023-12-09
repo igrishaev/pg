@@ -1,6 +1,5 @@
 package com.github.igrishaev;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
@@ -12,16 +11,27 @@ public class Main {
 
         String user = System.getenv("USER");
 
-        Config config = new Config.Builder(user, user)
-                .port(15432)
+//        Config config = new Config.Builder(user, user)
+//                .port(15432)
+//                .host("127.0.0.1")
+//                .password(user)
+//                .binaryEncode(true)
+//                .binaryDecode(true)
+//                .build();
+
+        Config config = new Config.Builder("test", "test")
+                .port(10130)
                 .host("127.0.0.1")
-                .password(user)
+                .password("test")
                 .binaryEncode(true)
                 .binaryDecode(true)
                 .build();
 
         // Connection conn = new Connection("127.0.0.1", 15432, user, user, user);
         Connection conn = new Connection(config);
+
+        System.out.println(conn.getId());
+        System.out.println(conn.getPid());
 
         Object res1 = conn.query("select x from generate_series(1, 3) as x; select 42 as foo");
         System.out.println(res1);
@@ -33,15 +43,15 @@ public class Main {
         conn.closeStatement(ps);
         System.out.println(res2);
 
-        Object res3 = conn.execute("select $1::int8 as int8", params, Collections.emptyList(), 999);
+        Object res3 = conn.execute("select $1::int8 as int8", params, Collections.emptyList());
         System.out.println(res3);
 
         Object res4 = conn.query("copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT CSV)");
         System.out.println(res4);
 
-        FileOutputStream out = null;
+        FileOutputStream out;
         try {
-            out = new FileOutputStream(new File("foo.csv"));
+            out = new FileOutputStream("foo.csv");
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }

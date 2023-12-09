@@ -3,7 +3,9 @@
    java.io.OutputStream
    java.util.UUID
    java.util.Map
+   java.util.List
    clojure.lang.Keyword
+   com.github.igrishaev.reducer.IReducer
    com.github.igrishaev.Connection
    com.github.igrishaev.PreparedStatement
    com.github.igrishaev.Config$Builder
@@ -63,11 +65,18 @@
       (.build))))
 
 
-(defn connect ^Connection [config]
-  (new Connection (->config config)))
+(defn connect
+
+  (^Connection [config]
+   (new Connection (->config config)))
+
+  (^Connection [^String host ^Integer port ^String user ^String password ^String database]
+   (new Connection host port user password database)))
 
 
 (defn status ^Keyword [^Connection conn]
+  (.getTxStatus conn)
+  #_
   (case (.getTxStatus conn)
     TXStatus/IDLE :I
     TXStatus/TRANSACTION :T
@@ -79,7 +88,7 @@
   (.isIdle conn))
 
 
-(defn transaction? ^Boolean [^Connection conn]
+(defn in-transaction? ^Boolean [^Connection conn]
   (.isTransaction conn))
 
 
@@ -115,20 +124,83 @@
   (.closeStatement conn stmt))
 
 
-(defn close-statement-by-name
-  [^Connection conn ^String stmt-name]
-  (.closeStatement conn stmt-name))
-
-
 (defn close [^Connection conn]
   (.close conn))
 
 
+(defn ssl?
+  "
+  True if the connection is encrypted with SSL.
+  "
+  ^Boolean [^Connection conn]
+  (.isSSL conn))
+
+
+(defn prepare-statement
+
+  (^PreparedStatement
+   [^Connection conn ^String sql]
+   (.prepare conn sql))
+
+  (^PreparedStatement
+   [^Connection conn ^String sql ^List oids]
+   (.prepare conn sql oids)))
+
+
+(defn execute-statement
+
+  ([^Connection conn ^PreparedStatement stmt]
+   (.executeStatement conn stmt))
+
+  ([^Connection conn ^PreparedStatement stmt ^List params]
+   (.executeStatement conn stmt params))
+
+  ([^Connection conn ^PreparedStatement stmt ^List params ^IReducer reducer]
+   (.executeStatement conn stmt params reducer))
+
+  ([^Connection conn ^PreparedStatement stmt ^List params ^IReducer reducer ^Integer row-count]
+   (.executeStatement conn stmt params reducer row-count)))
+
+
+(defn execute
+
+  ([^Connection conn ^PreparedStatement stmt]
+   (.execute conn stmt))
+
+  ([^Connection conn ^PreparedStatement stmt ^List params]
+   (.execute conn stmt params))
+
+  ([^Connection conn ^PreparedStatement stmt ^List params ^List oids]
+   (.execute conn stmt params oids))
+
+  ([^Connection conn ^PreparedStatement stmt ^List params ^List oids ^IReducer reducer]
+   (.execute conn stmt params oids reducer))
+
+  ([^Connection conn ^PreparedStatement stmt ^List params ^List oids ^IReducer reducer ^Integer row-count]
+   (.execute conn stmt params oids reducer row-count)))
+
+
+(defmacro with-statement
+  [[bind conn sql oids] & body]
+
+  `(let [conn#
+         ~conn
+
+         sql#
+         ~sql
+
+         ~bind
+         ~(if oids
+            `(prepare-statement conn# sql# ~oids)
+            `(prepare-statement conn# sql#))]
+
+     (try
+       ~@body
+       (finally
+         (close-statement conn# ~bind)))))
+
+
 (defmacro with-connection
-  "
-  Execute a block of code binding a connection
-  to the `bind` symbol. Close the connection afterwards.
-  "
   [[bind config] & body]
   `(let [~bind (connect ~config)]
      (try

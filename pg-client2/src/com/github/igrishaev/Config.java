@@ -3,6 +3,7 @@ package com.github.igrishaev;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collections;
+import java.util.Objects;
 
 public record Config (
         String user,
@@ -37,8 +38,8 @@ public record Config (
         private int outStreamBufSize = Const.OUT_STREAM_BUF_SIZE;
 
         public Builder(final String user, final String database) {
-            this.user = user;
-            this.database = database;
+            this.user = Objects.requireNonNull(user);
+            this.database = Objects.requireNonNull(database);
             this.pgParams.put("client_encoding", Const.CLIENT_ENCODING);
             this.pgParams.put("application_name", Const.APP_NAME);
         }

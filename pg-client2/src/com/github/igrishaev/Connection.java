@@ -1,5 +1,6 @@
 package com.github.igrishaev;
 
+import com.github.igrishaev.auth.MD5;
 import com.github.igrishaev.codec.DecoderBin;
 import com.github.igrishaev.codec.DecoderTxt;
 import com.github.igrishaev.codec.EncoderBin;
@@ -45,6 +46,9 @@ public class Connection implements Closeable {
 
     private final OutputStream dummyOutputStream;
     private final IReducer dummyReducer;
+    private final IReducer defaultReducer;
+    private final List<Object> dummyParams = Collections.emptyList();
+    private final List<OID> dummyOIDs = Collections.emptyList();
 
     public Connection(String host, int port, String user, String password, String database) {
         this(new Config.Builder(user, database)
@@ -62,6 +66,7 @@ public class Connection implements Closeable {
         this.decoderBin = new DecoderBin();
         this.encoderBin = new EncoderBin();
         this.dummyReducer = new Dummy();
+        this.defaultReducer = new Default();
         this.dummyOutputStream = new DummyOutputStream();
         this.id = UUID.randomUUID();
         this.createdAt = System.currentTimeMillis();
@@ -96,6 +101,10 @@ public class Connection implements Closeable {
 
     public synchronized TXStatus getTxStatus () {
         return txStatus;
+    }
+
+    public synchronized boolean isSSL () {
+        return config.useSSL();
     }
 
     private void closeSocket () {
@@ -353,7 +362,7 @@ public class Connection implements Closeable {
     }
 
     public synchronized List<Result> query(String sql) {
-        return query(sql, new Default());
+        return query(sql, defaultReducer);
     }
 
     public synchronized List<Result> query(String sql, IReducer reducer) {
@@ -362,7 +371,7 @@ public class Connection implements Closeable {
     }
 
     public synchronized PreparedStatement prepare (String sql) {
-        return prepare(sql, Collections.emptyList());
+        return prepare(sql, dummyOIDs);
     }
 
     public synchronized PreparedStatement prepare (String sql, List<OID> OIDs) {
@@ -372,8 +381,7 @@ public class Connection implements Closeable {
         sendDescribeStatement(statement);
         sendSync();
         sendFlush();
-        final Default reducer = new Default();
-        Accum res = interact(Phase.PREPARE, reducer);
+        Accum res = interact(Phase.PREPARE);
         ParameterDescription paramDesc = res.current.parameterDescription;
         return new PreparedStatement(parse, paramDesc);
     }
@@ -415,14 +423,22 @@ public class Connection implements Closeable {
     }
 
     public Object executeStatement (PreparedStatement ps) {
-        return executeStatement(ps, Collections.emptyList(), 0);
+        return executeStatement(ps, dummyParams, defaultReducer, 0);
     }
 
     public synchronized Object executeStatement (PreparedStatement ps, List<Object> params) {
-        return executeStatement(ps, params, 0);
+        return executeStatement(ps, params, defaultReducer, 0);
     }
 
-    public synchronized Result executeStatement (PreparedStatement ps, List<Object> params, long rowCount) {
+    public synchronized Object executeStatement (PreparedStatement ps, List<Object> params, IReducer reducer) {
+        return executeStatement(ps, params, reducer, 0);
+    }
+
+    public synchronized Result executeStatement (PreparedStatement ps,
+                                                 List<Object> params,
+                                                 IReducer reducer,
+                                                 long rowCount
+    ) {
         String portal = generatePortal();
         String statement = ps.parse().statement();
         OID[] OIDs = ps.parameterDescription().OIDs();
@@ -432,25 +448,32 @@ public class Connection implements Closeable {
         sendClosePortal(portal);
         sendSync();
         sendFlush();
-        IReducer reducer = new Default();
         return interact(Phase.EXECUTE, reducer).getResult();
     }
 
     public synchronized Result execute (String sql) {
-        return execute(sql, Collections.emptyList(), Collections.emptyList(), 0);
+        return execute(sql, dummyParams, dummyOIDs, defaultReducer, 0);
     }
 
     public synchronized Result execute (String sql, List<Object> params) {
-        return execute(sql, params, Collections.emptyList(), 0);
+        return execute(sql, params, dummyOIDs, defaultReducer, 0);
     }
 
     public synchronized Result execute (String sql, List<Object> params, List<OID> OIDs) {
-        return execute(sql, params, OIDs, 0);
+        return execute(sql, params, OIDs, defaultReducer, 0);
     }
 
-    public synchronized Result execute (String sql, List<Object> params, List<OID> OIDs, int rowCount) {
+    public synchronized Result execute (String sql, List<Object> params, List<OID> OIDs, IReducer reducer) {
+        return execute(sql, params, OIDs, reducer, 0);
+    }
+
+    public synchronized Result execute (String sql,
+                                        List<Object> params,
+                                        List<OID> OIDs,
+                                        IReducer reducer,
+                                        int rowCount) {
         PreparedStatement ps = prepare(sql, OIDs);
-        Result res = executeStatement(ps, params, rowCount);
+        Result res = executeStatement(ps, params, reducer, rowCount);
         closeStatement(ps);
         return res;
     }
@@ -528,6 +551,9 @@ public class Connection implements Closeable {
             case ReadyForQuery x:
                 handleReadyForQuery(x);
                 break;
+            case AuthenticationMD5Password x:
+                handleAuthenticationMD5Password(x);
+                break;
             case CommandComplete x:
                 handleCommandComplete(x, acc);
                 break;
@@ -554,6 +580,11 @@ public class Connection implements Closeable {
 
             default: throw new PGError("Cannot handle this message: %s", msg);
         }
+    }
+
+    private void handleAuthenticationMD5Password(AuthenticationMD5Password msg) {
+        final String hashed = MD5.hashPassword(config.user(), config.password(), msg.salt());
+        sendPassword(hashed);
     }
 
     private void handleCopyOutResponse(CopyOutResponse msg, Accum acc) {
@@ -673,7 +704,6 @@ public class Connection implements Closeable {
     public synchronized void commit () {
         sendQuery("COMMIT");
         interact(Phase.QUERY);
-        query("");
     }
 
     public synchronized void rollback () {
