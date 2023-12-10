@@ -1,10 +1,10 @@
 package com.github.igrishaev;
 
+import com.github.igrishaev.util.BBTool;
+
 import java.io.UnsupportedEncodingException;
-import java.net.PasswordAuthentication;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 
 public class Payload {
@@ -43,26 +43,19 @@ public class Payload {
 
     public Payload addUnsignedShort (Integer i) {
         size += 2;
-
         ByteBuffer buf = ByteBuffer.allocate(4);
         buf.putInt(i);
-
-        byte[] bytes = Arrays.copyOfRange(buf.array(), 2, 4);
-        items.add(bytes);
-
+        BBTool.skip(buf, 2);
+        items.add(buf);
         return this;
     }
 
     public Payload addUnsignedInteger (Long l) {
-
         size += 4;
-
         ByteBuffer buf = ByteBuffer.allocate(8);
         buf.putLong(l);
-
-        byte[] bytes = Arrays.copyOfRange(buf.array(), 4, 8);
-        items.add(bytes);
-
+        BBTool.skip(buf, 4);
+        items.add(buf);
         return this;
     }
 
@@ -86,38 +79,41 @@ public class Payload {
 
     public ByteBuffer toByteBuffer(Character tag) {
 
-        ByteBuffer bb;
+        ByteBuffer buf;
 
         if (tag == null) {
-            bb = ByteBuffer.allocate(size + 4);
+            buf = ByteBuffer.allocate(size + 4);
         } else {
-            bb = ByteBuffer.allocate(size + 5);
-            bb.put((byte)tag.charValue());
+            buf = ByteBuffer.allocate(size + 5);
+            buf.put((byte)tag.charValue());
         }
 
-        bb.putInt(size + 4);
+        buf.putInt(size + 4);
 
         for(Object item: items) {
             switch (item) {
                 case Integer i:
-                    bb.putInt(i);
+                    buf.putInt(i);
                     break;
                 case Short s:
-                    bb.putShort(s);
+                    buf.putShort(s);
+                    break;
+                case ByteBuffer bb:
+                    bb.put(bb);
                     break;
                 case Byte b:
-                    bb.put(b);
+                    buf.put(b);
                     break;
                 case Long l:
-                    bb.putLong(l);
+                    buf.putLong(l);
                     break;
                 case byte[] bs:
-                    bb.put(bs);
+                    buf.put(bs);
                     break;
                 default:
                     throw new PGError("unsupported item: %s", item);
             }
         }
-        return bb;
+        return buf;
     }
 }
