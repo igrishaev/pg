@@ -1,5 +1,6 @@
 (ns pg.client
   (:import
+   java.io.Writer
    java.io.OutputStream
    java.util.UUID
    java.util.Map
@@ -298,3 +299,8 @@
               `(.rollback conn#)
               `(.commit conn#))
            result#)))))
+
+
+(defmethod print-method Connection
+  [^Connection conn ^Writer writer]
+  (.write writer (.toString conn)))

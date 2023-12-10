@@ -245,7 +245,7 @@ public class Connection implements Closeable {
     private String generatePortal () {
         return String.format("portal%d", nextInt());
     }
-
+    
     private void sendStartupMessage () {
         StartupMessage msg =
             new StartupMessage(

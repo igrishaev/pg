@@ -9,7 +9,6 @@
   - copy done
 - clojure tests
 - Auth: plain password
-- Auth: md5
 - Auth: SASL
 - JSON buf size as a config param
 - idle? tx-error? transaction? methods
@@ -20,6 +19,7 @@
 - listen, un-listen methods
 - notify method
 - check TODOs
+- Exception type (catch Exception)
 - notification handler
 - notice handler
 - protocol handler

@@ -45,3 +45,21 @@
     (pg/rollback conn)
 
     (is (= :I (pg/status conn)))))
+
+
+(deftest test-client-conn-str-print
+  (pg/with-connection [conn *CONFIG*]
+
+    (let [repr
+          "<PG connection test@127.0.0.1:10130/test>"]
+
+      (is (= repr (str conn)))
+      (is (= repr (with-out-str
+                    (print conn)))))))
+
+
+(deftest test-client-conn-equals
+  (pg/with-connection [conn1 *CONFIG*]
+    (pg/with-connection [conn2 *CONFIG*]
+      (is (= conn1 conn1))
+      (is (not= conn1 conn2)))))
