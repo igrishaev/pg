@@ -88,7 +88,7 @@ public class Accum {
     public void throwErrorResponse () {
         if (!errorResponses.isEmpty()) {
             ErrorResponse errRes = errorResponses.get(0);
-            throw new PGError("Error response: %s", errRes.fields());
+            throw new PGError("ErrorResponse: %s", errRes.fields());
         }
     }
 }

@@ -2,6 +2,13 @@
 - query & execute params
 - pass reducer into query, execute, execute statement
 
+- reducers
+  - kebab
+  - unify the keys
+  - first
+
+UnusedMessage class?
+
 - 4-byte messages
   - terminate
   - flush

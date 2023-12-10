@@ -239,13 +239,13 @@ public class Connection implements Closeable {
     }
 
     private String generateStatement () {
-        return String.format("statement%d", nextInt());
+        return String.format("s%d", nextInt());
     }
 
     private String generatePortal () {
-        return String.format("portal%d", nextInt());
+        return String.format("p%d", nextInt());
     }
-    
+
     private void sendStartupMessage () {
         StartupMessage msg =
             new StartupMessage(
@@ -341,6 +341,8 @@ public class Connection implements Closeable {
             case 'H' -> CopyOutResponse.fromByteBuffer(bbBody);
             case 'd' -> CopyData.fromByteBuffer(bbBody);
             case 'c' -> new CopyDone();
+            case 'I' -> new EmptyQueryResponse();
+            case 'n' -> new NoData();
             default -> throw new PGError("Unknown message: %s", tag);
         };
 
@@ -530,6 +532,10 @@ public class Connection implements Closeable {
         // System.out.println(msg);
 
         switch (msg) {
+            case NoData ignored:
+                break;
+            case EmptyQueryResponse ignored:
+                break;
             case CloseComplete ignored:
                 break;
             case BindComplete ignored:

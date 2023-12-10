@@ -10,6 +10,7 @@
    com.github.igrishaev.Connection
    com.github.igrishaev.PreparedStatement
    com.github.igrishaev.Config$Builder
+   com.github.igrishaev.Result
    com.github.igrishaev.enums.TXStatus
    com.github.igrishaev.enums.TxLevel))
 
@@ -162,22 +163,47 @@
    (.executeStatement conn stmt params reducer row-count)))
 
 
+(defn ExecuteResult->clj [^Result result]
+  (.result result))
+
+
 (defn execute
 
   ([^Connection conn ^PreparedStatement stmt]
-   (.execute conn stmt))
+   (ExecuteResult->clj (.execute conn stmt)))
 
   ([^Connection conn ^PreparedStatement stmt ^List params]
-   (.execute conn stmt params))
+   (ExecuteResult->clj (.execute conn stmt params)))
 
-  ([^Connection conn ^PreparedStatement stmt ^List params ^List oids]
-   (.execute conn stmt params oids))
+  ([^Connection conn
+    ^PreparedStatement stmt
+    ^List params
+    ^List oids]
+   (ExecuteResult->clj (.execute conn stmt params oids)))
 
-  ([^Connection conn ^PreparedStatement stmt ^List params ^List oids ^IReducer reducer]
-   (.execute conn stmt params oids reducer))
+  ([^Connection conn
+    ^PreparedStatement stmt
+    ^List params
+    ^List oids
+    ^IReducer reducer]
+   (ExecuteResult->clj (.execute conn
+                                 stmt
+                                 params
+                                 oids
+                                 reducer)))
 
-  ([^Connection conn ^PreparedStatement stmt ^List params ^List oids ^IReducer reducer ^Integer row-count]
-   (.execute conn stmt params oids reducer row-count)))
+  ([^Connection conn
+    ^PreparedStatement stmt
+    ^List params
+    ^List oids
+    ^IReducer reducer
+    ^Integer row-count]
+   (ExecuteResult->clj (.execute conn
+                                 stmt
+                                 params
+                                 oids
+                                 reducer
+                                 row-count))))
 
 
 (defmacro with-statement
@@ -213,8 +239,22 @@
   (.isClosed conn))
 
 
+(defn QueryResults->clj [^List results]
+  (cond
+
+    (.isEmpty results)
+    nil
+
+    (= 1 (.size results))
+    (-> results ^Result (.get 0) .result)
+
+    :else
+    (mapv (fn [^Result result]
+            (.result result)) results)))
+
+
 (defn query [^Connection conn ^String sql]
-  (.query conn sql))
+  (QueryResults->clj (.query conn sql)))
 
 
 (defn begin [^Connection conn]
@@ -244,25 +284,25 @@
 
 
 (defmacro with-safe [& body]
-  (try
-    [(do ~@body) nil]
-    (catch Throwable e#
-      [nil e#])))
+  `(try
+     [(do ~@body) nil]
+     (catch Throwable e#
+       [nil e#])))
 
 
 (defn ->tx-level ^TxLevel [^Keyword level]
   (case level
 
-    :serializable
+    (:serializable "serializable")
     TxLevel/SERIALIZABLE
 
-    :repeatable-read
+    (:repeatable-read "repeatable-read")
     TxLevel/REPEATABLE_READ
 
-    :read-committed
+    (:read-committed "read-committed")
     TxLevel/READ_COMMITTED
 
-    :read-uncommitted
+    (:read-uncommitted "read-uncommitted")
     TxLevel/READ_UNCOMMITTED))
 
 
@@ -272,33 +312,36 @@
                          rollback?]}]
    & body]
 
-  `(let [conn#
-         ~conn
+  (let [bind (gensym "CONN")]
 
-         level#
-         (->tx-level ~isolation-level)]
+    `(let [~bind ~conn]
 
-     (.begin conn#)
+       (.begin ~bind)
 
-     (when ~isolation-level
-       (.setTxLevel conn# level#))
+       ~@(when isolation-level
+           [`(.setTxLevel ~bind (->tx-level ~isolation-level))])
 
-     (when ~read-only?
-       (.setTxReadOnly conn#))
+       ~@(when read-only?
+           [`(.setTxReadOnly ~bind)])
 
-     (let [[result# e#]
-           (with-safe ~@body)]
+       (let [[result# e#]
+             (with-safe ~@body)]
 
-       (if e#
-         (do
-           (.rollback conn#)
-           (throw e#))
+         (if e#
+           (do
+             (.rollback ~bind)
+             (throw e#))
 
-         (do
-           ~(if rollback?
-              `(.rollback conn#)
-              `(.commit conn#))
-           result#)))))
+           (do
+             ~(if rollback?
+                `(.rollback ~bind)
+                `(.commit ~bind))
+             result#))))))
+
+
+
+(defn connection? [x]
+  (instance? Connection x))
 
 
 (defmethod print-method Connection

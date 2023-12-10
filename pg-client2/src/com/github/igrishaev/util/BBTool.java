@@ -33,12 +33,6 @@ public class BBTool {
         return buf.remaining() == 0;
     }
 
-    public static byte[] getNBytes(ByteBuffer buf, int size) {
-        byte[] bytes = new byte[size];
-        buf.get(bytes);
-        return bytes;
-    }
-
     public static String getRestString (ByteBuffer buf) {
         return new String(buf.array(),
                           buf.position(),
