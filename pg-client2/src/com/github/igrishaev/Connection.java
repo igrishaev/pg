@@ -442,7 +442,7 @@ public class Connection implements Closeable {
         return executeStatement(ps, params, reducer, 0);
     }
 
-    public synchronized Result executeStatement (PreparedStatement ps,
+    public synchronized List<Result> executeStatement (PreparedStatement ps,
                                                  List<Object> params,
                                                  IReducer reducer,
                                                  long rowCount
@@ -456,32 +456,32 @@ public class Connection implements Closeable {
         sendClosePortal(portal);
         sendSync();
         sendFlush();
-        return interact(Phase.EXECUTE, reducer).getResult();
+        return interact(Phase.EXECUTE, reducer).getResults();
     }
 
-    public synchronized Result execute (String sql) {
+    public synchronized List<Result> execute (String sql) {
         return execute(sql, dummyParams, dummyOIDs, defaultReducer, 0);
     }
 
-    public synchronized Result execute (String sql, List<Object> params) {
+    public synchronized List<Result> execute (String sql, List<Object> params) {
         return execute(sql, params, dummyOIDs, defaultReducer, 0);
     }
 
-    public synchronized Result execute (String sql, List<Object> params, List<OID> OIDs) {
+    public synchronized List<Result> execute (String sql, List<Object> params, List<OID> OIDs) {
         return execute(sql, params, OIDs, defaultReducer, 0);
     }
 
-    public synchronized Result execute (String sql, List<Object> params, List<OID> OIDs, IReducer reducer) {
+    public synchronized List<Result> execute (String sql, List<Object> params, List<OID> OIDs, IReducer reducer) {
         return execute(sql, params, OIDs, reducer, 0);
     }
 
-    public synchronized Result execute (String sql,
+    public synchronized List<Result> execute (String sql,
                                         List<Object> params,
                                         List<OID> OIDs,
                                         IReducer reducer,
                                         int rowCount) {
         PreparedStatement ps = prepare(sql, OIDs);
-        Result res = executeStatement(ps, params, reducer, rowCount);
+        List<Result> res = executeStatement(ps, params, reducer, rowCount);
         closeStatement(ps);
         return res;
     }
@@ -627,10 +627,10 @@ public class Connection implements Closeable {
         }
     }
 
-    public synchronized Result copyOut (String sql, OutputStream outputStream) {
+    public synchronized List<Result> copyOut (String sql, OutputStream outputStream) {
         sendQuery(sql);
         Accum acc = interact(Phase.COPY, outputStream);
-        return acc.getResult();
+        return acc.getResults();
     }
 
     private void handleParseComplete(ParseComplete msg, Accum acc) {

@@ -167,34 +167,44 @@
    (.executeStatement conn stmt params reducer row-count)))
 
 
-(defn ExecuteResult->clj [^Result result]
-  (.result result))
+(defn Results->clj [^List results]
+  (cond
+
+    (.isEmpty results)
+    nil
+
+    (= 1 (.size results))
+    (-> results ^Result (.get 0) .result)
+
+    :else
+    (mapv (fn [^Result result]
+            (.result result)) results)))
 
 
 (defn execute
 
   ([^Connection conn ^PreparedStatement stmt]
-   (ExecuteResult->clj (.execute conn stmt)))
+   (Results->clj (.execute conn stmt)))
 
   ([^Connection conn ^PreparedStatement stmt ^List params]
-   (ExecuteResult->clj (.execute conn stmt params)))
+   (Results->clj (.execute conn stmt params)))
 
   ([^Connection conn
     ^PreparedStatement stmt
     ^List params
     ^List oids]
-   (ExecuteResult->clj (.execute conn stmt params oids)))
+   (Results->clj (.execute conn stmt params oids)))
 
   ([^Connection conn
     ^PreparedStatement stmt
     ^List params
     ^List oids
     ^IReducer reducer]
-   (ExecuteResult->clj (.execute conn
-                                 stmt
-                                 params
-                                 oids
-                                 reducer)))
+   (Results->clj (.execute conn
+                           stmt
+                           params
+                           oids
+                           reducer)))
 
   ([^Connection conn
     ^PreparedStatement stmt
@@ -202,12 +212,12 @@
     ^List oids
     ^IReducer reducer
     ^Integer row-count]
-   (ExecuteResult->clj (.execute conn
-                                 stmt
-                                 params
-                                 oids
-                                 reducer
-                                 row-count))))
+   (Results->clj (.execute conn
+                           stmt
+                           params
+                           oids
+                           reducer
+                           row-count))))
 
 
 (defmacro with-statement
@@ -243,22 +253,8 @@
   (.isClosed conn))
 
 
-(defn QueryResults->clj [^List results]
-  (cond
-
-    (.isEmpty results)
-    nil
-
-    (= 1 (.size results))
-    (-> results ^Result (.get 0) .result)
-
-    :else
-    (mapv (fn [^Result result]
-            (.result result)) results)))
-
-
 (defn query [^Connection conn ^String sql]
-  (QueryResults->clj (.query conn sql)))
+  (Results->clj (.query conn sql)))
 
 
 (defn begin [^Connection conn]

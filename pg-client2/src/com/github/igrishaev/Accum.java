@@ -55,7 +55,7 @@ public class Accum {
     }
 
     public ArrayList<Result> getResults () {
-        final ArrayList<Result> results = new ArrayList<>();
+        final ArrayList<Result> results = new ArrayList<>(1);
         for (Node node: nodes) {
             if (node.commandComplete != null) {
                 if (phase == Phase.COPY) {
@@ -68,11 +68,6 @@ public class Accum {
             }
         }
         return results;
-    }
-
-    public Result getResult () {
-        // TODO!!!
-        return getResults().get(0);
     }
 
     public void setCurrentValues (Object[] values) {

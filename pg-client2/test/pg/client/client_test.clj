@@ -407,54 +407,60 @@
                  @capture!)))))))
 
 
-;; (deftest test-client-broken-query
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (try
-;;       (pg/execute conn "selekt 1")
-;;       (is false "must have been an error")
-;;       (catch Exception e
-;;         (is (= "ErrorResponse" (ex-message e)))
-;;         (is (= {:error
-;;                 {:msg :ErrorResponse
-;;                  :errors
-;;                  {:severity "ERROR"
-;;                   :verbosity "ERROR"
-;;                   :code "42601"
-;;                   :message "syntax error at or near \"selekt\""
-;;                   :position "1"
-;;                   :function "scanner_yyerror"}}}
-;;                (-> e
-;;                    (ex-data)
-;;                    (update-in [:error :errors]
-;;                               dissoc :file :line))))))))
+;; TODO
+(deftest test-client-broken-query
+  (pg/with-connection [conn *CONFIG*]
+    (try
+      (pg/execute conn "selekt 1")
+      (is false "must have been an error")
+      (catch PGError e
+        (is (-> e ex-message (str/starts-with? "ErrorResponse"))))
+
+      #_
+      (catch Exception e
+        (is (= "ErrorResponse" (ex-message e)))
+        (is (= {:error
+                {:msg :ErrorResponse
+                 :errors
+                 {:severity "ERROR"
+                  :verbosity "ERROR"
+                  :code "42601"
+                  :message "syntax error at or near \"selekt\""
+                  :position "1"
+                  :function "scanner_yyerror"}}}
+               (-> e
+                   (ex-data)
+                   (update-in [:error :errors]
+                              dissoc :file :line))))))))
 
 
-;; (deftest test-client-error-response
+(deftest test-client-error-response
 
-;;   (let [config
-;;         (assoc *CONFIG* :pg-params {"pg_foobar" "111"})]
+  (let [config
+        (assoc *CONFIG* :pg-params {"pg_foobar" "111"})]
 
-;;     (is (thrown? Exception
-;;                  (pg/with-connection [conn config]
-;;                    42)))))
-
-
-;; (deftest test-client-wrong-startup-params
-
-;;   (let [config
-;;         (assoc *CONFIG* :pg-params {"application_name" "Clojure"
-;;                                     "DateStyle" "ISO, MDY"})]
-
-;;     (pg/with-connection [conn config]
-;;       (let [param
-;;             (pg/get-parameter conn "application_name")]
-;;         (is (= "Clojure" param))))))
+    (is (thrown? PGError
+                 (pg/with-connection [conn config]
+                   42)))))
 
 
-;; (deftest test-terminate-closed
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (pg/terminate conn)
-;;     (is (pg/closed? conn))))
+(deftest test-client-wrong-startup-params
+
+  (let [config
+        (assoc *CONFIG* :pg-params {"application_name" "Clojure"
+                                    "DateStyle" "ISO, MDY"})]
+
+    (pg/with-connection [conn config]
+      (let [param
+            (pg/get-parameter conn "application_name")]
+        (is (= "Clojure" param))))))
+
+
+;; TODO:
+(deftest test-terminate-closed
+  (pg/with-connection [conn *CONFIG*]
+    (pg/close conn)
+    (is (pg/closed? conn))))
 
 
 ;; (deftest test-client-prepare
