@@ -8,11 +8,40 @@
    clojure.lang.Keyword
    com.github.igrishaev.reducer.IReducer
    com.github.igrishaev.Connection
+   com.github.igrishaev.ExecuteParams
+   com.github.igrishaev.ExecuteParams$Builder
    com.github.igrishaev.PreparedStatement
    com.github.igrishaev.Config$Builder
    com.github.igrishaev.Result
    com.github.igrishaev.enums.TXStatus
    com.github.igrishaev.enums.TxLevel))
+
+
+(defn ->execute-params ^ExecuteParams [config]
+
+  (let [{:keys [params
+                oids
+                row-count
+                reducer]}
+        config]
+
+    (cond-> (new ExecuteParams$Builder)
+
+      params
+      (.params params)
+
+      oids
+      (.OIDs oids)
+
+      reducer
+      (.reducer reducer)
+
+      row-count
+      (.rowCount row-count)
+
+      :finally
+      (.build))))
+
 
 
 (defn ->config ^Config$Builder [params]
@@ -160,21 +189,6 @@
    (.prepare conn sql oids)))
 
 
-(defn execute-statement
-
-  ([^Connection conn ^PreparedStatement stmt]
-   (.executeStatement conn stmt))
-
-  ([^Connection conn ^PreparedStatement stmt ^List params]
-   (.executeStatement conn stmt params))
-
-  ([^Connection conn ^PreparedStatement stmt ^List params ^IReducer reducer]
-   (.executeStatement conn stmt params reducer))
-
-  ([^Connection conn ^PreparedStatement stmt ^List params ^IReducer reducer ^Integer row-count]
-   (.executeStatement conn stmt params reducer row-count)))
-
-
 (defn Results->clj [^List results]
   (cond
 
@@ -189,43 +203,26 @@
             (.result result)) results)))
 
 
-(defn execute
+(defn execute-statement
 
   ([^Connection conn ^PreparedStatement stmt]
-   (Results->clj (.execute conn stmt)))
+   (Results->clj
+    (.executeStatement conn stmt)))
 
-  ([^Connection conn ^PreparedStatement stmt ^List params]
-   (Results->clj (.execute conn stmt params)))
+  ([^Connection conn ^PreparedStatement stmt ^Map params]
+   (Results->clj
+    (.executeStatement conn stmt (->execute-params params)))))
 
-  ([^Connection conn
-    ^PreparedStatement stmt
-    ^List params
-    ^List oids]
-   (Results->clj (.execute conn stmt params oids)))
 
-  ([^Connection conn
-    ^PreparedStatement stmt
-    ^List params
-    ^List oids
-    ^IReducer reducer]
-   (Results->clj (.execute conn
-                           stmt
-                           params
-                           oids
-                           reducer)))
+(defn execute
 
-  ([^Connection conn
-    ^PreparedStatement stmt
-    ^List params
-    ^List oids
-    ^IReducer reducer
-    ^Integer row-count]
-   (Results->clj (.execute conn
-                           stmt
-                           params
-                           oids
-                           reducer
-                           row-count))))
+  ([^Connection conn ^String sql]
+   (Results->clj
+    (.execute conn sql)))
+
+  ([^Connection conn ^String sql ^Map params]
+   (Results->clj
+    (.execute conn sql (->execute-params params)))))
 
 
 (defmacro with-statement
@@ -261,8 +258,15 @@
   (.isClosed conn))
 
 
-(defn query [^Connection conn ^String sql]
-  (Results->clj (.query conn sql)))
+(defn query
+
+  ([^Connection conn ^String sql]
+   (Results->clj
+    (.query conn sql)))
+
+  ([^Connection conn ^String sql ^Map params]
+   (Results->clj
+    (.query conn sql (->execute-params params)))))
 
 
 (defn begin [^Connection conn]
@@ -355,8 +359,6 @@
 (defmethod print-method Connection
   [^Connection conn ^Writer writer]
   (.write writer (.toString conn)))
-
-
 
 
 (defn listen

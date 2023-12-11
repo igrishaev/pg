@@ -47,9 +47,6 @@ public class Connection implements Closeable {
 
     private final OutputStream dummyOutputStream;
     private final IReducer dummyReducer;
-    private final IReducer defaultReducer;
-    private final List<Object> dummyParams = Collections.emptyList();
-    private final List<OID> dummyOIDs = Collections.emptyList();
 
     public Connection(String host, int port, String user, String password, String database) {
         this(new Config.Builder(user, database)
@@ -67,7 +64,6 @@ public class Connection implements Closeable {
         this.decoderBin = new DecoderBin();
         this.encoderBin = new EncoderBin();
         this.dummyReducer = new Dummy();
-        this.defaultReducer = new Default();
         this.dummyOutputStream = new DummyOutputStream();
         this.id = UUID.randomUUID();
         this.createdAt = System.currentTimeMillis();
@@ -370,21 +366,21 @@ public class Connection implements Closeable {
     }
 
     public synchronized List<Result> query(String sql) {
-        return query(sql, defaultReducer);
+        return query(sql, new ExecuteParams.Builder().build());
     }
 
-    public synchronized List<Result> query(String sql, IReducer reducer) {
+    public synchronized List<Result> query(String sql, ExecuteParams executeParams) {
         sendQuery(sql);
-        return interact(Phase.QUERY, reducer).getResults();
+        return interact(Phase.QUERY, executeParams.reducer()).getResults();
     }
 
     public synchronized PreparedStatement prepare (String sql) {
-        return prepare(sql, dummyOIDs);
+        return prepare(sql, new ExecuteParams.Builder().build());
     }
 
-    public synchronized PreparedStatement prepare (String sql, List<OID> OIDs) {
+    public synchronized PreparedStatement prepare (String sql, ExecuteParams executeParams) {
         String statement = generateStatement();
-        Parse parse = new Parse(statement, sql, OIDs);
+        Parse parse = new Parse(statement, sql, executeParams.OIDs());
         sendMessage(parse);
         sendDescribeStatement(statement);
         sendSync();
@@ -431,57 +427,34 @@ public class Connection implements Closeable {
     }
 
     public Object executeStatement (PreparedStatement ps) {
-        return executeStatement(ps, dummyParams, defaultReducer, 0);
-    }
-
-    public synchronized Object executeStatement (PreparedStatement ps, List<Object> params) {
-        return executeStatement(ps, params, defaultReducer, 0);
-    }
-
-    public synchronized Object executeStatement (PreparedStatement ps, List<Object> params, IReducer reducer) {
-        return executeStatement(ps, params, reducer, 0);
+        return executeStatement(ps, new ExecuteParams.Builder().build());
     }
 
     public synchronized List<Result> executeStatement (PreparedStatement ps,
-                                                 List<Object> params,
-                                                 IReducer reducer,
-                                                 long rowCount
-    ) {
+                                                       ExecuteParams executeParams) {
         String portal = generatePortal();
         String statement = ps.parse().statement();
         OID[] OIDs = ps.parameterDescription().OIDs();
-        sendBind(portal, statement, params, OIDs);
+        sendBind(portal, statement, executeParams.params(), OIDs);
         sendDescribePortal(portal);
-        sendExecute(portal, rowCount);
+        sendExecute(portal, executeParams.rowCount());
         sendClosePortal(portal);
         sendSync();
         sendFlush();
-        return interact(Phase.EXECUTE, reducer).getResults();
+        return interact(Phase.EXECUTE, executeParams.reducer()).getResults();
     }
 
     public synchronized List<Result> execute (String sql) {
-        return execute(sql, dummyParams, dummyOIDs, defaultReducer, 0);
+        return execute(sql, new ExecuteParams.Builder().build());
     }
 
     public synchronized List<Result> execute (String sql, List<Object> params) {
-        return execute(sql, params, dummyOIDs, defaultReducer, 0);
+        return execute(sql, new ExecuteParams.Builder().params(params).build());
     }
 
-    public synchronized List<Result> execute (String sql, List<Object> params, List<OID> OIDs) {
-        return execute(sql, params, OIDs, defaultReducer, 0);
-    }
-
-    public synchronized List<Result> execute (String sql, List<Object> params, List<OID> OIDs, IReducer reducer) {
-        return execute(sql, params, OIDs, reducer, 0);
-    }
-
-    public synchronized List<Result> execute (String sql,
-                                        List<Object> params,
-                                        List<OID> OIDs,
-                                        IReducer reducer,
-                                        int rowCount) {
-        PreparedStatement ps = prepare(sql, OIDs);
-        List<Result> res = executeStatement(ps, params, reducer, rowCount);
+    public synchronized List<Result> execute (String sql, ExecuteParams executeParams) {
+        PreparedStatement ps = prepare(sql, executeParams);
+        List<Result> res = executeStatement(ps, executeParams);
         closeStatement(ps);
         return res;
     }

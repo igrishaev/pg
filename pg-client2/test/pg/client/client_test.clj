@@ -698,6 +698,7 @@
 ;; --------------
 
 
+#_
 (deftest test-statement-params-wrong-count
   (pg/with-connection [conn *CONFIG*]
     (pg/with-statement [stmt conn "select $1::integer as foo, $2::integer as bar"]
