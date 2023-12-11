@@ -80,8 +80,10 @@ public class Connection implements Closeable {
     }
 
     public void close () {
-        sendTerminate();
-        closeSocket();
+        if (!isClosed()) {
+            sendTerminate();
+            closeSocket();
+        }
     }
 
     private int nextInt() {

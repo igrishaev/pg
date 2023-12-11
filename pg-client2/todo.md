@@ -1,6 +1,5 @@
 - clojure wrapper
 - query & execute params
-- pass reducer into query, execute, execute statement
 
 - reducers
   - kebab
@@ -9,7 +8,6 @@
 
 UnusedMessage class?
 
-notifications fn params
 notifications fn try/catch?
 
 refactor execute & query params?
@@ -28,14 +26,14 @@ refactor execute & query params?
 - copy in: stream, maps, rows
 - set socket options
 - SSL support
-- listen, un-listen methods
-- notify method
 - check TODOs
 - Exception type (catch Exception)
-- notification handler
 - notice handler
 - protocol handler
 - connection pool
+
+- encode error -> close conn
+
 - datetime
   - decode txt
   - decode bin

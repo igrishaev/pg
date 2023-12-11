@@ -463,86 +463,86 @@
     (is (pg/closed? conn))))
 
 
-;; (deftest test-client-prepare
+(deftest test-client-prepare
 
-;;   (pg/with-connection [conn *CONFIG*]
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (let [query1
-;;           "prepare foo as select $1::integer as num"
+    (let [query1
+          "prepare foo as select $1::integer as num"
 
-;;           res1
-;;           (pg/execute conn query1)
+          res1
+          (pg/execute conn query1)
 
-;;           query2
-;;           "execute foo(42)"
+          query2
+          "execute foo(42)"
 
-;;           res2
-;;           (pg/execute conn query2)
+          res2
+          (pg/execute conn query2)
 
-;;           query3
-;;           "deallocate foo"
+          query3
+          "deallocate foo"
 
-;;           res3
-;;           (pg/execute conn query3)]
+          res3
+          (pg/execute conn query3)]
 
-;;       (is (nil? res1))
-;;       (is (= [{:num 42}] res2))
-;;       (is (nil? res3)))))
-
-
-;; (deftest test-client-cursor
-
-;;   (pg/with-connection [conn *CONFIG*]
-
-;;     (let [table
-;;           (gen-table)
-
-;;           query1
-;;           (format "create temp table %s (id serial, title text)" table)
-
-;;           _
-;;           (pg/execute conn query1)
-
-;;           query2
-;;           (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2') returning *" table)
-
-;;           _
-;;           (pg/execute conn query2)
-
-;;           query3
-;;           (format "DECLARE cur CURSOR for select * from %s" table)]
-
-;;       (pg/with-tx [conn]
-
-;;         (let [res3
-;;               (pg/execute conn query3)
-
-;;               res4
-;;               (pg/execute conn "fetch next from cur")
-
-;;               res5
-;;               (pg/execute conn "fetch next from cur")
-
-;;               res6
-;;               (pg/execute conn "fetch next from cur")]
-
-;;           (pg/execute conn "close cur")
-
-;;           (is (nil? res3))
-
-;;           (is (= [{:id 1 :title "test1"}] res4))
-;;           (is (= [{:id 2 :title "test2"}] res5))
-;;           (is (= [] res6)))))))
+      (is (nil? res1))
+      (is (= [{:num 42}] res2))
+      (is (nil? res3)))))
 
 
-;; (deftest test-client-wrong-minor-protocol
+(deftest test-client-cursor
 
-;;   (let [config
-;;         (assoc *CONFIG* :protocol-version 196609)]
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (pg/with-connection [conn config]
-;;       (is (= [{:foo 1}]
-;;              (pg/execute conn "select 1 as foo"))))))
+    (let [table
+          (gen-table)
+
+          query1
+          (format "create temp table %s (id serial, title text)" table)
+
+          _
+          (pg/execute conn query1)
+
+          query2
+          (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2') returning *" table)
+
+          _
+          (pg/execute conn query2)
+
+          query3
+          (format "DECLARE cur CURSOR for select * from %s" table)]
+
+      (pg/with-tx [conn]
+
+        (let [res3
+              (pg/execute conn query3)
+
+              res4
+              (pg/execute conn "fetch next from cur")
+
+              res5
+              (pg/execute conn "fetch next from cur")
+
+              res6
+              (pg/execute conn "fetch next from cur")]
+
+          (pg/execute conn "close cur")
+
+          (is (nil? res3))
+
+          (is (= [{:id 1 :title "test1"}] res4))
+          (is (= [{:id 2 :title "test2"}] res5))
+          (is (= [] res6)))))))
+
+
+(deftest test-client-wrong-minor-protocol
+
+  (let [config
+        (assoc *CONFIG* :protocol-version 196609)]
+
+    (pg/with-connection [conn config]
+      (is (= [{:foo 1}]
+             (pg/execute conn "select 1 as foo"))))))
 
 
 ;; (deftest test-client-wrong-major-protocol
