@@ -1,7 +1,7 @@
 package com.github.igrishaev.util;
 
-import clojure.lang.IPersistentMap;
+import clojure.lang.Associative;
 
 public interface IClojure {
-    IPersistentMap toClojure();
+    Associative toClojure();
 }

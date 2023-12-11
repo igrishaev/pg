@@ -29,6 +29,8 @@
                 in-stream-buf-size
                 out-stream-buf-size
                 fn-notification
+                fn-protocol-version
+                fn-notice
                 use-ssl?]}
         params]
 
@@ -66,6 +68,12 @@
 
       fn-notification
       (.fnNotification fn-notification)
+
+      fn-protocol-version
+      (.fnProtocolVersion fn-protocol-version)
+
+      fn-notice
+      (.fnNotice fn-notice)
 
       :finally
       (.build))))
@@ -373,3 +381,7 @@
   "
   [^Connection conn ^String channel ^String message]
   (.notify conn channel message))
+
+
+(defn prepared-statement? [x]
+  (instance? PreparedStatement x))

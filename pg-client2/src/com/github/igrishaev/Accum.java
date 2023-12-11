@@ -49,11 +49,12 @@ public class Accum {
         this.phase = phase;
         this.reducer = reducer;
         this.outputStream = outputStream;
-        nodes = new ArrayList<>();
-        errorResponses = new ArrayList<>();
+        nodes = new ArrayList<>(2);
+        errorResponses = new ArrayList<>(1);
         addNode();
     }
 
+    // TODO: array?
     public ArrayList<Result> getResults () {
         final ArrayList<Result> results = new ArrayList<>(1);
         for (Node node: nodes) {

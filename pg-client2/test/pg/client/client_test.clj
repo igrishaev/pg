@@ -630,37 +630,35 @@
       (let [res (pg/execute conn "ROLLBACK")]
         (is (nil? res))))
 
-    (is (= {:msg :NoticeResponse
-            :fields
-            {:severity "WARNING"
-             :verbosity "WARNING"
-             :code "25P01"
-             :message "there is no transaction in progress"
-             :function "UserAbortTransactionBlock"}}
+    (is (= {:verbosity "WARNING",
+            :function "UserAbortTransactionBlock",
+            :severity "WARNING",
+            :code "25P01",
+            :message "there is no transaction in progress"}
            (-> capture!
                (deref)
-               (update :fields dissoc :line :file))))))
+               (dissoc :line :file))))))
 
 
-;; (deftest test-client-insert-result-no-returning
-;;   (pg/with-connection [conn *CONFIG*]
+(deftest test-client-insert-result-no-returning
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (let [table
-;;           (gen-table)
+    (let [table
+          (gen-table)
 
-;;           query1
-;;           (format "create temp table %s (id serial, title text)" table)
+          query1
+          (format "create temp table %s (id serial, title text)" table)
 
-;;           _
-;;           (pg/execute conn query1)
+          _
+          (pg/execute conn query1)
 
-;;           query2
-;;           (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
+          query2
+          (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
 
-;;           res
-;;           (pg/execute conn query2)]
+          res
+          (pg/execute conn query2)]
 
-;;       (is (= 2 res)))))
+      (is (= 2 res)))))
 
 
 ;; (deftest test-client-select-fn-result
@@ -690,29 +688,27 @@
 ;;       (is (= {:id 1 :title "test1"} res)))))
 
 
-;; (deftest test-prepare-result
-
-;;   (pg/with-connection [conn *CONFIG*]
-
-;;     (let [res
-;;           (pg/prepare-statement conn "select $1::integer as foo")]
-
-;;       (is (map? res))
-;;       (is (= [:statement :RowDescription :ParameterDescription]
-;;              (keys res))))))
+(deftest test-prepare-result
+  (pg/with-connection [conn *CONFIG*]
+    (let [res
+          (pg/prepare-statement conn "select $1::integer as foo")]
+      (is (pg/prepared-statement? res)))))
 
 
-;; (deftest test-statement-params-wrong-count
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (pg/with-statement [stmt conn "select $1::integer as foo, $2::integer as bar"]
-;;       (try
-;;         (pg/execute-statement conn stmt [1])
-;;         (is false)
-;;         (catch Exception e
-;;           (is (= "Wrong parameters count: 1 (must be 2)"
-;;                  (ex-message e)))
-;;           (is (= {:params [1] :oids [23 23]}
-;;                  (ex-data e))))))))
+;; --------------
+
+
+(deftest test-statement-params-wrong-count
+  (pg/with-connection [conn *CONFIG*]
+    (pg/with-statement [stmt conn "select $1::integer as foo, $2::integer as bar"]
+      (try
+        (pg/execute-statement conn stmt [1])
+        (is false)
+        (catch Exception e
+          (is (= "Wrong parameters count: 1 (must be 2)"
+                 (ex-message e)))
+          (is (= {:params [1] :oids [23 23]}
+                 (ex-data e))))))))
 
 
 ;; (deftest test-statement-params-nil

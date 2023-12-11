@@ -1,50 +1,13 @@
 package com.github.igrishaev.msg;
 
-import com.github.igrishaev.util.BBTool;
-import com.github.igrishaev.PGError;
-
 import java.nio.ByteBuffer;
-import java.util.HashMap;
+import java.util.Map;
 
-public record ErrorResponse (HashMap<String, String> fields) {
-
-    public static String parseTag (byte tag) {
-        return switch ((char) tag) {
-            case 'S' -> "severity";
-            case 'V' -> "verbosity";
-            case 'C' -> "code";
-            case 'M' -> "message";
-            case 'D' -> "detail";
-            case 'H' -> "hint";
-            case 'P' -> "position";
-            case 'p' -> "position-internal";
-            case 'q' -> "query";
-            case 'W' -> "stacktrace";
-            case 's' -> "schema";
-            case 't' -> "table";
-            case 'c' -> "column";
-            case 'd' -> "datatype";
-            case 'n' -> "constraint";
-            case 'F' -> "file";
-            case 'L' -> "line";
-            case 'R' -> "function";
-            default -> throw new PGError("unknown tag: %s", tag);
-        };
-    }
+public record ErrorResponse (Map<String, String> fields) {
 
     public static ErrorResponse fromByteBuffer(ByteBuffer buf) {
-        HashMap<String, String> fields = new HashMap<>();
-        while (true) {
-            byte tag = buf.get();
-            if (tag == 0) {
-                break;
-            }
-            else {
-                String field = parseTag(tag);
-                String message = BBTool.getCString(buf, "UTF-8"); // TODO
-                fields.put(field, message);
-            };
-        };
+        // TODO: encoding
+        Map<String, String> fields = FieldParser.parseFields(buf, "UTF-8");
         return new ErrorResponse(fields);
     }
 }

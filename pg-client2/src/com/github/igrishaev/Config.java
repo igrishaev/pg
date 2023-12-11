@@ -23,7 +23,8 @@ public record Config (
         int inStreamBufSize,
         int outStreamBufSize,
         IFn fnNotification,
-        IFn fnProtocolVersion
+        IFn fnProtocolVersion,
+        IFn fnNotice
 ) {
 
     public static class Builder {
@@ -43,6 +44,7 @@ public record Config (
         private int outStreamBufSize = Const.OUT_STREAM_BUF_SIZE;
         private IFn fnNotification;
         private IFn fnProtocolVersion;
+        private IFn fnNotice;
 
         public Builder(final String user, final String database) {
             this.user = Objects.requireNonNull(user);
@@ -62,12 +64,17 @@ public record Config (
         }
 
         public Builder fnNotification(final IFn fnNotification) {
-            this.fnNotification = fnNotification;
+            this.fnNotification = Objects.requireNonNull(fnNotification);
+            return this;
+        }
+
+        public Builder fnNotice(final IFn fnNotice) {
+            this.fnNotice = Objects.requireNonNull(fnNotice);
             return this;
         }
 
         public Builder fnProtocolVersion(final IFn fnProtocolVersion) {
-            this.fnProtocolVersion = fnProtocolVersion;
+            this.fnProtocolVersion = Objects.requireNonNull(fnProtocolVersion);
             return this;
         }
 
@@ -142,7 +149,8 @@ public record Config (
                     this.inStreamBufSize,
                     this.outStreamBufSize,
                     this.fnNotification,
-                    this.fnProtocolVersion
+                    this.fnProtocolVersion,
+                    this.fnNotice
             );
         }
     }

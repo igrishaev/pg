@@ -1,9 +1,6 @@
 package com.github.igrishaev;
 
 import clojure.lang.IFn;
-import clojure.lang.IPersistentMap;
-import clojure.lang.Keyword;
-import clojure.lang.PersistentHashMap;
 import com.github.igrishaev.auth.MD5;
 import com.github.igrishaev.codec.DecoderBin;
 import com.github.igrishaev.codec.DecoderTxt;
@@ -23,7 +20,6 @@ import java.io.BufferedInputStream;
 import java.io.OutputStream;
 import java.io.BufferedOutputStream;
 import java.io.UnsupportedEncodingException;
-import java.security.Key;
 import java.util.*;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -352,6 +348,7 @@ public class Connection implements Closeable {
             case 'n' -> new NoData();
             case 'v' -> NegotiateProtocolVersion.fromByteBuffer(bbBody);
             case 'A' -> NotificationResponse.fromByteBuffer(bbBody);
+            case 'N' -> NoticeResponse.fromByteBuffer(bbBody);
             default -> throw new PGError("Unknown message: %s", tag);
         };
 
@@ -557,6 +554,9 @@ public class Connection implements Closeable {
             case AuthenticationCleartextPassword ignored:
                 handleAuthenticationCleartextPassword();
                 break;
+            case NoticeResponse x:
+                handleNoticeResponse(x);
+                break;
             case ParameterStatus x:
                 handleParameterStatus(x);
                 break;
@@ -608,6 +608,14 @@ public class Connection implements Closeable {
         IFn fnNotification = config.fnNotification();
         if (fnNotification != null) {
             fnNotification.invoke(msg.toClojure());
+        }
+    }
+
+    private void handleNoticeResponse(NoticeResponse msg) {
+        // TODO: try/catch?
+        final IFn fnNotice = config.fnNotice();
+        if (fnNotice != null) {
+            fnNotice.invoke(msg.toClojure());
         }
     }
 
