@@ -6,8 +6,7 @@ import clojure.lang.PersistentVector;
 
 public class Matrix extends MapMixin implements IReducer {
 
-    @Override
-    public Object compose(Object[] keys, Object[] vals) {
+    public Object compose(final Object[] keys, final Object[] vals) {
         return PersistentVector.create(vals);
     }
 
@@ -15,11 +14,11 @@ public class Matrix extends MapMixin implements IReducer {
         return PersistentVector.EMPTY.asTransient();
     }
 
-    public Object append(Object acc, Object row) {
+    public Object append(final Object acc, final Object row) {
         return core$conj_BANG_.invokeStatic(acc, row);
     }
 
-    public Object finalize(Object acc) {
+    public Object finalize(final Object acc) {
         return core$persistent_BANG_.invokeStatic(acc);
     }
 }

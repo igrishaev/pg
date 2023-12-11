@@ -10,7 +10,7 @@ public class KV extends MapMixin implements IReducer {
 
     private final IFn fk, fv;
 
-    public KV(IFn fk, IFn fv) {
+    public KV(final IFn fk, final IFn fv) {
         this.fk = fk;
         this.fv = fv;
     }
@@ -19,11 +19,11 @@ public class KV extends MapMixin implements IReducer {
         return PersistentHashMap.EMPTY.asTransient();
     }
 
-    public Object append (Object acc, Object row) {
+    public Object append (final Object acc, final Object row) {
         return core$assoc_BANG_.invokeStatic(acc, fk.invoke(row), fv.invoke(row));
     }
 
-    public Object finalize (Object acc) {
+    public Object finalize (final Object acc) {
         return core$persistent_BANG_.invokeStatic(acc);
     }
 }

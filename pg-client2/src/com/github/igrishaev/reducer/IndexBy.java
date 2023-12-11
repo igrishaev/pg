@@ -10,7 +10,7 @@ public class IndexBy extends MapMixin implements IReducer {
 
     private final IFn f;
 
-    public IndexBy(IFn f) {
+    public IndexBy(final IFn f) {
         this.f = f;
     }
 
@@ -18,11 +18,11 @@ public class IndexBy extends MapMixin implements IReducer {
         return PersistentHashMap.EMPTY.asTransient();
     }
 
-    public Object append (Object acc, Object row) {
+    public Object append (final Object acc, final Object row) {
         return core$assoc_BANG_.invokeStatic(acc, f.invoke(row), row);
     }
 
-    public Object finalize (Object acc) {
+    public Object finalize (final Object acc) {
         return core$persistent_BANG_.invokeStatic(acc);
     }
 }

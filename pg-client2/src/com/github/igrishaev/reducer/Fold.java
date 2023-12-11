@@ -8,7 +8,7 @@ public class Fold extends MapMixin implements IReducer {
     private final IFn f;
     private final Object init;
 
-    public Fold(IFn f, Object init) {
+    public Fold(final IFn f, final Object init) {
         this.f = f;
         this.init = init;
     }
@@ -17,11 +17,11 @@ public class Fold extends MapMixin implements IReducer {
         return init;
     }
 
-    public Object append (Object acc, Object row) {
+    public Object append (final Object acc, final Object row) {
         return f.invoke(acc, row);
     }
 
-    public Object finalize (Object acc) {
+    public Object finalize (final Object acc) {
         return acc;
     }
 }

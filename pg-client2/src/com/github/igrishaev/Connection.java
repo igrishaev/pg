@@ -376,8 +376,8 @@ public class Connection implements Closeable {
         sendDescribeStatement(statement);
         sendSync();
         sendFlush();
-        Accum res = interact(Phase.PREPARE);
-        ParameterDescription paramDesc = res.current.parameterDescription;
+        Accum acc = interact(Phase.PREPARE);
+        ParameterDescription paramDesc = acc.getParameterDescription();
         return new PreparedStatement(parse, paramDesc);
     }
 
@@ -561,26 +561,17 @@ public class Connection implements Closeable {
 
     private void handleNotificationResponse(NotificationResponse msg) {
         // TODO: try/catch?
-        IFn fnNotification = config.fnNotification();
-        if (fnNotification != null) {
-            fnNotification.invoke(msg.toClojure());
-        }
+        config.fnNotification().invoke(msg.toClojure());
     }
 
     private void handleNoticeResponse(NoticeResponse msg) {
         // TODO: try/catch?
-        final IFn fnNotice = config.fnNotice();
-        if (fnNotice != null) {
-            fnNotice.invoke(msg.toClojure());
-        }
+        config.fnNotice().invoke(msg.toClojure());
     }
 
     private void handleNegotiateProtocolVersion(NegotiateProtocolVersion msg) {
         // TODO: print by default?
-        IFn fnProtocolVersion = config.fnProtocolVersion();
-        if (fnProtocolVersion != null) {
-            fnProtocolVersion.invoke(msg.toClojure());
-        }
+        config.fnProtocolVersion().invoke(msg.toClojure());
     }
 
     private void handleAuthenticationMD5Password(AuthenticationMD5Password msg) {
@@ -589,7 +580,7 @@ public class Connection implements Closeable {
     }
 
     private void handleCopyOutResponse(CopyOutResponse msg, Accum acc) {
-        acc.current.copyOutResponse = msg;
+        acc.handleCopyOutResponse(msg);
     }
 
     private void handleCopyData(CopyData msg, Accum acc) {
@@ -609,11 +600,11 @@ public class Connection implements Closeable {
     }
 
     private void handleParseComplete(ParseComplete msg, Accum acc) {
-        acc.current.parseComplete = msg;
+        acc.handleParseComplete(msg);
     }
 
     private void handleParameterDescription (ParameterDescription msg, Accum acc) {
-        acc.current.parameterDescription = msg;
+        acc.handleParameterDescription(msg);
     }
 
     private void handleAuthenticationCleartextPassword() {
@@ -625,14 +616,12 @@ public class Connection implements Closeable {
     }
 
     private static void handleRowDescription(RowDescription msg, Accum acc) {
-        acc.current.rowDescription = msg;
-        String[] keys = msg.getColumnNames();
-        acc.setKeys(keys);
+        acc.handleRowDescription(msg);
     }
 
-    private void handleDataRow(DataRow msg, Accum res) {
+    private void handleDataRow(DataRow msg, Accum acc) {
         short size = msg.valueCount();
-        RowDescription.Column[] cols = res.current.rowDescription.columns();
+        RowDescription.Column[] cols = acc.getRowDescription().columns();
         ByteBuffer[] bufs = msg.values();
         Object[] values = new Object[size];
         for (short i = 0; i < size; i++) {
@@ -653,7 +642,7 @@ public class Connection implements Closeable {
                     throw new PGError("unknown format: %s", col.format());
             }
         }
-        res.setCurrentValues(values);
+        acc.setCurrentValues(values);
     }
 
     private void handleReadyForQuery(ReadyForQuery msg) {
@@ -661,8 +650,7 @@ public class Connection implements Closeable {
     }
 
     private static void handleCommandComplete(CommandComplete msg, Accum acc) {
-        acc.current.commandComplete = msg;
-        acc.addNode();
+        acc.handleCommandComplete(msg);
     }
 
     private static void handleErrorResponse(ErrorResponse msg, Accum acc) {

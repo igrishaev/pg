@@ -10,7 +10,7 @@ public class GroupBy extends MapMixin implements IReducer {
 
     private final IFn f;
 
-    public GroupBy(IFn f) {
+    public GroupBy(final IFn f) {
         this.f = f;
     }
 
@@ -18,7 +18,7 @@ public class GroupBy extends MapMixin implements IReducer {
         return PersistentHashMap.EMPTY;
     }
 
-    public Object append (Object acc, Object row) {
+    public Object append (final Object acc, final Object row) {
         Object key = f.invoke(row);
         if (RT.contains(acc, key) == Boolean.FALSE) {
             return RT.assoc(acc, key, PersistentVector.EMPTY.cons(key));
@@ -29,7 +29,7 @@ public class GroupBy extends MapMixin implements IReducer {
         }
     }
 
-    public Object finalize (Object acc) {
+    public Object finalize (final Object acc) {
         return acc;
     }
 }

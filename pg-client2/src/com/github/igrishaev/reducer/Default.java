@@ -10,7 +10,7 @@ public class Default extends MapMixin implements IReducer {
         return PersistentVector.EMPTY.asTransient();
     }
 
-    public Object append(Object acc, Object row) {
+    public Object append(final Object acc, final Object row) {
         return core$conj_BANG_.invokeStatic(acc, row);
     }
 

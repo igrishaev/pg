@@ -10,14 +10,14 @@ public class Accum {
 
      public static class Node {
 
-         public CopyOutResponse copyOutResponse;
-         public RowDescription rowDescription;
-         public CommandComplete commandComplete;
-         public ParseComplete parseComplete;
-         public ParameterDescription parameterDescription;
-         public Object[] keys;
-         public Object acc;
-         public Object res;
+         private CopyOutResponse copyOutResponse;
+         private RowDescription rowDescription;
+         private CommandComplete commandComplete;
+         private ParseComplete parseComplete;
+         private ParameterDescription parameterDescription;
+         private Object[] keys;
+         private Object acc;
+         private Object res;
 
          public Result toResult() {
 
@@ -51,6 +51,42 @@ public class Accum {
         addNode();
     }
 
+    public void handleParameterDescription(ParameterDescription msg) {
+        current.parameterDescription = msg;
+    }
+
+    public void handleCopyOutResponse (CopyOutResponse msg) {
+        current.copyOutResponse = msg;
+    }
+
+    public RowDescription getRowDescription () {
+        return current.rowDescription;
+    }
+
+    public ParameterDescription getParameterDescription () {
+        return current.parameterDescription;
+    }
+
+    public void handleParseComplete(ParseComplete msg) {
+        current.parseComplete = msg;
+    }
+
+    public void handleRowDescription(RowDescription msg) {
+        current.rowDescription = msg;
+        IFn fnKeyTransform = executeParams.fnKeyTransform();
+        String[] names = msg.getColumnNames();
+        Object[] keys = new Object[names.length];
+        for (short i = 0; i < keys.length; i ++) {
+            keys[i] = fnKeyTransform.invoke(names[i]);
+        }
+        current.keys = keys;
+    }
+
+    public void handleCommandComplete (CommandComplete msg) {
+        current.commandComplete = msg;
+        addNode();
+    }
+
     // TODO: array?
     public ArrayList<Result> getResults () {
         IReducer reducer = executeParams.reducer();
@@ -75,20 +111,11 @@ public class Accum {
         current.acc = reducer.append(current.acc, row);
     }
 
-    public void addNode() {
+    private void addNode() {
         IReducer reducer = executeParams.reducer();
         current = new Node();
         current.acc = reducer.initiate();
         nodes.add(current);
-    }
-
-    public void setKeys (String[] keys) {
-        IFn fnKeyTransform = executeParams.fnKeyTransform();
-        Object[] newKeys = new Object[keys.length];
-        for (short i = 0; i < keys.length; i ++) {
-            newKeys[i] = fnKeyTransform.invoke(keys[i]);
-        }
-        current.keys = newKeys;
     }
 
     public void throwErrorResponse () {

@@ -7,7 +7,7 @@ public class Run extends MapMixin implements IReducer {
 
     private final IFn f;
 
-    public Run(IFn f) {
+    public Run(final IFn f) {
         this.f = f;
     }
 
@@ -15,12 +15,12 @@ public class Run extends MapMixin implements IReducer {
         return 0;
     }
 
-    public Object append (Object acc, Object row) {
+    public Object append (final Object acc, final Object row) {
         f.invoke(row);
         return (Integer) acc + 1;
     }
 
-    public Object finalize (Object acc) {
+    public Object finalize (final Object acc) {
         return acc;
     }
 }

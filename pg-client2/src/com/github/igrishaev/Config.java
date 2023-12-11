@@ -42,9 +42,9 @@ public record Config (
         private boolean SOTCPnoDelay = true;
         private int inStreamBufSize = Const.IN_STREAM_BUF_SIZE;
         private int outStreamBufSize = Const.OUT_STREAM_BUF_SIZE;
-        private IFn fnNotification;
-        private IFn fnProtocolVersion;
-        private IFn fnNotice;
+        private IFn fnNotification = new core$identity();
+        private IFn fnProtocolVersion = new core$identity();
+        private IFn fnNotice = new core$identity();
 
         public Builder(final String user, final String database) {
             this.user = Objects.requireNonNull(user);
