@@ -545,98 +545,101 @@
              (pg/execute conn "select 1 as foo"))))))
 
 
-;; (deftest test-client-wrong-major-protocol
+(deftest test-client-wrong-major-protocol
 
-;;   (let [config
-;;         (assoc *CONFIG* :protocol-version 296608)]
+  (let [config
+        (assoc *CONFIG* :protocol-version 296608)]
 
-;;     (try
-;;       (pg/with-connection [conn config]
-;;         (pg/execute conn "select 1 as foo"))
-;;       (is false)
-;;       (catch Exception e
-;;         (is (= "ErrorResponse" (ex-message e)))
-;;         (is (= {:error
-;;                 {:msg :ErrorResponse
-;;                  :errors
-;;                  {:severity "FATAL"
-;;                   :verbosity "FATAL"
-;;                   :code "0A000"
-;;                   :function "ProcessStartupPacket"}}}
-;;                (-> e
-;;                    (ex-data)
-;;                    (update-in [:error :errors]
-;;                               dissoc
-;;                               :file :line :message))))))))
-
-
-;; (deftest test-client-empty-select
-;;   (pg/with-connection [conn *CONFIG*]
-
-;;     (let [table
-;;           (gen-table)
-
-;;           query1
-;;           (format "create temp table %s (id serial, title text)" table)
-
-;;           _
-;;           (pg/execute conn query1)
-
-;;           query2
-;;           (format "select * from %s" table)
-
-;;           res
-;;           (pg/execute conn query2)]
-
-;;       (is (= [] res)))))
+    (try
+      (pg/with-connection [conn config]
+        (pg/execute conn "select 1 as foo"))
+      (is false)
+      (catch PGError e
+        (is true)
+        #_
+        (is (= "ErrorResponse" (ex-message e)))
+        #_
+        (is (= {:error
+                {:msg :ErrorResponse
+                 :errors
+                 {:severity "FATAL"
+                  :verbosity "FATAL"
+                  :code "0A000"
+                  :function "ProcessStartupPacket"}}}
+               (-> e
+                   (ex-data)
+                   (update-in [:error :errors]
+                              dissoc
+                              :file :line :message))))))))
 
 
-;; (deftest test-client-insert-result-returning
-;;   (pg/with-connection [conn *CONFIG*]
+(deftest test-client-empty-select
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (let [table
-;;           (gen-table)
+    (let [table
+          (gen-table)
 
-;;           query1
-;;           (format "create temp table %s (id serial, title text)" table)
+          query1
+          (format "create temp table %s (id serial, title text)" table)
 
-;;           _
-;;           (pg/execute conn query1)
+          _
+          (pg/execute conn query1)
 
-;;           query2
-;;           (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2') returning *" table)
+          query2
+          (format "select * from %s" table)
 
-;;           res
-;;           (pg/execute conn query2)]
+          res
+          (pg/execute conn query2)]
 
-;;       (is (= [{:id 1 :title "test1"}
-;;               {:id 2 :title "test2"}]
-;;              res)))))
+      (is (= [] res)))))
 
 
-;; (deftest test-client-notice-custom-function
-;;   (let [capture!
-;;         (atom nil)
+(deftest test-client-insert-result-returning
+  (pg/with-connection [conn *CONFIG*]
 
-;;         config
-;;         (assoc *CONFIG* :fn-notice
-;;                (fn [message]
-;;                  (reset! capture! message)))]
+    (let [table
+          (gen-table)
 
-;;     (pg/with-connection [conn config]
-;;       (let [res (pg/execute conn "ROLLBACK")]
-;;         (is (nil? res))))
+          query1
+          (format "create temp table %s (id serial, title text)" table)
 
-;;     (is (= {:msg :NoticeResponse
-;;             :fields
-;;             {:severity "WARNING"
-;;              :verbosity "WARNING"
-;;              :code "25P01"
-;;              :message "there is no transaction in progress"
-;;              :function "UserAbortTransactionBlock"}}
-;;            (-> capture!
-;;                (deref)
-;;                (update :fields dissoc :line :file))))))
+          _
+          (pg/execute conn query1)
+
+          query2
+          (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2') returning *" table)
+
+          res
+          (pg/execute conn query2)]
+
+      (is (= [{:id 1 :title "test1"}
+              {:id 2 :title "test2"}]
+             res)))))
+
+
+(deftest test-client-notice-custom-function
+  (let [capture!
+        (atom nil)
+
+        config
+        (assoc *CONFIG* :fn-notice
+               (fn [message]
+                 (reset! capture! message)))]
+
+    (pg/with-connection [conn config]
+      (let [res (pg/execute conn "ROLLBACK")]
+        (is (nil? res))))
+
+    (is (= {:msg :NoticeResponse
+            :fields
+            {:severity "WARNING"
+             :verbosity "WARNING"
+             :code "25P01"
+             :message "there is no transaction in progress"
+             :function "UserAbortTransactionBlock"}}
+           (-> capture!
+               (deref)
+               (update :fields dissoc :line :file))))))
 
 
 ;; (deftest test-client-insert-result-no-returning

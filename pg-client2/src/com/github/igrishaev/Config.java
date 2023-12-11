@@ -22,7 +22,8 @@ public record Config (
         boolean SOTCPnoDelay,
         int inStreamBufSize,
         int outStreamBufSize,
-        IFn fnNotification
+        IFn fnNotification,
+        IFn fnProtocolVersion
 ) {
 
     public static class Builder {
@@ -41,6 +42,7 @@ public record Config (
         private int inStreamBufSize = Const.IN_STREAM_BUF_SIZE;
         private int outStreamBufSize = Const.OUT_STREAM_BUF_SIZE;
         private IFn fnNotification;
+        private IFn fnProtocolVersion;
 
         public Builder(final String user, final String database) {
             this.user = Objects.requireNonNull(user);
@@ -61,6 +63,11 @@ public record Config (
 
         public Builder fnNotification(final IFn fnNotification) {
             this.fnNotification = fnNotification;
+            return this;
+        }
+
+        public Builder fnProtocolVersion(final IFn fnProtocolVersion) {
+            this.fnProtocolVersion = fnProtocolVersion;
             return this;
         }
 
@@ -134,7 +141,8 @@ public record Config (
                     this.SOTCPnoDelay,
                     this.inStreamBufSize,
                     this.outStreamBufSize,
-                    this.fnNotification
+                    this.fnNotification,
+                    this.fnProtocolVersion
             );
         }
     }

@@ -350,6 +350,7 @@ public class Connection implements Closeable {
             case 'c' -> new CopyDone();
             case 'I' -> new EmptyQueryResponse();
             case 'n' -> new NoData();
+            case 'v' -> NegotiateProtocolVersion.fromByteBuffer(bbBody);
             case 'A' -> NotificationResponse.fromByteBuffer(bbBody);
             default -> throw new PGError("Unknown message: %s", tag);
         };
@@ -571,6 +572,9 @@ public class Connection implements Closeable {
             case AuthenticationMD5Password x:
                 handleAuthenticationMD5Password(x);
                 break;
+            case NegotiateProtocolVersion x:
+                handleNegotiateProtocolVersion(x);
+                break;
             case CommandComplete x:
                 handleCommandComplete(x, acc);
                 break;
@@ -603,12 +607,15 @@ public class Connection implements Closeable {
         // TODO: try/catch?
         IFn fnNotification = config.fnNotification();
         if (fnNotification != null) {
-            IPersistentMap map = PersistentHashMap.create(
-                    Keyword.intern("pid"), msg.pid(),
-                    Keyword.intern("channel"), msg.channel(),
-                    Keyword.intern("message"), msg.message()
-            );
-            fnNotification.invoke(map);
+            fnNotification.invoke(msg.toClojure());
+        }
+    }
+
+    private void handleNegotiateProtocolVersion(NegotiateProtocolVersion msg) {
+        // TODO: print by default?
+        IFn fnProtocolVersion = config.fnProtocolVersion();
+        if (fnProtocolVersion != null) {
+            fnProtocolVersion.invoke(msg.toClojure());
         }
     }
 
