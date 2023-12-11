@@ -4,8 +4,6 @@ import clojure.lang.IFn;
 import com.github.igrishaev.enums.Phase;
 import com.github.igrishaev.msg.*;
 import com.github.igrishaev.reducer.IReducer;
-
-import java.io.OutputStream;
 import java.util.ArrayList;
 
 public class Accum {
@@ -87,7 +85,7 @@ public class Accum {
     public void setKeys (String[] keys) {
         IFn fnKeyTransform = executeParams.fnKeyTransform();
         Object[] newKeys = new Object[keys.length];
-        for (short i = 0; i < keys.length; i ++) {;
+        for (short i = 0; i < keys.length; i ++) {
             newKeys[i] = fnKeyTransform.invoke(keys[i]);
         }
         current.keys = newKeys;
