@@ -22,7 +22,16 @@
   (let [{:keys [params
                 oids
                 row-count
-                reducer]}
+                reducer
+                fn-key
+                output-stream
+                group-by
+                index-by
+                matrix?
+                fold
+                kv
+                binary-encode?
+                binary-decode?]}
         config]
 
     (cond-> (new ExecuteParams$Builder)
@@ -39,9 +48,36 @@
       row-count
       (.rowCount row-count)
 
+      fn-key
+      (.fnKeyTransform fn-key)
+
+      output-stream
+      (.outputStream output-stream)
+
+      group-by
+      (.groupBy group-by)
+
+      index-by
+      (.indexBy index-by)
+
+      matrix?
+      (.asMatrix)
+
+      kv
+      (.KV (first kv) (second kv))
+
+      fold
+      (.fold (first fold) (second fold))
+
+      (some? binary-encode?)
+      (.binaryEncode binary-encode?)
+
+      (some? binary-decode?)
+      (.binaryDecode binary-decode?)
+
+
       :finally
       (.build))))
-
 
 
 (defn ->config ^Config$Builder [params]

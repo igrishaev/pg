@@ -6,12 +6,14 @@ import clojure.lang.PersistentHashMap;
 import clojure.lang.IFn;
 import clojure.lang.PersistentVector;
 
+import java.util.Objects;
+
 public class GroupBy extends MapMixin implements IReducer {
 
     private final IFn f;
 
     public GroupBy(final IFn f) {
-        this.f = f;
+        this.f = Objects.requireNonNull(f);
     }
 
     public Object initiate () {

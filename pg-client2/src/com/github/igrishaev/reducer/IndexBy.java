@@ -6,12 +6,14 @@ import clojure.core$persistent_BANG_;
 import clojure.lang.PersistentHashMap;
 import clojure.lang.IFn;
 
+import java.util.Objects;
+
 public class IndexBy extends MapMixin implements IReducer {
 
     private final IFn f;
 
     public IndexBy(final IFn f) {
-        this.f = f;
+        this.f = Objects.requireNonNull(f);
     }
 
     public Object initiate () {

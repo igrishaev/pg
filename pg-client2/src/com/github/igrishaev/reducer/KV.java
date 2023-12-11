@@ -3,16 +3,19 @@ package com.github.igrishaev.reducer;
 
 import clojure.core$assoc_BANG_;
 import clojure.core$persistent_BANG_;
+import clojure.lang.Obj;
 import clojure.lang.PersistentHashMap;
 import clojure.lang.IFn;
+
+import java.util.Objects;
 
 public class KV extends MapMixin implements IReducer {
 
     private final IFn fk, fv;
 
     public KV(final IFn fk, final IFn fv) {
-        this.fk = fk;
-        this.fv = fv;
+        this.fk = Objects.requireNonNull(fk);
+        this.fv = Objects.requireNonNull(fv);
     }
 
     public Object initiate () {

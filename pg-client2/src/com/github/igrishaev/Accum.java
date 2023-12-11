@@ -38,10 +38,10 @@ public class Accum {
     }
 
     public final Phase phase;
-    public final ArrayList<Node> nodes;
-    public final ArrayList<ErrorResponse> errorResponses;
     public final ExecuteParams executeParams;
-    public Node current;
+    private final ArrayList<Node> nodes;
+    private final ArrayList<ErrorResponse> errorResponses;
+    private Node current;
 
     public Accum(Phase phase, ExecuteParams executeParams) {
         this.phase = phase;
@@ -49,6 +49,10 @@ public class Accum {
         nodes = new ArrayList<>(2);
         errorResponses = new ArrayList<>(1);
         addNode();
+    }
+
+    public void addErrorResponse (ErrorResponse msg) {
+        errorResponses.add(msg);
     }
 
     public void handleParameterDescription(ParameterDescription msg) {

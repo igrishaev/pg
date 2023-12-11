@@ -100,18 +100,14 @@
     (is (nil? result))))
 
 
-;; todo
-#_
 (deftest test-client-fn-column
-
   (let [result
         (pg/with-connection [conn *CONFIG*]
-          (pg/execute conn "select 1 as foo" nil {:fn-column str/upper-case}))]
-
+          (pg/execute conn "select 1 as foo" {:fn-key str/upper-case}))]
     (is (= [{"FOO" 1}] result))))
 
 
-;; todo
+;; todo: kebab!
 #_
 (deftest test-client-fn-column-kebab
   (let [result

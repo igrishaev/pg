@@ -654,7 +654,7 @@ public class Connection implements Closeable {
     }
 
     private static void handleErrorResponse(ErrorResponse msg, Accum acc) {
-        acc.errorResponses.add(msg);
+        acc.addErrorResponse(msg);
     }
 
     private void handleBackendKeyData(BackendKeyData msg) {

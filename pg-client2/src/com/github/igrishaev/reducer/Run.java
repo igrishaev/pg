@@ -2,13 +2,14 @@
 package com.github.igrishaev.reducer;
 
 import clojure.lang.IFn;
+import java.util.Objects;
 
 public class Run extends MapMixin implements IReducer {
 
     private final IFn f;
 
     public Run(final IFn f) {
-        this.f = f;
+        this.f = Objects.requireNonNull(f);
     }
 
     public Object initiate () {

@@ -3,13 +3,15 @@ package com.github.igrishaev.reducer;
 
 import clojure.lang.IFn;
 
+import java.util.Objects;
+
 public class Fold extends MapMixin implements IReducer {
 
     private final IFn f;
     private final Object init;
 
     public Fold(final IFn f, final Object init) {
-        this.f = f;
+        this.f = Objects.requireNonNull(f);
         this.init = init;
     }
 

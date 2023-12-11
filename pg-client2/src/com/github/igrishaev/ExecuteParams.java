@@ -2,8 +2,7 @@ package com.github.igrishaev;
 
 import clojure.lang.IFn;
 import com.github.igrishaev.enums.OID;
-import com.github.igrishaev.reducer.Default;
-import com.github.igrishaev.reducer.IReducer;
+import com.github.igrishaev.reducer.*;
 
 import java.io.OutputStream;
 import java.util.Collections;
@@ -11,6 +10,7 @@ import java.util.List;
 import java.util.Objects;
 
 import clojure.core$identity;
+import clojure.core$keyword;
 import com.github.igrishaev.util.DummyOutputStream;
 
 public record ExecuteParams (
@@ -19,7 +19,9 @@ public record ExecuteParams (
         IReducer reducer,
         int rowCount,
         IFn fnKeyTransform,
-        OutputStream outputStream
+        OutputStream outputStream,
+        boolean binaryEncode,
+        boolean binaryDecode
 ) {
 
     public static class Builder {
@@ -28,8 +30,10 @@ public record ExecuteParams (
         private List<OID> OIDs = Collections.emptyList();
         private IReducer reducer = new Default();
         private int rowCount = 0;
-        private IFn fnKeyTransform = new core$identity();
+        private IFn fnKeyTransform = new core$keyword();
         private OutputStream outputStream = new DummyOutputStream();
+        boolean binaryEncode = false;
+        boolean binaryDecode = false;
 
         public Builder params (List<Object> params) {
             this.params = Objects.requireNonNull(params);
@@ -66,8 +70,43 @@ public record ExecuteParams (
             return this;
         }
 
+        public Builder indexBy (IFn fnIndexBy) {
+            this.reducer = new IndexBy(fnIndexBy);
+            return this;
+        }
+
+        public Builder groupBy (IFn fnGroupBy) {
+            this.reducer = new GroupBy(fnGroupBy);
+            return this;
+        }
+
+        public Builder KV (IFn fnK, IFn fnV) {
+            this.reducer = new KV(fnK, fnV);
+            return this;
+        }
+
+        public Builder asMatrix () {
+            this.reducer = new Matrix();
+            return this;
+        }
+
+        public Builder fold (IFn fnFold, Object init) {
+            this.reducer = new Fold(fnFold, init);
+            return this;
+        }
+
         public Builder rowCount (int rowCount) {
             this.rowCount = rowCount;
+            return this;
+        }
+
+        public Builder binaryEncode (boolean binaryEncode) {
+            this.binaryEncode = binaryEncode;
+            return this;
+        }
+
+        public Builder binaryDecode (boolean binaryDecode) {
+            this.binaryDecode = binaryDecode;
             return this;
         }
 
@@ -78,17 +117,16 @@ public record ExecuteParams (
                     reducer,
                     rowCount,
                     fnKeyTransform,
-                    outputStream
+                    outputStream,
+                    binaryEncode,
+                    binaryDecode
             );
         }
-
     }
 
     public static void main(String[] args) {
-
         IFn id = new core$identity();
         System.out.println(id.invoke(42));
-
         System.out.println(new ExecuteParams.Builder().rowCount(3).build());
     }
 
