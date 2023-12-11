@@ -19,13 +19,11 @@ public record StartupMessage (Integer protocolVersion,
             .addCString(user, encoding)
             .addCString("database")
             .addCString(database, encoding);
-        if (options != null) {
-            for (Map.Entry<String, String> entry: options.entrySet()) {
-                payload.addCString(entry.getKey(), encoding);
-                payload.addCString(entry.getValue(), encoding);
-            }
+        for (Map.Entry<String, String> entry: options.entrySet()) {
+            payload.addCString(entry.getKey(), encoding);
+            payload.addCString(entry.getValue(), encoding);
         }
         payload.addByte((byte)0);
-        return payload.toByteBuffer(null);
+        return payload.toByteBuffer();
     }
 }

@@ -9,6 +9,11 @@
 
 UnusedMessage class?
 
+notifications fn params
+notifications fn try/catch?
+
+refactor execute & query params?
+
 - 4-byte messages
   - terminate
   - flush

@@ -1,5 +1,7 @@
 package com.github.igrishaev;
 
+import clojure.lang.IFn;
+import clojure.core$identity;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collections;
@@ -19,7 +21,9 @@ public record Config (
         boolean SOKeepAlive,
         boolean SOTCPnoDelay,
         int inStreamBufSize,
-        int outStreamBufSize) {
+        int outStreamBufSize,
+        IFn fnNotification
+) {
 
     public static class Builder {
         private final String user;
@@ -36,6 +40,7 @@ public record Config (
         private boolean SOTCPnoDelay = true;
         private int inStreamBufSize = Const.IN_STREAM_BUF_SIZE;
         private int outStreamBufSize = Const.OUT_STREAM_BUF_SIZE;
+        private IFn fnNotification;
 
         public Builder(final String user, final String database) {
             this.user = Objects.requireNonNull(user);
@@ -51,6 +56,11 @@ public record Config (
 
         public Builder binaryEncode(final boolean binaryEncode) {
             this.binaryEncode = binaryEncode;
+            return this;
+        }
+
+        public Builder fnNotification(final IFn fnNotification) {
+            this.fnNotification = fnNotification;
             return this;
         }
 
@@ -123,7 +133,8 @@ public record Config (
                     this.SOKeepAlive,
                     this.SOTCPnoDelay,
                     this.inStreamBufSize,
-                    this.outStreamBufSize
+                    this.outStreamBufSize,
+                    this.fnNotification
             );
         }
     }

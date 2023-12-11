@@ -74,7 +74,7 @@
 
   (let [result
         (pg/with-connection [conn *CONFIG*]
-          (pg/execute conn "select 1 as foo, 'hello' as bar" nil))]
+          (pg/execute conn "select 1 as foo, 'hello' as bar"))]
 
     (is (= [{:foo 1 :bar "hello"}]
            result))))
@@ -132,6 +132,7 @@
                        (fn [& _]
                          (throw (new Exception "boom")))]
            (pg/execute conn "select 1 as foo"))))))
+
 
 (deftest test-client-reuse-conn
 
@@ -227,6 +228,7 @@
         (is false "Must have been an error")
         (catch PGError e
           (is (-> e ex-message (str/starts-with? "ErrorResponse")))
+          ;; TODO
           #_
           (is (= {:error
                   {:msg :ErrorResponse,
@@ -268,6 +270,7 @@
 
       (pg/execute conn (format "create table %s (id integer)" table))
 
+      ;; TODO: levels
       (pg/with-tx [conn {:isolation-level "serializable"}]
         (pg/execute conn (format "insert into %s values (1), (2)" table))
 
@@ -300,7 +303,7 @@
         (is (= [] res1))))))
 
 
-;; HERE
+;; TODO
 
 (deftest test-client-create-table
   (pg/with-connection [conn *CONFIG*]
@@ -318,96 +321,90 @@
       (is (nil? res)))))
 
 
-;; (deftest test-client-listen-notify
+(deftest test-client-listen-notify
 
-;;   (let [capture!
-;;         (atom [])
+  (let [capture!
+        (atom [])
 
-;;         fn-notification
-;;         (fn [Message]
-;;           (swap! capture! conj Message))
+        fn-notification
+        (fn [msg]
+          (swap! capture! conj msg))
 
-;;         config+
-;;         (assoc *CONFIG* :fn-notification fn-notification)]
+        config+
+        (assoc *CONFIG* :fn-notification fn-notification)]
 
-;;     (pg/with-connection [conn config+]
+    (pg/with-connection [conn config+]
 
-;;       (let [pid
-;;             (pg/pid conn)
+      (let [pid
+            (pg/pid conn)
 
-;;             channel
-;;             "!@#$%^&*();\" d'rop \"t'a'ble students--;42"
+            channel
+            "!@#$%^&*();\" d'rop \"t'a'ble students--;42"
 
-;;             res1
-;;             (pg/listen conn channel)
+            res1
+            (pg/listen conn channel)
 
-;;             payload
-;;             "'; \n\t\rdrop table studets--!@#$%^\""
+            message
+            "'; \n\t\rdrop table studets--!@#$%^\""
 
-;;             res2
-;;             (pg/notify conn channel payload)
+            res2
+            (pg/notify conn channel message)
 
-;;             res3
-;;             (pg/unlisten conn channel)
+            res3
+            (pg/unlisten conn channel)
 
-;;             res4
-;;             (pg/notify conn channel "more")
+            res4
+            (pg/notify conn channel "more")
 
-;;             messages
-;;             @capture!
+            invocations
+            @capture!]
 
-;;             [message]
-;;             messages]
+        (is (nil? res1))
+        (is (nil? res2))
+        (is (nil? res3))
+        (is (nil? res4))
 
-;;         (is (nil? res1))
-;;         (is (nil? res2))
-;;         (is (nil? res3))
-;;         (is (nil? res4))
+        (is (= 1 (count invocations)))
 
-;;         (is (= 1 (count messages)))
-
-;;         (is (= {:msg :NotificationResponse
-;;                 :pid pid
-;;                 :channel channel
-;;                 :message payload}
-;;                message))))))
+        (is (= {:pid pid
+                :channel channel
+                :message message}
+               (first invocations)))))))
 
 
-;; (deftest test-client-listen-notify-different-conns
+(deftest test-client-listen-notify-different-conns
 
-;;   (let [capture!
-;;         (atom [])
+  (let [capture!
+        (atom [])
 
-;;         fn-notification
-;;         (fn [Message]
-;;           (swap! capture! conj Message))
+        fn-notification
+        (fn [msg]
+          (swap! capture! conj msg))
 
-;;         config+
-;;         (assoc *CONFIG* :fn-notification fn-notification)]
+        config+
+        (assoc *CONFIG* :fn-notification fn-notification)]
 
-;;     (pg/with-connection [conn1 *CONFIG*]
-;;       (pg/with-connection [conn2 config+]
+    (pg/with-connection [conn1 *CONFIG*]
+      (pg/with-connection [conn2 config+]
 
-;;         (let [pid1 (pg/pid conn1)
-;;               pid2 (pg/pid conn2)]
+        (let [pid1 (pg/pid conn1)
+              pid2 (pg/pid conn2)]
 
-;;           (pg/execute conn2 "listen FOO")
-;;           (pg/execute conn1 "notify FOO, 'message1'")
-;;           (pg/execute conn1 "notify FOO, 'message2'")
+          (pg/execute conn2 "listen FOO")
+          (pg/execute conn1 "notify FOO, 'message1'")
+          (pg/execute conn1 "notify FOO, 'message2'")
 
-;;           (pg/execute conn2 "")
+          (pg/execute conn2 "")
 
-;;           (is (= [{:msg :NotificationResponse,
-;;                    :pid pid1
-;;                    :channel "foo"
-;;                    :message "message1"}
+          (is (= [{:pid pid1
+                   :channel "foo"
+                   :message "message1"}
 
-;;                   {:msg :NotificationResponse,
-;;                    :pid pid1
-;;                    :channel "foo"
-;;                    :message "message2"}]
+                  {:pid pid1
+                   :channel "foo"
+                   :message "message2"}]
 
-;;                  @capture!)))))))
+                 @capture!)))))))
 
 
 ;; (deftest test-client-broken-query

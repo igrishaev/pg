@@ -28,6 +28,7 @@
                 binary-decode?
                 in-stream-buf-size
                 out-stream-buf-size
+                fn-notification
                 use-ssl?]}
         params]
 
@@ -62,6 +63,9 @@
 
       (some? use-ssl?)
       (.useSSL use-ssl?)
+
+      fn-notification
+      (.fnNotification fn-notification)
 
       :finally
       (.build))))
@@ -347,3 +351,29 @@
 (defmethod print-method Connection
   [^Connection conn ^Writer writer]
   (.write writer (.toString conn)))
+
+
+
+
+(defn listen
+  "
+  Subscribe the connection to a given channel.
+  "
+  [^Connection conn ^String channel]
+  (.listen conn channel))
+
+
+(defn unlisten
+  "
+  Unsbuscribe the connection from a given channel.
+  "
+  [^Connection conn ^String channel]
+  (.unlisten conn channel))
+
+
+(defn notify
+  "
+  Send a text message to the given channel.
+  "
+  [^Connection conn ^String channel ^String message]
+  (.notify conn channel message))

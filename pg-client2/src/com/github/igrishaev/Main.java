@@ -36,6 +36,8 @@ public class Main {
         Object res1 = conn.query("select x from generate_series(1, 3) as x; select 42 as foo");
         System.out.println(res1);
 
+        System.out.println(conn.execute(""));
+
         PreparedStatement ps = conn.prepare("select $1::int as foo");
         ArrayList<Object> params = new ArrayList<>();
         params.add(1);

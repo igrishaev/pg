@@ -71,6 +71,7 @@ public class Accum {
     }
 
     public Result getResult () {
+        // TODO!!!
         return getResults().get(0);
     }
 

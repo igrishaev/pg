@@ -45,7 +45,7 @@ public class Payload {
         size += 2;
         ByteBuffer buf = ByteBuffer.allocate(4);
         buf.putInt(i);
-        BBTool.skip(buf, 2);
+        BBTool.skip(buf, -2);
         items.add(buf);
         return this;
     }
@@ -54,7 +54,7 @@ public class Payload {
         size += 4;
         ByteBuffer buf = ByteBuffer.allocate(8);
         buf.putLong(l);
-        BBTool.skip(buf, 4);
+        BBTool.skip(buf, -4);
         items.add(buf);
         return this;
     }
@@ -77,15 +77,19 @@ public class Payload {
         }
     }
 
-    public ByteBuffer toByteBuffer(Character tag) {
+    public ByteBuffer toByteBuffer() {
+        return toByteBuffer(Const.NULL_TAG);
+    }
+
+    public ByteBuffer toByteBuffer(char tag) {
 
         ByteBuffer buf;
 
-        if (tag == null) {
+        if (tag == Const.NULL_TAG) {
             buf = ByteBuffer.allocate(size + 4);
         } else {
             buf = ByteBuffer.allocate(size + 5);
-            buf.put((byte)tag.charValue());
+            buf.put((byte)tag);
         }
 
         buf.putInt(size + 4);
@@ -99,7 +103,7 @@ public class Payload {
                     buf.putShort(s);
                     break;
                 case ByteBuffer bb:
-                    bb.put(bb);
+                    buf.put(bb);
                     break;
                 case Byte b:
                     buf.put(b);

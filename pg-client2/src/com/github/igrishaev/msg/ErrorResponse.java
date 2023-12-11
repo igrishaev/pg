@@ -41,7 +41,7 @@ public record ErrorResponse (HashMap<String, String> fields) {
             }
             else {
                 String field = parseTag(tag);
-                String message = BBTool.getCString(buf, "UTF-8");
+                String message = BBTool.getCString(buf, "UTF-8"); // TODO
                 fields.put(field, message);
             };
         };

@@ -15,4 +15,5 @@ public class Const {
     public static int JSON_ENC_BUF_SIZE = 256;
     public static String APP_NAME = "pg2";
     public static String CLIENT_ENCODING = "UTF8";
+    public static char NULL_TAG = (char) 0;
 }

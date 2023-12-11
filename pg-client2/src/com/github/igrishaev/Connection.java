@@ -1,5 +1,9 @@
 package com.github.igrishaev;
 
+import clojure.lang.IFn;
+import clojure.lang.IPersistentMap;
+import clojure.lang.Keyword;
+import clojure.lang.PersistentHashMap;
 import com.github.igrishaev.auth.MD5;
 import com.github.igrishaev.codec.DecoderBin;
 import com.github.igrishaev.codec.DecoderTxt;
@@ -19,6 +23,7 @@ import java.io.BufferedInputStream;
 import java.io.OutputStream;
 import java.io.BufferedOutputStream;
 import java.io.UnsupportedEncodingException;
+import java.security.Key;
 import java.util.*;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -343,6 +348,7 @@ public class Connection implements Closeable {
             case 'c' -> new CopyDone();
             case 'I' -> new EmptyQueryResponse();
             case 'n' -> new NoData();
+            case 'A' -> NotificationResponse.fromByteBuffer(bbBody);
             default -> throw new PGError("Unknown message: %s", tag);
         };
 
@@ -532,6 +538,9 @@ public class Connection implements Closeable {
         // System.out.println(msg);
 
         switch (msg) {
+            case NotificationResponse x:
+                handleNotificationResponse(x);
+                break;
             case NoData ignored:
                 break;
             case EmptyQueryResponse ignored:
@@ -585,6 +594,19 @@ public class Connection implements Closeable {
                 break;
 
             default: throw new PGError("Cannot handle this message: %s", msg);
+        }
+    }
+
+    private void handleNotificationResponse(NotificationResponse msg) {
+        // TODO: try/catch?
+        IFn fnNotification = config.fnNotification();
+        if (fnNotification != null) {
+            IPersistentMap map = PersistentHashMap.create(
+                    Keyword.intern("pid"), msg.pid(),
+                    Keyword.intern("channel"), msg.channel(),
+                    Keyword.intern("message"), msg.message()
+            );
+            fnNotification.invoke(map);
         }
     }
 
@@ -737,6 +759,21 @@ public class Connection implements Closeable {
     public void setTxReadOnly () {
         sendQuery(SQL.SQLSetTxReadOnly);
         interact(Phase.QUERY);
+    }
+
+    public synchronized void listen(String channel) {
+        query(String.format("listen %s", SQL.quoteChannel(channel)));
+    }
+
+    public synchronized void unlisten (String channel) {
+        query(String.format("unlisten %s", SQL.quoteChannel(channel)));
+    }
+
+    public synchronized void notify (String channel, String message) {
+        ArrayList<Object> params = new ArrayList<>(2);
+        params.add(channel);
+        params.add(message);
+        execute("select pg_notify($1, $2)", params);
     }
 
 }
