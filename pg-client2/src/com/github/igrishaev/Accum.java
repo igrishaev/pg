@@ -1,5 +1,6 @@
 package com.github.igrishaev;
 
+import clojure.lang.IFn;
 import com.github.igrishaev.enums.Phase;
 import com.github.igrishaev.msg.*;
 import com.github.igrishaev.reducer.IReducer;
@@ -38,17 +39,15 @@ public class Accum {
          }
     }
 
-    public OutputStream outputStream;
-    public Phase phase;
-    public ArrayList<Node> nodes;
-    public ArrayList<ErrorResponse> errorResponses;
+    public final Phase phase;
+    public final ArrayList<Node> nodes;
+    public final ArrayList<ErrorResponse> errorResponses;
+    public final ExecuteParams executeParams;
     public Node current;
-    public IReducer reducer;
 
-    public Accum(Phase phase, IReducer reducer, OutputStream outputStream) {
+    public Accum(Phase phase, ExecuteParams executeParams) {
         this.phase = phase;
-        this.reducer = reducer;
-        this.outputStream = outputStream;
+        this.executeParams = executeParams;
         nodes = new ArrayList<>(2);
         errorResponses = new ArrayList<>(1);
         addNode();
@@ -56,6 +55,7 @@ public class Accum {
 
     // TODO: array?
     public ArrayList<Result> getResults () {
+        IReducer reducer = executeParams.reducer();
         final ArrayList<Result> results = new ArrayList<>(1);
         for (Node node: nodes) {
             if (node.commandComplete != null) {
@@ -72,14 +72,25 @@ public class Accum {
     }
 
     public void setCurrentValues (Object[] values) {
+        IReducer reducer = executeParams.reducer();
         Object row = reducer.compose(current.keys, values);
         current.acc = reducer.append(current.acc, row);
     }
 
     public void addNode() {
+        IReducer reducer = executeParams.reducer();
         current = new Node();
         current.acc = reducer.initiate();
         nodes.add(current);
+    }
+
+    public void setKeys (String[] keys) {
+        IFn fnKeyTransform = executeParams.fnKeyTransform();
+        Object[] newKeys = new Object[keys.length];
+        for (short i = 0; i < keys.length; i ++) {;
+            newKeys[i] = fnKeyTransform.invoke(keys[i]);
+        }
+        current.keys = newKeys;
     }
 
     public void throwErrorResponse () {

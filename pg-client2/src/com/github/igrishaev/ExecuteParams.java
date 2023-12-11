@@ -1,18 +1,25 @@
 package com.github.igrishaev;
 
+import clojure.lang.IFn;
 import com.github.igrishaev.enums.OID;
 import com.github.igrishaev.reducer.Default;
 import com.github.igrishaev.reducer.IReducer;
 
+import java.io.OutputStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+
+import clojure.core$identity;
+import com.github.igrishaev.util.DummyOutputStream;
 
 public record ExecuteParams (
         List<Object> params,
         List<OID> OIDs,
         IReducer reducer,
-        int rowCount
+        int rowCount,
+        IFn fnKeyTransform,
+        OutputStream outputStream
 ) {
 
     public static class Builder {
@@ -21,9 +28,21 @@ public record ExecuteParams (
         private List<OID> OIDs = Collections.emptyList();
         private IReducer reducer = new Default();
         private int rowCount = 0;
+        private IFn fnKeyTransform = new core$identity();
+        private OutputStream outputStream = new DummyOutputStream();
 
         public Builder params (List<Object> params) {
             this.params = Objects.requireNonNull(params);
+            return this;
+        }
+
+        public Builder outputStream (OutputStream outputStream) {
+            this.outputStream = Objects.requireNonNull(outputStream);
+            return this;
+        }
+
+        public Builder fnKeyTransform (IFn fnKeyTransform) {
+            this.fnKeyTransform = Objects.requireNonNull(fnKeyTransform);
             return this;
         }
 
@@ -57,13 +76,19 @@ public record ExecuteParams (
                     params,
                     OIDs,
                     reducer,
-                    rowCount
+                    rowCount,
+                    fnKeyTransform,
+                    outputStream
             );
         }
 
     }
 
     public static void main(String[] args) {
+
+        IFn id = new core$identity();
+        System.out.println(id.invoke(42));
+
         System.out.println(new ExecuteParams.Builder().rowCount(3).build());
     }
 

@@ -38,15 +38,15 @@ public class Main {
 
         System.out.println(conn.execute(""));
 
-        PreparedStatement ps = conn.prepare("select $1::int as foo");
-        ArrayList<Object> params = new ArrayList<>();
-        params.add(1);
-        Object res2 = conn.executeStatement(ps, params);
-        conn.closeStatement(ps);
-        System.out.println(res2);
+//        PreparedStatement ps = conn.prepare("select $1::int as foo");
+//        ArrayList<Object> params = new ArrayList<>();
+//        params.add(1);
+//        Object res2 = conn.executeStatement(ps, params);
+//        conn.closeStatement(ps);
+//        System.out.println(res2);
 
-        Object res3 = conn.execute("select $1::int8 as int8", params, Collections.emptyList());
-        System.out.println(res3);
+        // Object res3 = conn.execute("select $1::int8 as int8", params, Collections.emptyList());
+        // System.out.println(res3);
 
         Object res4 = conn.query("copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT CSV)");
         System.out.println(res4);

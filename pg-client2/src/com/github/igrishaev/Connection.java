@@ -8,10 +8,6 @@ import com.github.igrishaev.codec.EncoderBin;
 import com.github.igrishaev.codec.EncoderTxt;
 import com.github.igrishaev.enums.*;
 import com.github.igrishaev.msg.*;
-import com.github.igrishaev.reducer.Default;
-import com.github.igrishaev.reducer.Dummy;
-import com.github.igrishaev.reducer.IReducer;
-import com.github.igrishaev.util.DummyOutputStream;
 import com.github.igrishaev.util.SQL;
 
 import java.io.IOException;
@@ -45,9 +41,6 @@ public class Connection implements Closeable {
     private final DecoderBin decoderBin;
     private final EncoderBin encoderBin;
 
-    private final OutputStream dummyOutputStream;
-    private final IReducer dummyReducer;
-
     public Connection(String host, int port, String user, String password, String database) {
         this(new Config.Builder(user, database)
                 .host(host)
@@ -63,8 +56,6 @@ public class Connection implements Closeable {
         this.encoderTxt = new EncoderTxt();
         this.decoderBin = new DecoderBin();
         this.encoderBin = new EncoderBin();
-        this.dummyReducer = new Dummy();
-        this.dummyOutputStream = new DummyOutputStream();
         this.id = UUID.randomUUID();
         this.createdAt = System.currentTimeMillis();
         this.aInt = new AtomicInteger();
@@ -371,7 +362,7 @@ public class Connection implements Closeable {
 
     public synchronized List<Result> query(String sql, ExecuteParams executeParams) {
         sendQuery(sql);
-        return interact(Phase.QUERY, executeParams.reducer()).getResults();
+        return interact(Phase.QUERY, executeParams).getResults();
     }
 
     public synchronized PreparedStatement prepare (String sql) {
@@ -441,7 +432,7 @@ public class Connection implements Closeable {
         sendClosePortal(portal);
         sendSync();
         sendFlush();
-        return interact(Phase.EXECUTE, executeParams.reducer()).getResults();
+        return interact(Phase.EXECUTE, executeParams).getResults();
     }
 
     public synchronized List<Result> execute (String sql) {
@@ -480,8 +471,8 @@ public class Connection implements Closeable {
         interact(Phase.CLOSE);
     }
 
-    private Accum interact(Phase phase, IReducer reducer, OutputStream outputStream) {
-        Accum acc = new Accum(phase, reducer, outputStream);
+    private Accum interact(Phase phase, ExecuteParams executeParams) {
+        Accum acc = new Accum(phase, executeParams);
         while (true) {
             final Object msg = readMessage();
             // System.out.println(msg);
@@ -494,16 +485,8 @@ public class Connection implements Closeable {
         return acc;
     }
 
-    private Accum interact(Phase phase, IReducer reducer) {
-        return interact(phase, reducer, dummyOutputStream);
-    }
-
-    private Accum interact(Phase phase, OutputStream outputStream) {
-        return interact(phase, dummyReducer, outputStream);
-    }
-
     private Accum interact(Phase phase) {
-        return interact(phase, dummyReducer,  dummyOutputStream);
+        return interact(phase, new ExecuteParams.Builder().build());
     }
 
     private void handleMessage(Object msg, Accum acc) {
@@ -610,16 +593,18 @@ public class Connection implements Closeable {
     }
 
     private void handleCopyData(CopyData msg, Accum acc) {
+        OutputStream outputStream = acc.executeParams.outputStream();
         try {
-            acc.outputStream.write(msg.bytes());
+            outputStream.write(msg.bytes());
         } catch (IOException e) {
             throw new PGError(e, "could not handle CopyData response");
         }
     }
 
     public synchronized List<Result> copyOut (String sql, OutputStream outputStream) {
+        ExecuteParams executeParams = new ExecuteParams.Builder().outputStream(outputStream).build();
         sendQuery(sql);
-        Accum acc = interact(Phase.COPY, outputStream);
+        Accum acc = interact(Phase.COPY, executeParams);
         return acc.getResults();
     }
 
@@ -641,14 +626,8 @@ public class Connection implements Closeable {
 
     private static void handleRowDescription(RowDescription msg, Accum acc) {
         acc.current.rowDescription = msg;
-        IReducer reducer = acc.reducer;
-        short size = msg.columnCount();
-        Object[] keys = new Object[size];
-        for (short i = 0; i < size; i ++) {
-            String key = msg.columns()[i].name();
-            keys[i] = reducer.transformKey(key);
-        }
-        acc.current.keys = keys;
+        String[] keys = msg.getColumnNames();
+        acc.setKeys(keys);
     }
 
     private void handleDataRow(DataRow msg, Accum res) {

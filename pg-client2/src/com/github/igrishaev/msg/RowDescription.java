@@ -22,6 +22,14 @@ public record RowDescription (
             Format format) {
     }
 
+    public String [] getColumnNames () {
+        String[] names = new String[columnCount];
+        for (short i = 0; i < columnCount; i++) {
+            names[i] = columns()[i].name();
+        }
+        return names;
+    }
+
     public static RowDescription fromByteBuffer(ByteBuffer buf) {
         short size = buf.getShort();
         Column[] columns = new Column[size];
