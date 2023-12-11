@@ -107,27 +107,37 @@
     (is (= [{"FOO" 1}] result))))
 
 
-;; todo: kebab!
-#_
 (deftest test-client-fn-column-kebab
   (let [result
         (pg/with-connection [conn *CONFIG*]
-          (pg/execute conn "select 1 as \"user/foo-bar\"" nil {:fn-column func/kebab-keyword}))]
+          (pg/execute conn "select 1 as just_one" {:kebab? true}))]
+    (is (= [{:just-one 1}] result))))
+
+
+(deftest test-client-keyword-with-ns
+  (let [result
+        (pg/with-connection [conn *CONFIG*]
+          (pg/execute conn "select 1 as \"user/foo-bar\""))]
     (is (= [{:user/foo-bar 1}] result))))
 
 
-;; todo
-#_
 (deftest test-client-exception-in-the-middle
 
   (pg/with-connection [conn *CONFIG*]
 
-    (is (thrown?
-         Exception
-         (with-redefs [pg.decode.txt/decode
-                       (fn [& _]
-                         (throw (new Exception "boom")))]
-           (pg/execute conn "select 1 as foo"))))))
+    ;; TODO: drain conn? close statement?
+    (try
+      (pg/execute conn "select $1 as foo" {:params [(new Object)]})
+      (is false)
+      (catch PGError e
+        (is true)
+        (is (-> e
+                ex-message
+                (str/starts-with? "cannot text-encode a value")))))
+
+    (testing "still can use that connection"
+      (is (= [{:foo "test"}]
+             (pg/execute conn "select $1 as foo" {:params ["test"]}))))))
 
 
 (deftest test-client-reuse-conn
@@ -218,25 +228,14 @@
 
       (is (= [{:foo 1}] res1))
 
+      ;; TODO: pass fields as data?
+
       (try
         (pg/with-tx [conn {:read-only? true}]
           (pg/execute conn "create temp table foo123 (id integer)"))
         (is false "Must have been an error")
         (catch PGError e
-          (is (-> e ex-message (str/starts-with? "ErrorResponse")))
-          ;; TODO
-          #_
-          (is (= {:error
-                  {:msg :ErrorResponse,
-                   :errors
-                   {:severity "ERROR"
-                    :verbosity "ERROR"
-                    :code "25006"
-                    :message "cannot execute CREATE TABLE in a read-only transaction",
-                    :function "PreventCommandIfReadOnly"}}}
-                 (-> e
-                     (ex-data)
-                     (update-in [:error :errors] dissoc :line :file)))))))))
+          (is (-> e ex-message (str/starts-with? "ErrorResponse"))))))))
 
 
 (deftest test-exeplain-alalyze
@@ -266,8 +265,7 @@
 
       (pg/execute conn (format "create table %s (id integer)" table))
 
-      ;; TODO: levels
-      (pg/with-tx [conn {:isolation-level "serializable"}]
+      (pg/with-tx [conn {:isolation-level "SERIALIZABLE"}]
         (pg/execute conn (format "insert into %s values (1), (2)" table))
 
         (let [res1
@@ -300,7 +298,7 @@
 
 
 ;; TODO
-
+;; --------------------
 (deftest test-client-create-table
   (pg/with-connection [conn *CONFIG*]
 

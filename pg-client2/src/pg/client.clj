@@ -1,4 +1,6 @@
 (ns pg.client
+  (:require
+   [clojure.string :as str])
   (:import
    java.io.Writer
    java.io.OutputStream
@@ -17,7 +19,11 @@
    com.github.igrishaev.enums.TxLevel))
 
 
-(defn ->execute-params ^ExecuteParams [config]
+(defn ->kebab ^Keyword [^String column]
+  (-> column (str/replace #"_" "-") keyword))
+
+
+(defn ->execute-params ^ExecuteParams [opt]
 
   (let [{:keys [params
                 oids
@@ -28,11 +34,12 @@
                 group-by
                 index-by
                 matrix?
+                kebab?
                 fold
                 kv
                 binary-encode?
                 binary-decode?]}
-        config]
+        opt]
 
     (cond-> (new ExecuteParams$Builder)
 
@@ -62,6 +69,9 @@
 
       matrix?
       (.asMatrix)
+
+      kebab?
+      (.fnKeyTransform ->kebab)
 
       kv
       (.KV (first kv) (second kv))
@@ -245,9 +255,9 @@
    (Results->clj
     (.executeStatement conn stmt)))
 
-  ([^Connection conn ^PreparedStatement stmt ^Map params]
+  ([^Connection conn ^PreparedStatement stmt ^Map opt]
    (Results->clj
-    (.executeStatement conn stmt (->execute-params params)))))
+    (.executeStatement conn stmt (->execute-params opt)))))
 
 
 (defn execute
@@ -256,9 +266,9 @@
    (Results->clj
     (.execute conn sql)))
 
-  ([^Connection conn ^String sql ^Map params]
+  ([^Connection conn ^String sql ^Map opt]
    (Results->clj
-    (.execute conn sql (->execute-params params)))))
+    (.execute conn sql (->execute-params opt)))))
 
 
 (defmacro with-statement
@@ -300,9 +310,9 @@
    (Results->clj
     (.query conn sql)))
 
-  ([^Connection conn ^String sql ^Map params]
+  ([^Connection conn ^String sql ^Map opt]
    (Results->clj
-    (.query conn sql (->execute-params params)))))
+    (.query conn sql (->execute-params opt)))))
 
 
 (defn begin [^Connection conn]
@@ -338,19 +348,19 @@
        [nil e#])))
 
 
-(defn ->tx-level ^TxLevel [^Keyword level]
+(defn ->tx-level ^TxLevel [level]
   (case level
 
-    (:serializable "serializable")
+    (:serializable "SERIALIZABLE")
     TxLevel/SERIALIZABLE
 
-    (:repeatable-read "repeatable-read")
+    (:repeatable-read "REPEATABLE READ")
     TxLevel/REPEATABLE_READ
 
-    (:read-committed "read-committed")
+    (:read-committed "READ COMMITTED")
     TxLevel/READ_COMMITTED
 
-    (:read-uncommitted "read-uncommitted")
+    (:read-uncommitted "READ UNCOMMITTED")
     TxLevel/READ_UNCOMMITTED))
 
 
