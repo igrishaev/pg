@@ -85,7 +85,7 @@ example, the function just stores the notifications in a global atom:
 ~~~
 
 Let's go through the pipeline again with a new handler. Open a connection with
-the new hanlder and subscribe to the channel:
+the new handler and subscribe to the channel:
 
 ~~~clojure
 (def conn2
