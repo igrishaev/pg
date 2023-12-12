@@ -653,31 +653,31 @@
       (is (= {:inserted 2} res)))))
 
 
-;; (deftest test-client-select-fn-result
-;;   (pg/with-connection [conn *CONFIG*]
+(deftest test-client-select-fn-first
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (let [table
-;;           (gen-table)
+    (let [table
+          (gen-table)
 
-;;           query1
-;;           (format "create temp table %s (id serial, title text)" table)
+          query1
+          (format "create temp table %s (id serial, title text)" table)
 
-;;           _
-;;           (pg/execute conn query1)
+          _
+          (pg/execute conn query1)
 
-;;           query2
-;;           (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
+          query2
+          (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
 
-;;           _
-;;           (pg/execute conn query2)
+          _
+          (pg/execute conn query2)
 
-;;           query3
-;;           (format "select * from %s where id = 1" table)
+          query3
+          (format "select * from %s where id = 1" table)
 
-;;           res
-;;           (pg/execute conn query3 nil {:fn-result first})]
+          res
+          (pg/execute conn query3 {:first? true})]
 
-;;       (is (= {:id 1 :title "test1"} res)))))
+      (is (= {:id 1 :title "test1"} res)))))
 
 
 (deftest test-prepare-result
@@ -690,7 +690,22 @@
 ;; --------------
 
 
-#_
+;; Fail in test-statement-params-wrong-count
+
+;; expected: 1
+;;   actual: #error {
+;;            :cause "Index: 0"
+;;            :via
+;;            [{:type java.lang.IndexOutOfBoundsException
+;;              :message "Index: 0"
+;;              :at [java.util.Collections$EmptyList get "Collections.java" 4807]}]
+;;            :trace
+;;            [[java.util.Collections$EmptyList get "Collections.java" 4807]
+;;             [com.github.igrishaev.Connection sendBind "Connection.java" 391]
+;;             [com.github.igrishaev.Connection executeStatement "Connection.java" 430]
+;;             [pg.client$execute_statement invokeStatic "client.clj" 247]
+
+
 (deftest test-statement-params-wrong-count
   (pg/with-connection [conn *CONFIG*]
     (pg/with-statement [stmt conn "select $1::integer as foo, $2::integer as bar"]
@@ -698,8 +713,11 @@
         (pg/execute-statement conn stmt [1])
         (is false)
         (catch Exception e
+          (is (= 1 e))
+          #_
           (is (= "Wrong parameters count: 1 (must be 2)"
                  (ex-message e)))
+          #_
           (is (= {:params [1] :oids [23 23]}
                  (ex-data e))))))))
 

@@ -259,21 +259,19 @@
 (defmacro with-statement
   [[bind conn sql oids] & body]
 
-  `(let [conn#
-         ~conn
+  (let [CONN (gensym "CONN")]
 
-         sql#
-         ~sql
+    `(let [~CONN ~conn
 
-         ~bind
-         ~(if oids
-            `(prepare-statement conn# sql# ~oids)
-            `(prepare-statement conn# sql#))]
+           ~bind
+           ~(if oids
+              `(prepare-statement ~CONN ~sql ~oids)
+              `(prepare-statement ~CONN ~sql))]
 
-     (try
-       ~@body
-       (finally
-         (close-statement conn# ~bind)))))
+       (try
+         ~@body
+         (finally
+           (close-statement ~CONN ~bind))))))
 
 
 (defmacro with-connection
