@@ -117,14 +117,18 @@ public class Accum {
     }
 
     // TODO: array?
-    public ArrayList<Object> getResults () {
+    public Object getResult () {
         final ArrayList<Object> results = new ArrayList<>(1);
         for (Node node: nodes) {
             if (node.commandComplete != null) {
                 results.add(node.toResult(executeParams));
             }
         }
-        return results;
+        return switch (results.size()) {
+            case 0 -> null;
+            case 1 -> results.getFirst();
+            default -> results;
+        };
     }
 
     public void setCurrentValues (Object[] values) {

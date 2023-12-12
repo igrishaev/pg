@@ -80,6 +80,11 @@ public record ExecuteParams (
             return this;
         }
 
+        public Builder first () {
+            this.reducer = new First();
+            return this;
+        }
+
         public Builder KV (IFn fnK, IFn fnV) {
             this.reducer = new KV(fnK, fnV);
             return this;

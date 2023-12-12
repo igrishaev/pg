@@ -38,6 +38,7 @@
                 fold
                 init
                 kv
+                first?
                 binary-encode?
                 binary-decode?]}
         opt]
@@ -77,6 +78,9 @@
       kv
       (.KV (first kv) (second kv))
 
+      first?
+      (.first)
+
       (and fold init)
       (.fold fold init)
 
@@ -85,7 +89,6 @@
 
       (some? binary-decode?)
       (.binaryDecode binary-decode?)
-
 
       :finally
       (.build))))
@@ -236,40 +239,22 @@
    (.prepare conn sql oids)))
 
 
-(defn Results->clj [^List results]
-  (cond
-
-    (.isEmpty results)
-    nil
-
-    (= 1 (.size results))
-    (-> results ^Result (.get 0) .result)
-
-    :else
-    (mapv (fn [^Result result]
-            (.result result)) results)))
-
-
 (defn execute-statement
 
   ([^Connection conn ^PreparedStatement stmt]
-   (Results->clj
-    (.executeStatement conn stmt)))
+   (.executeStatement conn stmt))
 
   ([^Connection conn ^PreparedStatement stmt ^Map opt]
-   (Results->clj
-    (.executeStatement conn stmt (->execute-params opt)))))
+   (.executeStatement conn stmt (->execute-params opt))))
 
 
 (defn execute
 
   ([^Connection conn ^String sql]
-   (Results->clj
-    (.execute conn sql)))
+   (.execute conn sql))
 
   ([^Connection conn ^String sql ^Map opt]
-   (Results->clj
-    (.execute conn sql (->execute-params opt)))))
+   (.execute conn sql (->execute-params opt))))
 
 
 (defmacro with-statement
@@ -308,12 +293,10 @@
 (defn query
 
   ([^Connection conn ^String sql]
-   (Results->clj
-    (.query conn sql)))
+   (.query conn sql))
 
   ([^Connection conn ^String sql ^Map opt]
-   (Results->clj
-    (.query conn sql (->execute-params opt)))))
+   (.query conn sql (->execute-params opt))))
 
 
 (defn begin [^Connection conn]
