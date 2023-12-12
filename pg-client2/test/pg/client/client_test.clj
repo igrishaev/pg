@@ -710,142 +710,143 @@
   (pg/with-connection [conn *CONFIG*]
     (pg/with-statement [stmt conn "select $1::integer as foo, $2::integer as bar"]
       (try
-        (pg/execute-statement conn stmt [1])
+        (pg/execute-statement conn stmt {:params [1]})
         (is false)
-        (catch Exception e
-          (is (= 1 e))
-          #_
+        (catch PGError e
           (is (= "Wrong parameters count: 1 (must be 2)"
                  (ex-message e)))
+          ;; TODO: add data to the exception
           #_
           (is (= {:params [1] :oids [23 23]}
                  (ex-data e))))))))
 
 
-;; (deftest test-statement-params-nil
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (pg/with-statement [stmt conn "select 42 as answer"]
-;;       (let [res (pg/execute-statement conn stmt nil)]
-;;         (is (= [{:answer 42}] res))))))
+(deftest test-statement-params-nil
+  (pg/with-connection [conn *CONFIG*]
+    (pg/with-statement [stmt conn "select 42 as answer"]
+      (let [res (pg/execute-statement conn stmt {:params nil})]
+        (is (= [{:answer 42}] res))))))
 
 
-;; (deftest test-prepare-execute
+(deftest test-prepare-execute
 
-;;   (pg/with-connection [conn *CONFIG*]
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (pg/with-statement [stmt conn "select $1::integer as foo"]
+    (pg/with-statement [stmt conn "select $1::integer as foo"]
 
-;;       (let [res1
-;;             (pg/execute-statement conn stmt [1])
+      (let [res1
+            (pg/execute-statement conn stmt {:params [1]})
 
-;;             res2
-;;             (pg/execute-statement conn stmt [2])]
+            res2
+            (pg/execute-statement conn stmt {:params [2]})]
 
-;;         (is (= [{:foo 1}] res1))
-;;         (is (= [{:foo 2}] res2))))))
-
-
-;; (deftest test-prepare-execute-with-options
-
-;;   (pg/with-connection [conn *CONFIG*]
-
-;;     (pg/with-statement [stmt conn "select $1::integer as foo"]
-
-;;       (let [res1
-;;             (pg/execute-statement conn stmt [1] {:fn-column str/upper-case})
-
-;;             res2
-;;             (pg/execute-statement conn stmt [2] {:fn-result first})]
-
-;;         (is (= [{"FOO" 1}] res1))
-;;         (is (= {:foo 2} res2))))))
+        (is (= [{:foo 1}] res1))
+        (is (= [{:foo 2}] res2))))))
 
 
-;; (deftest test-client-delete-result
-;;   (pg/with-connection [conn *CONFIG*]
+(deftest test-prepare-execute-with-options
 
-;;     (let [table
-;;           (gen-table)
+  (pg/with-connection [conn *CONFIG*]
 
-;;           query1
-;;           (format "create temp table %s (id serial, title text)" table)
+    (pg/with-statement [stmt conn "select $1::integer as foo"]
 
-;;           _
-;;           (pg/execute conn query1)
+      (let [res1
+            (pg/execute-statement conn stmt {:params [1]
+                                             :fn-key str/upper-case})
 
-;;           query2
-;;           (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
+            res2
+            (pg/execute-statement conn stmt {:params [2]
+                                             :first? true})]
 
-;;           _
-;;           (pg/execute conn query2)
-
-;;           query3
-;;           (format "delete from %s " table)
-
-;;           res
-;;           (pg/execute conn query3)]
-
-;;       (is (= 2 res)))))
+        (is (= [{"FOO" 1}] res1))
+        (is (= {:foo 2} res2))))))
 
 
-;; (deftest test-client-update-result
-;;   (pg/with-connection [conn *CONFIG*]
+(deftest test-client-delete-result
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (let [table
-;;           (gen-table)
+    (let [table
+          (gen-table)
 
-;;           query1
-;;           (format "create temp table %s (id serial, title text)" table)
+          query1
+          (format "create temp table %s (id serial, title text)" table)
 
-;;           _
-;;           (pg/execute conn query1)
+          _
+          (pg/execute conn query1)
 
-;;           query2
-;;           (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
+          query2
+          (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
 
-;;           _
-;;           (pg/execute conn query2)
+          _
+          (pg/execute conn query2)
 
-;;           query3
-;;           (format "update %s set title = 'aaa'" table)
+          query3
+          (format "delete from %s " table)
 
-;;           res
-;;           (pg/execute conn query3)]
+          res
+          (pg/execute conn query3)]
 
-;;       (is (= 2 res)))))
+      (is (= {:deleted 2} res)))))
 
 
-;; (deftest test-client-mixed-result
-;;   (pg/with-connection [conn *CONFIG*]
+(deftest test-client-update-result
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (let [table
-;;           (gen-table)
+    (let [table
+          (gen-table)
 
-;;           query
-;;           (format
-;;            "
-;; create temp table %1$s (id serial, title text);
-;; insert into %1$s (id, title) values (1, 'test1'), (2, 'test2');
-;; insert into %1$s (id, title) values (3, 'test3') returning *;
-;; select * from %1$s where id <> 3;
-;; update %1$s set title = 'aaa' where id = 1;
-;; delete from %1$s where id = 2;
-;; drop table %1$s;
-;; "
-;;            table)
+          query1
+          (format "create temp table %s (id serial, title text)" table)
 
-;;           res
-;;           (pg/query conn query {:fn-column str/upper-case})]
+          _
+          (pg/execute conn query1)
 
-;;       (is (= [nil
-;;               2
-;;               [{"ID" 3 "TITLE" "test3"}]
-;;               [{"ID" 1 "TITLE" "test1"}
-;;                {"ID" 2 "TITLE" "test2"}]
-;;               1
-;;               1
-;;               nil]
-;;              res)))))
+          query2
+          (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
+
+          _
+          (pg/execute conn query2)
+
+          query3
+          (format "update %s set title = 'aaa'" table)
+
+          res
+          (pg/execute conn query3)]
+
+      (is (= {:updated 2} res)))))
+
+
+(deftest test-client-mixed-result
+  (pg/with-connection [conn *CONFIG*]
+
+    (let [table
+          (gen-table)
+
+          query
+          (format
+           "
+create temp table %1$s (id serial, title text);
+insert into %1$s (id, title) values (1, 'test1'), (2, 'test2');
+insert into %1$s (id, title) values (3, 'test3') returning *;
+select * from %1$s where id <> 3;
+update %1$s set title = 'aaa' where id = 1;
+delete from %1$s where id = 2;
+drop table %1$s;
+"
+           table)
+
+          res
+          (pg/query conn query {:fn-key str/upper-case})]
+
+      (is (= [{:command "CREATE TABLE"}
+              {:inserted 2}
+              [{"TITLE" "test3", "ID" 3}]
+              [{"TITLE" "test1", "ID" 1}
+               {"TITLE" "test2", "ID" 2}]
+              {:updated 1}
+              {:deleted 1}
+              {:command "DROP TABLE"}]
+             res)))))
 
 
 ;; (deftest test-client-truncate-result

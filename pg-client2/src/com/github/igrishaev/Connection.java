@@ -381,24 +381,38 @@ public class Connection implements Closeable {
         return new PreparedStatement(parse, paramDesc);
     }
 
-    private void sendBind (String portal, String statement, ExecuteParams executeParams, OID[] OIDs) {
+    private void sendBind (String portal,
+                           PreparedStatement stmt,
+                           ExecuteParams executeParams
+    ) {
+        List<Object> params = executeParams.params();
+        OID[] OIDs = stmt.parameterDescription().OIDs();
+        int size = params.size();
+
+        if (size != OIDs.length) {
+            throw new PGError("Wrong parameters count: %s (must be %s)",
+                    size, OIDs.length
+            );
+        }
+
         Format paramsFormat = executeParams.binaryEncode() || config.binaryEncode() ? Format.BIN : Format.TXT;
         Format columnFormat = executeParams.binaryDecode() || config.binaryDecode() ? Format.BIN : Format.TXT;
-        byte[][] values = new byte[OIDs.length][];
+
+        byte[][] bytes = new byte[size][];
         String encoding = getClientEncoding();
-        List<Object> params = executeParams.params();
-        for (int i = 0; i < OIDs.length; i++) {
+        String statement = stmt.parse().statement();
+        for (int i = 0; i < size; i++) {
             Object param = params.get(i);
             OID oid = OIDs[i];
             switch (paramsFormat) {
                 case BIN:
                     ByteBuffer buf = encoderBin.encode(param, oid);
-                    values[i] = buf.array();
+                    bytes[i] = buf.array();
                     break;
                 case TXT:
                     String value = encoderTxt.encode(param, oid);
                     try {
-                        values[i] = value.getBytes(encoding);
+                        bytes[i] = value.getBytes(encoding);
                     } catch (UnsupportedEncodingException e) {
                         throw new PGError(e, "could not encode a string, encoding: %s", encoding);
                     }
@@ -410,7 +424,7 @@ public class Connection implements Closeable {
         Bind msg = new Bind(
                 portal,
                 statement,
-                values,
+                bytes,
                 OIDs,
                 paramsFormat,
                 columnFormat
@@ -418,16 +432,14 @@ public class Connection implements Closeable {
         sendMessage(msg);
     }
 
-    public Object executeStatement (PreparedStatement ps) {
-        return executeStatement(ps, new ExecuteParams.Builder().build());
+    public Object executeStatement (PreparedStatement stmt) {
+        return executeStatement(stmt, new ExecuteParams.Builder().build());
     }
 
-    public synchronized Object executeStatement (PreparedStatement ps,
-                                                       ExecuteParams executeParams) {
+    public synchronized Object executeStatement (PreparedStatement stmt,
+                                                 ExecuteParams executeParams) {
         String portal = generatePortal();
-        String statement = ps.parse().statement();
-        OID[] OIDs = ps.parameterDescription().OIDs();
-        sendBind(portal, statement, executeParams, OIDs);
+        sendBind(portal, stmt, executeParams);
         sendDescribePortal(portal);
         sendExecute(portal, executeParams.rowCount());
         sendClosePortal(portal);
@@ -445,9 +457,9 @@ public class Connection implements Closeable {
     }
 
     public synchronized Object execute (String sql, ExecuteParams executeParams) {
-        PreparedStatement ps = prepare(sql, executeParams);
-        Object res = executeStatement(ps, executeParams);
-        closeStatement(ps);
+        PreparedStatement stmt = prepare(sql, executeParams);
+        Object res = executeStatement(stmt, executeParams);
+        closeStatement(stmt);
         return res;
     }
 
