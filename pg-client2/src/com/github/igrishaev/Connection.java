@@ -381,11 +381,12 @@ public class Connection implements Closeable {
         return new PreparedStatement(parse, paramDesc);
     }
 
-    private void sendBind (String portal, String statement, List<Object> params, OID[] OIDs) {
-        Format paramsFormat = config.binaryEncode() ? Format.BIN : Format.TXT;
-        Format columnFormat = config.binaryDecode() ? Format.BIN : Format.TXT;
+    private void sendBind (String portal, String statement, ExecuteParams executeParams, OID[] OIDs) {
+        Format paramsFormat = executeParams.binaryEncode() || config.binaryEncode() ? Format.BIN : Format.TXT;
+        Format columnFormat = executeParams.binaryDecode() || config.binaryDecode() ? Format.BIN : Format.TXT;
         byte[][] values = new byte[OIDs.length][];
         String encoding = getClientEncoding();
+        List<Object> params = executeParams.params();
         for (int i = 0; i < OIDs.length; i++) {
             Object param = params.get(i);
             OID oid = OIDs[i];
@@ -426,7 +427,7 @@ public class Connection implements Closeable {
         String portal = generatePortal();
         String statement = ps.parse().statement();
         OID[] OIDs = ps.parameterDescription().OIDs();
-        sendBind(portal, statement, executeParams.params(), OIDs);
+        sendBind(portal, statement, executeParams, OIDs);
         sendDescribePortal(portal);
         sendExecute(portal, executeParams.rowCount());
         sendClosePortal(portal);

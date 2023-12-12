@@ -36,6 +36,7 @@
                 matrix?
                 kebab?
                 fold
+                init
                 kv
                 binary-encode?
                 binary-decode?]}
@@ -76,8 +77,8 @@
       kv
       (.KV (first kv) (second kv))
 
-      fold
-      (.fold (first fold) (second fold))
+      (and fold init)
+      (.fold fold init)
 
       (some? binary-encode?)
       (.binaryEncode binary-encode?)

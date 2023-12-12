@@ -76,6 +76,7 @@ public class Accum {
     }
 
     public void handleRowDescription(RowDescription msg) {
+        current.acc = executeParams.reducer().initiate();
         current.rowDescription = msg;
         IFn fnKeyTransform = executeParams.fnKeyTransform();
         String[] names = msg.getColumnNames();
@@ -116,9 +117,7 @@ public class Accum {
     }
 
     private void addNode() {
-        IReducer reducer = executeParams.reducer();
         current = new Node();
-        current.acc = reducer.initiate();
         nodes.add(current);
     }
 
