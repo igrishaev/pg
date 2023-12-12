@@ -849,82 +849,83 @@ drop table %1$s;
              res)))))
 
 
-;; (deftest test-client-truncate-result
-;;   (pg/with-connection [conn *CONFIG*]
+(deftest test-client-truncate-result
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (let [table
-;;           (gen-table)
+    (let [table
+          (gen-table)
 
-;;           query1
-;;           (format "create temp table %s (id serial, title text)" table)
+          query1
+          (format "create temp table %s (id serial, title text)" table)
 
-;;           _
-;;           (pg/execute conn query1)
+          _
+          (pg/execute conn query1)
 
-;;           query2
-;;           (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
+          query2
+          (format "insert into %s (id, title) values (1, 'test1'), (2, 'test2')" table)
 
-;;           _
-;;           (pg/execute conn query2)
+          _
+          (pg/execute conn query2)
 
-;;           query3
-;;           (format "truncate %s" table)
+          query3
+          (format "truncate %s" table)
 
-;;           res
-;;           (pg/execute conn query3)]
+          res
+          (pg/execute conn query3)]
 
-;;       (is (nil? res)))))
-
-
-;; (deftest test-client-select-multi
-
-;;   (pg/with-connection [conn *CONFIG*]
-
-;;     (let [res
-;;           (pg/query conn "select 1 as foo; select 2 as bar")]
-
-;;       (is (= [[{:foo 1}] [{:bar 2}]] res)))))
+      (is (= {:command "TRUNCATE TABLE"} res)))))
 
 
-;; (deftest test-client-field-duplicates
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [res
-;;           (pg/execute conn "select 1 as id, 2 as id")]
-;;       (is (= [{:id 1 :id_1 2}] res)))))
+(deftest test-client-select-multi
+  (pg/with-connection [conn *CONFIG*]
+    (let [res
+          (pg/query conn "select 1 as foo; select 2 as bar")]
+      (is (= [[{:foo 1}] [{:bar 2}]] res)))))
 
 
-;; (deftest test-client-json-read
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [res
-;;           (pg/execute conn "select '[1, 2, 3]'::json as arr")]
-;;       (is (= [{:arr [1 2 3]}] res)))))
+;; TODO
+(deftest test-client-field-duplicates
+  (pg/with-connection [conn *CONFIG*]
+    (let [res
+          (pg/execute conn "select 1 as id, 2 as id")]
+      (is (= [{:id 1 :id_1 2}] res)))))
 
 
-;; (deftest test-client-jsonb-read
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [res
-;;           (pg/execute conn "select '{\"foo\": 123}'::jsonb as obj")]
-;;       (is (= [{:obj {:foo 123}}] res)))))
+(deftest test-client-json-read
+  (pg/with-connection [conn *CONFIG*]
+    (let [res
+          (pg/execute conn "select '[1, 2, 3]'::json as arr")]
+      (is (= [{:arr [1 2 3]}] res)))))
 
 
-;; (deftest test-client-json-write
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [res
-;;           (pg/execute conn
-;;                       "select $1::json as obj"
-;;                       [{:foo 123}]
-;;                       {:fn-result first})]
-;;       (is (= {:obj {:foo 123}} res)))))
+(deftest test-client-jsonb-read
+  (pg/with-connection [conn *CONFIG*]
+    (let [res
+          (pg/execute conn "select '{\"foo\": 123}'::jsonb as obj")]
+      (is (= [{:obj {:foo 123}}] res)))))
 
 
-;; (deftest test-client-json-write-no-hint
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [res
-;;           (pg/execute conn
-;;                       "select $1 as obj"
-;;                       [{:foo 123}]
-;;                       {:fn-result first})]
-;;       (is (= {:obj {:foo 123}} res)))))
+;; TODO: test json wrapper
+(deftest test-client-json-write
+  (pg/with-connection [conn *CONFIG*]
+    (let [res
+          (pg/execute conn
+                      "select $1::json as obj"
+                      {:params [{:foo 123}]
+                       :first? true})]
+      (is (= {:obj {:foo 123}} res)))))
+
+
+;; TODO: fix
+;; TODO: default OIDs
+(deftest test-client-json-write-no-hint
+  (pg/with-connection [conn *CONFIG*]
+    (let [res
+          (pg/execute conn
+                      "select $1 as obj"
+                      {:params [{:foo 123}]
+                       :first? true})]
+      (is (= {:obj {:foo 123}} res)))))
 
 
 ;; (deftest test-client-jsonb-write
