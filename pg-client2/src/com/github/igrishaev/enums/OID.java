@@ -1,4 +1,5 @@
 package com.github.igrishaev.enums;
+
 import com.github.igrishaev.PGError;
 
 import java.util.HashMap;

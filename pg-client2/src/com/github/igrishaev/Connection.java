@@ -1,6 +1,5 @@
 package com.github.igrishaev;
 
-import clojure.lang.IFn;
 import com.github.igrishaev.auth.MD5;
 import com.github.igrishaev.codec.DecoderBin;
 import com.github.igrishaev.codec.DecoderTxt;
@@ -8,6 +7,7 @@ import com.github.igrishaev.codec.EncoderBin;
 import com.github.igrishaev.codec.EncoderTxt;
 import com.github.igrishaev.enums.*;
 import com.github.igrishaev.msg.*;
+import com.github.igrishaev.type.OIDMap;
 import com.github.igrishaev.util.SQL;
 
 import java.io.IOException;
@@ -216,7 +216,7 @@ public class Connection implements Closeable {
     }
 
     private void sendMessage (IMessage msg) {
-        // System.out.println(msg);
+        System.out.println(msg);
         ByteBuffer buf = msg.encode(getClientEncoding());
         // System.out.println(Arrays.toString(buf.array()));
         try {
@@ -371,7 +371,26 @@ public class Connection implements Closeable {
 
     public synchronized PreparedStatement prepare (String sql, ExecuteParams executeParams) {
         String statement = generateStatement();
-        Parse parse = new Parse(statement, sql, executeParams.OIDs());
+
+        List<OID> OIDsProvided = executeParams.OIDs();
+        int OIDsProvidedCount = OIDsProvided.size();
+
+        List<Object> params = executeParams.params();
+        int paramCount = params.size();
+
+        OID[] OIDs = new OID[paramCount];
+
+        for (int i = 0; i < paramCount; i++) {
+            if (i < OIDsProvidedCount) {
+                OIDs[i] = OIDsProvided.get(i);
+            }
+            else {
+                Object param = params.get(i);
+                OIDs[i] = OIDMap.guessOID(param);
+            }
+        }
+
+        Parse parse = new Parse(statement, sql, OIDs);
         sendMessage(parse);
         sendDescribeStatement(statement);
         sendSync();
@@ -488,7 +507,7 @@ public class Connection implements Closeable {
         Accum acc = new Accum(phase, executeParams);
         while (true) {
             final Object msg = readMessage();
-            // System.out.println(msg);
+            System.out.println(msg);
             handleMessage(msg, acc);
             if (isEnough(msg, phase)) {
                 break;

@@ -1,5 +1,6 @@
 (ns pg.client.client-test
   (:import
+   com.github.igrishaev.enums.OID
    com.github.igrishaev.PGError)
   (:require
    [clojure.string :as str]
@@ -687,25 +688,6 @@
       (is (pg/prepared-statement? res)))))
 
 
-;; --------------
-
-
-;; Fail in test-statement-params-wrong-count
-
-;; expected: 1
-;;   actual: #error {
-;;            :cause "Index: 0"
-;;            :via
-;;            [{:type java.lang.IndexOutOfBoundsException
-;;              :message "Index: 0"
-;;              :at [java.util.Collections$EmptyList get "Collections.java" 4807]}]
-;;            :trace
-;;            [[java.util.Collections$EmptyList get "Collections.java" 4807]
-;;             [com.github.igrishaev.Connection sendBind "Connection.java" 391]
-;;             [com.github.igrishaev.Connection executeStatement "Connection.java" 430]
-;;             [pg.client$execute_statement invokeStatic "client.clj" 247]
-
-
 (deftest test-statement-params-wrong-count
   (pg/with-connection [conn *CONFIG*]
     (pg/with-statement [stmt conn "select $1::integer as foo, $2::integer as bar"]
@@ -891,6 +873,27 @@ drop table %1$s;
       (is (= [{:id 1 :id_1 2}] res)))))
 
 
+(deftest test-client-insert-simple
+  (pg/with-connection [conn *CONFIG*]
+    (let [table
+          (gen-table)
+
+          command
+          (format "create table %s (id integer, title text)" table)
+
+          _
+          (pg/execute conn command)
+
+          res
+          (pg/execute conn
+                      (format "insert into %s (id, title) values ($1, $2), ($3, $4) returning *" table)
+                      {:params [1 "test1" 2 "test2"]})]
+
+      (is (= [{:title "test1", :id 1}
+              {:title "test2", :id 2}]
+             res)))))
+
+
 (deftest test-client-json-read
   (pg/with-connection [conn *CONFIG*]
     (let [res
@@ -906,6 +909,7 @@ drop table %1$s;
 
 
 ;; TODO: test json wrapper
+
 (deftest test-client-json-write
   (pg/with-connection [conn *CONFIG*]
     (let [res
@@ -916,8 +920,6 @@ drop table %1$s;
       (is (= {:obj {:foo 123}} res)))))
 
 
-;; TODO: fix
-;; TODO: default OIDs
 (deftest test-client-json-write-no-hint
   (pg/with-connection [conn *CONFIG*]
     (let [res
@@ -926,6 +928,21 @@ drop table %1$s;
                       {:params [{:foo 123}]
                        :first? true})]
       (is (= {:obj {:foo 123}} res)))))
+
+
+(deftest test-client-json-write-oid-hint
+  (pg/with-connection [conn *CONFIG*]
+    (let [res
+          (pg/execute conn
+                      "select $1 as obj"
+                      {:params [{:foo 123}]
+                       :oids [OID/JSONB]
+                       :first? true})]
+      (is (= {:obj {:foo 123}} res)))))
+
+
+;; TODO: wrong oid hint
+;; TODO: more oids than params
 
 
 ;; (deftest test-client-jsonb-write

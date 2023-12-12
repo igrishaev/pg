@@ -5,16 +5,15 @@ import com.github.igrishaev.PGError;
 import com.github.igrishaev.Payload;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 
 public record Parse (String statement,
                      String query,
-                     List<OID> OIDs)
+                     OID[] OIDs)
         implements IMessage {
 
     public ByteBuffer encode(String encoding) {
 
-        int OIDCount = OIDs.size();
+        int OIDCount = OIDs.length;
 
         if (OIDCount > 0xFFFF) {
             throw new PGError(
@@ -29,6 +28,10 @@ public record Parse (String statement,
             .addCString(statement, encoding)
             .addCString(query, encoding)
             .addUnsignedShort(OIDCount);
+
+        for (OID oid: OIDs) {
+            payload.addInteger(oid.toInt());
+        }
 
         return payload.toByteBuffer('P');
     }

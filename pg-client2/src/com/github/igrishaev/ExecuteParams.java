@@ -5,6 +5,7 @@ import com.github.igrishaev.enums.OID;
 import com.github.igrishaev.reducer.*;
 
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -40,6 +41,11 @@ public record ExecuteParams (
             return this;
         }
 
+        public Builder params (Object... params) {
+            this.params = Arrays.asList(params);
+            return this;
+        }
+
         public Builder outputStream (OutputStream outputStream) {
             this.outputStream = Objects.requireNonNull(outputStream);
             return this;
@@ -47,16 +53,6 @@ public record ExecuteParams (
 
         public Builder fnKeyTransform (IFn fnKeyTransform) {
             this.fnKeyTransform = Objects.requireNonNull(fnKeyTransform);
-            return this;
-        }
-
-        public Builder addParam (Object param) {
-            this.params.add(param);
-            return this;
-        }
-
-        public Builder addParams (List<Object> params) {
-            this.params.addAll(Objects.requireNonNull(params));
             return this;
         }
 

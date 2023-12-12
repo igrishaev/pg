@@ -33,10 +33,10 @@ public class Main {
         System.out.println(conn.getId());
         System.out.println(conn.getPid());
 
-        Object res1 = conn.query("select x from generate_series(1, 3) as x; select 42 as foo");
-        System.out.println(res1);
+        // Object res1 = conn.query("select x from generate_series(1, 3) as x; select 42 as foo");
+        // System.out.println(res1);
 
-        System.out.println(conn.execute(""));
+        // System.out.println(conn.execute(""));
 
 //        PreparedStatement ps = conn.prepare("select $1::int as foo");
 //        ArrayList<Object> params = new ArrayList<>();
@@ -47,6 +47,14 @@ public class Main {
 
         // Object res3 = conn.execute("select $1::int8 as int8", params, Collections.emptyList());
         // System.out.println(res3);
+
+        // conn.execute("create table abc (id integer, title text)");
+        Object resIns = conn.execute(
+                "insert into abc (id, title) values ($1, $2), ($3, $4) returning *",
+                new ExecuteParams.Builder().params(1, "test2", 2, "test2").build()
+        );
+
+        System.out.println(resIns);
 
         Object res4 = conn.query("copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT CSV)");
         System.out.println(res4);
