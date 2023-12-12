@@ -4,9 +4,9 @@ import com.github.igrishaev.util.BBTool;
 
 import java.nio.ByteBuffer;
 
-public record CommandComplete (String tag) {
+public record CommandComplete (String command) {
         public static CommandComplete fromByteBuffer(ByteBuffer buf) {
-                String tag = BBTool.getCString(buf, "UTF-8");
-                return new CommandComplete(tag);
+                String command = BBTool.getCString(buf, "UTF-8");
+                return new CommandComplete(command);
         }
 }

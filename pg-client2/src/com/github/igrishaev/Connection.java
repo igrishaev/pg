@@ -356,11 +356,11 @@ public class Connection implements Closeable {
         sendMessage(msg);
     }
 
-    public synchronized List<Result> query(String sql) {
+    public synchronized List<Object> query(String sql) {
         return query(sql, new ExecuteParams.Builder().build());
     }
 
-    public synchronized List<Result> query(String sql, ExecuteParams executeParams) {
+    public synchronized List<Object> query(String sql, ExecuteParams executeParams) {
         sendQuery(sql);
         return interact(Phase.QUERY, executeParams).getResults();
     }
@@ -422,7 +422,7 @@ public class Connection implements Closeable {
         return executeStatement(ps, new ExecuteParams.Builder().build());
     }
 
-    public synchronized List<Result> executeStatement (PreparedStatement ps,
+    public synchronized List<Object> executeStatement (PreparedStatement ps,
                                                        ExecuteParams executeParams) {
         String portal = generatePortal();
         String statement = ps.parse().statement();
@@ -436,17 +436,17 @@ public class Connection implements Closeable {
         return interact(Phase.EXECUTE, executeParams).getResults();
     }
 
-    public synchronized List<Result> execute (String sql) {
+    public synchronized List<Object> execute (String sql) {
         return execute(sql, new ExecuteParams.Builder().build());
     }
 
-    public synchronized List<Result> execute (String sql, List<Object> params) {
+    public synchronized List<Object> execute (String sql, List<Object> params) {
         return execute(sql, new ExecuteParams.Builder().params(params).build());
     }
 
-    public synchronized List<Result> execute (String sql, ExecuteParams executeParams) {
+    public synchronized List<Object> execute (String sql, ExecuteParams executeParams) {
         PreparedStatement ps = prepare(sql, executeParams);
-        List<Result> res = executeStatement(ps, executeParams);
+        List<Object> res = executeStatement(ps, executeParams);
         closeStatement(ps);
         return res;
     }
@@ -593,7 +593,7 @@ public class Connection implements Closeable {
         }
     }
 
-    public synchronized List<Result> copyOut (String sql, OutputStream outputStream) {
+    public synchronized List<Object> copyOut (String sql, OutputStream outputStream) {
         ExecuteParams executeParams = new ExecuteParams.Builder().outputStream(outputStream).build();
         sendQuery(sql);
         Accum acc = interact(Phase.COPY, executeParams);

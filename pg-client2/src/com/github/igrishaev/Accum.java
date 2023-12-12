@@ -1,6 +1,8 @@
 package com.github.igrishaev;
 
 import clojure.lang.IFn;
+import clojure.lang.Keyword;
+import clojure.lang.PersistentHashMap;
 import com.github.igrishaev.enums.Phase;
 import com.github.igrishaev.msg.*;
 import com.github.igrishaev.reducer.IReducer;
@@ -17,23 +19,45 @@ public class Accum {
          private ParameterDescription parameterDescription;
          private Object[] keys;
          private Object acc;
-         private Object res;
 
-         public Result toResult() {
+         public Object toResult(ExecuteParams executeParams) {
 
-             String[] parts = commandComplete.tag().split(" +");
+             if (rowDescription != null) {
+                 return executeParams.reducer().finalize(acc);
+             }
+
+             String command = commandComplete.command();
+
+             String[] parts = command.split(" +");
              String lead = parts[0];
-             int rowsProcessed = switch (lead) {
-                 case "INSERT" -> Integer.parseInt(parts[2]);
-                 case "UPDATE", "DELETE", "SELECT", "COPY" -> Integer.parseInt(parts[1]);
-                 default -> 0;
+
+             return switch (lead) {
+                 case "INSERT" -> PersistentHashMap.create(
+                         Keyword.intern("inserted"),
+                         Integer.parseInt(parts[2])
+                 );
+                 case "UPDATE" -> PersistentHashMap.create(
+                         Keyword.intern("updated"),
+                         Integer.parseInt(parts[1])
+                 );
+                 case "DELETE" -> PersistentHashMap.create(
+                         Keyword.intern("deleted"),
+                         Integer.parseInt(parts[1])
+                 );
+                 case "SELECT" -> PersistentHashMap.create(
+                         Keyword.intern("selected"),
+                         Integer.parseInt(parts[1])
+                 );
+                 case "COPY" -> PersistentHashMap.create(
+                         Keyword.intern("copied"),
+                         Integer.parseInt(parts[1])
+                 );
+                 default -> PersistentHashMap.create(
+                         Keyword.intern("command"),
+                         command
+                 );
              };
 
-             return new Result(
-                     commandComplete.tag(),
-                     rowsProcessed,
-                     res
-             );
          }
     }
 
@@ -93,18 +117,11 @@ public class Accum {
     }
 
     // TODO: array?
-    public ArrayList<Result> getResults () {
-        IReducer reducer = executeParams.reducer();
-        final ArrayList<Result> results = new ArrayList<>(1);
+    public ArrayList<Object> getResults () {
+        final ArrayList<Object> results = new ArrayList<>(1);
         for (Node node: nodes) {
             if (node.commandComplete != null) {
-                if (phase == Phase.COPY) {
-                    node.res = node.copyOutResponse;
-                }
-                else {
-                    node.res = reducer.finalize(node.acc);
-                }
-                results.add(node.toResult());
+                results.add(node.toResult(executeParams));
             }
         }
         return results;
