@@ -178,7 +178,7 @@
   (pg/with-connection [conn *CONFIG*]
 
     (let [ids
-          (range 1 0xFFFF)
+          (range 1 (inc 0xFFFF))
 
           params
           (for [id ids]
@@ -191,7 +191,7 @@
           (format "select 42 in (%s) answer" q-marks)
 
           res1
-          (pg/execute conn query ids)]
+          (pg/execute conn query {:params ids})]
 
       (is (= [{:answer true}] res1)))))
 
@@ -229,7 +229,6 @@
       (is (= [{:foo 1}] res1))
 
       ;; TODO: pass fields as data?
-
       (try
         (pg/with-tx [conn {:read-only? true}]
           (pg/execute conn "create temp table foo123 (id integer)"))
@@ -297,8 +296,6 @@
         (is (= [] res1))))))
 
 
-;; TODO
-;; --------------------
 (deftest test-client-create-table
   (pg/with-connection [conn *CONFIG*]
 
@@ -311,8 +308,8 @@
           res
           (pg/execute conn query)]
 
-      ;; [com.github.igrishaev.Result 0x5d4cb48e "Result[tag=CREATE TABLE, rowsProcessed=0, result=[]]"]
-      (is (nil? res)))))
+      (is (= {:command "CREATE TABLE"}
+             res)))))
 
 
 (deftest test-client-listen-notify
@@ -425,14 +422,16 @@
                (-> e
                    (ex-data)
                    (update-in [:error :errors]
-                              dissoc :file :line))))))))
+                              dissoc :file :line))))))
+
+    (testing "still can recover"
+      (is (= [{:one 1}]
+             (pg/execute conn "select 1 as one"))))))
 
 
 (deftest test-client-error-response
-
   (let [config
         (assoc *CONFIG* :pg-params {"pg_foobar" "111"})]
-
     (is (thrown? PGError
                  (pg/with-connection [conn config]
                    42)))))
@@ -450,7 +449,6 @@
         (is (= "Clojure" param))))))
 
 
-;; TODO:
 (deftest test-terminate-closed
   (pg/with-connection [conn *CONFIG*]
     (pg/close conn)
@@ -479,9 +477,9 @@
           res3
           (pg/execute conn query3)]
 
-      (is (nil? res1))
+      (is (= {:command "PREPARE"} res1))
       (is (= [{:num 42}] res2))
-      (is (nil? res3)))))
+      (is (= {:command "DEALLOCATE"} res3)))))
 
 
 (deftest test-client-cursor
@@ -522,7 +520,7 @@
 
           (pg/execute conn "close cur")
 
-          (is (nil? res3))
+          (is (= {:command "DECLARE CURSOR"} res3))
 
           (is (= [{:id 1 :title "test1"}] res4))
           (is (= [{:id 2 :title "test2"}] res5))
@@ -622,7 +620,7 @@
 
     (pg/with-connection [conn config]
       (let [res (pg/execute conn "ROLLBACK")]
-        (is (nil? res))))
+        (is (= {:command "ROLLBACK"} res))))
 
     (is (= {:verbosity "WARNING",
             :function "UserAbortTransactionBlock",
@@ -652,7 +650,7 @@
           res
           (pg/execute conn query2)]
 
-      (is (= 2 res)))))
+      (is (= {:inserted 2} res)))))
 
 
 ;; (deftest test-client-select-fn-result

@@ -14,7 +14,6 @@
    com.github.igrishaev.ExecuteParams$Builder
    com.github.igrishaev.PreparedStatement
    com.github.igrishaev.Config$Builder
-   com.github.igrishaev.Result
    com.github.igrishaev.enums.TXStatus
    com.github.igrishaev.enums.TxLevel))
 
