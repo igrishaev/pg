@@ -18,6 +18,8 @@ public class DateTimeTxt {
     private static final DateTimeFormatter frmt_encode_timestamptz;
     private static final DateTimeFormatter frmt_encode_timestamp;
     private static final DateTimeFormatter frmt_encode_date;
+    private static final DateTimeFormatter frmt_encode_timetz;
+    private static final DateTimeFormatter frmt_encode_time;
 
     static {
         frmt_decode_timestamptz = new DateTimeFormatterBuilder()
@@ -55,6 +57,11 @@ public class DateTimeTxt {
 
         frmt_encode_date = DateTimeFormatter.ofPattern("yyyy-MM-dd")
                 .withZone(ZoneOffset.UTC);
+
+        frmt_encode_timetz = DateTimeFormatter.ofPattern("HH:mm:ss.SSSSSSx");
+
+        frmt_encode_time = DateTimeFormatter.ofPattern("HH:mm:ss.SSSSSS");
+
     }
 
     //
@@ -109,5 +116,13 @@ public class DateTimeTxt {
     public static String encodeDATE (Temporal t) {
         return frmt_encode_date.format(t);
     }
-    
+
+    public static String encodeTIMETZ (Temporal t) {
+        return frmt_encode_timetz.format(t);
+    }
+
+    public static String encodeTIME (Temporal t) {
+        return frmt_encode_time.format(t);
+    }
+
 }

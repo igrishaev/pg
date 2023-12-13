@@ -25,12 +25,12 @@ public class EncoderTxt extends ACodec {
                 case TEXT, VARCHAR -> s.toString();
                 default -> txtEncodingError(x, oid);
             };
-            
+
             case String s -> switch (oid) {
                 case TEXT, VARCHAR -> s;
                 default -> txtEncodingError(x, oid);
             };
-            
+
             case Short s -> switch (oid) {
                 case INT2 -> String.valueOf(s);
                 case INT4 -> String.valueOf(s.intValue());
