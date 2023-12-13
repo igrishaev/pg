@@ -6,6 +6,7 @@ import com.github.igrishaev.Const;
 import com.github.igrishaev.enums.OID;
 
 import java.io.StringWriter;
+import java.time.Instant;
 import java.util.UUID;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -109,6 +110,13 @@ public class EncoderTxt extends ACodec {
                     yield writer.toString();
                 }
                 default -> txtEncodingError(c, oid);
+            };
+
+            case Instant i -> switch (oid) {
+                case TIMESTAMPTZ, TEXT, VARCHAR -> DateTimeTxt.encodeTIMESTAMPTZ(i);
+                case TIMESTAMP -> DateTimeTxt.encodeTIMESTAMP(i);
+                case DATE -> DateTimeTxt.encodeDATE(i);
+                default -> txtEncodingError(i, oid);
             };
 
             default -> txtEncodingError(x, oid);

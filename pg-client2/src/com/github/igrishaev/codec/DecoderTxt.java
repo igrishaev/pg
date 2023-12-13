@@ -4,28 +4,11 @@ import com.github.igrishaev.PGError;
 import com.github.igrishaev.enums.OID;
 import com.github.igrishaev.util.JSON;
 
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-
 import java.nio.ByteBuffer;
-import java.time.temporal.ChronoField;
 import java.util.UUID;
 import java.math.BigDecimal;
 
 public class DecoderTxt extends ACodec {
-
-    private static final DateTimeFormatter frmt_timestamptz;
-
-    static {
-        frmt_timestamptz = new DateTimeFormatterBuilder()
-                .appendPattern("yyyy-MM-dd HH:mm:ss")
-                .appendFraction(ChronoField.MICRO_OF_SECOND, 0, 6, true)
-                .appendPattern("x")
-                .toFormatter()
-                .withZone(ZoneOffset.UTC);
-    }
 
     public Object decode(ByteBuffer buf, OID oid) {
 
@@ -49,11 +32,9 @@ public class DecoderTxt extends ACodec {
                 };
             }
             case JSON, JSONB -> JSON.readValue(buf);
-
-            case TIMESTAMPTZ -> OffsetDateTime.parse(
-                    getString(buf), frmt_timestamptz
-            );
-            
+            case TIMESTAMPTZ -> DateTimeTxt.decodeTIMESTAMPTZ(getString(buf));
+            case TIMESTAMP -> DateTimeTxt.decodeTIMESTAMP(getString(buf));
+            case DATE -> DateTimeTxt.decodeDATE(getString(buf));
             default -> getString(buf);
         };
     }

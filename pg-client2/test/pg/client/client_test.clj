@@ -1,6 +1,9 @@
 (ns pg.client.client-test
   (:import
+   java.util.Date
    java.time.Instant
+   java.time.LocalDate
+   java.time.LocalDateTime
    java.time.OffsetDateTime
    com.github.igrishaev.enums.OID
    com.github.igrishaev.PGError)
@@ -1002,50 +1005,51 @@ drop table %1$s;
             (pg/execute-statement conn stmt {:params [inst]})
             obj
             (-> res first :obj)]
-        (is (instance? OffsetDateTime obj))))))
+        (is (instance? OffsetDateTime obj))
+        (is (= (str inst) (str obj)))))))
 
 
-;; (deftest test-client-timestamp-read
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [res (pg/execute conn "select '2022-01-01 23:59:59.123+03'::timestamp as obj")
-;;           obj (-> res first :obj)]
-;;       (is (instance? LocalDateTime obj))
-;;       (is (= "2022-01-01T23:59:59.123" (str obj))))))
+(deftest test-client-timestamp-read
+  (pg/with-connection [conn *CONFIG*]
+    (let [res (pg/execute conn "select '2022-01-01 23:59:59.123+03'::timestamp as obj")
+          obj (-> res first :obj)]
+      (is (instance? LocalDateTime obj))
+      (is (= "2022-01-01T23:59:59.123" (str obj))))))
 
 
-;; (deftest test-client-timestamp-pass
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (pg/with-statement [stmt conn "select $1::timestamp as obj"]
-;;       (let [inst
-;;             (Instant/parse "2022-01-01T20:59:59.000000123Z")
-;;             res
-;;             (pg/execute-statement conn stmt [inst])]
+(deftest test-client-timestamp-pass
+  (pg/with-connection [conn *CONFIG*]
+    (pg/with-statement [stmt conn "select $1::timestamp as obj"]
+      (let [inst
+            (Instant/parse "2022-01-01T20:59:59.000000123Z")
+            res
+            (pg/execute-statement conn stmt {:params [inst]})]
 
-;;         (is (= "2022-01-01T20:59:59"
-;;                (-> res first :obj str)))))))
-
-
-;; (deftest test-client-instant-date-read
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [res (pg/execute conn "select '2022-01-01 23:59:59.123+03'::date as obj")
-;;           obj (-> res first :obj)]
-;;       (is (instance? LocalDate obj))
-;;       (is (= "2022-01-01" (str obj))))))
+        (is (= "2022-01-01T20:59:59"
+               (-> res first :obj str)))))))
 
 
-;; (deftest test-client-pass-date-timestamptz
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [date
-;;           (new Date 85 11 31 23 59 59)
+(deftest test-client-instant-date-read
+  (pg/with-connection [conn *CONFIG*]
+    (let [res (pg/execute conn "select '2022-01-01 23:59:59.123+03'::date as obj")
+          obj (-> res first :obj)]
+      (is (instance? LocalDate obj))
+      (is (= "2022-01-01" (str obj))))))
 
-;;           res
-;;           (pg/execute conn "select $1::timestamptz as obj" [date])
 
-;;           obj
-;;           (-> res first :obj)]
+(deftest test-client-pass-date-timestamptz
+  (pg/with-connection [conn *CONFIG*]
+    (let [date
+          (new Date 85 11 31 23 59 59)
 
-;;       (is (instance? OffsetDateTime obj))
-;;       (is (= "1985-12-31T20:59:59Z" (str obj))))))
+          res
+          (pg/execute conn "select $1::timestamptz as obj" {:params [date]})
+
+          obj
+          (-> res first :obj)]
+
+      (is (instance? OffsetDateTime obj))
+      (is (= "1985-12-31T20:59:59Z" (str obj))))))
 
 
 ;; (deftest test-client-date-pass-date
