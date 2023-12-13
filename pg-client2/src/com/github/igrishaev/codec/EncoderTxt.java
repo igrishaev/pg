@@ -116,6 +116,7 @@ public class EncoderTxt extends ACodec {
                 default -> txtEncodingError(c, oid);
             };
 
+            // TODO: split on types
             case Temporal t -> switch (oid) {
                 case TIMESTAMPTZ -> DateTimeTxt.encodeTIMESTAMPTZ(t);
                 case TIMESTAMP -> DateTimeTxt.encodeTIMESTAMP(t);

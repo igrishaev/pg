@@ -182,6 +182,7 @@ public class EncoderBin extends ACodec {
                 default -> binEncodingError(x, oid);
             };
 
+            // TODO: split on types
             case Temporal t -> switch (oid) {
                 case TIME -> DateTimeBin.encodeTIME(t);
                 case TIMETZ -> DateTimeBin.encodeTIMETZ(t);

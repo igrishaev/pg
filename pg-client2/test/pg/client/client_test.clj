@@ -1172,8 +1172,9 @@ drop table %1$s;
 
       (pg/with-statement [stmt conn query]
 
+        ;; TODO: :rows
         (let [result
-              (pg/execute-statement conn stmt [] {:rows 1})]
+              (pg/execute-statement conn stmt {:row-count 1})]
 
           (is (= [{:column1 1 :column2 2}]
                  result)))))))
