@@ -35,6 +35,8 @@ public class DecoderTxt extends ACodec {
             case TIMESTAMPTZ -> DateTimeTxt.decodeTIMESTAMPTZ(getString(buf));
             case TIMESTAMP -> DateTimeTxt.decodeTIMESTAMP(getString(buf));
             case DATE -> DateTimeTxt.decodeDATE(getString(buf));
+            case TIMETZ -> DateTimeTxt.decodeTIMETZ(getString(buf));
+            case TIME -> DateTimeTxt.decodeTIME(getString(buf));
             default -> getString(buf);
         };
     }

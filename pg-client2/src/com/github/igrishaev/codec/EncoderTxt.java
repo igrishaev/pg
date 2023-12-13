@@ -5,6 +5,9 @@ import clojure.lang.IPersistentCollection;
 import com.github.igrishaev.Const;
 import com.github.igrishaev.enums.OID;
 
+import java.time.OffsetTime;
+import java.time.temporal.Temporal;
+import java.util.Date;
 import java.io.StringWriter;
 import java.time.Instant;
 import java.util.UUID;
@@ -112,11 +115,18 @@ public class EncoderTxt extends ACodec {
                 default -> txtEncodingError(c, oid);
             };
 
-            case Instant i -> switch (oid) {
-                case TIMESTAMPTZ, TEXT, VARCHAR -> DateTimeTxt.encodeTIMESTAMPTZ(i);
-                case TIMESTAMP -> DateTimeTxt.encodeTIMESTAMP(i);
-                case DATE -> DateTimeTxt.encodeDATE(i);
-                default -> txtEncodingError(i, oid);
+            case Temporal t -> switch (oid) {
+                case TIMESTAMPTZ -> DateTimeTxt.encodeTIMESTAMPTZ(t);
+                case TIMESTAMP -> DateTimeTxt.encodeTIMESTAMP(t);
+                case DATE -> DateTimeTxt.encodeDATE(t);
+                default -> txtEncodingError(t, oid);
+            };
+
+            case Date d -> switch (oid) {
+                case TIMESTAMPTZ -> DateTimeTxt.encodeTIMESTAMPTZ(d);
+                case TIMESTAMP -> DateTimeTxt.encodeTIMESTAMP(d);
+                case DATE -> DateTimeTxt.encodeDATE(d);
+                default -> txtEncodingError(d, oid);
             };
 
             default -> txtEncodingError(x, oid);
