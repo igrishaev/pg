@@ -32,6 +32,11 @@ public class DecoderBin extends ACodec {
                 }
             }
             case JSON, JSONB -> JSON.readValueBinary(buf);
+            case TIME -> DateTimeBin.decodeTIME(buf);
+            case TIMETZ -> DateTimeBin.decodeTIMETZ(buf);
+            case DATE -> DateTimeBin.decodeDATE(buf);
+            case TIMESTAMP -> DateTimeBin.decodeTIMESTAMP(buf);
+            case TIMESTAMPTZ -> DateTimeBin.decodeTIMESTAMPTZ(buf);
             default -> getBytes(buf);
         };
     }

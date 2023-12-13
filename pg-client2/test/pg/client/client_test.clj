@@ -2,8 +2,10 @@
   (:import
    java.util.Date
    java.time.Instant
+   java.time.LocalTime
    java.time.LocalDate
    java.time.LocalDateTime
+   java.time.OffsetTime
    java.time.OffsetDateTime
    com.github.igrishaev.enums.OID
    com.github.igrishaev.PGError)
@@ -1051,118 +1053,130 @@ drop table %1$s;
       (is (instance? OffsetDateTime obj))
       (is (= "1985-12-31T20:59:59Z" (str obj))))))
 
+;; TODO
+#_
+(deftest test-client-date-pass-date
 
-;; (deftest test-client-date-pass-date
+  (pg/with-connection [conn *CONFIG*]
+    (let [date
+          (new Date 85 11 31 23 59 59)
 
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [date
-;;           (new Date 85 11 31 23 59 59)
+          res
+          (pg/execute conn "select EXTRACT('year' from $1) as year" {:params [date]})]
 
-;;           res
-;;           (pg/execute conn "select EXTRACT('year' from $1) as year" [date])]
+      (is (= [{:year 1985M}] res))
 
-;;       (if (or (pgi/is11?) (pgi/is12?) (pgi/is13?))
-;;         (is (= [{:year 1985.0}] res))
-;;         (is (= [{:year 1985M}] res))))))
-
-
-;; (deftest test-client-read-time
-
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [res
-;;           (pg/execute conn "select now()::time as time")
-
-;;           time
-;;           (-> res first :time)]
-
-;;       (is (instance? LocalTime time)))))
+      #_
+      (if (or (pgi/is11?) (pgi/is12?) (pgi/is13?))
+        (is (= [{:year 1985.0}] res))
+        (is (= [{:year 1985M}] res))))))
 
 
-;; (deftest test-client-pass-time
+(deftest test-client-read-time
 
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [time1
-;;           (LocalTime/now)
+  (pg/with-connection [conn *CONFIG*]
+    (let [res
+          (pg/execute conn "select now()::time as time")
 
-;;           res
-;;           (pg/execute conn "select $1::time as time" [time1])
+          time
+          (-> res first :time)]
 
-;;           time2
-;;           (-> res first :time)]
-
-;;       (is (= time1 time2)))))
+      (is (instance? LocalTime time)))))
 
 
-;; (deftest test-client-read-timetz
+(deftest test-client-pass-time
 
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [res
-;;           (pg/execute conn "select now()::timetz as timetz")
+  (pg/with-connection [conn *CONFIG*]
+    (let [time1
+          (LocalTime/now)
 
-;;           timetz
-;;           (-> res first :timetz)]
+          res
+          (pg/execute conn "select $1::time as time" {:params [time1]})
 
-;;       (is (instance? OffsetTime timetz)))))
+          time2
+          (-> res first :time)]
 
-
-;; (deftest test-client-pass-timetz
-
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [time1
-;;           (OffsetTime/now)
-
-;;           res
-;;           (pg/execute conn "select $1::timetz as timetz" [time1])
-
-;;           time2
-;;           (-> res first :timetz)]
-
-;;       (is (= time1 time2)))))
+      (is (= time1 time2)))))
 
 
-;; (deftest test-client-conn-with-open
-;;   (with-open [conn (pg/connect *CONFIG*)]
-;;     (let [res (pg/execute conn "select 1 as one")]
-;;       (is (= [{:one 1}] res)))))
+(deftest test-client-read-timetz
+
+  (pg/with-connection [conn *CONFIG*]
+    (let [res
+          (pg/execute conn "select now()::timetz as timetz")
+
+          timetz
+          (-> res first :timetz)]
+
+      (is (instance? OffsetTime timetz)))))
 
 
-;; (deftest test-client-prepare-&-close-ok
+(deftest test-client-pass-timetz
 
-;;   (pg/with-connection [conn *CONFIG*]
+  (pg/with-connection [conn *CONFIG*]
+    (let [time1
+          (OffsetTime/now)
 
-;;     (let [statement
-;;           (pg/prepare-statement conn "select 1 as foo")]
+          res
+          (pg/execute conn "select $1::timetz as timetz" {:params [time1]})
 
-;;       (is (map? statement))
+          time2
+          (-> res first :timetz)]
 
-;;       (let [result
-;;             (pg/close-statement conn statement)]
-
-;;         (is (nil? result))
-
-;;         (try
-;;           (pg/execute-statement conn statement)
-;;           (is false)
-;;           (catch Exception e
-;;             (is (= "ErrorResponse" (ex-message e)))
-;;             (is (re-matches
-;;                  #"prepared statement (.+?) does not exist"
-;;                  (-> e ex-data :error :errors :message)))))))))
+      (is (= time1 time2)))))
 
 
-;; (deftest test-execute-row-limit
-;;   (pg/with-connection [conn *CONFIG*]
+(deftest test-client-conn-with-open
+  (with-open [conn (pg/connect *CONFIG*)]
+    (let [res (pg/execute conn "select 1 as one")]
+      (is (= [{:one 1}] res)))))
 
-;;     (let [query
-;;           "with foo as (values (1, 2), (3, 4), (5, 6)) select * from foo"]
 
-;;       (pg/with-statement [stmt conn query]
+(deftest test-client-prepare-&-close-ok
 
-;;         (let [result
-;;               (pg/execute-statement conn stmt [] {:rows 1})]
+  (pg/with-connection [conn *CONFIG*]
 
-;;           (is (= [{:column1 1 :column2 2}]
-;;                  result)))))))
+    (let [stmt
+          (pg/prepare-statement conn "select 1 as foo")]
+
+      (is (pg/prepared-statement? stmt))
+
+      (let [result
+            (pg/close-statement conn stmt)]
+
+        (is (nil? result))
+
+        (try
+          (pg/execute-statement conn stmt)
+          (is false)
+          (catch PGError e
+            (is true)
+            (is (-> e ex-message (str/starts-with? "ErrorResponse")))
+
+            #_
+            (is (= 1 (-> e ex-message (re-find "ErrorResponse"))))
+
+            ;; message=prepared statement \"s1\" does not exist
+
+            #_
+            (is (re-matches
+                 #"prepared statement (.+?) does not exist"
+                 (-> e ex-data :error :errors :message)))))))))
+
+
+(deftest test-execute-row-limit
+  (pg/with-connection [conn *CONFIG*]
+
+    (let [query
+          "with foo as (values (1, 2), (3, 4), (5, 6)) select * from foo"]
+
+      (pg/with-statement [stmt conn query]
+
+        (let [result
+              (pg/execute-statement conn stmt [] {:rows 1})]
+
+          (is (= [{:column1 1 :column2 2}]
+                 result)))))))
 
 
 ;; (deftest test-execute-row-limit-int32-unsigned

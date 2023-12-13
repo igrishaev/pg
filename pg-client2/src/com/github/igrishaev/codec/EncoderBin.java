@@ -2,6 +2,7 @@ package com.github.igrishaev.codec;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
+import java.time.temporal.Temporal;
 import java.util.UUID;
 
 import clojure.lang.IPersistentCollection;
@@ -169,7 +170,6 @@ public class EncoderBin extends ACodec {
                     yield ByteBuffer.wrap(out.toByteArray());
                 }
                 default -> binEncodingError(w.value(), oid);
-
             };
 
             case IPersistentCollection c -> switch (oid) {
@@ -182,7 +182,17 @@ public class EncoderBin extends ACodec {
                 default -> binEncodingError(x, oid);
             };
 
-            // BigDecimal, BigInteger, BigInt
+            case Temporal t -> switch (oid) {
+                case TIME -> DateTimeBin.encodeTIME(t);
+                case TIMETZ -> DateTimeBin.encodeTIMETZ(t);
+                case DATE -> DateTimeBin.encodeDATE(t);
+                case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP(t);
+                case TIMESTAMPTZ -> DateTimeBin.encodeTIMESTAMPTZ(t);
+                default -> binEncodingError(t, oid);
+            };
+
+            // TODO: Date
+            // TODO: BigDecimal, BigInteger, BigInt
 
             default -> binEncodingError(x, oid);
         };

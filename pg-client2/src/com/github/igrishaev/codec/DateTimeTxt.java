@@ -47,6 +47,7 @@ public class DateTimeTxt {
 
         frmt_decode_time = new DateTimeFormatterBuilder()
                 .appendPattern("HH:mm:ss")
+                .appendFraction(ChronoField.MICRO_OF_SECOND, 0, 6, true)
                 .toFormatter();
 
         frmt_encode_timestamptz = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSx")
