@@ -2,9 +2,9 @@ package com.github.igrishaev.codec;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
-import java.util.Map;
 import java.util.UUID;
 
+import clojure.lang.IPersistentCollection;
 import clojure.lang.Symbol;
 import com.github.igrishaev.Const;
 import com.github.igrishaev.PGError;
@@ -172,11 +172,11 @@ public class EncoderBin extends ACodec {
 
             };
 
-            case Map<?,?> m -> switch (oid) {
+            case IPersistentCollection c -> switch (oid) {
                 case JSON, JSONB -> {
                     // TODO; guess the size?
                     ByteArrayOutputStream out = new ByteArrayOutputStream(Const.JSON_ENC_BUF_SIZE);
-                    JSON.writeValue(out, m);
+                    JSON.writeValue(out, c);
                     yield ByteBuffer.wrap(out.toByteArray());
                 }
                 default -> binEncodingError(x, oid);

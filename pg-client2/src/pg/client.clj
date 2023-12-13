@@ -8,6 +8,8 @@
    java.util.Map
    java.util.List
    clojure.lang.Keyword
+   com.github.igrishaev.util.JSON
+   com.github.igrishaev.util.JSON$Wrapper
    com.github.igrishaev.reducer.IReducer
    com.github.igrishaev.Connection
    com.github.igrishaev.ExecuteParams
@@ -414,3 +416,23 @@
 
 (defn prepared-statement? [x]
   (instance? PreparedStatement x))
+
+
+;;
+;; JSON
+;;
+
+(defn json-wrap [x]
+  (new JSON$Wrapper x))
+
+
+(defn json-read-string [^String input]
+  (JSON/readValue input))
+
+
+(defn json-write-writer [value ^Writer writer]
+  (JSON/writeValue writer value))
+
+
+(defn json-write-stream [value ^OutputStream out ]
+  (JSON/writeValue out value))

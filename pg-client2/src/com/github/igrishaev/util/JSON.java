@@ -1,6 +1,10 @@
 package com.github.igrishaev.util;
 
-import clojure.lang.*;
+import clojure.lang.Keyword;
+import clojure.lang.PersistentVector;
+import clojure.lang.PersistentHashMap;
+import clojure.lang.Ratio;
+import clojure.lang.Symbol;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.igrishaev.PGError;
 import jsonista.jackson.PersistentVectorDeserializer;

@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.UUID;
 
-public class OIDMap {
+public class OIDHint {
 
     public static OID guessOID (Object x) {
         return switch (x) {

@@ -7,7 +7,7 @@ import com.github.igrishaev.codec.EncoderBin;
 import com.github.igrishaev.codec.EncoderTxt;
 import com.github.igrishaev.enums.*;
 import com.github.igrishaev.msg.*;
-import com.github.igrishaev.type.OIDMap;
+import com.github.igrishaev.type.OIDHint;
 import com.github.igrishaev.util.SQL;
 
 import java.io.IOException;
@@ -386,7 +386,7 @@ public class Connection implements Closeable {
             }
             else {
                 Object param = params.get(i);
-                OIDs[i] = OIDMap.guessOID(param);
+                OIDs[i] = OIDHint.guessOID(param);
             }
         }
 

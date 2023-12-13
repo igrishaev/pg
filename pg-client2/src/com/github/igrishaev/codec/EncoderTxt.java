@@ -1,11 +1,11 @@
 package com.github.igrishaev.codec;
 
 import clojure.lang.Symbol;
+import clojure.lang.IPersistentCollection;
 import com.github.igrishaev.Const;
 import com.github.igrishaev.enums.OID;
 
 import java.io.StringWriter;
-import java.util.Map;
 import java.util.UUID;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -61,7 +61,7 @@ public class EncoderTxt extends ACodec {
             };
 
             case UUID u -> switch (oid) {
-                case TEXT, VARCHAR -> String.valueOf(u);
+                case UUID, TEXT, VARCHAR -> String.valueOf(u);
                 default -> txtEncodingError(x, oid);
             };
 
@@ -100,15 +100,15 @@ public class EncoderTxt extends ACodec {
                 default -> txtEncodingError(w.value(), oid);
             };
 
-            case Map<?, ?> m -> switch (oid) {
+            case IPersistentCollection c -> switch (oid) {
+                // TODO: maybe return bytes?
+                // TODO: guess the initial size?
                 case JSON, JSONB -> {
-                    // TODO: maybe return bytes?
-                    // TODO: guess the initial size?
                     StringWriter writer = new StringWriter(Const.JSON_ENC_BUF_SIZE);
-                    JSON.writeValue(writer, m);
+                    JSON.writeValue(writer, c);
                     yield writer.toString();
                 }
-                default -> txtEncodingError(x, oid);
+                default -> txtEncodingError(c, oid);
             };
 
             default -> txtEncodingError(x, oid);

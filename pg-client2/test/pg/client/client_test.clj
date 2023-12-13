@@ -1,5 +1,7 @@
 (ns pg.client.client-test
   (:import
+   java.time.Instant
+   java.time.OffsetDateTime
    com.github.igrishaev.enums.OID
    com.github.igrishaev.PGError)
   (:require
@@ -945,62 +947,62 @@ drop table %1$s;
 ;; TODO: more oids than params
 
 
-;; (deftest test-client-jsonb-write
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [json
-;;           [1 2 [true {:foo 1}]]
+(deftest test-client-jsonb-write
+  (pg/with-connection [conn *CONFIG*]
+    (let [json
+          [1 2 [true {:foo 1}]]
 
-;;           res
-;;           (pg/execute conn
-;;                       "select $1::jsonb as obj"
-;;                       [json]
-;;                       {:fn-result first})]
-;;       (is (= '{:obj (1 2 [true {:foo 1}])} res)))))
-
-
-;; (deftest test-client-default-oid-long
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [res (pg/execute conn "select $1 as foo" [42])]
-;;       (is (= [{:foo 42}] res)))))
+          res
+          (pg/execute conn
+                      "select $1::jsonb as obj"
+                      {:params [json]
+                       :first? first})]
+      (is (= '{:obj (1 2 [true {:foo 1}])} res)))))
 
 
-;; (deftest test-client-default-oid-uuid
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [uid (random-uuid)
-;;           res (pg/execute conn "select $1 as foo" [uid])]
-;;       (is (= [{:foo uid}] res)))))
+(deftest test-client-default-oid-long
+  (pg/with-connection [conn *CONFIG*]
+    (let [res (pg/execute conn "select $1 as foo" {:params [42]})]
+      (is (= [{:foo 42}] res)))))
 
 
-;; (deftest test-client-execute-sqlvec
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [res (pg/execute conn "select $1 as foo" ["hi"])]
-;;       (is (= [{:foo "hi"}] res)))))
+(deftest test-client-default-oid-uuid
+  (pg/with-connection [conn *CONFIG*]
+    (let [uid (random-uuid)
+          res (pg/execute conn "select $1 as foo" {:params [uid]})]
+      (is (= [{:foo uid}] res)))))
 
 
-;; (deftest test-client-execute-sqlvec-no-params
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [res (pg/execute conn "select 42 as foo")]
-;;       (is (= [{:foo 42}] res)))))
+(deftest test-client-execute-sqlvec
+  (pg/with-connection [conn *CONFIG*]
+    (let [res (pg/execute conn "select $1 as foo" {:params ["hi"]})]
+      (is (= [{:foo "hi"}] res)))))
 
 
-;; (deftest test-client-timestamptz-read
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [res (pg/execute conn "select '2022-01-01 23:59:59.123+03'::timestamptz as obj")
-;;           obj (-> res first :obj)]
-;;       (is (instance? OffsetDateTime obj))
-;;       (is (= "2022-01-01T20:59:59.123Z" (str obj))))))
+(deftest test-client-execute-sqlvec-no-params
+  (pg/with-connection [conn *CONFIG*]
+    (let [res (pg/execute conn "select 42 as foo")]
+      (is (= [{:foo 42}] res)))))
 
 
-;; (deftest test-client-timestamptz-pass
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (pg/with-statement [stmt conn "select $1::timestamptz as obj"]
-;;       (let [inst
-;;             (Instant/parse "2022-01-01T20:59:59.123456Z")
-;;             res
-;;             (pg/execute-statement conn stmt [inst])
-;;             obj
-;;             (-> res first :obj)]
-;;         (is (instance? OffsetDateTime obj))))))
+(deftest test-client-timestamptz-read
+  (pg/with-connection [conn *CONFIG*]
+    (let [res (pg/execute conn "select '2022-01-01 23:59:59.123+03'::timestamptz as obj")
+          obj (-> res first :obj)]
+      (is (instance? OffsetDateTime obj))
+      (is (= "2022-01-01T20:59:59.123Z" (str obj))))))
+
+
+(deftest test-client-timestamptz-pass
+  (pg/with-connection [conn *CONFIG*]
+    (pg/with-statement [stmt conn "select $1::timestamptz as obj"]
+      (let [inst
+            (Instant/parse "2022-01-01T20:59:59.123456Z")
+            res
+            (pg/execute-statement conn stmt {:params [inst]})
+            obj
+            (-> res first :obj)]
+        (is (instance? OffsetDateTime obj))))))
 
 
 ;; (deftest test-client-timestamp-read
