@@ -77,6 +77,11 @@ public record ExecuteParams (
             return this;
         }
 
+        public Builder run (IFn fnRun) {
+            this.reducer = new Run(fnRun);
+            return this;
+        }
+
         public Builder first () {
             this.reducer = new First();
             return this;

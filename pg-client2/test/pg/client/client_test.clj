@@ -1180,23 +1180,24 @@ drop table %1$s;
                  result)))))))
 
 
-;; (deftest test-execute-row-limit-int32-unsigned
-;;   (pg/with-connection [conn *CONFIG*]
+(deftest test-execute-row-limit-int32-unsigned
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (let [query
-;;           "with foo as (values (1, 2), (3, 4), (5, 6)) select * from foo"]
+    (let [query
+          "with foo as (values (1, 2), (3, 4), (5, 6)) select * from foo"]
 
-;;       (pg/with-statement [stmt conn query]
+      (pg/with-statement [stmt conn query]
 
-;;         (let [result
-;;               (pg/execute-statement conn stmt [] {:rows 0xFFFFFFFF})]
+        (let [result
+              (pg/execute-statement conn stmt {:row-count 0xFFFFFFFF})]
 
-;;           (is (= [{:column1 1 :column2 2}
-;;                   {:column1 3 :column2 4}
-;;                   {:column1 5 :column2 6}]
-;;                  result)))))))
+          (is (= [{:column1 1 :column2 2}
+                  {:column1 3 :column2 4}
+                  {:column1 5 :column2 6}]
+                 result)))))))
 
 
+;; TODO
 ;; (deftest test-acc-as-java
 
 ;;   (pg/with-connection [conn *CONFIG*]
@@ -1218,77 +1219,78 @@ drop table %1$s;
 ;;                   res)))))
 
 
-;; (deftest test-acc-as-index-by
+(deftest test-acc-as-index-by
 
-;;   (pg/with-connection [conn *CONFIG*]
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (let [query
-;;           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
+    (let [query
+          "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
-;;           res
-;;           (pg/execute conn query nil {:as (as/index-by :a)})]
+          res
+          (pg/execute conn query {:index-by :a})]
 
-;;       (is (= {1 {:a 1 :b 2}
-;;               3 {:a 3 :b 4}
-;;               5 {:a 5 :b 6}}
+      (is (= {1 {:a 1 :b 2}
+              3 {:a 3 :b 4}
+              5 {:a 5 :b 6}}
 
-;;              res)))))
-
-
-;; (deftest test-acc-as-group-by
-
-;;   (pg/with-connection [conn *CONFIG*]
-
-;;     (let [query
-;;           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
-
-;;           res
-;;           (pg/execute conn query nil {:as (as/group-by :a)})]
-
-;;       (is (= {1 [{:a 1 :b 2}]
-;;               3 [{:a 3 :b 4}]
-;;               5 [{:a 5 :b 6}]}
-;;              res)))))
+             res)))))
 
 
-;; (deftest test-acc-as-kv
+(deftest test-acc-as-group-by
 
-;;   (pg/with-connection [conn *CONFIG*]
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (let [query
-;;           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
+    (let [query
+          "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
-;;           res
-;;           (pg/execute conn query nil {:as (as/kv :b :a)})]
+          res
+          (pg/execute conn query {:group-by :a})]
 
-;;       (is (= {2 1
-;;               4 3
-;;               6 5}
-;;              res)))))
+      ;; TODO
+      (is (= {1 [{:a 1 :b 2}]
+              3 [{:a 3 :b 4}]
+              5 [{:a 5 :b 6}]}
+             res)))))
 
 
-;; (deftest test-acc-as-run
+(deftest test-acc-as-kv
 
-;;   (pg/with-connection [conn *CONFIG*]
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (let [query
-;;           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
+    (let [query
+          "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
-;;           capture!
-;;           (atom [])
+          res
+          (pg/execute conn query {:kv [:b :a]})]
 
-;;           as
-;;           (as/run
-;;             (fn [row]
-;;               (swap! capture! conj row)))
+      (is (= {2 1
+              4 3
+              6 5}
+             res)))))
 
-;;           res
-;;           (pg/execute conn query nil {:as as})]
 
-;;       (is (= 3 res))
+;; TODO: fix
+(deftest test-acc-as-run
 
-;;       (is (= [{:a 1 :b 2} {:a 3 :b 4} {:a 5 :b 6}]
-;;              @capture!)))))
+  (pg/with-connection [conn *CONFIG*]
+
+    (let [query
+          "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
+
+          capture!
+          (atom [])
+
+          func
+          (fn [row]
+            (swap! capture! conj row))
+
+          res
+          (pg/execute conn query {:run func})]
+
+      (is (= 3 res))
+
+      (is (= [{:a 1 :b 2} {:a 3 :b 4} {:a 5 :b 6}]
+             @capture!)))))
 
 
 ;; (deftest test-acc-as-fold

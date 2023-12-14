@@ -23,11 +23,11 @@ public class GroupBy extends MapMixin implements IReducer {
     public Object append (final Object acc, final Object row) {
         Object key = f.invoke(row);
         if (RT.contains(acc, key) == Boolean.FALSE) {
-            return RT.assoc(acc, key, PersistentVector.EMPTY.cons(key));
+            return RT.assoc(acc, key, PersistentVector.EMPTY.cons(row));
         }
         else {
-            PersistentVector val = (PersistentVector) RT.get(acc, key);
-            return RT.assoc(acc, key, val.cons(key));
+            PersistentVector vec = (PersistentVector) RT.get(acc, key);
+            return RT.assoc(acc, key, vec.cons(row));
         }
     }
 

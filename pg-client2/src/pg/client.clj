@@ -37,6 +37,7 @@
                 matrix?
                 kebab?
                 fold
+                run ;; TODO: each?
                 init
                 kv
                 first?
@@ -69,6 +70,9 @@
 
       index-by
       (.indexBy index-by)
+
+      run
+      (.run index-by)
 
       matrix?
       (.asMatrix)
