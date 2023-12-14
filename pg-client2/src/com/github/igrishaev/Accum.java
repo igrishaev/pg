@@ -13,12 +13,17 @@ public class Accum {
      public static class Node {
 
          private CopyOutResponse copyOutResponse;
+         private PortalSuspended portalSuspended;
          private RowDescription rowDescription;
          private CommandComplete commandComplete;
          private ParseComplete parseComplete;
          private ParameterDescription parameterDescription;
          private Object[] keys;
          private Object acc;
+
+         private boolean isComplete() {
+             return commandComplete != null || portalSuspended != null;
+         }
 
          public Object toResult(ExecuteParams executeParams) {
 
@@ -83,6 +88,11 @@ public class Accum {
         current.parameterDescription = msg;
     }
 
+    public void handlePortalSuspended(PortalSuspended msg) {
+        current.portalSuspended = msg;
+        addNode();
+    }
+
     public void handleCopyOutResponse (CopyOutResponse msg) {
         current.copyOutResponse = msg;
     }
@@ -120,7 +130,7 @@ public class Accum {
     public Object getResult () {
         final ArrayList<Object> results = new ArrayList<>(1);
         for (Node node: nodes) {
-            if (node.commandComplete != null) {
+            if (node.isComplete()) {
                 results.add(node.toResult(executeParams));
             }
         }

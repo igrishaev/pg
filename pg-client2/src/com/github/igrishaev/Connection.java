@@ -336,6 +336,7 @@ public class Connection implements Closeable {
             case 'v' -> NegotiateProtocolVersion.fromByteBuffer(bbBody);
             case 'A' -> NotificationResponse.fromByteBuffer(bbBody);
             case 'N' -> NoticeResponse.fromByteBuffer(bbBody);
+            case 's' -> new PortalSuspended();
             default -> throw new PGError("Unknown message: %s", tag);
         };
 
@@ -557,6 +558,9 @@ public class Connection implements Closeable {
             case ReadyForQuery x:
                 handleReadyForQuery(x);
                 break;
+            case PortalSuspended x:
+                handlePortalSuspended(x, acc);
+                break;
             case AuthenticationMD5Password x:
                 handleAuthenticationMD5Password(x);
                 break;
@@ -589,6 +593,10 @@ public class Connection implements Closeable {
 
             default: throw new PGError("Cannot handle this message: %s", msg);
         }
+    }
+
+    private void handlePortalSuspended(PortalSuspended msg, Accum acc) {
+        acc.handlePortalSuspended(msg);
     }
 
     private void handleNotificationResponse(NotificationResponse msg) {

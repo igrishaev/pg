@@ -25,6 +25,7 @@ public record ExecuteParams (
         boolean binaryDecode
 ) {
 
+    // TODO: remove builder?
     public static class Builder {
 
         private List<Object> params = Collections.emptyList();
