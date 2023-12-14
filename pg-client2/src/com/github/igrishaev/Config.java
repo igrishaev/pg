@@ -79,7 +79,7 @@ public record Config (
         }
 
         public Builder binaryDecode(final boolean binaryDecode) {
-            this.binaryDecode = binaryEncode;
+            this.binaryDecode = binaryDecode;
             return this;
         }
 

@@ -33,6 +33,8 @@ public class Main {
         System.out.println(conn.getId());
         System.out.println(conn.getPid());
 
+        System.out.println(conn.execute("select '1 year 1 second'::interval as interval"));
+
         // Object res1 = conn.query("select x from generate_series(1, 3) as x; select 42 as foo");
         // System.out.println(res1);
 
@@ -49,30 +51,30 @@ public class Main {
         // System.out.println(res3);
 
         // conn.execute("create table abc (id integer, title text)");
-        Object resIns = conn.execute(
-                "insert into abc (id, title) values ($1, $2), ($3, $4) returning *",
-                new ExecuteParams.Builder().params(1, "test2", 2, "test2").build()
-        );
-
-        System.out.println(resIns);
-
-        Object res4 = conn.query("copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT CSV)");
-        System.out.println(res4);
-
-        FileOutputStream out;
-        try {
-            out = new FileOutputStream("foo.csv");
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-        Object res5 = conn.copyOut("copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT CSV)", out);
-        System.out.println(res5);
-
-        Object res6 = conn.query("select '[1, 2, 3, {\"foo/bar\": true}]'::jsonb");
-        System.out.println(res6);
-
-        Object res7 = conn.execute("select '[1, 2, 3, {\"foo/bar\": true}]'::jsonb");
-        System.out.println(res7);
+//        Object resIns = conn.execute(
+//                "insert into abc (id, title) values ($1, $2), ($3, $4) returning *",
+//                new ExecuteParams.Builder().params(1, "test2", 2, "test2").build()
+//        );
+//
+//        System.out.println(resIns);
+//
+//        Object res4 = conn.query("copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT CSV)");
+//        System.out.println(res4);
+//
+//        FileOutputStream out;
+//        try {
+//            out = new FileOutputStream("foo.csv");
+//        } catch (FileNotFoundException e) {
+//            throw new RuntimeException(e);
+//        }
+//        Object res5 = conn.copyOut("copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT CSV)", out);
+//        System.out.println(res5);
+//
+//        Object res6 = conn.query("select '[1, 2, 3, {\"foo/bar\": true}]'::jsonb");
+//        System.out.println(res6);
+//
+//        Object res7 = conn.execute("select '[1, 2, 3, {\"foo/bar\": true}]'::jsonb");
+//        System.out.println(res7);
 
 
 

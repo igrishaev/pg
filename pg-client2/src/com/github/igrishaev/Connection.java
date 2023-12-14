@@ -415,8 +415,8 @@ public class Connection implements Closeable {
             );
         }
 
-        Format paramsFormat = executeParams.binaryEncode() || config.binaryEncode() ? Format.BIN : Format.TXT;
-        Format columnFormat = executeParams.binaryDecode() || config.binaryDecode() ? Format.BIN : Format.TXT;
+        Format paramsFormat = (executeParams.binaryEncode() || config.binaryEncode()) ? Format.BIN : Format.TXT;
+        Format columnFormat = (executeParams.binaryDecode() || config.binaryDecode()) ? Format.BIN : Format.TXT;
 
         byte[][] bytes = new byte[size][];
         String encoding = getClientEncoding();

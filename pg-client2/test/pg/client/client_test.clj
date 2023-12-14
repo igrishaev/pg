@@ -1293,92 +1293,109 @@ drop table %1$s;
              @capture!)))))
 
 
-;; (deftest test-acc-as-fold
+(deftest test-acc-as-fold
 
-;;   (pg/with-connection [conn *CONFIG*]
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (let [query
-;;           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
+    (let [query
+          "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
-;;           as
-;;           (as/fold #{} (fn [acc {:keys [a b]}]
-;;                          (conj acc [a b])))
+          fold
+          (fn [acc {:keys [a b]}]
+            (conj acc [a b]))
 
-;;           res
-;;           (pg/execute conn query nil {:as as})]
+          res
+          (pg/execute conn query {:fold fold :init #{}})]
 
-;;       (is (= #{[3 4] [5 6] [1 2]} res)))))
-
-
-;; (deftest test-acc-as-matrix
-
-;;   (pg/with-connection [conn *CONFIG*]
-
-;;     (let [query
-;;           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
-
-;;           res
-;;           (pg/execute conn query nil {:as as/matrix})]
-
-;;       (is (= [[1 2]
-;;               [3 4]
-;;               [5 6]]
-;;              res)))))
+      (is (= #{[3 4] [5 6] [1 2]} res)))))
 
 
-;; (deftest test-acc-as-first
+(deftest test-acc-as-matrix
 
-;;   (pg/with-connection [conn *CONFIG*]
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (let [query
-;;           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
+    (let [query
+          "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
-;;           res
-;;           (pg/execute conn query nil {:as as/first})]
+          res
+          (pg/execute conn query {:matrix? true})]
 
-;;       (is (= {:a 1 :b 2} res)))))
-
-
-;; (deftest test-conn-opt
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [opt (conn/get-opt conn)]
-;;       (is (= {:date-style "ISO, MDY"
-;;               :time-zone "Etc/UTC"
-;;               :server-encoding "UTF8"
-;;               :client-encoding "UTF8"}
-;;              opt)))))
+      (is (= [[1 2]
+              [3 4]
+              [5 6]]
+             res)))))
 
 
-;; (deftest test-two-various-params
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [res
-;;           (pg/execute conn "select $1::int8 = $1::int4 as eq" [(int 123) 123])]
-;;       (is (= [{:eq true}] res)))))
+(deftest test-acc-as-first
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (let [query
+          "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
+
+          res
+          (pg/execute conn query {:first? true})]
+
+      (is (= {:a 1 :b 2} res)))))
 
 
-;; (deftest test-empty-select
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [res (pg/execute conn "select")]
-;;       (is (= [] res)))))
+;; TODO
+(deftest test-conn-params
+  (pg/with-connection [conn *CONFIG*]
+    (let [params (pg/get-parameters conn)]
+      (is (= {"DateStyle" "ISO, MDY",
+              "server_encoding" "UTF8",
+              "TimeZone" "Etc/UTC",
+              "application_name" "pg2",
+              "is_superuser" "on",
+              "standard_conforming_strings" "on",
+              "client_encoding" "UTF8",
+              "IntervalStyle" "postgres",
+              "server_version" "13.12 (Debian 13.12-1.pgdg120+1)",
+              "session_authorization" "test",
+              "integer_datetimes" "on"}
+             params)))))
 
 
-;; (deftest test-encode-binary-simple
-;;   (pg/with-connection [conn (assoc *CONFIG* :binary-encode? true)]
-;;     (let [res (pg/execute conn "select $1::integer as num" [42])]
-;;       (is (= [{:num 42}] res)))))
+(deftest test-two-various-params
+  (pg/with-connection [conn *CONFIG*]
+    (let [res
+          (pg/execute conn
+                      "select $1::int8 = $1::int4 as eq"
+                      {:params [(int 123) 123]})]
+      (is (= [{:eq true}] res)))))
 
 
-;; (deftest test-decode-binary-simple
-;;   (pg/with-connection [conn (assoc *CONFIG* :binary-decode? true)]
-;;     (let [res (pg/execute conn "select $1::integer as num" [42])]
-;;       (is (= [{:num 42}] res)))))
+;; TODO: DataRow[valueCount=0, values=[Ljava.nio.ByteBuffer;@16903ccc]
+
+;; TODO: []
+(deftest test-empty-select
+  (pg/with-connection [conn *CONFIG*]
+    (let [res (pg/execute conn "select")]
+      (is (= [{}] res)))))
 
 
-;; (deftest test-decode-binary-unsupported
-;;   (pg/with-connection [conn (assoc *CONFIG* :binary-decode? true)]
-;;     (let [res (pg/execute conn "select '1 year 1 second'::interval as interval" [])]
-;;       (is (= [{:interval [0 0 0 0 0 15 66 64 0 0 0 0 0 0 0 12]}]
-;;              (update-in res [0 :interval] vec))))))
+(deftest test-encode-binary-simple
+  (pg/with-connection [conn (assoc *CONFIG* :binary-encode? true)]
+    (let [res (pg/execute conn "select $1::integer as num" {:params [42]})]
+      (is (= [{:num 42}] res)))))
+
+
+;; TODO: params: map or top-level param?
+(deftest test-decode-binary-simple
+  (pg/with-connection [conn (assoc *CONFIG* :binary-decode? true)]
+    (let [res (pg/execute conn "select $1::integer as num" {:params [42]})]
+      (is (= [{:num 42}] res)))))
+
+
+;; TODO: it's not binary!
+(deftest test-decode-binary-unsupported
+  (pg/with-connection [conn (assoc *CONFIG* :binary-decode? true)]
+    (let [res (pg/execute conn "select '1 year 1 second'::interval as interval")]
+      (is (= 1 res))
+      #_
+      (is (= [{:interval [0 0 0 0 0 15 66 64 0 0 0 0 0 0 0 12]}]
+             (update-in res [0 :interval] vec))))))
 
 
 ;; (deftest test-decode-text-unsupported
