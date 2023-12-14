@@ -7,6 +7,7 @@
    java.time.LocalDateTime
    java.time.OffsetTime
    java.time.OffsetDateTime
+   java.util.concurrent.ExecutionException
    com.github.igrishaev.enums.OID
    com.github.igrishaev.PGError)
   (:require
@@ -1392,289 +1393,293 @@ drop table %1$s;
 (deftest test-decode-binary-unsupported
   (pg/with-connection [conn (assoc *CONFIG* :binary-decode? true)]
     (let [res (pg/execute conn "select '1 year 1 second'::interval as interval")]
-      (is (= 1 res))
-      #_
       (is (= [{:interval [0 0 0 0 0 15 66 64 0 0 0 0 0 0 0 12]}]
              (update-in res [0 :interval] vec))))))
 
 
-;; (deftest test-decode-text-unsupported
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [res (pg/execute conn "select '1 year 1 second'::interval as interval")]
-;;       (is (= [{:interval "1 year 00:00:01"}] res)))))
-
-
-;; (deftest test-decode-binary-text
-;;   (pg/with-connection [conn (assoc *CONFIG* :binary-decode? true)]
-;;     (let [res (pg/execute conn "select 'hello'::text as text" [])]
-;;       (is (= [{:text "hello"}] res)))))
-
-
-;; (deftest test-decode-binary-varchar
-;;   (pg/with-connection [conn (assoc *CONFIG* :binary-decode? true)]
-;;     (let [res (pg/execute conn "select 'hello'::varchar as text" [])]
-;;       (is (= [{:text "hello"}] res)))))
-
-
-;; (deftest test-decode-binary-bpchar
-;;   (pg/with-connection [conn (assoc *CONFIG*
-;;                                    :binary-encode? true
-;;                                    :binary-decode? true)]
-;;     (let [res (pg/execute conn "select $1::char as char" ["ё"])]
-;;       (is (= [{:char \ё}] res)))))
-
-
-;; (deftest test-decode-oid
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [res (pg/execute conn "select $1::oid as oid" [42])]
-;;       (is (= [{:oid 42}] res)))))
-
-
-;; (deftest test-decode-oid-binary
-;;   (pg/with-connection [conn (assoc *CONFIG*
-;;                                    :binary-encode? true
-;;                                    :binary-decode? true)]
-;;     (let [res (pg/execute conn "select $1::oid as oid" [42])]
-;;       (is (= [{:oid 42}] res)))))
-
-
-;; (deftest test-uuid-text
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [uuid
-;;           (random-uuid)
-;;           res
-;;           (pg/execute conn "select $1 as uuid" [uuid])]
-;;       (is (= [{:uuid uuid}] res)))))
-
-
-;; (deftest test-uuid-bin
-;;   (pg/with-connection [conn (assoc *CONFIG*
-;;                                    :binary-encode? true
-;;                                    :binary-decode? true)]
-;;     (let [uuid
-;;           (random-uuid)
-;;           res
-;;           (pg/execute conn "select $1 as uuid" [uuid])]
-;;       (is (= [{:uuid uuid}] res)))))
-
-
-;; (deftest test-time-bin-read
-;;   (pg/with-connection [conn (assoc *CONFIG*
-;;                                    :binary-encode? true
-;;                                    :binary-decode? true)]
-;;     (let [res
-;;           (pg/execute conn "select '12:01:59.123456789+03'::time as time;" [])
-;;           time
-;;           (-> res first :time)]
-;;       (is (instance? LocalTime time))
-;;       (is (= "12:01:59.123457" (str time))))))
-
-
-;; (deftest test-timetz-bin-read
-;;   (pg/with-connection [conn (assoc *CONFIG*
-;;                                    :binary-encode? true
-;;                                    :binary-decode? true)]
-;;     (let [res
-;;           (pg/execute conn "select '12:01:59.123456789+03'::timetz as timetz;" [])
-;;           timetz
-;;           (-> res first :timetz)]
-;;       (is (instance? OffsetTime timetz))
-;;       (is (= "12:01:59.123457+03:00" (str timetz))))))
-
-
-;; (deftest test-timestamp-bin-read
-;;   (pg/with-connection [conn (assoc *CONFIG*
-;;                                    :binary-encode? true
-;;                                    :binary-decode? true)]
-;;     (let [res
-;;           (pg/execute conn "select '2022-01-01 12:01:59.123456789+03'::timestamp as ts;" [])
-;;           ts
-;;           (-> res first :ts)]
-;;       (is (instance? LocalDateTime ts))
-;;       (is (= "2022-01-01T12:01:59.123457" (str ts))))))
-
-
-;; (deftest test-timestamptz-bin-read
-;;   (pg/with-connection [conn (assoc *CONFIG*
-;;                                    :binary-encode? true
-;;                                    :binary-decode? true)]
-;;     (let [res
-;;           (pg/execute conn "select '2022-01-01 12:01:59.123456789+03'::timestamptz as tstz;" [])
-;;           tstz
-;;           (-> res first :tstz)]
-;;       (is (instance? OffsetDateTime tstz))
-;;       (is (= "2022-01-01T09:01:59.123457Z" (str tstz))))))
+(deftest test-decode-text-unsupported
+  (pg/with-connection [conn *CONFIG*]
+    (let [res (pg/execute conn "select '1 year 1 second'::interval as interval")]
+      (is (= [{:interval "1 year 00:00:01"}] res)))))
+
+
+(deftest test-decode-binary-text
+  (pg/with-connection [conn (assoc *CONFIG* :binary-decode? true)]
+    (let [res (pg/execute conn "select 'hello'::text as text")]
+      (is (= [{:text "hello"}] res)))))
+
+
+(deftest test-decode-binary-varchar
+  (pg/with-connection [conn (assoc *CONFIG* :binary-decode? true)]
+    (let [res (pg/execute conn "select 'hello'::varchar as text")]
+      (is (= [{:text "hello"}] res)))))
+
+
+;; TODO
+(deftest test-decode-binary-bpchar
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [res (pg/execute conn "select $1::char as char" {:params ["ё"]})]
+      (is (= [{:char \ё}] res)))))
+
+
+(deftest test-decode-oid
+  (pg/with-connection [conn *CONFIG*]
+    (let [res (pg/execute conn "select $1::oid as oid" {:params [42]})]
+      (is (= [{:oid 42}] res)))))
+
+
+(deftest test-decode-oid-binary
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [res (pg/execute conn "select $1::oid as oid" {:params [42]})]
+      (is (= [{:oid 42}] res)))))
+
+
+(deftest test-uuid-text
+  (pg/with-connection [conn *CONFIG*]
+    (let [uuid
+          (random-uuid)
+          res
+          (pg/execute conn "select $1 as uuid" {:params [uuid]})]
+      (is (= [{:uuid uuid}] res)))))
+
+
+(deftest test-uuid-bin
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [uuid
+          (random-uuid)
+          res
+          (pg/execute conn "select $1 as uuid" {:params [uuid]})]
+      (is (= [{:uuid uuid}] res)))))
+
+
+(deftest test-time-bin-read
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [res
+          (pg/execute conn "select '12:01:59.123456789+03'::time as time")
+          time
+          (-> res first :time)]
+      (is (instance? LocalTime time))
+      (is (= "12:01:59.123457" (str time))))))
+
+
+(deftest test-timetz-bin-read
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [res
+          (pg/execute conn "select '12:01:59.123456789+03'::timetz as timetz")
+          timetz
+          (-> res first :timetz)]
+      (is (instance? OffsetTime timetz))
+      (is (= "12:01:59.123457+03:00" (str timetz))))))
+
+
+(deftest test-timestamp-bin-read
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [res
+          (pg/execute conn "select '2022-01-01 12:01:59.123456789+03'::timestamp as ts")
+          ts
+          (-> res first :ts)]
+      (is (instance? LocalDateTime ts))
+      (is (= "2022-01-01T12:01:59.123457" (str ts))))))
+
+
+(deftest test-timestamptz-bin-read
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [res
+          (pg/execute conn "select '2022-01-01 12:01:59.123456789+03'::timestamptz as tstz")
+          tstz
+          (-> res first :tstz)]
+      (is (instance? OffsetDateTime tstz))
+      (is (= "2022-01-01T09:01:59.123457Z" (str tstz))))))
 
 
-;; (deftest test-date-bin-read
-;;   (pg/with-connection [conn (assoc *CONFIG*
-;;                                    :binary-encode? true
-;;                                    :binary-decode? true)]
-;;     (let [res
-;;           (pg/execute conn "select '2022-01-01 12:01:59.123456789+03'::date as date;" [])
-;;           date
-;;           (-> res first :date)]
-;;       (is (instance? LocalDate date))
-;;       (is (= "2022-01-01" (str date))))))
+(deftest test-date-bin-read
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [res
+          (pg/execute conn "select '2022-01-01 12:01:59.123456789+03'::date as date")
+          date
+          (-> res first :date)]
+      (is (instance? LocalDate date))
+      (is (= "2022-01-01" (str date))))))
 
 
-;; (deftest test-pass-zoned-time-timetz-bin
-;;   (pg/with-connection [conn (assoc *CONFIG*
-;;                                    :binary-encode? true
-;;                                    :binary-decode? true)]
-;;     (let [x1
-;;           (OffsetTime/now)
+(deftest test-pass-zoned-time-timetz-bin
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [x1
+          (OffsetTime/now)
 
-;;           res
-;;           (pg/execute conn "select $1 as x;" [x1])
+          res
+          (pg/execute conn "select $1 as x" {:params [x1]})
 
-;;           x2
-;;           (-> res first :x)]
+          x2
+          (-> res first :x)]
 
-;;       (is (instance? OffsetTime x2))
-;;       (is (= x1 x2)))))
+      (is (instance? OffsetTime x2))
+      (is (= x1 x2)))))
 
 
-;; (deftest test-pass-local-time-time-bin
-;;   (pg/with-connection [conn (assoc *CONFIG*
-;;                                    :binary-encode? true
-;;                                    :binary-decode? true)]
-;;     (let [x1
-;;           (LocalTime/now)
+(deftest test-pass-local-time-time-bin
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [x1
+          (LocalTime/now)
 
-;;           res
-;;           (pg/execute conn "select $1 as x;" [x1])
+          res
+          (pg/execute conn "select $1 as x;" {:params [x1]})
 
-;;           x2
-;;           (-> res first :x)]
+          x2
+          (-> res first :x)]
 
-;;       (is (instance? LocalTime x2))
-;;       (is (= x1 x2)))))
+      (is (instance? LocalTime x2))
+      (is (= x1 x2)))))
 
 
-;; (deftest test-pass-instant-timestamptz-bin
-;;   (pg/with-connection [conn (assoc *CONFIG*
-;;                                    :binary-encode? true
-;;                                    :binary-decode? true)]
-;;     (let [x1
-;;           (Instant/now)
+(deftest test-pass-instant-timestamptz-bin
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [x1
+          (Instant/now)
 
-;;           res
-;;           (pg/execute conn "select $1 as x;" [x1])
+          res
+          (pg/execute conn "select $1 as x;" {:params [x1]})
 
-;;           ^OffsetDateTime x2
-;;           (-> res first :x)]
+          ^OffsetDateTime x2
+          (-> res first :x)]
 
-;;       (is (= x1 (.toInstant x2))))))
+      (is (= x1 (.toInstant x2))))))
 
 
-;; (deftest test-pass-instant-timestamp-bin
-;;   (pg/with-connection [conn (assoc *CONFIG*
-;;                                    :binary-encode? true
-;;                                    :binary-decode? true)]
-;;     (let [x1
-;;           (Instant/parse "2023-07-25T12:36:15.981981Z")
+(deftest test-pass-instant-timestamp-bin
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [x1
+          (Instant/parse "2023-07-25T12:36:15.981981Z")
 
-;;           res
-;;           (pg/execute conn "select $1::timestamp as x" [x1])
+          res
+          (pg/execute conn "select $1::timestamp as x" {:params [x1]})
 
-;;           x2
-;;           (-> res first :x)]
+          x2
+          (-> res first :x)]
 
-;;       (is (= (LocalDateTime/parse "2023-07-25T12:36:15.981981")
-;;              x2)))))
+      (is (= (LocalDateTime/parse "2023-07-25T12:36:15.981981")
+             x2)))))
 
 
-;; (deftest test-pass-date-timestamp-bin
-;;   (pg/with-connection [conn (assoc *CONFIG*
-;;                                    :binary-encode? true
-;;                                    :binary-decode? true)]
-;;     (let [x1
-;;           (new Date 123123123123123)
-;;           ;; 5871-08-14T03:32:03.123-00:00
+(deftest test-pass-date-timestamp-bin
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [x1
+          (new Date 123123123123123)
+          ;; 5871-08-14T03:32:03.123-00:00
 
-;;           res
-;;           (pg/execute conn "select $1::timestamp as x" [x1])
+          res
+          (pg/execute conn "select $1::timestamp as x" {:params [x1]})
 
-;;           x2
-;;           (-> res first :x)]
+          x2
+          (-> res first :x)]
 
-;;       (is (= "5871-08-14T03:32:03.123" (str x2))))))
+      (is (= "5871-08-14T03:32:03.123" (str x2))))))
 
 
-;; (deftest test-pass-date-timestamptz-bin
-;;   (pg/with-connection [conn (assoc *CONFIG*
-;;                                    :binary-encode? true
-;;                                    :binary-decode? true)]
-;;     (let [x1
-;;           (new Date 123123123123123)
-;;           ;; 5871-08-14T03:32:03.123-00:00
+(deftest test-pass-date-timestamptz-bin
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [x1
+          (new Date 123123123123123)
+          ;; 5871-08-14T03:32:03.123-00:00
 
-;;           res
-;;           (pg/execute conn "select $1::timestamptz as x" [x1])
+          res
+          (pg/execute conn "select $1::timestamptz as x" {:params [x1]})
 
-;;           x2
-;;           (-> res first :x)]
+          x2
+          (-> res first :x)]
 
-;;       (is (= "5871-08-14T03:32:03.123Z" (str x2))))))
+      (is (= "5871-08-14T03:32:03.123Z" (str x2))))))
 
 
-;; (deftest test-read-write-numeric-txt
-;;   (pg/with-connection [conn *CONFIG*]
-;;     (let [x1
-;;           (bigdec "-123.456")
+(deftest test-read-write-numeric-txt
+  (pg/with-connection [conn *CONFIG*]
+    (let [x1
+          (bigdec "-123.456")
 
-;;           res
-;;           (pg/execute conn "select $1::numeric as x" [x1])
+          res
+          (pg/execute conn "select $1::numeric as x" {:params [x1]})
 
-;;           x2
-;;           (-> res first :x)]
+          x2
+          (-> res first :x)]
 
-;;       (is (= (str x1) (str x2))))))
+      (is (= (str x1) (str x2))))))
 
 
-;; (deftest test-read-write-numeric-bin
-;;   (pg/with-connection [conn (assoc *CONFIG*
-;;                                    :binary-encode? true
-;;                                    :binary-decode? true)]
-;;     (let [x1
-;;           (bigdec "-123.456")
+;; TODO
+(deftest test-read-write-numeric-bin
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [x1
+          (bigdec "-123.456")
 
-;;           res
-;;           (pg/execute conn "select $1::numeric as x" [x1])
+          res
+          (pg/execute conn "select $1::numeric as x" {:params [x1]})
 
-;;           x2
-;;           (-> res first :x)]
+          x2
+          (-> res first :x)]
 
-;;       (is (= (str x1) (str x2))))))
+      (is (= (str x1) (str x2))))))
 
 
-;; (deftest test-cancel-query
+(deftest test-cancel-query
 
-;;   (let [conn1
-;;         (pg/connect *CONFIG*)
+  (let [conn1
+        (pg/connect *CONFIG*)
 
-;;         fut
-;;         (future
-;;           (pg/query conn1 "select pg_sleep(60) as sleep"))]
+        fut
+        (future
+          (pg/query conn1 "select pg_sleep(60) as sleep"))
 
-;;     ;; let it start
-;;     (Thread/sleep 100)
+        _
+        ;; let it start
+        (Thread/sleep 100)
 
-;;     (pg/cancel conn1)
+        res
+        (pg/cancel-request conn1)]
 
-;;     (try
-;;       @fut
-;;       (is false)
-;;       (catch ExecutionException e-future
-;;         (let [e (ex-cause e-future)]
-;;           (is (= "ErrorResponse" (ex-message e)))
-;;           (is (= "canceling statement due to user request"
-;;                  (-> e
-;;                      ex-data
-;;                      :error
-;;                      :errors
-;;                      :message))))))))
+    (is (= 1 res))
+
+    (try
+      @fut
+      (is false)
+      (catch ExecutionException e-future
+        (let [e (ex-cause e-future)]
+          (is (= "ErrorResponse" (ex-message e)))
+          (is (= "canceling statement due to user request"
+                 (-> e
+                     ex-data
+                     :error
+                     :errors
+                     :message))))))))
 
 
 ;; (deftest test-copy-out-api-txt

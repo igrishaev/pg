@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import com.github.igrishaev.PGError;
 import com.github.igrishaev.enums.OID;
+import com.github.igrishaev.util.BBTool;
 import com.github.igrishaev.util.JSON;
 
 
@@ -13,6 +14,7 @@ public class DecoderBin extends ACodec {
 
     public Object decode(ByteBuffer buf, OID oid) {
         return switch (oid) {
+            case TEXT, VARCHAR, NAME -> BBTool.getRestString(buf); // TODO: encoding
             case INT2 -> buf.getShort();
             case INT4, OID -> buf.getInt();
             case INT8 -> buf.getLong();

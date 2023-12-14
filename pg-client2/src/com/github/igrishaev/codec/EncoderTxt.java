@@ -28,7 +28,7 @@ public class EncoderTxt extends ACodec {
             };
 
             case String s -> switch (oid) {
-                case TEXT, VARCHAR -> s;
+                case TEXT, VARCHAR, NAME -> s;
                 default -> txtEncodingError(x, oid);
             };
 

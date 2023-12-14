@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.time.*;
 import java.time.temporal.ChronoField;
 import java.time.temporal.Temporal;
+import java.util.Date;
 
 public class DateTimeBin {
 
@@ -95,6 +96,18 @@ public class DateTimeBin {
         ByteBuffer buf = ByteBuffer.allocate(8);
         buf.putLong(sum);
         return buf;
+    }
+
+    public static ByteBuffer encodeDATE (Date d) {
+        return encodeDATE(d.toInstant());
+    }
+
+    public static ByteBuffer encodeTIMESTAMP (Date d) {
+        return encodeTIMESTAMP(d.toInstant());
+    }
+
+    public static ByteBuffer encodeTIMESTAMPTZ (Date d) {
+        return encodeTIMESTAMPTZ(d.toInstant());
     }
 
 }

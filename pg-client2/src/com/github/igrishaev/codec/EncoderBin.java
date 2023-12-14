@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.time.temporal.Temporal;
 import java.util.UUID;
+import java.util.Date;
 
 import clojure.lang.IPersistentCollection;
 import clojure.lang.Symbol;
@@ -27,7 +28,7 @@ public class EncoderBin extends ACodec {
             };
 
             case String s -> switch (oid) {
-                case TEXT, VARCHAR -> {
+                case TEXT, VARCHAR, NAME -> {
                     byte[] bytes = getBytes(s);
                     yield ByteBuffer.wrap(bytes);
                 }
@@ -182,6 +183,13 @@ public class EncoderBin extends ACodec {
                 default -> binEncodingError(x, oid);
             };
 
+            case Date d -> switch (oid) {
+                case DATE -> DateTimeBin.encodeDATE(d);
+                case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP(d);
+                case TIMESTAMPTZ -> DateTimeBin.encodeTIMESTAMPTZ(d);
+                default -> binEncodingError(d, oid);
+            };
+
             // TODO: split on types
             case Temporal t -> switch (oid) {
                 case TIME -> DateTimeBin.encodeTIME(t);
@@ -192,7 +200,6 @@ public class EncoderBin extends ACodec {
                 default -> binEncodingError(t, oid);
             };
 
-            // TODO: Date
             // TODO: BigDecimal, BigInteger, BigInt
 
             default -> binEncodingError(x, oid);

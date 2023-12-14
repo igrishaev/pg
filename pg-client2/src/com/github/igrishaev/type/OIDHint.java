@@ -1,12 +1,14 @@
 package com.github.igrishaev.type;
 
+import clojure.lang.IPersistentCollection;
 import clojure.lang.Symbol;
 import com.github.igrishaev.enums.OID;
 import com.github.igrishaev.util.JSON;
 
 import java.nio.ByteBuffer;
-import java.util.Map;
+import java.time.*;
 import java.util.UUID;
+import java.util.Date;
 
 public class OIDHint {
 
@@ -20,12 +22,19 @@ public class OIDHint {
             case Boolean ignored -> OID.BOOL;
             case String ignored -> OID.TEXT;
             case Character ignored -> OID.TEXT;
-            case Map<?,?> ignored -> OID.JSON;
+            case IPersistentCollection ignored -> OID.JSON;
             case Symbol ignored -> OID.TEXT;
             case UUID ignored -> OID.UUID;
             case JSON.Wrapper ignored -> OID.JSON;
             case byte[] ignored -> OID.BYTEA;
             case ByteBuffer ignored -> OID.BYTEA;
+            case Date ignored -> OID.TIMESTAMPTZ;
+            case LocalTime ignored -> OID.TIME;
+            case OffsetTime ignored -> OID.TIMETZ;
+            case LocalDate ignored -> OID.DATE;
+            case LocalDateTime ignored -> OID.TIMESTAMPTZ;
+            case OffsetDateTime ignored -> OID.TIMESTAMPTZ;
+            case Instant ignored -> OID.TIMESTAMPTZ;
             default -> OID.DEFAULT;
         };
     }

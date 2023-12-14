@@ -35,9 +35,9 @@ public class BBTool {
 
     public static String getRestString (ByteBuffer buf) {
         return new String(buf.array(),
-                          buf.position(),
+                          buf.arrayOffset() + buf.position(),
                           buf.remaining(),
-                StandardCharsets.UTF_8);
+                StandardCharsets.UTF_8); // TODO: encoding
     }
 
     public static void skip (ByteBuffer buf, int offset) {
