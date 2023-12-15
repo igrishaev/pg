@@ -655,7 +655,7 @@ public class Connection implements Closeable {
             sendCopyData(buf, size);
         }
         sendCopyDone();
-        return interact(Phase.COPY);
+        return interact(Phase.COPY).getResult();
     }
 
     private void handleParseComplete(ParseComplete msg, Accum acc) {

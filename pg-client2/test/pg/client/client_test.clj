@@ -1823,7 +1823,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
           res-query
           (pg/query conn "select * from foo")]
 
-      (is (= 2 res-copy))
+      (is (= {:copied 2} res-copy))
 
       (is (= [{:id 1 :name "Ivan" :active true}
               {:id 2 :name "Juan" :active false}]
