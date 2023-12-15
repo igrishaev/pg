@@ -12,7 +12,6 @@ import java.util.Objects;
 
 import clojure.core$identity;
 import clojure.core$keyword;
-import com.github.igrishaev.util.DummyOutputStream;
 
 public record ExecuteParams (
         List<Object> params,
@@ -33,7 +32,7 @@ public record ExecuteParams (
         private IReducer reducer = new Default();
         private int rowCount = 0;
         private IFn fnKeyTransform = new core$keyword();
-        private OutputStream outputStream = new DummyOutputStream();
+        private OutputStream outputStream = OutputStream.nullOutputStream();
         boolean binaryEncode = false;
         boolean binaryDecode = false;
 

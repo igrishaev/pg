@@ -1,5 +1,6 @@
 (ns pg.client.client-test
   (:import
+   java.io.ByteArrayOutputStream
    java.util.Date
    java.time.Instant
    java.time.LocalTime
@@ -11,6 +12,8 @@
    com.github.igrishaev.enums.OID
    com.github.igrishaev.PGError)
   (:require
+   [clojure.data.csv :as csv]
+   [clojure.java.io :as io]
    [clojure.string :as str]
    [pg.client :as pg]
    [clojure.test :refer [deftest is use-fixtures testing]]))
@@ -1664,165 +1667,167 @@ drop table %1$s;
         (Thread/sleep 100)
 
         res
-        (pg/cancel-request conn1)]
+        (pg/cancel-request conn1)
 
-    (is (= 1 res))
+        res2
+        (pg/query conn1 "select 42 as res")]
+
+    (is (nil? res))
 
     (try
       @fut
       (is false)
       (catch ExecutionException e-future
         (let [e (ex-cause e-future)]
-          (is (= "ErrorResponse" (ex-message e)))
-          (is (= "canceling statement due to user request"
-                 (-> e
-                     ex-data
-                     :error
-                     :errors
-                     :message))))))))
+          (is (= "ErrorResponse: {severity=ERROR, code=57014, file=postgres.c, line=3224, function=ProcessInterrupts, message=canceling statement due to user request, verbosity=ERROR}"
+                 (ex-message e))))))
+
+    (is (= [{:res 42}] res2))))
 
 
-;; (deftest test-copy-out-api-txt
+(deftest test-copy-out-api-txt
 
-;;   (pg/with-connection [conn *CONFIG*]
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (let [sql
-;;           "copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT CSV)"
+    (let [sql
+          "copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT CSV)"
 
-;;           out
-;;           (new ByteArrayOutputStream)
+          out
+          (new ByteArrayOutputStream)
 
-;;           res
-;;           (pg/copy-out conn sql out)
+          res
+          (pg/copy-out conn sql out)
 
-;;           rows
-;;           (with-open [reader (-> out
-;;                                  (.toByteArray)
-;;                                  (io/input-stream)
-;;                                  (io/reader))]
-;;             (vec (csv/read-csv reader)))]
+          rows
+          (with-open [reader (-> out
+                                 (.toByteArray)
+                                 (io/input-stream)
+                                 (io/reader))]
+            (vec (csv/read-csv reader)))]
 
-;;       (is (= 9 res))
+      (is (= {:copied 9} res))
 
-;;       (is (= [["1" "1"]
-;;               ["2" "4"]
-;;               ["3" "9"]
-;;               ["4" "16"]
-;;               ["5" "25"]
-;;               ["6" "36"]
-;;               ["7" "49"]
-;;               ["8" "64"]
-;;               ["9" "81"]] rows)))))
-
-
-;; (deftest test-copy-out-api-bin
-
-;;   (pg/with-connection [conn *CONFIG*]
-
-;;     (let [sql
-;;           "copy (select s.x as x, s.x * s.x as square from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT BINARY)"
-
-;;           out
-;;           (new ByteArrayOutputStream)
-
-;;           res
-;;           (pg/copy-out conn sql out)]
-
-;;       (is (= 3 res))
-
-;;       (is (= [80 71 67 79 80 89 10 -1 13 10 0 0 0 0 0 0 0 0 0 0 2 0 0 0 4 0 0 0 1 0 0 0 4 0 0 0 1 0 2 0 0 0 4 0 0 0 2 0 0 0 4 0 0 0 4 0 2 0 0 0 4 0 0 0 3 0 0 0 4 0 0 0 9 -1 -1]
-;;              (-> out (.toByteArray) (vec)))))))
+      (is (= [["1" "1"]
+              ["2" "4"]
+              ["3" "9"]
+              ["4" "16"]
+              ["5" "25"]
+              ["6" "36"]
+              ["7" "49"]
+              ["8" "64"]
+              ["9" "81"]] rows)))))
 
 
-;; (deftest test-copy-out-api-multiple-expressions
+(deftest test-copy-out-api-bin
 
-;;   (pg/with-connection [conn *CONFIG*]
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (let [sql
-;;           "select 42; copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT CSV)"
+    (let [sql
+          "copy (select s.x as x, s.x * s.x as square from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT BINARY)"
 
-;;           out
-;;           (new ByteArrayOutputStream)
+          out
+          (new ByteArrayOutputStream)
 
-;;           _
-;;           (pg/copy-out conn sql out)]
+          res
+          (pg/copy-out conn sql out)]
 
-;;       (is (= "1,1\n2,4\n3,9\n4,16\n5,25\n6,36\n7,49\n8,64\n9,81\n"
-;;              (-> out .toByteArray String.))))
+      (is (= {:copied 3} res))
 
-;;     (let [res (pg/query conn "select 1 as one")]
-;;       (is (= [{:one 1}] res)))))
-
-
-;; (deftest test-copy-out-query
-
-;;   (pg/with-connection [conn *CONFIG*]
-
-;;     (let [sql
-;;           "
-;; copy (select s.x as x, s.x * s.x as square from generate_series(1, 4) as s(x)) TO STDOUT WITH (FORMAT BINARY);
-;; select 1 as one;
-;; copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT CSV);
-;;           "
-
-;;           out1
-;;           (new ByteArrayOutputStream)
-
-;;           out2
-;;           (new ByteArrayOutputStream)
-
-;;           output-streams
-;;           [out1 out2]
-
-;;           res
-;;           (pg/query conn sql)
-
-;;           dump1
-;;           (.toByteArray out1)
-
-;;           dump2
-;;           (.toByteArray out2)]
-
-;;       (is (= 0 (count dump1)))
-;;       (is (= 0 (count dump2)))
-
-;;       (is (= [4 [{:one 1}] 3] res)))))
+      (is (= [80 71 67 79 80 89 10 -1 13 10 0 0 0 0 0 0 0 0 0 0 2 0 0 0 4 0 0 0 1 0 0 0 4 0 0 0 1 0 2 0 0 0 4 0 0 0 2 0 0 0 4 0 0 0 4 0 2 0 0 0 4 0 0 0 3 0 0 0 4 0 0 0 9 -1 -1]
+             (-> out (.toByteArray) (vec)))))))
 
 
-;; (deftest test-copy-in-api-csv
+(deftest test-copy-out-api-multiple-expressions
 
-;;   (pg/with-connection [conn *CONFIG*]
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (pg/query conn "create temp table foo (id bigint, name text, active boolean)")
+    (let [sql
+          "select 42; copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT CSV)"
 
-;;     (let [rows
-;;           [[1 "Ivan" true]
-;;            [2 "Juan" false]]
+          out
+          (new ByteArrayOutputStream)
 
-;;           out
-;;           (new ByteArrayOutputStream)
+          _
+          (pg/copy-out conn sql out)]
 
-;;           _
-;;           (with-open [writer (io/writer out)]
-;;             (csv/write-csv writer rows))
+      (is (= "1,1\n2,4\n3,9\n4,16\n5,25\n6,36\n7,49\n8,64\n9,81\n"
+             (-> out .toByteArray String.))))
 
-;;           in-stream
-;;           (-> out .toByteArray io/input-stream)
-
-;;           res-copy
-;;           (pg/copy-in conn
-;;                       "copy foo (id, name, active) from STDIN WITH (FORMAT CSV)"
-;;                       in-stream)
+    (let [res (pg/query conn "select 1 as one")]
+      (is (= [{:one 1}] res)))))
 
 
-;;           res-query
-;;           (pg/query conn "select * from foo")]
+(deftest test-copy-out-query
 
-;;       (is (= 2 res-copy))
+  (pg/with-connection [conn *CONFIG*]
 
-;;       (is (= [{:id 1 :name "Ivan" :active true}
-;;               {:id 2 :name "Juan" :active false}]
-;;              res-query)))))
+    (let [sql
+          "
+copy (select s.x as x, s.x * s.x as square from generate_series(1, 4) as s(x)) TO STDOUT WITH (FORMAT BINARY);
+select 1 as one;
+copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT CSV);
+          "
+
+          out1
+          (new ByteArrayOutputStream)
+
+          out2
+          (new ByteArrayOutputStream)
+
+          output-streams
+          [out1 out2]
+
+          res
+          (pg/query conn sql)
+
+          dump1
+          (.toByteArray out1)
+
+          dump2
+          (.toByteArray out2)]
+
+      (is (= 0 (count dump1)))
+      (is (= 0 (count dump2)))
+
+      (is (= [{:copied 4}
+              [{:one 1}]
+              {:copied 3}]
+              res)))))
+
+
+(deftest test-copy-in-api-csv
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (pg/query conn "create temp table foo (id bigint, name text, active boolean)")
+
+    (let [rows
+          [[1 "Ivan" true]
+           [2 "Juan" false]]
+
+          out
+          (new ByteArrayOutputStream)
+
+          _
+          (with-open [writer (io/writer out)]
+            (csv/write-csv writer rows))
+
+          in-stream
+          (-> out .toByteArray io/input-stream)
+
+          res-copy
+          (pg/copy-in conn
+                      "copy foo (id, name, active) from STDIN WITH (FORMAT CSV)"
+                      in-stream)
+
+          res-query
+          (pg/query conn "select * from foo")]
+
+      (is (= 2 res-copy))
+
+      (is (= [{:id 1 :name "Ivan" :active true}
+              {:id 2 :name "Juan" :active false}]
+             res-query)))))
 
 
 ;; (deftest test-copy-in-rows-ok-csv

@@ -8,14 +8,10 @@ import com.github.igrishaev.codec.EncoderTxt;
 import com.github.igrishaev.enums.*;
 import com.github.igrishaev.msg.*;
 import com.github.igrishaev.type.OIDHint;
+import com.github.igrishaev.util.IOTool;
 import com.github.igrishaev.util.SQL;
 
-import java.io.IOException;
-import java.io.Closeable;
-import java.io.BufferedInputStream;
-import java.io.OutputStream;
-import java.io.BufferedOutputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.util.*;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -49,7 +45,7 @@ public class Connection implements Closeable {
                 .build());
     }
 
-    public Connection(Config config) {
+    public Connection(Config config, boolean sendStartup) {
         this.config = config;
         this.params = new HashMap<>();
         this.decoderTxt = new DecoderTxt();
@@ -60,6 +56,13 @@ public class Connection implements Closeable {
         this.createdAt = System.currentTimeMillis();
         this.aInt = new AtomicInteger();
         connect();
+        if (sendStartup) {
+            authenticate();
+        }
+    }
+
+    public Connection(Config config) {
+        this(config, true);
     }
 
     public void close () {
@@ -211,8 +214,6 @@ public class Connection implements Closeable {
         catch (IOException e) {
             throw new PGError(e, "Cannot get an output stream");
         }
-
-        authenticate();
     }
 
     private void sendMessage (IMessage msg) {
@@ -251,8 +252,8 @@ public class Connection implements Closeable {
         sendMessage(new Execute(portal, rowCount));
     }
 
-    private void sendCopyData (byte[] buf) {
-        sendMessage(new CopyData(buf));
+    private void sendCopyData (final byte[] buf, final int size) {
+        sendMessage(new CopyData(buf, size));
     }
 
     private void sendCopyDone () {
@@ -337,6 +338,7 @@ public class Connection implements Closeable {
             case 'A' -> NotificationResponse.fromByteBuffer(bbBody);
             case 'N' -> NoticeResponse.fromByteBuffer(bbBody);
             case 's' -> new PortalSuspended();
+            case 'G' -> CopyInResponse.fromByteBuffer(bbBody);
             default -> throw new PGError("Unknown message: %s", tag);
         };
 
@@ -588,6 +590,8 @@ public class Connection implements Closeable {
             case CopyData x:
                 handleCopyData(x, acc);
                 break;
+            case CopyInResponse ignored:
+                break;
             case CopyDone ignored:
                 break;
 
@@ -637,6 +641,21 @@ public class Connection implements Closeable {
         sendQuery(sql);
         Accum acc = interact(Phase.COPY, executeParams);
         return acc.getResult();
+    }
+
+    public synchronized Object copyIn (String sql, InputStream inputStream) {
+        sendQuery(sql);
+        // TODO: prefill the first 5 bytes!!!
+        final byte[] buf = new byte[Const.COPY_BUFFER_SIZE];
+        while (true) {
+            final int size = IOTool.read(inputStream, buf);
+            if (size == -1) {
+                break;
+            }
+            sendCopyData(buf, size);
+        }
+        sendCopyDone();
+        return interact(Phase.COPY);
     }
 
     private void handleParseComplete(ParseComplete msg, Accum acc) {
@@ -716,7 +735,7 @@ public class Connection implements Closeable {
 
     public static void cancelRequest(Connection conn) {
         CancelRequest msg = new CancelRequest(Const.CANCEL_CODE, conn.pid, conn.secretKey);
-        Connection temp = clone(conn);
+        Connection temp = new Connection(conn.config, false);
         temp.sendMessage(msg);
         temp.close();
     }

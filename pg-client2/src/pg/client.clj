@@ -3,6 +3,7 @@
    [clojure.string :as str])
   (:import
    java.io.Writer
+   java.io.InputStream
    java.io.OutputStream
    java.util.UUID
    java.util.Map
@@ -325,6 +326,11 @@
 (defn copy-out
   [^Connection conn ^String sql ^OutputStream out]
   (.copyOut conn sql out))
+
+
+(defn copy-in
+  [^Connection conn ^String sql ^InputStream in]
+  (.copyIn conn sql in))
 
 
 
