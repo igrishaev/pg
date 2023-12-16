@@ -13,7 +13,7 @@ public class Main {
 
         String user = System.getenv("USER");
 
-//        Config config = new Config.Builder(user, user)
+//        Config config = Config.builder(user, user)
 //                .port(15432)
 //                .host("127.0.0.1")
 //                .password(user)
@@ -21,7 +21,7 @@ public class Main {
 //                .binaryDecode(true)
 //                .build();
 
-        Config config = new Config.Builder("test", "test")
+        Config config = Config.builder("test", "test")
                 .port(10130)
                 .host("127.0.0.1")
                 .password("test")

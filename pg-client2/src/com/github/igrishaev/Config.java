@@ -27,6 +27,14 @@ public record Config (
         IFn fnNotice
 ) {
 
+    public static Builder builder (final String user, final String database) {
+        return new Builder(user, database);
+    }
+
+    public static Config standard (final String user, final String database) {
+        return builder(user, database).build();
+    }
+
     public static class Builder {
         private final String user;
         private final String database;

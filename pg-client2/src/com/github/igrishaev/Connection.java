@@ -35,7 +35,7 @@ public class Connection implements Closeable {
     private final CodecParams codecParams;
 
     public Connection(String host, int port, String user, String password, String database) {
-        this(new Config.Builder(user, database)
+        this(Config.builder(user, database)
                 .host(host)
                 .port(port)
                 .password(password)
