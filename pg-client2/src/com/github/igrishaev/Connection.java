@@ -662,17 +662,53 @@ public class Connection implements Closeable {
             final List<List<Object>> params,
             final CopyParams copyParams
     ) {
+        return switch (copyParams.format()) {
+            case CSV -> copyInRowsCSV(sql, params, copyParams);
+            case BIN -> copyInRowsBin(sql, params, copyParams);
+            case TAB -> throw new PGError("TAB COPY format is not implemented");
+        };
+    }
+
+    public synchronized Object copyInRowsCSV (
+            final String sql,
+            final List<List<Object>> params,
+            final CopyParams copyParams
+    ) {
         sendQuery(sql);
         for (List<Object> row: params) {
-            final byte[] bytes = Copy.encodeRow(row, copyParams, codecParams);
-            sendCopyData(bytes);
+            final String line = Copy.encodeRowCSV(row, copyParams, codecParams);
+            sendCopyData(line.getBytes(StandardCharsets.UTF_8));
         }
         sendCopyDone();
         return interact(Phase.COPY).getResult();
     }
 
-//    public synchronized Object copyInMaps (final String sql, final List<IPersistentMap> rows) {
-//
+    public synchronized Object copyInRowsBin (
+            final String sql,
+            final List<List<Object>> params,
+            final CopyParams copyParams
+    ) {
+        sendQuery(sql);
+        sendCopyData(Const.COPY_BIN_HEADER);
+
+        // TODO: reduce mem allocation
+        for (List<Object> row: params) {
+            final ByteBuffer buf = Copy.encodeRowBin(row, copyParams, codecParams);
+            sendCopyData(buf.array());
+        }
+        // TODO: precalculate
+        sendCopyData(Const.shortMinusOne);
+        sendCopyDone();
+        return interact(Phase.COPY).getResult();
+    }
+
+//    public synchronized Object copyInMaps (
+//            final String sql,
+//            final List<Map<?,?>> params,
+//            final CopyParams copyParams
+//    ) {
+//        Iterable<?> rows = params.stream();
+//        return copyInRows(sql, rows, copyParams);
 //    }
 
     private void handleParseComplete(ParseComplete msg, Accum acc) {
