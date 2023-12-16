@@ -702,14 +702,15 @@ public class Connection implements Closeable {
         return interact(Phase.COPY).getResult();
     }
 
-//    public synchronized Object copyInMaps (
-//            final String sql,
-//            final List<Map<?,?>> params,
-//            final CopyParams copyParams
-//    ) {
-//        Iterable<?> rows = params.stream();
-//        return copyInRows(sql, rows, copyParams);
-//    }
+    public synchronized Object copyInMaps (
+            final String sql,
+            final List<Map<?,?>> params,
+            final CopyParams copyParams
+    ) {
+        // TODO: wft
+        List<List<Object>> rows = params.stream().map(map -> new ArrayList<Object>().reversed()).toList();
+        return copyInRows(sql, rows, copyParams);
+    }
 
     private void handleParseComplete(ParseComplete msg, Accum acc) {
         acc.handleParseComplete(msg);
