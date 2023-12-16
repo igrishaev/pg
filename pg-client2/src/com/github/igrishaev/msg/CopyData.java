@@ -6,6 +6,10 @@ public record CopyData (byte[] bytes, int size) implements IMessage {
     // TODO: do not wrap into a BB
     // TODO: do not copy the array!!!
 
+    public CopyData(byte[] bytes) {
+        this(bytes, bytes.length);
+    }
+
     public ByteBuffer encode(final String encoding) {
         ByteBuffer buf = ByteBuffer.allocate(1 + 4 + size);
         buf.put((byte)'d');

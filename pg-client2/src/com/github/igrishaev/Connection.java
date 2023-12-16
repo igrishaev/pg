@@ -252,6 +252,9 @@ public class Connection implements Closeable {
         sendMessage(new Execute(portal, rowCount));
     }
 
+    private void sendCopyData (final byte[] buf) {
+        sendMessage(new CopyData(buf));
+    }
     private void sendCopyData (final byte[] buf, final int size) {
         sendMessage(new CopyData(buf, size));
     }
@@ -360,7 +363,7 @@ public class Connection implements Closeable {
     }
 
     public synchronized Object query(String sql) {
-        return query(sql, new ExecuteParams.Builder().build());
+        return query(sql, ExecuteParams.standard());
     }
 
     public synchronized Object query(String sql, ExecuteParams executeParams) {
@@ -369,7 +372,7 @@ public class Connection implements Closeable {
     }
 
     public synchronized PreparedStatement prepare (String sql) {
-        return prepare(sql, new ExecuteParams.Builder().build());
+        return prepare(sql, ExecuteParams.standard());
     }
 
     public synchronized PreparedStatement prepare (String sql, ExecuteParams executeParams) {
@@ -455,7 +458,7 @@ public class Connection implements Closeable {
     }
 
     public Object executeStatement (PreparedStatement stmt) {
-        return executeStatement(stmt, new ExecuteParams.Builder().build());
+        return executeStatement(stmt, ExecuteParams.standard());
     }
 
     public synchronized Object executeStatement (PreparedStatement stmt,
@@ -471,11 +474,11 @@ public class Connection implements Closeable {
     }
 
     public synchronized Object execute (String sql) {
-        return execute(sql, new ExecuteParams.Builder().build());
+        return execute(sql, ExecuteParams.standard());
     }
 
     public synchronized Object execute (String sql, List<Object> params) {
-        return execute(sql, new ExecuteParams.Builder().params(params).build());
+        return execute(sql, ExecuteParams.builder().params(params).build());
     }
 
     public synchronized Object execute (String sql, ExecuteParams executeParams) {
@@ -521,7 +524,7 @@ public class Connection implements Closeable {
     }
 
     private Accum interact(Phase phase) {
-        return interact(phase, new ExecuteParams.Builder().build());
+        return interact(phase, ExecuteParams.standard());
     }
 
     private void handleMessage(Object msg, Accum acc) {
@@ -637,7 +640,7 @@ public class Connection implements Closeable {
     }
 
     public synchronized Object copyOut (String sql, OutputStream outputStream) {
-        ExecuteParams executeParams = new ExecuteParams.Builder().outputStream(outputStream).build();
+        ExecuteParams executeParams = ExecuteParams.builder().outputStream(outputStream).build();
         sendQuery(sql);
         Accum acc = interact(Phase.COPY, executeParams);
         return acc.getResult();
@@ -657,6 +660,35 @@ public class Connection implements Closeable {
         sendCopyDone();
         return interact(Phase.COPY).getResult();
     }
+
+//    public synchronized Object copyInRows (final String sql, List<List<Object>> params) {
+//        return copyInRows(sql, params, new RunParams());
+//    }
+
+//    public synchronized Object copyInRows (final String sql, List<List<Object>> params, RunParams runParams) {
+//        sendQuery(sql);
+//        // TODO: prefill the first 5 bytes!!!
+//        for (List<Object> row: params) {
+//            int len = row.size();
+//            for (Object param: row) {
+//                if (runParams.binaryEncode) {
+//                    if (param == null) {
+//                        -1
+//                    }
+//                    else {
+//                        encoderBin.encode(param, OID.DEFAULT);
+//                    }
+//                }
+//                else {
+//                    encoderTxt.encode(param, OID.DEFAULT);
+//                }
+//            }
+//            byte[] bytes = new byte[123];
+//            sendCopyData(bytes);
+//        }
+//        sendCopyDone();
+//        return interact(Phase.COPY).getResult();
+//    }
 
     private void handleParseComplete(ParseComplete msg, Accum acc) {
         acc.handleParseComplete(msg);
