@@ -10,9 +10,13 @@ import com.github.igrishaev.util.BBTool;
 import com.github.igrishaev.util.JSON;
 
 
-public class DecoderBin extends ACodec {
+public class DecoderBin {
 
-    public Object decode(ByteBuffer buf, OID oid) {
+    public static Object decode(ByteBuffer buf, OID oid) {
+        return decode(buf, oid, CodecParams.standard());
+    }
+
+    public static Object decode(ByteBuffer buf, OID oid, CodecParams codecParams) {
         return switch (oid) {
             case TEXT, VARCHAR, NAME -> BBTool.getRestString(buf); // TODO: encoding
             case INT2 -> buf.getShort();
@@ -39,7 +43,7 @@ public class DecoderBin extends ACodec {
             case DATE -> DateTimeBin.decodeDATE(buf);
             case TIMESTAMP -> DateTimeBin.decodeTIMESTAMP(buf);
             case TIMESTAMPTZ -> DateTimeBin.decodeTIMESTAMPTZ(buf);
-            default -> getBytes(buf);
+            default -> BBTool.getRestBytes(buf);
         };
     }
 

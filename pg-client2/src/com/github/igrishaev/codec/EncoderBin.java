@@ -17,7 +17,7 @@ import com.github.igrishaev.util.JSON;
 public class EncoderBin {
 
     public static ByteBuffer encode (Object x) {
-        return encode(x, OID.DEFAULT, new CodecParams());
+        return encode(x, OID.DEFAULT, CodecParams.standard());
     }
 
     public static ByteBuffer encode (Object x, CodecParams codecParams) {
@@ -25,7 +25,7 @@ public class EncoderBin {
     }
 
     public static ByteBuffer encode (Object x, OID oid) {
-        return encode(x, oid, new CodecParams());
+        return encode(x, oid, CodecParams.standard());
     }
 
     private static ByteBuffer binEncodingError(Object x, OID oid) {

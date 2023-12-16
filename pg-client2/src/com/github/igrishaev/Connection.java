@@ -32,11 +32,6 @@ public class Connection implements Closeable {
     private BufferedInputStream inStream;
     private BufferedOutputStream outStream;
     private final Map<String, String> params;
-
-    private final DecoderTxt decoderTxt;
-    private final EncoderTxt encoderTxt;
-    private final DecoderBin decoderBin;
-
     private final CodecParams codecParams;
 
     public Connection(String host, int port, String user, String password, String database) {
@@ -50,10 +45,7 @@ public class Connection implements Closeable {
     public Connection(Config config, boolean sendStartup) {
         this.config = config;
         this.params = new HashMap<>();
-        this.decoderTxt = new DecoderTxt();
-        this.encoderTxt = new EncoderTxt();
-        this.decoderBin = new DecoderBin();
-        this.codecParams = new CodecParams();
+        this.codecParams = CodecParams.standard();
         this.id = UUID.randomUUID();
         this.createdAt = System.currentTimeMillis();
         this.aInt = new AtomicInteger();
@@ -431,7 +423,7 @@ public class Connection implements Closeable {
                     bytes[i] = buf.array();
                     break;
                 case TXT:
-                    String value = encoderTxt.encode(param, oid);
+                    String value = EncoderTxt.encode(param, oid, codecParams);
                     try {
                         bytes[i] = value.getBytes(encoding);
                     } catch (UnsupportedEncodingException e) {
@@ -720,10 +712,10 @@ public class Connection implements Closeable {
             RowDescription.Column col = cols[i];
             switch (col.format()) {
                 case TXT:
-                    values[i] = decoderTxt.decode(buf, col.typeOid());
+                    values[i] = DecoderTxt.decode(buf, col.typeOid(), codecParams);
                     break;
                 case BIN:
-                    values[i] = decoderBin.decode(buf, col.typeOid());
+                    values[i] = DecoderBin.decode(buf, col.typeOid(), codecParams);
                     break;
                 default:
                     throw new PGError("unknown format: %s", col.format());

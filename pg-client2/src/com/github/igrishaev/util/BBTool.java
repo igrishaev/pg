@@ -40,6 +40,23 @@ public class BBTool {
                 StandardCharsets.UTF_8); // TODO: encoding
     }
 
+    public static byte[] getRestBytes (ByteBuffer buf) {
+        int size = buf.limit();
+        byte[] bytes = new byte[size];
+        buf.get(bytes);
+        return bytes;
+    }
+
+    public static String getString(ByteBuffer buf, String encoding) {
+        int offset = buf.arrayOffset() + buf.position();
+        try {
+            return new String(buf.array(), offset, buf.limit(), encoding);
+        }
+        catch (UnsupportedEncodingException e) {
+            throw new PGError(e, "could not get a string");
+        }
+    }
+
     public static void skip (ByteBuffer buf, int offset) {
         buf.position(buf.position() + offset);
     }

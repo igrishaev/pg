@@ -8,4 +8,8 @@ public class CodecParams {
     public String dateStyle = "";
     public boolean integerDatetime = true;
 
+    public static CodecParams standard () {
+        return new CodecParams();
+    }
+
 }
