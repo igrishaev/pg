@@ -1,6 +1,5 @@
 package com.github.igrishaev;
 
-import clojure.lang.IPersistentMap;
 import com.github.igrishaev.auth.MD5;
 import com.github.igrishaev.codec.DecoderBin;
 import com.github.igrishaev.codec.DecoderTxt;
@@ -638,7 +637,7 @@ public class Connection implements Closeable {
         return acc.getResult();
     }
 
-    public synchronized Object copyIn (String sql, InputStream inputStream) {
+    public synchronized Object copyInStream (String sql, InputStream inputStream) {
         sendQuery(sql);
         // TODO: prefill the first 5 bytes!!!
         final byte[] buf = new byte[Const.COPY_BUFFER_SIZE];
@@ -653,13 +652,17 @@ public class Connection implements Closeable {
         return interact(Phase.COPY).getResult();
     }
 
+    public synchronized Object copyInRows (final String sql, final Iterator<List<Object>> iterator) {
+        return copyInRows(sql, iterator, CopyParams.standard());
+    }
+
     public synchronized Object copyInRows (final String sql, final List<List<Object>> params) {
-        return copyInRows(sql, params, CopyParams.standard());
+        return copyInRows(sql, params.iterator(), CopyParams.standard());
     }
 
     public synchronized Object copyInRows (
             final String sql,
-            final List<List<Object>> params,
+            final Iterator<List<Object>> params,
             final CopyParams copyParams
     ) {
         return switch (copyParams.format()) {
@@ -669,47 +672,55 @@ public class Connection implements Closeable {
         };
     }
 
-    public synchronized Object copyInRowsCSV (
+    private synchronized Object copyInRowsCSV (
             final String sql,
-            final List<List<Object>> params,
+            final Iterator<List<Object>> params,
             final CopyParams copyParams
     ) {
         sendQuery(sql);
-        for (List<Object> row: params) {
+        params.forEachRemaining(row -> {
             final String line = Copy.encodeRowCSV(row, copyParams, codecParams);
             sendCopyData(line.getBytes(StandardCharsets.UTF_8));
-        }
+        });
         sendCopyDone();
         return interact(Phase.COPY).getResult();
     }
 
-    public synchronized Object copyInRowsBin (
+    private synchronized Object copyInRowsBin (
             final String sql,
-            final List<List<Object>> params,
+            final Iterator<List<Object>> params,
             final CopyParams copyParams
     ) {
         sendQuery(sql);
         sendCopyData(Const.COPY_BIN_HEADER);
 
         // TODO: reduce mem allocation
-        for (List<Object> row: params) {
+        params.forEachRemaining(row -> {
             final ByteBuffer buf = Copy.encodeRowBin(row, copyParams, codecParams);
             sendCopyData(buf.array());
-        }
+        });
         // TODO: precalculate
         sendCopyData(Const.shortMinusOne);
         sendCopyDone();
         return interact(Phase.COPY).getResult();
     }
 
+    private static List<Object> mapToRow(final Map<?,?> map, final List<Object> keys) {
+        final List<Object> row = new ArrayList<>(keys.size());
+        for (final Object key: keys) {
+            row.add(map.get(key));
+        }
+        return row;
+    }
+
     public synchronized Object copyInMaps (
             final String sql,
             final List<Map<?,?>> params,
-            final CopyParams copyParams
+            final CopyParams copyParams,
+            final List<Object> keys
     ) {
-        // TODO: wft
-        List<List<Object>> rows = params.stream().map(map -> new ArrayList<Object>().reversed()).toList();
-        return copyInRows(sql, rows, copyParams);
+        Iterator iterator =  params.stream().map(map -> mapToRow(map, keys)).iterator();
+        return copyInRows(sql, iterator, copyParams);
     }
 
     private void handleParseComplete(ParseComplete msg, Accum acc) {

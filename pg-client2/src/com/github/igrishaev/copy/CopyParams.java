@@ -33,6 +33,7 @@ public record CopyParams(
         List<OID> OIDs = Collections.emptyList();
         CopyFormat format = CopyFormat.CSV;
 
+        // TODO: not null!
         public Builder CSVNull (final String CSVNull) {
             this.CSVNull = CSVNull;
             return this;
