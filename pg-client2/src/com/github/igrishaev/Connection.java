@@ -4,6 +4,7 @@ import com.github.igrishaev.auth.MD5;
 import com.github.igrishaev.codec.DecoderBin;
 import com.github.igrishaev.codec.DecoderTxt;
 import com.github.igrishaev.codec.EncoderBin;
+import com.github.igrishaev.codec.CodecParams;
 import com.github.igrishaev.codec.EncoderTxt;
 import com.github.igrishaev.enums.*;
 import com.github.igrishaev.msg.*;
@@ -35,7 +36,8 @@ public class Connection implements Closeable {
     private final DecoderTxt decoderTxt;
     private final EncoderTxt encoderTxt;
     private final DecoderBin decoderBin;
-    private final EncoderBin encoderBin;
+
+    private final CodecParams codecParams;
 
     public Connection(String host, int port, String user, String password, String database) {
         this(new Config.Builder(user, database)
@@ -51,7 +53,7 @@ public class Connection implements Closeable {
         this.decoderTxt = new DecoderTxt();
         this.encoderTxt = new EncoderTxt();
         this.decoderBin = new DecoderBin();
-        this.encoderBin = new EncoderBin();
+        this.codecParams = new CodecParams();
         this.id = UUID.randomUUID();
         this.createdAt = System.currentTimeMillis();
         this.aInt = new AtomicInteger();
@@ -121,24 +123,18 @@ public class Connection implements Closeable {
         params.put(param, value);
         switch (param) {
             case "client_encoding":
-                encoderBin.setEncoding(value);
-                encoderTxt.setEncoding(value);
+                codecParams.clientEncoding = param;
+                break;
             case "server_encoding":
-                decoderTxt.setEncoding(value);
-                decoderBin.setEncoding(value);
+                codecParams.serverEncoding = param;
                 break;
             case "DateStyle":
-                decoderTxt.setDateStyle(value);
-                encoderTxt.setDateStyle(value);
-                decoderBin.setDateStyle(value);
-                encoderBin.setDateStyle(value);
+                codecParams.dateStyle = param;
                 break;
             case "TimeZone":
-                decoderTxt.setTimeZone(value);
-                encoderTxt.setTimeZone(value);
-                decoderBin.setTimeZone(value);
-                encoderBin.setTimeZone(value);
+                codecParams.timeZone = param;
                 break;
+                // TODO: integer_datetimes
         }
     }
 
@@ -431,7 +427,7 @@ public class Connection implements Closeable {
             OID oid = OIDs[i];
             switch (paramsFormat) {
                 case BIN:
-                    ByteBuffer buf = encoderBin.encode(param, oid);
+                    ByteBuffer buf = EncoderBin.encode(param, oid, codecParams);
                     bytes[i] = buf.array();
                     break;
                 case TXT:

@@ -5,7 +5,7 @@ import com.github.igrishaev.enums.OID;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-
+// TODO: delete it!
 abstract class ACodec {
 
     String encoding = "UTF-8";
@@ -40,6 +40,7 @@ abstract class ACodec {
         buf.get(bytes);
         return bytes;
     }
+
     public byte[] getBytes (String string) {
         try {
             return string.getBytes(encoding);
