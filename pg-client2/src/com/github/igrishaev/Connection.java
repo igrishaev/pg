@@ -1,11 +1,14 @@
 package com.github.igrishaev;
 
+import clojure.lang.IPersistentMap;
 import com.github.igrishaev.auth.MD5;
 import com.github.igrishaev.codec.DecoderBin;
 import com.github.igrishaev.codec.DecoderTxt;
 import com.github.igrishaev.codec.EncoderBin;
 import com.github.igrishaev.codec.CodecParams;
 import com.github.igrishaev.codec.EncoderTxt;
+import com.github.igrishaev.copy.Copy;
+import com.github.igrishaev.copy.CopyParams;
 import com.github.igrishaev.enums.*;
 import com.github.igrishaev.msg.*;
 import com.github.igrishaev.type.OIDHint;
@@ -13,6 +16,7 @@ import com.github.igrishaev.util.IOTool;
 import com.github.igrishaev.util.SQL;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -649,33 +653,26 @@ public class Connection implements Closeable {
         return interact(Phase.COPY).getResult();
     }
 
-//    public synchronized Object copyInRows (final String sql, List<List<Object>> params) {
-//        return copyInRows(sql, params, new RunParams());
-//    }
+    public synchronized Object copyInRows (final String sql, final List<List<Object>> params) {
+        return copyInRows(sql, params, CopyParams.standard());
+    }
 
-//    public synchronized Object copyInRows (final String sql, List<List<Object>> params, RunParams runParams) {
-//        sendQuery(sql);
-//        // TODO: prefill the first 5 bytes!!!
-//        for (List<Object> row: params) {
-//            int len = row.size();
-//            for (Object param: row) {
-//                if (runParams.binaryEncode) {
-//                    if (param == null) {
-//                        -1
-//                    }
-//                    else {
-//                        encoderBin.encode(param, OID.DEFAULT);
-//                    }
-//                }
-//                else {
-//                    encoderTxt.encode(param, OID.DEFAULT);
-//                }
-//            }
-//            byte[] bytes = new byte[123];
-//            sendCopyData(bytes);
-//        }
-//        sendCopyDone();
-//        return interact(Phase.COPY).getResult();
+    public synchronized Object copyInRows (
+            final String sql,
+            final List<List<Object>> params,
+            final CopyParams copyParams
+    ) {
+        sendQuery(sql);
+        for (List<Object> row: params) {
+            final byte[] bytes = Copy.encodeRow(row, copyParams, codecParams);
+            sendCopyData(bytes);
+        }
+        sendCopyDone();
+        return interact(Phase.COPY).getResult();
+    }
+
+//    public synchronized Object copyInMaps (final String sql, final List<IPersistentMap> rows) {
+//
 //    }
 
     private void handleParseComplete(ParseComplete msg, Accum acc) {

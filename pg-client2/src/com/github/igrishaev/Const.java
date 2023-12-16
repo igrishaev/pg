@@ -16,4 +16,8 @@ public class Const {
     public static String APP_NAME = "pg2";
     public static String CLIENT_ENCODING = "UTF8";
     public static char NULL_TAG = (char) 0;
+    public static String COPY_CSV_NULL = "";
+    public static String COPY_CSV_CELL_SEP = ",";
+    public static String COPY_CSV_CELL_QUOTE = "\\";
+    public static String COPY_CSV_LINE_SEP = "\r\n";
 }
