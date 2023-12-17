@@ -49,3 +49,10 @@ refactor execute & query params?
   - decode bin
   - encode txt
   - encode bin
+
+- catch:
+  - encoding error
+  - copy out error
+  - copy in error
+  - copy row bin/text
+  - notification/notice error
