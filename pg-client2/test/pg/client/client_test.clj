@@ -1916,6 +1916,8 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
               (.getBytes)
               io/input-stream)]
 
+      ;; TODO: copy-in: copy-params
+      ;; better exception handling
       (try
         (pg/copy-in conn
                     "copy foo (id, name, active) from STDIN WITH (FORMAT CSV)"
