@@ -6,6 +6,7 @@ import com.github.igrishaev.enums.OID;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public record CopyParams(
         String CSVNull,
@@ -33,34 +34,48 @@ public record CopyParams(
         List<OID> OIDs = Collections.emptyList();
         CopyFormat format = CopyFormat.CSV;
 
-        // TODO: not null!
         public Builder CSVNull (final String CSVNull) {
-            this.CSVNull = CSVNull;
+            this.CSVNull = Objects.requireNonNull(CSVNull);
             return this;
         }
 
         public Builder CSVCellSep (final String CSVCellSep) {
-            this.CSVCellSep = CSVCellSep;
+            this.CSVCellSep = Objects.requireNonNull(CSVCellSep);
             return this;
         }
 
         public Builder CSVQuote (final String CSVQuote) {
-            this.CSVQuote = CSVQuote;
+            this.CSVQuote = Objects.requireNonNull(CSVQuote);
             return this;
         }
 
         public Builder CSVLineSep (final String CSVLineSep) {
-            this.CSVLineSep = CSVLineSep;
+            this.CSVLineSep = Objects.requireNonNull(CSVLineSep);
             return this;
         }
 
         public Builder OIDs (final List<OID> OIDs) {
-            this.OIDs = OIDs;
+            this.OIDs = Objects.requireNonNull(OIDs);
             return this;
         }
 
         public Builder format (final CopyFormat format) {
-            this.format = format;
+            this.format = Objects.requireNonNull(format);
+            return this;
+        }
+
+        public Builder setCSV () {
+            this.format = CopyFormat.CSV;
+            return this;
+        }
+
+        public Builder setBin () {
+            this.format = CopyFormat.BIN;
+            return this;
+        }
+
+        public Builder setTab () {
+            this.format = CopyFormat.TAB;
             return this;
         }
 

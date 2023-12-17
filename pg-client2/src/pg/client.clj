@@ -9,6 +9,8 @@
    java.util.Map
    java.util.List
    clojure.lang.Keyword
+   com.github.igrishaev.copy.CopyParams
+   com.github.igrishaev.copy.CopyParams$Builder
    com.github.igrishaev.util.JSON
    com.github.igrishaev.util.JSON$Wrapper
    com.github.igrishaev.reducer.IReducer
@@ -25,9 +27,9 @@
   (-> column (str/replace #"_" "-") keyword))
 
 
-(defn ->execute-params ^ExecuteParams [opt]
+(defn ->execute-params ^ExecuteParams [^Map opt]
 
-  (let [{:keys [params
+  (let [{:keys [^List params
                 oids
                 row-count
                 reducer
@@ -46,7 +48,7 @@
                 binary-decode?]}
         opt]
 
-    (cond-> (new ExecuteParams$Builder)
+    (cond-> (ExecuteParams/builder)
 
       params
       (.params params)
@@ -95,6 +97,39 @@
 
       (some? binary-decode?)
       (.binaryDecode binary-decode?)
+
+      :finally
+      (.build))))
+
+
+(defn ->copy-params ^CopyParams [^Map opt]
+  (let [{:keys [csv-null
+                csv-sep
+                csv-end
+                csv?
+                bin?
+                tab?]}
+        opt]
+
+    (cond-> (CopyParams/builder)
+
+      csv-null
+      (.CSVNull csv-null)
+
+      csv-sep
+      (.CSVCellSep csv-sep)
+
+      csv-end
+      (.CSVLineSep csv-end)
+
+      csv?
+      (.setCSV)
+
+      bin?
+      (.setBin)
+
+      tab?
+      (.setBin)
 
       :finally
       (.build))))
@@ -248,7 +283,7 @@
 (defn execute-statement
 
   ([^Connection conn ^PreparedStatement stmt]
-   (.executeStatement conn stmt))
+   (.executeStatement conn stmt (ExecuteParams/standard)))
 
   ([^Connection conn ^PreparedStatement stmt ^Map opt]
    (.executeStatement conn stmt (->execute-params opt))))
@@ -257,7 +292,7 @@
 (defn execute
 
   ([^Connection conn ^String sql]
-   (.execute conn sql))
+   (.execute conn sql (ExecuteParams/standard)))
 
   ([^Connection conn ^String sql ^Map opt]
    (.execute conn sql (->execute-params opt))))
@@ -297,7 +332,7 @@
 (defn query
 
   ([^Connection conn ^String sql]
-   (.query conn sql))
+   (.query conn sql (ExecuteParams/standard)))
 
   ([^Connection conn ^String sql ^Map opt]
    (.query conn sql (->execute-params opt))))
@@ -328,10 +363,21 @@
   (.copyOut conn sql out))
 
 
+
+#_
 (defn copy-in
   [^Connection conn ^String sql ^InputStream in]
-  (.copyIn conn sql in))
+  (.copyInStream conn sql in))
 
+
+#_
+(defn copy-in-rows
+
+  ([^Connection conn ^String sql]
+   (.copyInRows conn sql (CopyParams/standard)))
+
+  ([^Connection conn ^String sql ^Map opt]
+   (.copyInRows conn sql (->copy-params opt))))
 
 
 (defmacro with-safe [& body]

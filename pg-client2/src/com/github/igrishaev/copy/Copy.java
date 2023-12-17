@@ -1,14 +1,11 @@
 package com.github.igrishaev.copy;
 
-import com.github.igrishaev.Const;
-import com.github.igrishaev.PGError;
 import com.github.igrishaev.codec.CodecParams;
 import com.github.igrishaev.codec.EncoderBin;
 import com.github.igrishaev.codec.EncoderTxt;
 import com.github.igrishaev.enums.OID;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
 
@@ -63,7 +60,7 @@ public class Copy {
 
         int totalSize = 0;
 
-        // TODO: very insufficiently (prefill header bytes)
+        // TODO: non-needed allocations (prefill header bytes)
         for (short i = 0; i < count; i++) {
             final Object item = row.get(i);
             if (item == null) {
