@@ -14,7 +14,8 @@ public record CopyParams(
         String CSVQuote,
         String CSVLineSep,
         List<OID> OIDs,
-        CopyFormat format
+        CopyFormat format,
+        int bufSize
 ) {
 
     public static CopyParams standard () {
@@ -33,6 +34,7 @@ public record CopyParams(
         String CSVLineSep = Const.COPY_CSV_LINE_SEP;
         List<OID> OIDs = Collections.emptyList();
         CopyFormat format = CopyFormat.CSV;
+        int bufSize = Const.COPY_BUFFER_SIZE;
 
         public Builder CSVNull (final String CSVNull) {
             this.CSVNull = Objects.requireNonNull(CSVNull);
@@ -79,6 +81,11 @@ public record CopyParams(
             return this;
         }
 
+        public Builder bufSize (final int bufSize) {
+            this.bufSize = bufSize;
+            return this;
+        }
+
         public CopyParams build () {
             return new CopyParams(
                     CSVNull,
@@ -86,7 +93,8 @@ public record CopyParams(
                     CSVQuote,
                     CSVLineSep,
                     OIDs,
-                    format
+                    format,
+                    bufSize
             );
         }
 

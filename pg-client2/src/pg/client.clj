@@ -106,6 +106,8 @@
   (let [{:keys [csv-null
                 csv-sep
                 csv-end
+                buf-size
+                oids
                 csv?
                 bin?
                 tab?]}
@@ -122,6 +124,9 @@
       csv-end
       (.CSVLineSep csv-end)
 
+      oids
+      (.OIDs oids)
+
       csv?
       (.setCSV)
 
@@ -130,6 +135,9 @@
 
       tab?
       (.setBin)
+
+      buf-size
+      (.bufSize buf-size)
 
       :finally
       (.build))))

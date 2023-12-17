@@ -18,7 +18,7 @@ public class Const {
     public static final char NULL_TAG = (char) 0;
     public static final String COPY_CSV_NULL = "";
     public static final String COPY_CSV_CELL_SEP = ",";
-    public static final String COPY_CSV_CELL_QUOTE = "\\";
+    public static final String COPY_CSV_CELL_QUOTE = "\"";
     public static final String COPY_CSV_LINE_SEP = "\r\n";
     public static final byte[] COPY_BIN_HEADER = {
             // header

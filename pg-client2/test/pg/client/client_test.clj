@@ -1847,19 +1847,20 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
           (pg/copy-in-rows conn
                            "copy foo (id, name, active, note) from STDIN WITH (FORMAT CSV, NULL 'dummy', DELIMITER '|')"
                            rows
-                           {:null "dummy"
-                            :sep \|})
+                           {:csv-null "dummy"
+                            :csv-sep "|"})
 
           res-query
           (pg/query conn "select * from foo")]
 
-      (is (= 2 res-copy))
+      (is (= {:copied 2} res-copy))
 
       (is (= [{:id 1 :name "Ivan" :active true :note weird}
               {:id 2 :name "Juan" :active false :note nil}]
              res-query)))))
 
 
+;; TODO: ?
 ;; (deftest test-copy-in-rows-ok-csv-wrong-oids
 
 ;;   (pg/with-connection [conn *CONFIG*]
@@ -1877,56 +1878,56 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
 ;;                (ex-message e)))))))
 
 
-;; (deftest test-copy-in-rows-ok-bin
+(deftest test-copy-in-rows-ok-bin
 
-;;   (pg/with-connection [conn *CONFIG*]
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (pg/query conn "create temp table foo (id int2, name text, active boolean, note text)")
+    (pg/query conn "create temp table foo (id int2, name text, active boolean, note text)")
 
-;;     (let [rows
-;;           [[1 "Ivan" true nil]
-;;            [2 "Juan" false "kek"]]
+    (let [rows
+          [[1 "Ivan" true nil]
+           [2 "Juan" false "kek"]]
 
-;;           res-copy
-;;           (pg/copy-in-rows conn
-;;                            "copy foo (id, name, active, note) from STDIN WITH (FORMAT BINARY)"
-;;                            rows
-;;                            {:format :bin
-;;                             :oids {0 oid/int2 2 oid/bool}})
+          res-copy
+          (pg/copy-in-rows conn
+                           "copy foo (id, name, active, note) from STDIN WITH (FORMAT BINARY)"
+                           rows
+                           {:bin? true
+                            :oids [OID/INT2 OID/DEFAULT OID/BOOL]})
 
-;;           res-query
-;;           (pg/query conn "select * from foo")]
+          res-query
+          (pg/query conn "select * from foo")]
 
-;;       (is (= 2 res-copy))
+      (is (= {:copied 2} res-copy))
 
-;;       (is (= [{:id 1 :name "Ivan" :active true :note nil}
-;;               {:id 2 :name "Juan" :active false :note "kek"}]
-;;              res-query)))))
+      (is (= [{:id 1 :name "Ivan" :active true :note nil}
+              {:id 2 :name "Juan" :active false :note "kek"}]
+             res-query)))))
 
 
-;; (deftest test-copy-in-broken-csv
+(deftest test-copy-in-broken-csv
 
-;;   (pg/with-connection [conn *CONFIG*]
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (pg/query conn "create temp table foo (id bigint, name text, active boolean)")
+    (pg/query conn "create temp table foo (id bigint, name text, active boolean)")
 
-;;     (let [in-stream
-;;           (-> "\n\b232\t\n\n@#^@#$\r\b"
-;;               (.getBytes)
-;;               io/input-stream)]
+    (let [in-stream
+          (-> "\n\b232\t\n\n@#^@#$\r\b"
+              (.getBytes)
+              io/input-stream)]
 
-;;       (try
-;;         (pg/copy-in conn
-;;                     "copy foo (id, name, active) from STDIN WITH (FORMAT CSV)"
-;;                     in-stream
-;;                     {:buffer-size 1})
-;;         (is false)
-;;         (catch Exception e
-;;           (is e)))
+      (try
+        (pg/copy-in conn
+                    "copy foo (id, name, active) from STDIN WITH (FORMAT CSV)"
+                    in-stream
+                    {:buf-size 1})
+        (is false)
+        (catch Exception e
+          (is e)))
 
-;;       (let [res-query
-;;             (pg/query conn "select 1 as one")]
-;;         (is (= [{:one 1}] res-query))))))
+      (let [res-query
+            (pg/query conn "select 1 as one")]
+        (is (= [{:one 1}] res-query))))))
 
 
 ;; (deftest test-copy-in-maps-ok-csv

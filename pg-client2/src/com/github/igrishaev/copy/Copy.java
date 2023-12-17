@@ -1,11 +1,14 @@
 package com.github.igrishaev.copy;
 
+import com.github.igrishaev.Const;
 import com.github.igrishaev.codec.CodecParams;
 import com.github.igrishaev.codec.EncoderBin;
 import com.github.igrishaev.codec.EncoderTxt;
 import com.github.igrishaev.enums.OID;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -29,12 +32,12 @@ public class Copy {
             OID oid = i < OIDLen ? OIDs.get(i) : OID.DEFAULT;
             i++;
             Object item = iterator.next();
-            if (item != null) {
+            if (item == null) {
                 sb.append(copyParams.CSVNull());
             }
             // TODO: check if needs quoting? perf test
             else {
-                String encoded = EncoderTxt.encode(row, oid, codecParams);
+                String encoded = EncoderTxt.encode(item, oid, codecParams);
                 sb.append(copyParams.CSVQuote());
                 sb.append(quoteCSV(encoded));
                 sb.append(copyParams.CSVQuote());
@@ -59,7 +62,7 @@ public class Copy {
         final List<OID> OIDs = copyParams.OIDs();
         final int OIDLen = OIDs.size();
 
-        int totalSize = 0;
+        int totalSize = 2;
 
         // TODO: non-needed allocations (prefill header bytes)
         for (short i = 0; i < count; i++) {
@@ -77,17 +80,49 @@ public class Copy {
         }
 
         ByteBuffer result = ByteBuffer.allocate(totalSize);
+        result.putShort(count);
+
         for (ByteBuffer buf: bufs) {
             if (buf == null) {
                 result.putInt(-1);
             }
             else {
-                result.putInt(buf.array().length);
-                result.put(buf);
+                result.putInt(buf.limit());
+                result.put(buf.rewind());
             }
-
         }
         return result;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(encodeRowCSV(
+                List.of(1, 2, 3),
+                CopyParams.standard(),
+                CodecParams.standard())
+        );
+
+        List<Object> row = new ArrayList<>();
+        row.add(1);
+        row.add("Ivan");
+        row.add(true);
+        row.add(null);
+
+        List<OID> OIDs = List.of(OID.INT2, OID.DEFAULT, OID.BOOL);
+
+        System.out.println(
+                Arrays.toString(
+                    encodeRowBin(
+                            row,
+                            CopyParams.builder().OIDs(OIDs).build(),
+                            CodecParams.standard()
+                    ).array())
+        );
+
+        System.out.println(Arrays.toString(Const.COPY_BIN_HEADER));
+
+        ByteBuffer bb = ByteBuffer.allocate(2);
+        bb.putShort((short)-1);
+        System.out.println(Arrays.toString(bb.array()));
     }
 
 }
