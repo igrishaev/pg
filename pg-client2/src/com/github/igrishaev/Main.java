@@ -38,13 +38,11 @@ public class Main {
         // System.out.println(conn.execute("select '1 year 1 second'::interval as interval"));
 
         System.out.println(conn.execute("create temp table foo (a int, b int, c int)"));
-
         InputStream in = new ByteArrayInputStream("1,2,3".getBytes());
-
         conn.copyInStream("copy foo (a, b, c) from STDIN WITH (FORMAT CSV)", in);
 
-        // Object res1 = conn.query("select x from generate_series(1, 3) as x; select 42 as foo");
-        // System.out.println(res1);
+         Object res1 = conn.query("select x from generate_series(1, 3) as x; select 42 as foo");
+         System.out.println(res1);
 
         // System.out.println(conn.execute(""));
 

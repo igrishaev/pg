@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 public class DecoderTxt {
 
     private static String getString(ByteBuffer buf, CodecParams codecParams) {
-        return BBTool.getCString(buf, codecParams.serverEncoding);
+        return BBTool.getString(buf, codecParams.serverEncoding);
     }
 
     public static Object decode(ByteBuffer buf, OID oid) {

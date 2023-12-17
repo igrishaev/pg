@@ -1792,7 +1792,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
       (is (= [{:copied 4}
               [{:one 1}]
               {:copied 3}]
-              res)))))
+             res)))))
 
 
 (deftest test-copy-in-api-csv
@@ -1830,34 +1830,34 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
              res-query)))))
 
 
-;; (deftest test-copy-in-rows-ok-csv
+(deftest test-copy-in-rows-ok-csv
 
-;;   (pg/with-connection [conn *CONFIG*]
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (pg/query conn "create temp table foo (id bigint, name text, active boolean, note text)")
+    (pg/query conn "create temp table foo (id bigint, name text, active boolean, note text)")
 
-;;     (let [weird
-;;           "foo'''b'ar\r\n\f\t\bsdf--NULL~!@#$%^&*()\"sdf\"\""
+    (let [weird
+          "foo'''b'ar\r\n\f\t\bsdf--NULL~!@#$%^&*()\"sdf\"\""
 
-;;           rows
-;;           [[1 "Ivan" true weird]
-;;            [2 "Juan" false nil]]
+          rows
+          [[1 "Ivan" true weird]
+           [2 "Juan" false nil]]
 
-;;           res-copy
-;;           (pg/copy-in-rows conn
-;;                            "copy foo (id, name, active, note) from STDIN WITH (FORMAT CSV, NULL 'dummy', DELIMITER '|')"
-;;                            rows
-;;                            {:null "dummy"
-;;                             :sep \|})
+          res-copy
+          (pg/copy-in-rows conn
+                           "copy foo (id, name, active, note) from STDIN WITH (FORMAT CSV, NULL 'dummy', DELIMITER '|')"
+                           rows
+                           {:null "dummy"
+                            :sep \|})
 
-;;           res-query
-;;           (pg/query conn "select * from foo")]
+          res-query
+          (pg/query conn "select * from foo")]
 
-;;       (is (= 2 res-copy))
+      (is (= 2 res-copy))
 
-;;       (is (= [{:id 1 :name "Ivan" :active true :note weird}
-;;               {:id 2 :name "Juan" :active false :note nil}]
-;;              res-query)))))
+      (is (= [{:id 1 :name "Ivan" :active true :note weird}
+              {:id 2 :name "Juan" :active false :note nil}]
+             res-query)))))
 
 
 ;; (deftest test-copy-in-rows-ok-csv-wrong-oids

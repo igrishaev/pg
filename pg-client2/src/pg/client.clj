@@ -363,21 +363,18 @@
   (.copyOut conn sql out))
 
 
-
-#_
 (defn copy-in
   [^Connection conn ^String sql ^InputStream in]
   (.copyInStream conn sql in))
 
 
-#_
 (defn copy-in-rows
 
-  ([^Connection conn ^String sql]
-   (.copyInRows conn sql (CopyParams/standard)))
+  ([^Connection conn ^String sql ^List rows]
+   (.copyInRows conn sql rows (CopyParams/standard)))
 
-  ([^Connection conn ^String sql ^Map opt]
-   (.copyInRows conn sql (->copy-params opt))))
+  ([^Connection conn ^String sql ^List rows ^Map opt]
+   (.copyInRows conn sql rows (->copy-params opt))))
 
 
 (defmacro with-safe [& body]

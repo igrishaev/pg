@@ -32,6 +32,7 @@ public class Copy {
             if (item != null) {
                 sb.append(copyParams.CSVNull());
             }
+            // TODO: check if needs quoting? perf test
             else {
                 String encoded = EncoderTxt.encode(row, oid, codecParams);
                 sb.append(copyParams.CSVQuote());

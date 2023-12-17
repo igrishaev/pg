@@ -118,16 +118,16 @@ public class Connection implements Closeable {
         params.put(param, value);
         switch (param) {
             case "client_encoding":
-                codecParams.clientEncoding = param;
+                codecParams.clientEncoding = value;
                 break;
             case "server_encoding":
-                codecParams.serverEncoding = param;
+                codecParams.serverEncoding = value;
                 break;
             case "DateStyle":
-                codecParams.dateStyle = param;
+                codecParams.dateStyle = value;
                 break;
             case "TimeZone":
-                codecParams.timeZone = param;
+                codecParams.timeZone = value;
                 break;
                 // TODO: integer_datetimes
         }
@@ -652,15 +652,15 @@ public class Connection implements Closeable {
         return interact(Phase.COPY).getResult();
     }
 
-    public synchronized Object copyInRows (final String sql, final Iterator<List<Object>> iterator) {
-        return copyInRows(sql, iterator, CopyParams.standard());
-    }
-
-    public synchronized Object copyInRows (final String sql, final List<List<Object>> params) {
-        return copyInRows(sql, params.iterator(), CopyParams.standard());
-    }
-
     public synchronized Object copyInRows (
+            final String sql,
+            final List<List<Object>> params,
+            final CopyParams copyParams
+    ) {
+        return copyInRowsIterator(sql, params.iterator(), copyParams);
+    }
+
+    private synchronized Object copyInRowsIterator (
             final String sql,
             final Iterator<List<Object>> params,
             final CopyParams copyParams
@@ -719,8 +719,8 @@ public class Connection implements Closeable {
             final CopyParams copyParams,
             final List<Object> keys
     ) {
-        Iterator iterator =  params.stream().map(map -> mapToRow(map, keys)).iterator();
-        return copyInRows(sql, iterator, copyParams);
+        Iterator<List<Object>> iterator =  params.stream().map(map -> mapToRow(map, keys)).iterator();
+        return copyInRowsIterator(sql, iterator, copyParams);
     }
 
     private void handleParseComplete(ParseComplete msg, Accum acc) {
