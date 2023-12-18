@@ -71,6 +71,7 @@ public class Accum {
     private final ArrayList<Node> nodes;
     private final ArrayList<ErrorResponse> errorResponses;
     private Node current;
+    private Throwable exception;
 
     public Accum(Phase phase, ExecuteParams executeParams) {
         this.phase = phase;
@@ -78,6 +79,10 @@ public class Accum {
         nodes = new ArrayList<>(2);
         errorResponses = new ArrayList<>(1);
         addNode();
+    }
+
+    public void setException(Throwable e) {
+        this.exception = e;
     }
 
     public void addErrorResponse (ErrorResponse msg) {
@@ -152,9 +157,12 @@ public class Accum {
         nodes.add(current);
     }
 
-    public void throwErrorResponse () {
+    public void maybeThrowError() {
+        if (exception != null) {
+            throw new PGError(exception, "Unhandled exception: %s", exception.getMessage());
+        }
         if (!errorResponses.isEmpty()) {
-            ErrorResponse errRes = errorResponses.get(0);
+            ErrorResponse errRes = errorResponses.getFirst();
             throw new PGError("ErrorResponse: %s", errRes.fields());
         }
     }

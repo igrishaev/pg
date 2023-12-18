@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public class IOTool {
+
     public static int read(
             final InputStream inputStream,
             final byte[] buf) {
@@ -34,6 +35,24 @@ public class IOTool {
             outputStream.write(buf);
         } catch (IOException e) {
             throw new PGError(e, "cannot write a byte array into an output stream");
+        }
+    }
+
+    public static byte[] readNBytes(final InputStream inputStream, final int len) {
+        try {
+            return inputStream.readNBytes(len);
+        }
+        catch (IOException e) {
+            throw new PGError(e, "cannot read N bytes from a stream, len: %s", len);
+        }
+    }
+
+    public static long skip(final InputStream inputStream, final long n) {
+        try {
+            return inputStream.skip(n);
+        }
+        catch (IOException e) {
+            throw new PGError(e, "cannot skip N bytes from a stream, n: %s", n);
         }
     }
 

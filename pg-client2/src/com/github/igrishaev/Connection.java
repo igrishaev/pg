@@ -1,6 +1,6 @@
 package com.github.igrishaev;
 
-import clojure.lang.Compiler;
+import clojure.lang.Agent;
 import clojure.lang.IFn;
 import com.github.igrishaev.auth.MD5;
 import com.github.igrishaev.codec.DecoderBin;
@@ -15,9 +15,6 @@ import com.github.igrishaev.msg.*;
 import com.github.igrishaev.type.OIDHint;
 import com.github.igrishaev.util.IOTool;
 import com.github.igrishaev.util.SQL;
-
-import clojure.core$partial;
-import clojure.core$future_call;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -528,7 +525,7 @@ public class Connection implements Closeable {
                 break;
             }
         }
-        acc.throwErrorResponse();
+        acc.maybeThrowError();
         return acc;
     }
 
@@ -616,9 +613,9 @@ public class Connection implements Closeable {
     }
 
     private static void futureCall(IFn f, Object arg) {
-        core$future_call.invokeStatic(
-                core$partial.invokeStatic(f, arg)
-        );
+        Agent.soloExecutor.submit(() -> {
+            f.invoke(arg);
+        });
     }
 
     private void handleNotificationResponse(NotificationResponse msg) {
@@ -642,13 +639,29 @@ public class Connection implements Closeable {
         acc.handleCopyOutResponse(msg);
     }
 
+    private void drainCopy () {
+        while (true) {
+            ByteBuffer buf = ByteBuffer.wrap(IOTool.readNBytes(inStream, 5));
+            char tag = (char) buf.get();
+            int size = buf.getInt() - 4;
+        }
+    }
+
+    // TODO: reuse source byte buffer
+    // TODO: CopyDataIn & CopyDataOut
     private void handleCopyData(CopyData msg, Accum acc) {
+        Throwable e = null;
         OutputStream outputStream = acc.executeParams.outputStream();
         try {
             outputStream.write(msg.bytes());
-        } catch (IOException e) {
-            throw new PGError(e, "could not handle CopyData response");
+        } catch (Throwable caught) {
+            e = caught;
         }
+        if (e != null) {
+            acc.setException(e);
+            cancelRequest(this);
+        }
+
     }
 
     public synchronized Object copyOut (String sql, OutputStream outputStream) {
@@ -663,12 +676,6 @@ public class Connection implements Closeable {
             final InputStream inputStream
     ) {
         return copyInStream(sql, inputStream, CopyParams.standard());
-    }
-
-    private Object onCopyFailed(Throwable e) {
-        sendCopyFail("Terminated due to an exception on the client side");
-        interact(Phase.COPY);
-        throw new PGError(e, "Unhandled exception during COPY IN command");
     }
 
     public synchronized Object copyInStream (
@@ -703,13 +710,14 @@ public class Connection implements Closeable {
             sendBytes(buf, 0, 5 + read);
         }
 
+        // TODO: collect exception
         if (e == null) {
             sendCopyDone();
-            return interact(Phase.COPY).getResult();
         }
         else {
-            return onCopyFailed(e);
+            sendCopyFail("Terminated due to an exception on the client side");
         }
+        return interact(Phase.COPY).getResult();
     }
 
     public synchronized Object copyInRows(
@@ -778,13 +786,15 @@ public class Connection implements Closeable {
                 throw new PGError("TAB COPY format is not implemented");
         }
 
+        // TODO: pass exception
         if (e == null) {
             sendCopyDone();
-            return interact(Phase.COPY).getResult();
+
         }
         else {
-            return onCopyFailed(e);
+            sendCopyFail("Terminated due to an exception on the client side");
         }
+        return interact(Phase.COPY).getResult();
 
     }
 

@@ -324,6 +324,7 @@
              res)))))
 
 
+;; TODO: test again
 (deftest test-client-listen-notify
 
   (let [capture!
@@ -1824,6 +1825,8 @@ drop table %1$s;
     (let [res (pg/query conn "select 1 as one")]
       (is (= [{:one 1}] res)))))
 
+
+;; TODO: copy out IOException (cancel, reuse)
 
 (deftest test-copy-out-query
 
