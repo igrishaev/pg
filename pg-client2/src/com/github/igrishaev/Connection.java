@@ -20,6 +20,7 @@ import java.util.*;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 public class Connection implements Closeable {
 
@@ -652,55 +653,55 @@ public class Connection implements Closeable {
         return interact(Phase.COPY).getResult();
     }
 
-    public synchronized Object copyInRows (
+    public synchronized Object copyInRows(
             final String sql,
             final List<List<Object>> params,
             final CopyParams copyParams
     ) {
-        return copyInRowsIterator(sql, params.iterator(), copyParams);
+        return copyInRowsStream(
+                Objects.requireNonNull(sql, "A SQL expression cannot be null"),
+                Objects.requireNonNull(params, "A list of rows cannot be null")
+                        .stream()
+                        .filter(Objects::nonNull),
+                Objects.requireNonNull(copyParams, "Copy parameters cannot be null")
+        );
     }
 
-    private synchronized Object copyInRowsIterator (
+    private synchronized Object copyInRowsStream (
             final String sql,
-            final Iterator<List<Object>> params,
+            final Stream<List<Object>> params,
             final CopyParams copyParams
     ) {
-        return switch (copyParams.format()) {
-            case CSV -> copyInRowsCSV(sql, params, copyParams);
-            case BIN -> copyInRowsBin(sql, params, copyParams);
-            case TAB -> throw new PGError("TAB COPY format is not implemented");
-        };
-    }
 
-    private synchronized Object copyInRowsCSV (
-            final String sql,
-            final Iterator<List<Object>> params,
-            final CopyParams copyParams
-    ) {
+        final CopyFormat format = copyParams.format();
+
         sendQuery(sql);
-        params.forEachRemaining(row -> {
-            final String line = Copy.encodeRowCSV(row, copyParams, codecParams);
-            sendCopyData(line.getBytes(StandardCharsets.UTF_8));
-        });
-        sendCopyDone();
-        return interact(Phase.COPY).getResult();
-    }
 
-    private synchronized Object copyInRowsBin (
-            final String sql,
-            final Iterator<List<Object>> params,
-            final CopyParams copyParams
-    ) {
-        sendQuery(sql);
-        sendCopyData(Const.COPY_BIN_HEADER);
+        switch (format) {
 
-        // TODO: reduce mem allocation
-        params.forEachRemaining(row -> {
-            final ByteBuffer buf = Copy.encodeRowBin(row, copyParams, codecParams);
-            sendCopyData(buf.array());
-        });
-        // TODO: precalculate
-        sendCopyData(Const.shortMinusOne);
+            case CSV:
+                params.forEach(row -> {
+                    final String line = Copy.encodeRowCSV(row, copyParams, codecParams);
+                    sendCopyData(line.getBytes(StandardCharsets.UTF_8));
+                });
+                break;
+
+            case BIN:
+                sendCopyData(Const.COPY_BIN_HEADER);
+                // TODO: reduce mem allocation
+                params.forEach(row -> {
+                    final ByteBuffer buf = Copy.encodeRowBin(row, copyParams, codecParams);
+                    sendCopyData(buf.array());
+                });
+                // TODO: precalculate
+                sendCopyData(Const.shortMinusOne);
+                break;
+
+            case TAB:
+                // TODO? send copy failed?
+                throw new PGError("TAB COPY format is not implemented");
+        }
+
         sendCopyDone();
         return interact(Phase.COPY).getResult();
     }
@@ -716,11 +717,17 @@ public class Connection implements Closeable {
     public synchronized Object copyInMaps (
             final String sql,
             final List<Map<?,?>> params,
-            final CopyParams copyParams,
-            final List<Object> keys
+            final List<Object> keys,
+            final CopyParams copyParams
     ) {
-        Iterator<List<Object>> iterator =  params.stream().map(map -> mapToRow(map, keys)).iterator();
-        return copyInRowsIterator(sql, iterator, copyParams);
+        Stream<List<Object>> stream =
+                Objects.requireNonNull(params, "A list of maps cannot be null")
+                        .stream().filter(Objects::nonNull)
+                        .map(map -> mapToRow(map, keys));
+        return copyInRowsStream(
+                Objects.requireNonNull(sql, "A SQL expression cannot be null"),
+                stream,
+                Objects.requireNonNull(copyParams, "Copy params cannot be null"));
     }
 
     private void handleParseComplete(ParseComplete msg, Accum acc) {

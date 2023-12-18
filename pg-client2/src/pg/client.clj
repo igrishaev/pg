@@ -2,25 +2,31 @@
   (:require
    [clojure.string :as str])
   (:import
-   java.io.Writer
-   java.io.InputStream
-   java.io.OutputStream
-   java.util.UUID
-   java.util.Map
-   java.util.List
    clojure.lang.Keyword
-   com.github.igrishaev.copy.CopyParams
-   com.github.igrishaev.copy.CopyParams$Builder
-   com.github.igrishaev.util.JSON
-   com.github.igrishaev.util.JSON$Wrapper
-   com.github.igrishaev.reducer.IReducer
+   com.github.igrishaev.Config$Builder
    com.github.igrishaev.Connection
    com.github.igrishaev.ExecuteParams
    com.github.igrishaev.ExecuteParams$Builder
    com.github.igrishaev.PreparedStatement
-   com.github.igrishaev.Config$Builder
+   com.github.igrishaev.copy.CopyParams
+   com.github.igrishaev.copy.CopyParams$Builder
    com.github.igrishaev.enums.TXStatus
-   com.github.igrishaev.enums.TxLevel))
+   com.github.igrishaev.enums.TxLevel
+   com.github.igrishaev.enums.CopyFormat
+   com.github.igrishaev.reducer.IReducer
+   com.github.igrishaev.util.JSON
+   com.github.igrishaev.util.JSON$Wrapper
+   java.io.InputStream
+   java.io.OutputStream
+   java.io.Writer
+   java.util.List
+   java.util.Map
+   java.util.UUID))
+
+
+(def ^CopyFormat COPY_FORMAT_BIN CopyFormat/BIN)
+(def ^CopyFormat COPY_FORMAT_CSV CopyFormat/CSV)
+(def ^CopyFormat COPY_FORMAT_TAB CopyFormat/TAB)
 
 
 (defn ->kebab ^Keyword [^String column]
@@ -108,6 +114,7 @@
                 csv-end
                 buf-size
                 oids
+                ^CopyFormat format
                 csv?
                 bin?
                 tab?]}
@@ -135,6 +142,9 @@
 
       tab?
       (.setBin)
+
+      format
+      (.format format)
 
       buf-size
       (.bufSize buf-size)
@@ -383,6 +393,15 @@
 
   ([^Connection conn ^String sql ^List rows ^Map opt]
    (.copyInRows conn sql rows (->copy-params opt))))
+
+
+(defn copy-in-maps
+
+  ([^Connection conn ^String sql ^List maps ^List keys]
+   (.copyInMaps conn sql maps keys (CopyParams/standard)))
+
+  ([^Connection conn ^String sql ^List maps ^List keys ^Map opt]
+   (.copyInMaps conn sql maps keys (->copy-params opt))))
 
 
 (defmacro with-safe [& body]
