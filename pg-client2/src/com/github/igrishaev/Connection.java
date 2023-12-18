@@ -217,7 +217,7 @@ public class Connection implements Closeable {
     private void sendByteBuffer (ByteBuffer bb) {
         // TODO: move to IOTools
         try {
-            outStream.write(bb.array());
+            outStream.write(bb.array(), 0, bb.limit());
             outStream.flush();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -674,6 +674,7 @@ public class Connection implements Closeable {
             ByteBuffer bb = ByteBuffer.wrap(buf);
             bb.put((byte)'d');
             bb.putInt(4 + read);
+            bb.limit(5 + read);
             sendByteBuffer(bb);
         }
         sendCopyDone();
