@@ -1898,6 +1898,9 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
              res-query)))))
 
 
+;; TODO: test COPY in stream witn an exception in the middle
+
+
 (deftest test-copy-in-rows-ok-csv
 
   (pg/with-connection [conn *CONFIG*]
@@ -1999,6 +2002,8 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
             (pg/query conn "select 1 as one")]
         (is (= [{:one 1}] res-query))))))
 
+
+;; TODO: check exception in the middle
 
 (deftest test-copy-in-maps-ok-csv
 

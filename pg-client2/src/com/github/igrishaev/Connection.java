@@ -1,5 +1,6 @@
 package com.github.igrishaev;
 
+import clojure.lang.Compiler;
 import clojure.lang.IFn;
 import com.github.igrishaev.auth.MD5;
 import com.github.igrishaev.codec.DecoderBin;
@@ -214,14 +215,14 @@ public class Connection implements Closeable {
         }
     }
 
-    private void sendByteBuffer (ByteBuffer bb) {
-        // TODO: move to IOTools
-        try {
-            outStream.write(bb.array(), 0, bb.limit());
-            outStream.flush();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    private void sendBytes (final byte[] buf) {
+        IOTool.write(outStream, buf);
+        IOTool.flush(outStream);
+    }
+
+    private void sendBytes (final byte[] buf, final int offset, final int len) {
+        IOTool.write(outStream, buf, offset, len);
+        IOTool.flush(outStream);
     }
 
     private void sendMessage (IMessage msg) {
@@ -657,28 +658,58 @@ public class Connection implements Closeable {
         return acc.getResult();
     }
 
-    public synchronized Object copyInStream (String sql, InputStream inputStream) {
+    public synchronized Object copyInStream (
+            final String sql,
+            final InputStream inputStream
+    ) {
         return copyInStream(sql, inputStream, CopyParams.standard());
     }
 
-    public synchronized Object copyInStream (String sql, InputStream inputStream, CopyParams copyParams) {
+    private Object onCopyFailed(Throwable e) {
+        sendCopyFail("Terminated due to an exception on the client side");
+        interact(Phase.COPY);
+        throw new PGError(e, "Unhandled exception during COPY IN command");
+    }
+
+    public synchronized Object copyInStream (
+            final String sql,
+            final InputStream inputStream,
+            final CopyParams copyParams
+    ) {
         sendQuery(sql);
 
         final int contentSize = copyParams.bufSize();
         final byte[] buf = new byte[5 + contentSize];
+
+        Throwable e = null;
+        int read = 0;
+
         while (true) {
-            final int read = IOTool.read(inputStream, buf, 5, contentSize);
+            try {
+                read = inputStream.read(buf, 5, contentSize);
+            }
+            catch (Throwable caught) {
+                e = caught;
+                break;
+            }
+
             if (read == -1) {
                 break;
             }
+
             ByteBuffer bb = ByteBuffer.wrap(buf);
             bb.put((byte)'d');
             bb.putInt(4 + read);
-            bb.limit(5 + read);
-            sendByteBuffer(bb);
+            sendBytes(buf, 0, 5 + read);
         }
-        sendCopyDone();
-        return interact(Phase.COPY).getResult();
+
+        if (e == null) {
+            sendCopyDone();
+            return interact(Phase.COPY).getResult();
+        }
+        else {
+            return onCopyFailed(e);
+        }
     }
 
     public synchronized Object copyInRows(
@@ -702,36 +733,59 @@ public class Connection implements Closeable {
     ) {
 
         final CopyFormat format = copyParams.format();
-
-        sendQuery(sql);
+        Throwable e = null;
+        Iterator<List<Object>> iterator = params.iterator();
 
         switch (format) {
 
             case CSV:
-                params.forEach(row -> {
-                    final String line = Copy.encodeRowCSV(row, copyParams, codecParams);
+                sendQuery(sql);
+                String line = null;
+                while (iterator.hasNext()) {
+                    try {
+                        line = Copy.encodeRowCSV(iterator.next(), copyParams, codecParams);
+                    }
+                    catch (Throwable caught) {
+                        e = caught;
+                        break;
+                    }
                     sendCopyData(line.getBytes(StandardCharsets.UTF_8));
-                });
+                }
                 break;
 
             case BIN:
+                sendQuery(sql);
+                ByteBuffer buf = null;
                 sendCopyData(Const.COPY_BIN_HEADER);
                 // TODO: reduce mem allocation
-                params.forEach(row -> {
-                    final ByteBuffer buf = Copy.encodeRowBin(row, copyParams, codecParams);
+                while (iterator.hasNext()) {
+                    try {
+                        buf = Copy.encodeRowBin(iterator.next(), copyParams, codecParams);
+                    }
+                    catch (Throwable caught) {
+                        e = caught;
+                        break;
+                    }
                     sendCopyData(buf.array());
-                });
-                // TODO: precalculate
-                sendCopyData(Const.shortMinusOne);
+                }
+                if (e == null) {
+                    // TODO: precalculate
+                    sendCopyData(Const.shortMinusOne);
+                }
                 break;
 
             case TAB:
-                // TODO? send copy failed?
                 throw new PGError("TAB COPY format is not implemented");
         }
 
-        sendCopyDone();
-        return interact(Phase.COPY).getResult();
+        if (e == null) {
+            sendCopyDone();
+            return interact(Phase.COPY).getResult();
+        }
+        else {
+            return onCopyFailed(e);
+        }
+
     }
 
     private static List<Object> mapToRow(final Map<?,?> map, final List<Object> keys) {
