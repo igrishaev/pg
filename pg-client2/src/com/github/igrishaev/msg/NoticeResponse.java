@@ -13,7 +13,10 @@ public record NoticeResponse(Map<String, String> fields) implements IClojure {
         for (Map.Entry<String, String> e: fields.entrySet()) {
             map = RT.assoc(map, Keyword.intern(e.getKey()), e.getValue());
         }
-        return map;
+        return map.assoc(
+                Keyword.intern("msg"),
+                Keyword.intern("NoticeResponse")
+        );
     }
 
     public static NoticeResponse fromByteBuffer (ByteBuffer buf) {

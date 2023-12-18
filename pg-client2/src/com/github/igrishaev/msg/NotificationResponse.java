@@ -15,6 +15,7 @@ public record NotificationResponse(int pid,
 
     public IPersistentMap toClojure () {
         return PersistentHashMap.create(
+                Keyword.intern("msg"), Keyword.intern("NoticeResponse"),
                 Keyword.intern("pid"), pid,
                 Keyword.intern("channel"), channel,
                 Keyword.intern("message"), message

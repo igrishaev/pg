@@ -7,6 +7,7 @@ import clojure.lang.PersistentVector;
 import com.github.igrishaev.util.BBTool;
 import com.github.igrishaev.util.IClojure;
 import java.nio.ByteBuffer;
+import java.security.Key;
 import java.util.Arrays;
 
 public record NegotiateProtocolVersion(
@@ -17,6 +18,7 @@ public record NegotiateProtocolVersion(
 
     public IPersistentMap toClojure () {
         return PersistentHashMap.create(
+                Keyword.intern("msg"), Keyword.intern("NegotiateProtocolVersion"),
                 Keyword.intern("version"), version,
                 Keyword.intern("param-count"), paramCount,
                 Keyword.intern("params"), PersistentVector.create(Arrays.asList(params))

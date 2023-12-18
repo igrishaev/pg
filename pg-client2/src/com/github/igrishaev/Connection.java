@@ -1,5 +1,6 @@
 package com.github.igrishaev;
 
+import clojure.lang.IFn;
 import com.github.igrishaev.auth.MD5;
 import com.github.igrishaev.codec.DecoderBin;
 import com.github.igrishaev.codec.DecoderTxt;
@@ -13,6 +14,9 @@ import com.github.igrishaev.msg.*;
 import com.github.igrishaev.type.OIDHint;
 import com.github.igrishaev.util.IOTool;
 import com.github.igrishaev.util.SQL;
+
+import clojure.core$partial;
+import clojure.core$future_call;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -130,7 +134,9 @@ public class Connection implements Closeable {
             case "TimeZone":
                 codecParams.timeZone = value;
                 break;
-                // TODO: integer_datetimes
+            case "integer_datetimes":
+                codecParams.integerDatetime = value.equals("on");
+                break;
         }
     }
 
@@ -598,19 +604,22 @@ public class Connection implements Closeable {
         acc.handlePortalSuspended(msg);
     }
 
+    private static void futureCall(IFn f, Object arg) {
+        core$future_call.invokeStatic(
+                core$partial.invokeStatic(f, arg)
+        );
+    }
+
     private void handleNotificationResponse(NotificationResponse msg) {
-        // TODO: try/catch?
-        config.fnNotification().invoke(msg.toClojure());
+        futureCall(config.fnNotification(), msg.toClojure());
     }
 
     private void handleNoticeResponse(NoticeResponse msg) {
-        // TODO: try/catch?
-        config.fnNotice().invoke(msg.toClojure());
+        futureCall(config.fnNotice(), msg.toClojure());
     }
 
     private void handleNegotiateProtocolVersion(NegotiateProtocolVersion msg) {
-        // TODO: print by default?
-        config.fnProtocolVersion().invoke(msg.toClojure());
+        futureCall(config.fnProtocolVersion(), msg.toClojure());
     }
 
     private void handleAuthenticationMD5Password(AuthenticationMD5Password msg) {

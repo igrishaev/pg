@@ -369,10 +369,62 @@
 
         (is (= 1 (count invocations)))
 
-        (is (= {:pid pid
+        (is (= {:msg :NoticeResponse
+                :pid pid
                 :channel channel
                 :message message}
                (first invocations)))))))
+
+
+(deftest test-client-listen-notify-exception
+
+  (let [capture!
+        (atom [])
+
+        fn-notification
+        (fn [msg]
+          (try
+            (/ 0 0)
+            (swap! capture! conj msg)
+            (catch Throwable e
+              (swap! capture! conj e))))
+
+        config+
+        (assoc *CONFIG* :fn-notification fn-notification)]
+
+    (pg/with-connection [conn config+]
+
+      (let [pid
+            (pg/pid conn)
+
+            channel
+            "!@#$%^&*();\" d'rop \"t'a'ble students--;42"
+
+            res1
+            (pg/listen conn channel)
+
+            message
+            "'; \n\t\rdrop table studets--!@#$%^\""
+
+            res2
+            (pg/notify conn channel message)
+
+            res3
+            (pg/unlisten conn channel)
+
+            res4
+            (pg/notify conn channel "more")
+
+            e
+            (-> capture! deref first)]
+
+        (is (nil? res1))
+        (is (nil? res2))
+        (is (nil? res3))
+        (is (nil? res4))
+
+        (is (instance? ArithmeticException e))
+        (is (= "Divide by zero" (ex-message e)))))))
 
 
 (deftest test-client-listen-notify-different-conns
@@ -541,12 +593,25 @@
 
 (deftest test-client-wrong-minor-protocol
 
-  (let [config
-        (assoc *CONFIG* :protocol-version 196609)]
+  (let [capture!
+        (atom [])
+
+        config
+        (assoc *CONFIG*
+               :protocol-version 196609
+               :fn-protocol-version
+               (fn [msg]
+                 (swap! capture! conj msg)))]
 
     (pg/with-connection [conn config]
       (is (= [{:foo 1}]
-             (pg/execute conn "select 1 as foo"))))))
+             (pg/execute conn "select 1 as foo"))))
+
+    (is (= {:msg :NegotiateProtocolVersion
+            :params []
+            :param-count 0
+            :version 196608}
+           (-> capture! deref first)))))
 
 
 (deftest test-client-wrong-major-protocol
@@ -634,7 +699,10 @@
       (let [res (pg/execute conn "ROLLBACK")]
         (is (= {:command "ROLLBACK"} res))))
 
-    (is (= {:verbosity "WARNING",
+    (Thread/sleep 100)
+
+    (is (= {:msg :NoticeResponse
+            :verbosity "WARNING",
             :function "UserAbortTransactionBlock",
             :severity "WARNING",
             :code "25P01",

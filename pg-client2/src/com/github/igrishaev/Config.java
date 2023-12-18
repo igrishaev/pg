@@ -1,7 +1,7 @@
 package com.github.igrishaev;
 
 import clojure.lang.IFn;
-import clojure.core$identity;
+import clojure.core$println;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collections;
@@ -50,9 +50,9 @@ public record Config (
         private boolean SOTCPnoDelay = true;
         private int inStreamBufSize = Const.IN_STREAM_BUF_SIZE;
         private int outStreamBufSize = Const.OUT_STREAM_BUF_SIZE;
-        private IFn fnNotification = new core$identity();
-        private IFn fnProtocolVersion = new core$identity();
-        private IFn fnNotice = new core$identity();
+        private IFn fnNotification = new core$println();
+        private IFn fnProtocolVersion = new core$println();
+        private IFn fnNotice = new core$println();
 
         public Builder(final String user, final String database) {
             this.user = Objects.requireNonNull(user);
