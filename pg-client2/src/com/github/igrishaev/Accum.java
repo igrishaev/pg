@@ -69,6 +69,7 @@ public class Accum {
     public final Phase phase;
     public final ExecuteParams executeParams;
     private final ArrayList<Node> nodes;
+    //  TODO: not an array but a single value
     private final ArrayList<ErrorResponse> errorResponses;
     private Node current;
     private Throwable exception;
