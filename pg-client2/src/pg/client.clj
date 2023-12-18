@@ -382,8 +382,12 @@
 
 
 (defn copy-in
-  [^Connection conn ^String sql ^InputStream in]
-  (.copyInStream conn sql in))
+
+  ([^Connection conn ^String sql ^InputStream in]
+   (.copyInStream conn sql in (CopyParams/standard)))
+
+  ([^Connection conn ^String sql ^InputStream in ^Map opt]
+   (.copyInStream conn sql in (->copy-params opt))))
 
 
 (defn copy-in-rows

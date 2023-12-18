@@ -214,6 +214,16 @@ public class Connection implements Closeable {
         }
     }
 
+    private void sendByteBuffer (ByteBuffer bb) {
+        // TODO: move to IOTools
+        try {
+            outStream.write(bb.array());
+            outStream.flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void sendMessage (IMessage msg) {
         System.out.println(msg);
         ByteBuffer buf = msg.encode(getClientEncoding());
@@ -648,15 +658,23 @@ public class Connection implements Closeable {
     }
 
     public synchronized Object copyInStream (String sql, InputStream inputStream) {
+        return copyInStream(sql, inputStream, CopyParams.standard());
+    }
+
+    public synchronized Object copyInStream (String sql, InputStream inputStream, CopyParams copyParams) {
         sendQuery(sql);
-        // TODO: prefill the first 5 bytes!!!
-        final byte[] buf = new byte[Const.COPY_BUFFER_SIZE];
+
+        final int contentSize = copyParams.bufSize();
+        final byte[] buf = new byte[5 + contentSize];
         while (true) {
-            final int size = IOTool.read(inputStream, buf);
-            if (size == -1) {
+            final int read = IOTool.read(inputStream, buf, 5, contentSize);
+            if (read == -1) {
                 break;
             }
-            sendCopyData(buf, size);
+            ByteBuffer bb = ByteBuffer.wrap(buf);
+            bb.put((byte)'d');
+            bb.putInt(4 + read);
+            sendByteBuffer(bb);
         }
         sendCopyDone();
         return interact(Phase.COPY).getResult();
