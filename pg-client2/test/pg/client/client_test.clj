@@ -1954,9 +1954,30 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
         (is (= [{:one 1}] (pg/query conn "select 1 as one")))))))
 
 
-;; test copy in rows error
-;; test copy in maps error
 ;; test copy in maps empty keys error
+
+(deftest test-copy-in-rows-exception-in-the-middle
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (pg/query conn "create temp table foo (id bigint, name text, active boolean, note text)")
+
+    (let [rows
+          [[1 "Ivan" true (new Object)]]]
+
+      (try
+        (pg/copy-in-rows conn
+                         "copy foo (id, name, active, note) from STDIN WITH (FORMAT CSV, NULL 'dummy', DELIMITER '|')"
+                         rows)
+        (is false)
+        (catch PGError e
+          (is (= 1 (-> e ex-message)))
+          (is (= 1 (-> e ex-cause ex-message))))))
+
+    (testing "conn is ok"
+      (is (= :I (pg/status conn)))
+      (is (= [{:one 1}] (pg/query conn "select 1 as one"))))))
+
 
 (deftest test-copy-in-rows-ok-csv
 
@@ -2125,7 +2146,38 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
               {:id 2, :name "Juan", :active nil, :note nil}]
              res-query)))))
 
-;; TODO: fix the test
+
+(deftest test-copy-in-maps-error-in-the-middle
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (pg/query conn "create temp table foo (id int2, name text, active boolean, note text)")
+
+    (let [maps
+          [{:lala 123 :name "Ivan" :id 1 :active true :note "aaa"}
+           {:id 2 :active nil :note nil :name (new Object) :extra "lol"}]]
+
+      (try
+        (pg/copy-in-maps conn
+                         "copy foo (id, name, active, note) from STDIN WITH (FORMAT BINARY)"
+                         maps
+                         [:id :name :active :note]
+                         {:oids [OID/INT2]
+                          :copy-bin? true})
+        (is false)
+        (catch PGError e
+          (is (-> e
+                  ex-message
+                  (str/starts-with? "Unhandled exception: cannot binary-encode a value")))
+          (is (-> e
+                  ex-cause
+                  ex-message
+                  (str/starts-with? "cannot binary-encode a value"))))))
+
+    (testing "the conn still works"
+      (is (= :I (pg/status conn)))
+      (is (= [{:one 1}] (pg/query conn "select 1 as one"))))))
+
 
 (deftest test-copy-in-rows-empty-csv
 
@@ -2167,7 +2219,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
                            maps
                            [:id :name :active :note]
                            {:oids [OID/INT2]
-                            :format pg/COPY_FORMAT_BIN})
+                            :copy-format pg/COPY_FORMAT_BIN})
 
           res-query
           (pg/query conn "select * from foo")]
@@ -2179,6 +2231,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
              res-query)))))
 
 
+;; TODO: fix this!!!
 (deftest test-copy-in-maps-empty-bin
 
   (pg/with-connection [conn *CONFIG*]
@@ -2188,10 +2241,10 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
     (let [res-copy
           (pg/copy-in-maps conn
                            "copy foo (id, name, active, note) from STDIN WITH (FORMAT BINARY)"
-                           nil
-                           nil
-                           {:oids [OID/INT2]
-                            :bin? true})
+                           []
+                           #_nil [:id :name :active :note]
+                           { ;; :oids [OID/INT2]
+                            :copy-bin? true})
 
           res-query
           (pg/query conn "select * from foo")]

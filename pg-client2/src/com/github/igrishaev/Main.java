@@ -1,11 +1,15 @@
 package com.github.igrishaev;
 
+import clojure.lang.Keyword;
+import clojure.lang.PersistentHashMap;
+
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 public class Main {
 
@@ -42,6 +46,20 @@ public class Main {
         conn.copy(
                 "copy foo (a, b, c) from STDIN WITH (FORMAT CSV)",
                 ExecuteParams.builder().inputStream(in).build()
+        );
+
+        // TODO: fix this case!
+        conn.copy(
+                "copy foo (a, b, c) from STDIN WITH (FORMAT BINARY)",
+                ExecuteParams.builder()
+                        .copyInMaps(Collections.emptyList())
+                        .copyMapKeys(List.of(
+                                Keyword.intern("a"),
+                                Keyword.intern("b"),
+                                Keyword.intern("c")
+                        ))
+                        .setBin()
+                        .build()
         );
 
          Object res1 = conn.query("select x from generate_series(1, 3) as x; select 42 as foo");
