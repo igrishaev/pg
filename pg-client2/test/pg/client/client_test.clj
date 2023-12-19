@@ -2,6 +2,7 @@
   (:import
    java.io.OutputStream
    java.io.ByteArrayOutputStream
+   java.io.InputStream
    java.util.Date
    java.time.Instant
    java.time.LocalTime
@@ -1893,7 +1894,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
              res)))))
 
 
-(deftest test-copy-in-api-csv
+(deftest test-copy-in-stream-csv
 
   (pg/with-connection [conn *CONFIG*]
 
@@ -1928,8 +1929,34 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
              res-query)))))
 
 
-;; TODO: test COPY in stream witn an exception in the middle
+(deftest test-copy-in-stream-csv-broken-stream
 
+  (pg/with-connection [conn *CONFIG*]
+
+    (pg/query conn "create temp table foo (id bigint, name text, active boolean)")
+
+    (let [in-stream
+          (proxy [InputStream] []
+            (read [buf off len]
+              (throw (new Exception "BOOM"))))]
+
+      (try
+        (pg/copy-in conn
+                    "copy foo (id, name, active) from STDIN WITH (FORMAT CSV)"
+                    in-stream)
+        (is false)
+        (catch PGError e
+          (is (= "Unhandled exception: BOOM" (-> e ex-message)))
+          (is (= "BOOM" (-> e ex-cause ex-message)))))
+
+      (testing "the connection is still usable"
+        (is (= :I (pg/status conn)))
+        (is (= [{:one 1}] (pg/query conn "select 1 as one")))))))
+
+
+;; test copy in rows error
+;; test copy in maps error
+;; test copy in maps empty keys error
 
 (deftest test-copy-in-rows-ok-csv
 
