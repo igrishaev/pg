@@ -8,8 +8,6 @@
    com.github.igrishaev.ExecuteParams
    com.github.igrishaev.ExecuteParams$Builder
    com.github.igrishaev.PreparedStatement
-   com.github.igrishaev.copy.CopyParams
-   com.github.igrishaev.copy.CopyParams$Builder
    com.github.igrishaev.enums.TXStatus
    com.github.igrishaev.enums.TxLevel
    com.github.igrishaev.enums.CopyFormat
@@ -41,6 +39,7 @@
                 reducer
                 fn-key
                 output-stream
+                input-stream
                 group-by
                 index-by
                 matrix?
@@ -51,7 +50,18 @@
                 kv
                 first?
                 binary-encode?
-                binary-decode?]}
+                binary-decode?
+                csv-null
+                csv-sep
+                csv-end
+                copy-buf-size
+                ^CopyFormat copy-format
+                copy-csv?
+                copy-bin?
+                copy-tab?
+                copy-in-rows
+                copy-in-maps
+                copy-in-keys]}
         opt]
 
     (cond-> (ExecuteParams/builder)
@@ -73,6 +83,9 @@
 
       output-stream
       (.outputStream output-stream)
+
+      input-stream
+      (.inputStream input-stream)
 
       group-by
       (.groupBy group-by)
@@ -104,24 +117,6 @@
       (some? binary-decode?)
       (.binaryDecode binary-decode?)
 
-      :finally
-      (.build))))
-
-
-(defn ->copy-params ^CopyParams [^Map opt]
-  (let [{:keys [csv-null
-                csv-sep
-                csv-end
-                buf-size
-                oids
-                ^CopyFormat format
-                csv?
-                bin?
-                tab?]}
-        opt]
-
-    (cond-> (CopyParams/builder)
-
       csv-null
       (.CSVNull csv-null)
 
@@ -134,23 +129,33 @@
       oids
       (.OIDs oids)
 
-      csv?
+      copy-csv?
       (.setCSV)
 
-      bin?
+      copy-bin?
       (.setBin)
 
-      tab?
+      copy-tab?
       (.setBin)
 
-      format
-      (.format format)
+      copy-format
+      (.copyFormat copy-format)
 
-      buf-size
-      (.bufSize buf-size)
+      copy-buf-size
+      (.bufSize copy-buf-size)
+
+      copy-in-rows
+      (.copyInRows copy-in-rows)
+
+      copy-in-maps
+      (.copyInMaps copy-in-maps)
+
+      copy-in-keys
+      (.copyMapKeys copy-in-keys)
 
       :finally
       (.build))))
+
 
 
 (defn ->config ^Config$Builder [params]
@@ -377,35 +382,56 @@
 
 
 (defn copy-out
-  [^Connection conn ^String sql ^OutputStream out]
-  (.copyOut conn sql out))
+
+  ([^Connection conn ^String sql ^OutputStream out]
+   (copy-out conn sql out nil))
+
+  ([^Connection conn ^String sql ^OutputStream out ^Map opt]
+   (.copy conn
+          sql
+          (-> opt
+              (assoc :output-stream out)
+              (->execute-params)))))
 
 
 (defn copy-in
 
   ([^Connection conn ^String sql ^InputStream in]
-   (.copyInStream conn sql in (CopyParams/standard)))
+   (copy-in conn sql in nil))
 
   ([^Connection conn ^String sql ^InputStream in ^Map opt]
-   (.copyInStream conn sql in (->copy-params opt))))
+   (.copy conn
+          sql
+          (-> opt
+              (assoc :input-stream in)
+              (->execute-params)))))
 
 
 (defn copy-in-rows
 
   ([^Connection conn ^String sql ^List rows]
-   (.copyInRows conn sql rows (CopyParams/standard)))
+   (copy-in-rows conn sql rows nil))
 
   ([^Connection conn ^String sql ^List rows ^Map opt]
-   (.copyInRows conn sql rows (->copy-params opt))))
+   (.copy conn
+          sql
+          (-> opt
+              (assoc :copy-in-rows rows)
+              (->execute-params)))))
 
 
 (defn copy-in-maps
 
   ([^Connection conn ^String sql ^List maps ^List keys]
-   (.copyInMaps conn sql maps keys (CopyParams/standard)))
+   (copy-in-maps conn sql maps keys nil))
 
   ([^Connection conn ^String sql ^List maps ^List keys ^Map opt]
-   (.copyInMaps conn sql maps keys (->copy-params opt))))
+   (.copy conn
+          sql
+          (-> opt
+              (assoc :copy-in-maps maps
+                     :copy-in-keys keys)
+              (->execute-params)))))
 
 
 (defmacro with-safe [& body]

@@ -77,6 +77,7 @@ public record ExecuteParams (
             return this;
         }
 
+        // TODO: rename copyInKeys
         public Builder copyMapKeys (final List<Object> copyMapKeys) {
             this.copyMapKeys = Objects.requireNonNull(copyMapKeys);
             return this;
@@ -202,6 +203,7 @@ public record ExecuteParams (
             return this;
         }
 
+        // TODO: rename to copyBufSize
         public Builder bufSize (final int bufSize) {
             this.copyBufSize = bufSize;
             return this;

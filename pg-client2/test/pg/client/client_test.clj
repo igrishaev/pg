@@ -1,5 +1,6 @@
 (ns pg.client.client-test
   (:import
+   java.io.OutputStream
    java.io.ByteArrayOutputStream
    java.util.Date
    java.time.Instant
@@ -1754,6 +1755,32 @@ drop table %1$s;
     (is (= [{:res 42}] res2))))
 
 
+(deftest test-copy-out-broken-stream
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (let [sql
+          "copy (select s.x as x, s.x * s.x as square from generate_series(1, 9) as s(x)) TO STDOUT WITH (FORMAT CSV)"
+
+          out
+          (proxy [OutputStream] []
+            (write [b]
+              (throw (new Exception "BOOM"))))]
+
+      (try
+        (pg/copy-out conn sql out)
+        (is false)
+        (catch PGError e
+          (is (= "Unhandled exception: BOOM"
+                 (-> e ex-message)))
+          (is (= "BOOM" (-> e ex-cause ex-message)))))
+
+      (testing "the connection still can be used"
+        (is (= :I (pg/status conn)))
+        (is (= [{:one 1}]
+               (pg/query conn "select 1 as one")))))))
+
+
 (deftest test-copy-out-api-txt
 
   (pg/with-connection [conn *CONFIG*]
@@ -1966,7 +1993,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
           (pg/copy-in-rows conn
                            "copy foo (id, name, active, note) from STDIN WITH (FORMAT BINARY)"
                            rows
-                           {:bin? true
+                           {:copy-bin? true
                             :oids [OID/INT2 OID/DEFAULT OID/BOOL]})
 
           res-query
@@ -1996,7 +2023,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
         (pg/copy-in conn
                     "copy foo (id, name, active) from STDIN WITH (FORMAT CSV)"
                     in-stream
-                    {:buf-size 1})
+                    {:copy-buf-size 1})
         (is false)
         (catch Exception e
           (is e)))
@@ -2027,7 +2054,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
                            maps
                            [:id :name :active :note]
                            {:oids [OID/INT2]
-                            :csv? true})
+                            :copy-csv? true})
 
           res-query
           (pg/query conn "select * from foo")]
@@ -2060,7 +2087,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
                            ;; TODO: oid as a map {field->oid}
                            [:id :name :active :note]
                            {:oids [OID/INT2]
-                            :bin? true})
+                            :copy-bin? true})
 
           res-query
           (pg/query conn "select * from foo")]
@@ -2084,12 +2111,12 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
                            "copy foo (id, name, active, note) from STDIN WITH (FORMAT CSV)"
                            nil
                            {:oids [OID/INT2]
-                            :csv? true})
+                            :copy-csv? true})
 
           res-query
           (pg/query conn "select * from foo")]
 
-      (is (= 0 res-copy))
+      (is (= {:copied 0} res-copy))
       (is (= [] res-query)))))
 
 
