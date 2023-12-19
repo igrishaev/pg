@@ -1,6 +1,7 @@
 package com.github.igrishaev.copy;
 
 import com.github.igrishaev.Const;
+import com.github.igrishaev.ExecuteParams;
 import com.github.igrishaev.codec.CodecParams;
 import com.github.igrishaev.codec.EncoderBin;
 import com.github.igrishaev.codec.EncoderTxt;
@@ -20,12 +21,12 @@ public class Copy {
 
     public static String encodeRowCSV (
             final List<Object> row,
-            final CopyParams copyParams,
+            final ExecuteParams executeParams,
             final CodecParams codecParams
     ) {
         final StringBuilder sb = new StringBuilder();
         final Iterator<Object> iterator = row.iterator();
-        final List<OID> OIDs = copyParams.OIDs();
+        final List<OID> OIDs = executeParams.OIDs();
         final int OIDLen = OIDs.size();
         short i = 0;
         while (iterator.hasNext()) {
@@ -33,33 +34,33 @@ public class Copy {
             i++;
             Object item = iterator.next();
             if (item == null) {
-                sb.append(copyParams.CSVNull());
+                sb.append(executeParams.CSVNull());
             }
             // TODO: check if needs quoting? perf test
             else {
                 String encoded = EncoderTxt.encode(item, oid, codecParams);
-                sb.append(copyParams.CSVQuote());
+                sb.append(executeParams.CSVQuote());
                 sb.append(quoteCSV(encoded));
-                sb.append(copyParams.CSVQuote());
+                sb.append(executeParams.CSVQuote());
             }
             if (iterator.hasNext()) {
-                sb.append(copyParams.CSVCellSep());
+                sb.append(executeParams.CSVCellSep());
             }
         }
-        sb.append(copyParams.CSVLineSep());
+        sb.append(executeParams.CSVLineSep());
         return sb.toString();
     }
 
     public static ByteBuffer encodeRowBin (
             final List<Object> row,
-            final CopyParams copyParams,
+            final ExecuteParams executeParams,
             final CodecParams codecParams
     ) {
 
         final short count = (short) row.size();
         final ByteBuffer[] bufs = new ByteBuffer[count];
 
-        final List<OID> OIDs = copyParams.OIDs();
+        final List<OID> OIDs = executeParams.OIDs();
         final int OIDLen = OIDs.size();
 
         int totalSize = 2;
@@ -97,7 +98,7 @@ public class Copy {
     public static void main(String[] args) {
         System.out.println(encodeRowCSV(
                 List.of(1, 2, 3),
-                CopyParams.standard(),
+                ExecuteParams.standard(),
                 CodecParams.standard())
         );
 
@@ -113,7 +114,7 @@ public class Copy {
                 Arrays.toString(
                     encodeRowBin(
                             row,
-                            CopyParams.builder().OIDs(OIDs).build(),
+                            ExecuteParams.builder().OIDs(OIDs).build(),
                             CodecParams.standard()
                     ).array())
         );

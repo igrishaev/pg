@@ -9,7 +9,6 @@ import com.github.igrishaev.codec.EncoderBin;
 import com.github.igrishaev.codec.CodecParams;
 import com.github.igrishaev.codec.EncoderTxt;
 import com.github.igrishaev.copy.Copy;
-import com.github.igrishaev.copy.CopyParams;
 import com.github.igrishaev.enums.*;
 import com.github.igrishaev.msg.*;
 import com.github.igrishaev.type.OIDHint;
@@ -599,12 +598,136 @@ public class Connection implements Closeable {
             case CopyData x:
                 handleCopyData(x, acc);
                 break;
-            case CopyInResponse ignored:
+            case CopyInResponse x:
+                handleCopyInResponse(x, acc);
                 break;
             case CopyDone ignored:
                 break;
 
             default: throw new PGError("Cannot handle this message: %s", msg);
+        }
+    }
+
+    private void handleCopyInResponseStream(CopyInResponse msg, Accum acc) {
+
+        final int contentSize = acc.executeParams.copyBufSize();
+        final byte[] buf = new byte[5 + contentSize];
+
+        InputStream inputStream = acc.executeParams.inputStream();
+
+        Throwable e = null;
+        int read = 0;
+
+        while (true) {
+            try {
+                read = inputStream.read(buf, 5, contentSize);
+            }
+            catch (Throwable caught) {
+                e = caught;
+                break;
+            }
+
+            if (read == -1) {
+                break;
+            }
+
+            ByteBuffer bb = ByteBuffer.wrap(buf);
+            bb.put((byte)'d');
+            bb.putInt(4 + read);
+            sendBytes(buf, 0, 5 + read);
+        }
+
+        if (e == null) {
+            sendCopyDone();
+        }
+        else {
+            acc.setException(e);
+            sendCopyFail("Terminated due to an exception on the client side");
+        }
+    }
+
+    private void handleCopyInResponseData (CopyInResponse msg, Accum acc, Iterator<List<Object>> iterator) {
+        final ExecuteParams executeParams = acc.executeParams;
+        final CopyFormat format = executeParams.copyFormat();
+        Throwable e = null;
+
+        switch (format) {
+
+            case CSV:
+                String line = null;
+                while (iterator.hasNext()) {
+                    try {
+                        line = Copy.encodeRowCSV(iterator.next(), executeParams, codecParams);
+                    }
+                    catch (Throwable caught) {
+                        e = caught;
+                        break;
+                    }
+                    sendCopyData(line.getBytes(StandardCharsets.UTF_8));
+                }
+                break;
+
+            case BIN:
+                ByteBuffer buf = null;
+                sendCopyData(Const.COPY_BIN_HEADER);
+                // TODO: reduce mem allocation
+                while (iterator.hasNext()) {
+                    try {
+                        buf = Copy.encodeRowBin(iterator.next(), executeParams, codecParams);
+                    }
+                    catch (Throwable caught) {
+                        e = caught;
+                        break;
+                    }
+                    sendCopyData(buf.array());
+                }
+                if (e == null) {
+                    // TODO: precalculate
+                    sendCopyData(Const.shortMinusOne);
+                }
+                break;
+
+            case TAB:
+                e = new PGError("TAB COPY format is not implemented");
+                break;
+        }
+
+        if (e == null) {
+            sendCopyDone();
+        }
+        else {
+            acc.setException(e);
+            sendCopyFail("Terminated due to an exception on the client side");
+        }
+    }
+
+    private void handleCopyInResponseRows (CopyInResponse msg, Accum acc) {
+        Iterator<List<Object>> iterator = acc.executeParams.copyInRows()
+                .stream()
+                .filter(Objects::nonNull)
+                .iterator();
+        handleCopyInResponseData(msg, acc, iterator);
+    }
+
+    private void handleCopyInResponseMaps(CopyInResponse msg, Accum acc) {
+        List<Object> keys = acc.executeParams.copyMapKeys();
+        Iterator<List<Object>> iterator = acc.executeParams.copyInMaps()
+                .stream()
+                .filter(Objects::nonNull)
+                .map(map -> mapToRow(map, keys))
+                .iterator();
+        handleCopyInResponseData(msg, acc, iterator);
+    }
+
+    private void handleCopyInResponse(CopyInResponse msg, Accum acc) {
+
+        if (!acc.executeParams.copyInRows().isEmpty()) {
+            handleCopyInResponseRows(msg, acc);
+        }
+        else if (!acc.executeParams.copyInMaps().isEmpty()) {
+            handleCopyInResponseMaps(msg, acc);
+        } else {
+            handleCopyInResponseStream(msg, acc);
         }
     }
 
@@ -639,163 +762,22 @@ public class Connection implements Closeable {
         acc.handleCopyOutResponse(msg);
     }
 
-    private void drainCopy () {
-        while (true) {
-            ByteBuffer buf = ByteBuffer.wrap(IOTool.readNBytes(inStream, 5));
-            char tag = (char) buf.get();
-            int size = buf.getInt() - 4;
-        }
-    }
-
     // TODO: reuse source byte buffer
     // TODO: CopyDataIn & CopyDataOut
     private void handleCopyData(CopyData msg, Accum acc) {
-        Throwable e = null;
         OutputStream outputStream = acc.executeParams.outputStream();
         try {
             outputStream.write(msg.bytes());
-        } catch (Throwable caught) {
-            e = caught;
-        }
-        if (e != null) {
+        } catch (Throwable e) {
             acc.setException(e);
             cancelRequest(this);
         }
-
     }
 
-    public synchronized Object copyOut (String sql, OutputStream outputStream) {
-        ExecuteParams executeParams = ExecuteParams.builder().outputStream(outputStream).build();
+    public synchronized Object copy (final String sql, final ExecuteParams executeParams) {
         sendQuery(sql);
         Accum acc = interact(Phase.COPY, executeParams);
         return acc.getResult();
-    }
-
-    public synchronized Object copyInStream (
-            final String sql,
-            final InputStream inputStream
-    ) {
-        return copyInStream(sql, inputStream, CopyParams.standard());
-    }
-
-    public synchronized Object copyInStream (
-            final String sql,
-            final InputStream inputStream,
-            final CopyParams copyParams
-    ) {
-        sendQuery(sql);
-
-        final int contentSize = copyParams.bufSize();
-        final byte[] buf = new byte[5 + contentSize];
-
-        Throwable e = null;
-        int read = 0;
-
-        while (true) {
-            try {
-                read = inputStream.read(buf, 5, contentSize);
-            }
-            catch (Throwable caught) {
-                e = caught;
-                break;
-            }
-
-            if (read == -1) {
-                break;
-            }
-
-            ByteBuffer bb = ByteBuffer.wrap(buf);
-            bb.put((byte)'d');
-            bb.putInt(4 + read);
-            sendBytes(buf, 0, 5 + read);
-        }
-
-        // TODO: collect exception
-        if (e == null) {
-            sendCopyDone();
-        }
-        else {
-            sendCopyFail("Terminated due to an exception on the client side");
-        }
-        return interact(Phase.COPY).getResult();
-    }
-
-    public synchronized Object copyInRows(
-            final String sql,
-            final List<List<Object>> params,
-            final CopyParams copyParams
-    ) {
-        return copyInRowsStream(
-                Objects.requireNonNull(sql, "A SQL expression cannot be null"),
-                Objects.requireNonNull(params, "A list of rows cannot be null")
-                        .stream()
-                        .filter(Objects::nonNull),
-                Objects.requireNonNull(copyParams, "Copy parameters cannot be null")
-        );
-    }
-
-    private synchronized Object copyInRowsStream (
-            final String sql,
-            final Stream<List<Object>> params,
-            final CopyParams copyParams
-    ) {
-
-        final CopyFormat format = copyParams.format();
-        Throwable e = null;
-        Iterator<List<Object>> iterator = params.iterator();
-
-        switch (format) {
-
-            case CSV:
-                sendQuery(sql);
-                String line = null;
-                while (iterator.hasNext()) {
-                    try {
-                        line = Copy.encodeRowCSV(iterator.next(), copyParams, codecParams);
-                    }
-                    catch (Throwable caught) {
-                        e = caught;
-                        break;
-                    }
-                    sendCopyData(line.getBytes(StandardCharsets.UTF_8));
-                }
-                break;
-
-            case BIN:
-                sendQuery(sql);
-                ByteBuffer buf = null;
-                sendCopyData(Const.COPY_BIN_HEADER);
-                // TODO: reduce mem allocation
-                while (iterator.hasNext()) {
-                    try {
-                        buf = Copy.encodeRowBin(iterator.next(), copyParams, codecParams);
-                    }
-                    catch (Throwable caught) {
-                        e = caught;
-                        break;
-                    }
-                    sendCopyData(buf.array());
-                }
-                if (e == null) {
-                    // TODO: precalculate
-                    sendCopyData(Const.shortMinusOne);
-                }
-                break;
-
-            case TAB:
-                throw new PGError("TAB COPY format is not implemented");
-        }
-
-        // TODO: pass exception
-        if (e == null) {
-            sendCopyDone();
-
-        }
-        else {
-            sendCopyFail("Terminated due to an exception on the client side");
-        }
-        return interact(Phase.COPY).getResult();
-
     }
 
     private static List<Object> mapToRow(final Map<?,?> map, final List<Object> keys) {
@@ -804,22 +786,6 @@ public class Connection implements Closeable {
             row.add(map.get(key));
         }
         return row;
-    }
-
-    public synchronized Object copyInMaps (
-            final String sql,
-            final List<Map<?,?>> params,
-            final List<Object> keys,
-            final CopyParams copyParams
-    ) {
-        Stream<List<Object>> stream =
-                Objects.requireNonNull(params, "A list of maps cannot be null")
-                        .stream().filter(Objects::nonNull)
-                        .map(map -> mapToRow(map, keys));
-        return copyInRowsStream(
-                Objects.requireNonNull(sql, "A SQL expression cannot be null"),
-                stream,
-                Objects.requireNonNull(copyParams, "Copy params cannot be null"));
     }
 
     private void handleParseComplete(ParseComplete msg, Accum acc) {
