@@ -648,7 +648,9 @@ public class Connection implements Closeable {
         }
         else {
             acc.setException(e);
-            sendCopyFail("Terminated due to an exception on the client side");
+            sendCopyFail(Const.COPY_FAIL_EXCEPTION_MSG);
+            sendSync();
+            sendFlush();
         }
     }
 
@@ -721,6 +723,8 @@ public class Connection implements Closeable {
         } catch (Throwable e) {
             acc.setException(e);
             cancelRequest(this);
+            sendSync();
+            sendFlush();
         }
     }
 
@@ -758,25 +762,37 @@ public class Connection implements Closeable {
         acc.handleRowDescription(msg);
     }
 
-    private void handleDataRow(DataRow msg, Accum acc) {
-        short size = msg.valueCount();
-        RowDescription.Column[] cols = acc.getRowDescription().columns();
-        ByteBuffer[] bufs = msg.values();
-        Object[] values = new Object[size];
+    private void handleDataRowUnsafe(final DataRow msg, final Accum acc) {
+        final short size = msg.valueCount();
+        final RowDescription.Column[] cols = acc.getRowDescription().columns();
+        final ByteBuffer[] bufs = msg.values();
+        final Object[] values = new Object[size];
         for (short i = 0; i < size; i++) {
-            ByteBuffer buf = bufs[i];
+            final ByteBuffer buf = bufs[i];
             if (buf == null) {
                 values[i] = null;
                 continue;
             }
-            RowDescription.Column col = cols[i];
-            Object value = switch (col.format()) {
+            final RowDescription.Column col = cols[i];
+            final Object value = switch (col.format()) {
                 case TXT -> DecoderTxt.decode(buf, col.typeOid(), codecParams);
                 case BIN -> DecoderBin.decode(buf, col.typeOid(), codecParams);
             };
             values[i] = value;
         }
         acc.setCurrentValues(values);
+    }
+
+    private void handleDataRow(final DataRow msg, final Accum acc) {
+        try {
+            handleDataRowUnsafe(msg, acc);
+        }
+        catch (Throwable e) {
+            acc.setException(e);
+            cancelRequest(this);
+            sendSync();
+            sendFlush();
+        }
     }
 
     private void handleReadyForQuery(ReadyForQuery msg) {
