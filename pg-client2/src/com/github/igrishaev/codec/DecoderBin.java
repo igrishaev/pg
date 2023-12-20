@@ -22,7 +22,7 @@ public class DecoderBin {
             final CodecParams codecParams
     ) {
         return switch (oid) {
-            case TEXT, VARCHAR, NAME -> BBTool.getRestString(buf, codecParams.serverCharset); // TODO: encoding
+            case TEXT, VARCHAR, NAME -> BBTool.getRestString(buf, codecParams.serverCharset);
             case INT2 -> buf.getShort();
             case INT4, OID -> buf.getInt();
             case INT8 -> buf.getLong();

@@ -92,6 +92,13 @@
       (is (instance? LocalTime res)))))
 
 
+(deftest test-oid-bytea
+  (let [buf
+        (->bb [1 2 3 4])]
+    (is (= [1 2 3 4]
+           (vec (decode buf oid/bytea))))))
+
+
 (deftest test-oid-name
 
   (let [buf

@@ -9,9 +9,12 @@
 adopt enc/dec tests
 
 bytea
-fix enc/dec datetime
+fix enc datetime
 
 bin copy in: array of BB
+
+- execute common fn name
+- prepare name
 
 - datetime
   - decode txt
