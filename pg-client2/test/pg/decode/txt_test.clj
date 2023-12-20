@@ -1,5 +1,7 @@
 (ns pg.decode.txt-test
   (:import
+   com.github.igrishaev.PGError
+   com.github.igrishaev.codec.DecoderTxt
    java.time.OffsetTime
    java.time.LocalTime
    java.time.LocalDate
@@ -9,8 +11,11 @@
    java.math.BigDecimal)
   (:require
    [pg.oid :as oid]
-   [pg.decode.txt :refer [decode]]
    [clojure.test :refer [deftest is testing]]))
+
+
+(defn decode [obj oid]
+  (DecoderTxt/decode obj oid))
 
 
 (deftest test-numbers
@@ -77,13 +82,9 @@
   (try
     (decode "x" oid/bool)
     (is false)
-    (catch Exception e
-      (is (= "cannot parse bool: x"
-             (ex-message e)))
-      (is (= {:string "x"
-              :oid 16
-              :opt nil}
-             (ex-data e))))))
+    (catch PGError e
+      (is (= "wrong boolean value: x"
+             (ex-message e))))))
 
 
 (deftest test-uuid
@@ -183,7 +184,6 @@
              (str res))))))
 
 
-;; TODO: implement!
 (deftest test-decode-array
 
   (testing "trivial ints"

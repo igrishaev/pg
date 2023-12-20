@@ -1,4 +1,5 @@
 (ns pg.oid
+  (:refer-clojure :exclude [char name time])
   (:import
    com.github.igrishaev.enums.OID))
 

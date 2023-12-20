@@ -12,6 +12,7 @@ import com.github.igrishaev.copy.Copy;
 import com.github.igrishaev.enums.*;
 import com.github.igrishaev.msg.*;
 import com.github.igrishaev.type.OIDHint;
+import com.github.igrishaev.util.BBTool;
 import com.github.igrishaev.util.IOTool;
 import com.github.igrishaev.util.SQL;
 
@@ -764,7 +765,10 @@ public class Connection implements Closeable {
             }
             final RowDescription.Column col = cols[i];
             final Object value = switch (col.format()) {
-                case TXT -> DecoderTxt.decode(buf, col.typeOid(), codecParams);
+                case TXT -> {
+                    final String string = BBTool.getString(buf, codecParams.serverCharset);
+                    yield DecoderTxt.decode(string, col.typeOid());
+                }
                 case BIN -> DecoderBin.decode(buf, col.typeOid(), codecParams);
             };
             values[i] = value;

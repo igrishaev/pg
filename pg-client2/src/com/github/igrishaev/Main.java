@@ -48,22 +48,26 @@ public class Main {
                 ExecuteParams.builder().inputStream(in).build()
         );
 
-        // TODO: fix this case!
-        conn.copy(
-                "copy foo (a, b, c) from STDIN WITH (FORMAT BINARY)",
-                ExecuteParams.builder()
-                        .copyInMaps(Collections.emptyList())
-                        .copyMapKeys(List.of(
-                                Keyword.intern("a"),
-                                Keyword.intern("b"),
-                                Keyword.intern("c")
-                        ))
-                        .setBin()
-                        .build()
-        );
+        System.out.println(conn.query("SELECT '\\xDEADBEEF'::bytea"));
 
-         Object res1 = conn.query("select x from generate_series(1, 3) as x; select 42 as foo");
-         System.out.println(res1);
+        // SELECT E'\\xDEADBEEF';
+
+        // TODO: fix this case!
+//        conn.copy(
+//                "copy foo (a, b, c) from STDIN WITH (FORMAT BINARY)",
+//                ExecuteParams.builder()
+//                        .copyInMaps(Collections.emptyList())
+//                        .copyMapKeys(List.of(
+//                                Keyword.intern("a"),
+//                                Keyword.intern("b"),
+//                                Keyword.intern("c")
+//                        ))
+//                        .setBin()
+//                        .build()
+//        );
+//
+//         Object res1 = conn.query("select x from generate_series(1, 3) as x; select 42 as foo");
+//         System.out.println(res1);
 
         // System.out.println(conn.execute(""));
 
