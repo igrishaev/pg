@@ -7,6 +7,7 @@ import clojure.lang.PersistentVector;
 import com.github.igrishaev.util.BBTool;
 import com.github.igrishaev.util.IClojure;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.security.Key;
 import java.util.Arrays;
 
@@ -25,13 +26,15 @@ public record NegotiateProtocolVersion(
         );
     }
 
-    public static NegotiateProtocolVersion fromByteBuffer(ByteBuffer buf) {
+    public static NegotiateProtocolVersion fromByteBuffer(
+            final ByteBuffer buf,
+            final Charset charset
+    ) {
         final int version = buf.getInt();
         final int paramCount = buf.getInt();
         final String[] params = new String[paramCount];
-        // TODO: encoding
         for (int i = 0; i < paramCount; i++) {
-            params[i] = BBTool.getCString(buf, "UTF-8");
+            params[i] = BBTool.getCString(buf, charset);
         }
         return new NegotiateProtocolVersion(version, paramCount, params);
     }

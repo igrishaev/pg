@@ -16,7 +16,9 @@ import com.github.igrishaev.util.IOTool;
 import com.github.igrishaev.util.SQL;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.time.ZoneId;
 import java.util.*;
 import java.net.Socket;
 import java.nio.ByteBuffer;
@@ -124,13 +126,13 @@ public class Connection implements Closeable {
         params.put(param, value);
         switch (param) {
             case "client_encoding" ->
-                    codecParams.clientEncoding = value;
+                    codecParams.clientCharset = Charset.forName(value);
             case "server_encoding" ->
-                    codecParams.serverEncoding = value;
+                    codecParams.serverCharset = Charset.forName(value);
             case "DateStyle" ->
                     codecParams.dateStyle = value;
             case "TimeZone" ->
-                    codecParams.timeZone = value;
+                    codecParams.timeZone = ZoneId.of(value);
             case "integer_datetimes" ->
                     codecParams.integerDatetime = value.equals("on");
         }
@@ -311,13 +313,13 @@ public class Connection implements Closeable {
         // System.out.println(Arrays.toString(bufBody));
 
         return switch (tag) {
-            case 'R' -> AuthenticationResponse.fromByteBuffer(bbBody).parseResponse(bbBody);
-            case 'S' -> ParameterStatus.fromByteBuffer(bbBody);
+            case 'R' -> AuthenticationResponse.fromByteBuffer(bbBody).parseResponse(bbBody, codecParams.serverCharset);
+            case 'S' -> ParameterStatus.fromByteBuffer(bbBody, codecParams.serverCharset);
             case 'Z' -> ReadyForQuery.fromByteBuffer(bbBody);
-            case 'C' -> CommandComplete.fromByteBuffer(bbBody);
-            case 'T' -> RowDescription.fromByteBuffer(bbBody);
+            case 'C' -> CommandComplete.fromByteBuffer(bbBody, codecParams.serverCharset);
+            case 'T' -> RowDescription.fromByteBuffer(bbBody, codecParams.serverCharset);
             case 'D' -> DataRow.fromByteBuffer(bbBody);
-            case 'E' -> ErrorResponse.fromByteBuffer(bbBody);
+            case 'E' -> ErrorResponse.fromByteBuffer(bbBody, codecParams.serverCharset);
             case 'K' -> BackendKeyData.fromByteBuffer(bbBody);
             case '1' -> ParseComplete.INSTANCE;
             case '2' -> BindComplete.INSTANCE;
@@ -328,9 +330,9 @@ public class Connection implements Closeable {
             case 'c' -> CopyDone.INSTANCE;
             case 'I' -> EmptyQueryResponse.INSTANCE;
             case 'n' -> NoData.INSTANCE;
-            case 'v' -> NegotiateProtocolVersion.fromByteBuffer(bbBody);
-            case 'A' -> NotificationResponse.fromByteBuffer(bbBody);
-            case 'N' -> NoticeResponse.fromByteBuffer(bbBody);
+            case 'v' -> NegotiateProtocolVersion.fromByteBuffer(bbBody, codecParams.serverCharset);
+            case 'A' -> NotificationResponse.fromByteBuffer(bbBody, codecParams.serverCharset);
+            case 'N' -> NoticeResponse.fromByteBuffer(bbBody, codecParams.serverCharset);
             case 's' -> PortalSuspended.INSTANCE;
             case 'G' -> CopyInResponse.fromByteBuffer(bbBody);
             default -> throw new PGError("Unknown message: %s", tag);

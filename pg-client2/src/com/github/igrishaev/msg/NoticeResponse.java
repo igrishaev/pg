@@ -4,6 +4,7 @@ import clojure.lang.*;
 import com.github.igrishaev.util.IClojure;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Map;
 
 public record NoticeResponse(Map<String, String> fields) implements IClojure {
@@ -19,9 +20,8 @@ public record NoticeResponse(Map<String, String> fields) implements IClojure {
         );
     }
 
-    public static NoticeResponse fromByteBuffer (ByteBuffer buf) {
-        // TODO encoding
-        Map<String, String> fields = FieldParser.parseFields(buf, "UTF-8");
+    public static NoticeResponse fromByteBuffer (final ByteBuffer buf, final Charset charset) {
+        final Map<String, String> fields = FieldParser.parseFields(buf, charset);
         return new NoticeResponse(fields);
     }
 }

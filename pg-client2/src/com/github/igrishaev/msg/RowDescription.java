@@ -5,6 +5,7 @@ import com.github.igrishaev.enums.Format;
 import com.github.igrishaev.enums.OID;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 public record RowDescription (
         short columnCount,
@@ -23,19 +24,19 @@ public record RowDescription (
     }
 
     public String [] getColumnNames () {
-        String[] names = new String[columnCount];
+        final String[] names = new String[columnCount];
         for (short i = 0; i < columnCount; i++) {
             names[i] = columns()[i].name();
         }
         return names;
     }
 
-    public static RowDescription fromByteBuffer(ByteBuffer buf) {
-        short size = buf.getShort();
-        Column[] columns = new Column[size];
+    public static RowDescription fromByteBuffer(final ByteBuffer buf, Charset charset) {
+        final short size = buf.getShort();
+        final Column[] columns = new Column[size];
         for (short i = 0; i < size; i++) {
             Column col = new Column(i,
-                    BBTool.getCString(buf, "UTF-8"),
+                    BBTool.getCString(buf, charset),
                     buf.getInt(),
                     buf.getShort(),
                     OID.ofInt(buf.getInt()),

@@ -1,63 +1,46 @@
 package com.github.igrishaev.util;
 
-import com.github.igrishaev.PGError;
-
 import java.nio.ByteBuffer;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
-
+import java.nio.charset.Charset;
 
 public class BBTool {
 
-    public static String getCString (ByteBuffer buf, String encoding) {
-
-        int pos = buf.position();
+    public static String getCString (final ByteBuffer buf, final Charset charset) {
+        final int pos = buf.position();
         int len = 0;
-
         while (buf.get(pos + len) != 0) {
             len++;
         }
-
         skip(buf, len + 1);
-
-        try {
-            return new String(buf.array(), pos, len, encoding);
-        }
-        catch (UnsupportedEncodingException e) {
-            throw new PGError(e, "cannot decode a C-string");
-        }
-
+        return new String(buf.array(), pos, len, charset);
     }
 
-    public static Boolean isEnd (ByteBuffer buf) {
+    public static Boolean isEnd (final ByteBuffer buf) {
         return buf.remaining() == 0;
     }
 
-    public static String getRestString (ByteBuffer buf) {
-        return new String(buf.array(),
-                          buf.arrayOffset() + buf.position(),
-                          buf.remaining(),
-                StandardCharsets.UTF_8); // TODO: encoding
+    public static String getRestString (final ByteBuffer buf, Charset charset) {
+        return new String(
+                buf.array(),
+                buf.arrayOffset() + buf.position(),
+                buf.remaining(),
+                charset
+        );
     }
 
-    public static byte[] getRestBytes (ByteBuffer buf) {
-        int size = buf.limit();
-        byte[] bytes = new byte[size];
+    public static byte[] getRestBytes (final ByteBuffer buf) {
+        final int size = buf.limit();
+        final byte[] bytes = new byte[size];
         buf.get(bytes);
         return bytes;
     }
 
-    public static String getString(ByteBuffer buf, String encoding) {
-        int offset = buf.arrayOffset() + buf.position();
-        try {
-            return new String(buf.array(), offset, buf.limit(), encoding);
-        }
-        catch (UnsupportedEncodingException e) {
-            throw new PGError(e, "could not get a string");
-        }
+    public static String getString(final ByteBuffer buf, final Charset charset) {
+        final int offset = buf.arrayOffset() + buf.position();
+        return new String(buf.array(), offset, buf.limit(), charset);
     }
 
-    public static void skip (ByteBuffer buf, int offset) {
+    public static void skip (final ByteBuffer buf, final int offset) {
         buf.position(buf.position() + offset);
     }
 

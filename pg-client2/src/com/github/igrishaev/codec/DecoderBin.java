@@ -12,13 +12,17 @@ import com.github.igrishaev.util.JSON;
 
 public class DecoderBin {
 
-    public static Object decode(ByteBuffer buf, OID oid) {
+    public static Object decode(final ByteBuffer buf, final OID oid) {
         return decode(buf, oid, CodecParams.standard());
     }
 
-    public static Object decode(ByteBuffer buf, OID oid, CodecParams codecParams) {
+    public static Object decode(
+            final ByteBuffer buf,
+            final OID oid,
+            final CodecParams codecParams
+    ) {
         return switch (oid) {
-            case TEXT, VARCHAR, NAME -> BBTool.getRestString(buf); // TODO: encoding
+            case TEXT, VARCHAR, NAME -> BBTool.getRestString(buf, codecParams.serverCharset); // TODO: encoding
             case INT2 -> buf.getShort();
             case INT4, OID -> buf.getInt();
             case INT8 -> buf.getLong();

@@ -33,11 +33,7 @@ public class EncoderBin {
     }
 
     private static byte[] getBytes (String string, CodecParams codecParams) {
-        try {
-            return string.getBytes(codecParams.clientEncoding);
-        } catch (UnsupportedEncodingException e) {
-            throw new PGError(e, "could not get bytes from a string");
-        }
+        return string.getBytes(codecParams.clientCharset);
     }
 
     public static ByteBuffer encode (Object x, OID oid, CodecParams codecParams) {

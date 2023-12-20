@@ -4,6 +4,7 @@ import com.github.igrishaev.PGError;
 import com.github.igrishaev.util.BBTool;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,7 +34,10 @@ public class FieldParser {
         };
     }
 
-    public static Map<String, String> parseFields(ByteBuffer buf, String encoding) {
+    public static Map<String, String> parseFields(
+            final ByteBuffer buf,
+            final Charset charset
+    ) {
         HashMap<String, String> fields = new HashMap<>();
         while (true) {
             byte tag = buf.get();
@@ -42,7 +46,7 @@ public class FieldParser {
             }
             else {
                 String field = parseTag((char)tag);
-                String message = BBTool.getCString(buf, encoding);
+                String message = BBTool.getCString(buf, charset);
                 fields.put(field, message);
             };
         };

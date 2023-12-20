@@ -7,6 +7,7 @@ import com.github.igrishaev.util.BBTool;
 import com.github.igrishaev.util.IClojure;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 public record NotificationResponse(int pid,
                                    String channel,
@@ -22,11 +23,13 @@ public record NotificationResponse(int pid,
         );
     }
 
-    public static NotificationResponse fromByteBuffer (ByteBuffer buf) {
-        // TODO
+    public static NotificationResponse fromByteBuffer (
+            final ByteBuffer buf,
+            final Charset charset
+    ) {
         final int pid = buf.getInt();
-        final String channel = BBTool.getCString(buf, "UTF-8");
-        final String message = BBTool.getCString(buf, "UTF-8");
+        final String channel = BBTool.getCString(buf, charset);
+        final String message = BBTool.getCString(buf, charset);
         return new NotificationResponse(pid, channel, message);
     }
 }

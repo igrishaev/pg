@@ -1,10 +1,15 @@
 package com.github.igrishaev.codec;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+
 public class CodecParams {
 
-    public String clientEncoding = "UTF-8";
-    public String serverEncoding = "UTF-8";
-    public String timeZone = "UTC";
+    public Charset clientCharset = StandardCharsets.UTF_8;
+    public Charset serverCharset = StandardCharsets.UTF_8;
+    public ZoneId timeZone = ZoneOffset.UTC;
     public String dateStyle = "";
     public boolean integerDatetime = true;
 
