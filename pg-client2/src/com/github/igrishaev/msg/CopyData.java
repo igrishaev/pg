@@ -2,24 +2,19 @@ package com.github.igrishaev.msg;
 
 import java.nio.ByteBuffer;
 
-public record CopyData (byte[] bytes, int off, int len) implements IMessage {
-
-    public CopyData(final byte[] bytes) {
-        this(bytes, 0, bytes.length);
-    }
+public record CopyData (ByteBuffer buf) implements IMessage {
 
     public ByteBuffer encode(final String encoding) {
-        final ByteBuffer buf = ByteBuffer.allocate(1 + 4 + len);
-        buf.put((byte)'d');
-        buf.putInt(4 + len);
-        buf.put(bytes, off, len);
-        return buf;
+        buf.rewind();
+        final int size = buf.limit();
+        final ByteBuffer result = ByteBuffer.allocate(1 + 4 + size);
+        result.put((byte)'d');
+        result.putInt(4 + size);
+        result.put(buf);
+        return result;
     }
 
     public static CopyData fromByteBuffer(final ByteBuffer buf) {
-        final byte[] bytes = buf.array();
-        final int off = buf.arrayOffset() + buf.position();
-        final int len = buf.limit();
-        return new CopyData(bytes, off, len);
+        return new CopyData(buf);
     }
 }

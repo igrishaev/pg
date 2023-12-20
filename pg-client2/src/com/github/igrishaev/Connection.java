@@ -258,10 +258,7 @@ public class Connection implements Closeable {
     }
 
     private void sendCopyData (final byte[] buf) {
-        sendMessage(new CopyData(buf));
-    }
-    private void sendCopyData (final byte[] buf, final int off, final int len) {
-        sendMessage(new CopyData(buf, off, len));
+        sendMessage(new CopyData(ByteBuffer.wrap(buf)));
     }
 
     private void sendCopyDone () {
@@ -763,8 +760,9 @@ public class Connection implements Closeable {
 
     private void handleCopyData(CopyData msg, Accum acc) {
         OutputStream outputStream = acc.executeParams.outputStream();
+        final byte[] bytes = msg.buf().array();
         try {
-            outputStream.write(msg.bytes(), msg.off(), msg.len());
+            outputStream.write(bytes);
         } catch (Throwable e) {
             acc.setException(e);
             cancelRequest(this);

@@ -34,8 +34,6 @@ public class Copy {
             (byte) 0, (byte) 0, (byte) 0, (byte) 0
     };
 
-    public static final byte[] shortMinusOne = new byte[] {(byte) -1, (byte) -1};
-
     public static final byte[] MSG_COPY_BIN_TERM = new byte[] {
             (byte) 'd',
             (byte) 0,
