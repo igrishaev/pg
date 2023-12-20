@@ -58,8 +58,8 @@ public record ExecuteParams (
         private String CSVLineSep = Const.COPY_CSV_LINE_SEP;
         private CopyFormat copyFormat = CopyFormat.CSV;
         private int copyBufSize = Const.COPY_BUFFER_SIZE;
-        private List<List<Object>> copyInRows = Collections.emptyList();
-        private List<Map<Object, Object>> copyInMaps = Collections.emptyList();
+        private List<List<Object>> copyInRows = null;
+        private List<Map<Object, Object>> copyInMaps = null;
         List<Object> copyMapKeys = Collections.emptyList();
 
         public Builder params (final List<Object> params) {
@@ -68,18 +68,18 @@ public record ExecuteParams (
         }
 
         public Builder copyInRows (final List<List<Object>> copyInRows) {
-            this.copyInRows = Objects.requireNonNull(copyInRows);
+            this.copyInRows = Objects.requireNonNull(copyInRows, "COPY IN rows cannot be null");
             return this;
         }
 
         public Builder copyInMaps (final List<Map<Object, Object>> copyInMaps) {
-            this.copyInMaps = Objects.requireNonNull(copyInMaps);
+            this.copyInMaps = Objects.requireNonNull(copyInMaps, "COPY IN maps cannot be null");
             return this;
         }
 
         // TODO: rename copyInKeys
         public Builder copyMapKeys (final List<Object> copyMapKeys) {
-            this.copyMapKeys = Objects.requireNonNull(copyMapKeys);
+            this.copyMapKeys = Objects.requireNonNull(copyMapKeys, "COPY IN map keys cannot be null");
             return this;
         }
 
@@ -89,12 +89,12 @@ public record ExecuteParams (
         }
 
         public Builder outputStream (final OutputStream outputStream) {
-            this.outputStream = Objects.requireNonNull(outputStream);
+            this.outputStream = Objects.requireNonNull(outputStream, "the output stream cannot be null");
             return this;
         }
 
         public Builder inputStream (final InputStream inputStream) {
-            this.inputStream = Objects.requireNonNull(inputStream);
+            this.inputStream = Objects.requireNonNull(inputStream, "the input stream cannot be null");
             return this;
         }
 

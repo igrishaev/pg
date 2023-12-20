@@ -20,23 +20,4 @@ public class Const {
     public static final String COPY_CSV_CELL_SEP = ",";
     public static final String COPY_CSV_CELL_QUOTE = "\"";
     public static final String COPY_CSV_LINE_SEP = "\r\n";
-    public static final byte[] COPY_BIN_HEADER = {
-            // header
-            (byte) 'P',
-            (byte) 'G',
-            (byte) 'C',
-            (byte) 'O',
-            (byte) 'P',
-            (byte) 'Y',
-            (byte) 10,
-            (byte) 0xFF,
-            (byte) 13,
-            (byte) 10,
-            (byte) 0,
-            // 0 int32
-            (byte) 0, (byte) 0, (byte) 0, (byte) 0,
-            // 0 int32
-            (byte) 0, (byte) 0, (byte) 0, (byte) 0
-    };
-    public static final byte[] shortMinusOne = new byte[] {(byte) -1, (byte) -1};
 }

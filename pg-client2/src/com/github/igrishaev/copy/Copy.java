@@ -15,6 +15,37 @@ import java.util.List;
 
 public class Copy {
 
+    public static final byte[] COPY_BIN_HEADER = {
+            // header
+            (byte) 'P',
+            (byte) 'G',
+            (byte) 'C',
+            (byte) 'O',
+            (byte) 'P',
+            (byte) 'Y',
+            (byte) 10,
+            (byte) 0xFF,
+            (byte) 13,
+            (byte) 10,
+            (byte) 0,
+            // 0 int32
+            (byte) 0, (byte) 0, (byte) 0, (byte) 0,
+            // 0 int32
+            (byte) 0, (byte) 0, (byte) 0, (byte) 0
+    };
+
+    public static final byte[] shortMinusOne = new byte[] {(byte) -1, (byte) -1};
+
+    public static final byte[] MSG_COPY_BIN_TERM = new byte[] {
+            (byte) 'd',
+            (byte) 0,
+            (byte) 0,
+            (byte) 0,
+            (byte) 6,
+            (byte) -1,
+            (byte) -1
+    };
+
     public static String quoteCSV (String line) {
         return line.replace("\"", "\"\"");
     }
@@ -119,7 +150,7 @@ public class Copy {
                     ).array())
         );
 
-        System.out.println(Arrays.toString(Const.COPY_BIN_HEADER));
+        System.out.println(Arrays.toString(Copy.COPY_BIN_HEADER));
 
         ByteBuffer bb = ByteBuffer.allocate(2);
         bb.putShort((short)-1);

@@ -260,8 +260,8 @@ public class Connection implements Closeable {
     private void sendCopyData (final byte[] buf) {
         sendMessage(new CopyData(buf));
     }
-    private void sendCopyData (final byte[] buf, final int size) {
-        sendMessage(new CopyData(buf, size));
+    private void sendCopyData (final byte[] buf, final int off, final int len) {
+        sendMessage(new CopyData(buf, off, len));
     }
 
     private void sendCopyDone () {
@@ -669,7 +669,7 @@ public class Connection implements Closeable {
 
             case BIN:
                 ByteBuffer buf = null;
-                sendCopyData(Const.COPY_BIN_HEADER);
+                sendCopyData(Copy.COPY_BIN_HEADER);
                 // TODO: reduce mem allocation
                 while (iterator.hasNext()) {
                     try {
@@ -682,8 +682,7 @@ public class Connection implements Closeable {
                     sendCopyData(buf.array());
                 }
                 if (e == null) {
-                    // TODO: precalculate
-                    sendCopyData(Const.shortMinusOne);
+                    sendBytes(Copy.MSG_COPY_BIN_TERM);
                 }
                 break;
 
@@ -721,10 +720,10 @@ public class Connection implements Closeable {
 
     private void handleCopyInResponse(CopyInResponse msg, Accum acc) {
 
-        if (!acc.executeParams.copyInRows().isEmpty()) {
+        if (acc.executeParams.copyInRows() != null) {
             handleCopyInResponseRows(msg, acc);
         }
-        else if (!acc.executeParams.copyInMaps().isEmpty()) {
+        else if (acc.executeParams.copyInMaps() != null) {
             handleCopyInResponseMaps(msg, acc);
         } else {
             handleCopyInResponseStream(msg, acc);
@@ -762,12 +761,10 @@ public class Connection implements Closeable {
         acc.handleCopyOutResponse(msg);
     }
 
-    // TODO: reuse source byte buffer
-    // TODO: CopyDataIn & CopyDataOut
     private void handleCopyData(CopyData msg, Accum acc) {
         OutputStream outputStream = acc.executeParams.outputStream();
         try {
-            outputStream.write(msg.bytes());
+            outputStream.write(msg.bytes(), msg.off(), msg.len());
         } catch (Throwable e) {
             acc.setException(e);
             cancelRequest(this);
