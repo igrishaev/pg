@@ -66,6 +66,12 @@
     (is (= 42 res))))
 
 
+(deftest test-oid-bytea
+  (let [res (decode "\\xDEadBeEF" oid/bytea)]
+    (is (bytes? res))
+    (is (= [-34 -83 -66 -17] (vec res)))))
+
+
 (deftest test-bool
 
   (let [res (decode "f" oid/bool)]
