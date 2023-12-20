@@ -1,12 +1,11 @@
 package com.github.igrishaev.msg;
 
-import com.github.igrishaev.Payload;
-
-import java.nio.ByteBuffer;
-
-public record Flush () implements IMessage {
-    public ByteBuffer encode(String encoding) {
-        return new Payload().toByteBuffer('H');
-    }
-
+public record Flush () {
+    public final static byte[] content = new byte[] {
+            (byte)'H',
+            (byte) 0,
+            (byte) 0,
+            (byte) 0,
+            (byte) 4
+    };
 }

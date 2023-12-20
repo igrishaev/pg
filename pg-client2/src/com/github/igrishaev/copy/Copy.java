@@ -1,6 +1,5 @@
 package com.github.igrishaev.copy;
 
-import com.github.igrishaev.Const;
 import com.github.igrishaev.ExecuteParams;
 import com.github.igrishaev.codec.CodecParams;
 import com.github.igrishaev.codec.EncoderBin;
@@ -65,7 +64,6 @@ public class Copy {
             if (item == null) {
                 sb.append(executeParams.CSVNull());
             }
-            // TODO: check if needs quoting? perf test
             else {
                 String encoded = EncoderTxt.encode(item, oid, codecParams);
                 sb.append(executeParams.CSVQuote());
@@ -86,6 +84,7 @@ public class Copy {
             final CodecParams codecParams
     ) {
 
+        // TODO: maybe return a list/array of buffers?
         final short count = (short) row.size();
         final ByteBuffer[] bufs = new ByteBuffer[count];
 
@@ -94,7 +93,6 @@ public class Copy {
 
         int totalSize = 2;
 
-        // TODO: non-needed allocations (prefill header bytes)
         for (short i = 0; i < count; i++) {
             final Object item = row.get(i);
             if (item == null) {

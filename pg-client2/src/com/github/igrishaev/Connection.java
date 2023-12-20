@@ -21,7 +21,6 @@ import java.util.*;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
 
 public class Connection implements Closeable {
 
@@ -83,6 +82,7 @@ public class Connection implements Closeable {
         return id;
     }
 
+    @SuppressWarnings("unused")
     public long getCreatedAt() {
         return createdAt;
     }
@@ -91,10 +91,12 @@ public class Connection implements Closeable {
         return socket.isClosed();
     }
 
+    @SuppressWarnings("unused")
     public synchronized TXStatus getTxStatus () {
         return txStatus;
     }
 
+    @SuppressWarnings("unused")
     public synchronized boolean isSSL () {
         return config.useSSL();
     }
@@ -108,10 +110,12 @@ public class Connection implements Closeable {
         }
     }
 
+    @SuppressWarnings("unused")
     public synchronized String getParam (String param) {
         return params.get(param);
     }
 
+    @SuppressWarnings("unused")
     public synchronized Map<String, String> getParams () {
         return Collections.unmodifiableMap(params);
     }
@@ -137,10 +141,6 @@ public class Connection implements Closeable {
         }
     }
 
-    private String getServerEncoding() {
-        return params.getOrDefault("server_encoding", Const.UTF8);
-    }
-
     private String getClientEncoding() {
         return params.getOrDefault("client_encoding", Const.UTF8);
     }
@@ -157,6 +157,7 @@ public class Connection implements Closeable {
         return config.user();
     }
 
+    @SuppressWarnings("unused")
     private Map<String, String> getPgParams () {
         return config.pgParams();
     }
@@ -253,20 +254,12 @@ public class Connection implements Closeable {
         sendMessage(msg);
     }
 
-    private void sendExecute (String portal, Long rowCount) {
-        sendMessage(new Execute(portal, rowCount));
-    }
-
     private void sendCopyData (final byte[] buf) {
         sendMessage(new CopyData(ByteBuffer.wrap(buf)));
     }
 
     private void sendCopyDone () {
         sendMessage(new CopyDone());
-    }
-
-    private void sendCopyFail () {
-        sendCopyFail(Const.COPY_FAIL_MSG);
     }
 
     private void sendCopyFail (String errorMessage) {
@@ -286,13 +279,14 @@ public class Connection implements Closeable {
     }
 
     private void sendFlush () {
-        sendMessage(new Flush());
+        sendBytes(Flush.content);
     }
 
     private void sendTerminate () {
         sendMessage(new Terminate());
     }
 
+    @SuppressWarnings("unused")
     private void sendSSLRequest () {
         sendMessage(new SSLRequest(Const.SSL_CODE));
     }
@@ -330,8 +324,9 @@ public class Connection implements Closeable {
             case 'D' -> DataRow.fromByteBuffer(bbBody);
             case 'E' -> ErrorResponse.fromByteBuffer(bbBody);
             case 'K' -> BackendKeyData.fromByteBuffer(bbBody);
-            case '1' -> new ParseComplete();
-            case '2' -> new BindComplete();
+            case '1' -> ParseComplete.INSTANCE;
+            case '2' -> BindComplete.INSTANCE;
+            // TODO: INSTANCE singletons
             case '3' -> new CloseComplete();
             case 't' -> ParameterDescription.fromByteBuffer(bbBody);
             case 'H' -> CopyOutResponse.fromByteBuffer(bbBody);
@@ -373,10 +368,6 @@ public class Connection implements Closeable {
         return interact(Phase.QUERY, executeParams).getResult();
     }
 
-    public synchronized PreparedStatement prepare (String sql) {
-        return prepare(sql, ExecuteParams.standard());
-    }
-
     public synchronized PreparedStatement prepare (String sql, ExecuteParams executeParams) {
         String statement = generateStatement();
 
@@ -401,6 +392,7 @@ public class Connection implements Closeable {
         Parse parse = new Parse(statement, sql, OIDs);
         sendMessage(parse);
         sendDescribeStatement(statement);
+        // TODO: precalculate payload
         sendSync();
         sendFlush();
         Accum acc = interact(Phase.PREPARE);
@@ -457,10 +449,6 @@ public class Connection implements Closeable {
                 columnFormat
         );
         sendMessage(msg);
-    }
-
-    public Object executeStatement (PreparedStatement stmt) {
-        return executeStatement(stmt, ExecuteParams.standard());
     }
 
     public synchronized Object executeStatement (PreparedStatement stmt,
@@ -595,8 +583,8 @@ public class Connection implements Closeable {
             case CopyData x:
                 handleCopyData(x, acc);
                 break;
-            case CopyInResponse x:
-                handleCopyInResponse(x, acc);
+            case CopyInResponse ignored:
+                handleCopyInResponse(acc);
                 break;
             case CopyDone ignored:
                 break;
@@ -605,7 +593,7 @@ public class Connection implements Closeable {
         }
     }
 
-    private void handleCopyInResponseStream(CopyInResponse msg, Accum acc) {
+    private void handleCopyInResponseStream(Accum acc) {
 
         final int contentSize = acc.executeParams.copyBufSize();
         final byte[] buf = new byte[5 + contentSize];
@@ -613,7 +601,7 @@ public class Connection implements Closeable {
         InputStream inputStream = acc.executeParams.inputStream();
 
         Throwable e = null;
-        int read = 0;
+        int read;
 
         while (true) {
             try {
@@ -639,11 +627,11 @@ public class Connection implements Closeable {
         }
         else {
             acc.setException(e);
-            sendCopyFail("Terminated due to an exception on the client side");
+            sendCopyFail(Const.COPY_FAIL_EXCEPTION_MSG);
         }
     }
 
-    private void handleCopyInResponseData (CopyInResponse msg, Accum acc, Iterator<List<Object>> iterator) {
+    private void handleCopyInResponseData (Accum acc, Iterator<List<Object>> iterator) {
         final ExecuteParams executeParams = acc.executeParams;
         final CopyFormat format = executeParams.copyFormat();
         Throwable e = null;
@@ -651,7 +639,8 @@ public class Connection implements Closeable {
         switch (format) {
 
             case CSV:
-                String line = null;
+                // TODO: find a way to reduce mem allocation
+                String line;
                 while (iterator.hasNext()) {
                     try {
                         line = Copy.encodeRowCSV(iterator.next(), executeParams, codecParams);
@@ -665,9 +654,9 @@ public class Connection implements Closeable {
                 break;
 
             case BIN:
-                ByteBuffer buf = null;
+                ByteBuffer buf;
                 sendCopyData(Copy.COPY_BIN_HEADER);
-                // TODO: reduce mem allocation
+                // TODO: find a way to reduce mem allocation
                 while (iterator.hasNext()) {
                     try {
                         buf = Copy.encodeRowBin(iterator.next(), executeParams, codecParams);
@@ -697,33 +686,33 @@ public class Connection implements Closeable {
         }
     }
 
-    private void handleCopyInResponseRows (CopyInResponse msg, Accum acc) {
+    private void handleCopyInResponseRows (Accum acc) {
         Iterator<List<Object>> iterator = acc.executeParams.copyInRows()
                 .stream()
                 .filter(Objects::nonNull)
                 .iterator();
-        handleCopyInResponseData(msg, acc, iterator);
+        handleCopyInResponseData(acc, iterator);
     }
 
-    private void handleCopyInResponseMaps(CopyInResponse msg, Accum acc) {
+    private void handleCopyInResponseMaps(Accum acc) {
         List<Object> keys = acc.executeParams.copyMapKeys();
         Iterator<List<Object>> iterator = acc.executeParams.copyInMaps()
                 .stream()
                 .filter(Objects::nonNull)
                 .map(map -> mapToRow(map, keys))
                 .iterator();
-        handleCopyInResponseData(msg, acc, iterator);
+        handleCopyInResponseData(acc, iterator);
     }
 
-    private void handleCopyInResponse(CopyInResponse msg, Accum acc) {
+    private void handleCopyInResponse(Accum acc) {
 
         if (acc.executeParams.copyInRows() != null) {
-            handleCopyInResponseRows(msg, acc);
+            handleCopyInResponseRows(acc);
         }
         else if (acc.executeParams.copyInMaps() != null) {
-            handleCopyInResponseMaps(msg, acc);
+            handleCopyInResponseMaps(acc);
         } else {
-            handleCopyInResponseStream(msg, acc);
+            handleCopyInResponseStream(acc);
         }
     }
 
@@ -854,7 +843,8 @@ public class Connection implements Closeable {
         };
     }
 
-    public static Connection clone(Connection conn) {
+    @SuppressWarnings("unused")
+    public static Connection clone (Connection conn) {
         return new Connection(conn.config);
     }
 
@@ -865,51 +855,62 @@ public class Connection implements Closeable {
         temp.close();
     }
 
+    @SuppressWarnings("unused")
     public synchronized void begin () {
         sendQuery("BEGIN");
         interact(Phase.QUERY);
     }
 
+    @SuppressWarnings("unused")
     public synchronized void commit () {
         sendQuery("COMMIT");
         interact(Phase.QUERY);
     }
 
+    @SuppressWarnings("unused")
     public synchronized void rollback () {
         sendQuery("ROLLBACK");
         interact(Phase.QUERY);
     }
 
+    @SuppressWarnings("unused")
     public synchronized boolean isIdle () {
         return txStatus == TXStatus.IDLE;
     }
 
+    @SuppressWarnings("unused")
     public synchronized boolean isTxError () {
         return txStatus == TXStatus.ERROR;
     }
 
+    @SuppressWarnings("unused")
     public synchronized boolean isTransaction () {
         return txStatus == TXStatus.TRANSACTION;
     }
 
+    @SuppressWarnings("unused")
     public void setTxLevel (TxLevel level) {
         sendQuery(SQL.SQLSetTxLevel(level));
         interact(Phase.QUERY);
     }
 
+    @SuppressWarnings("unused")
     public void setTxReadOnly () {
         sendQuery(SQL.SQLSetTxReadOnly);
         interact(Phase.QUERY);
     }
 
-    public synchronized void listen(String channel) {
+    @SuppressWarnings("unused")
+    public synchronized void listen (String channel) {
         query(String.format("listen %s", SQL.quoteChannel(channel)));
     }
 
+    @SuppressWarnings("unused")
     public synchronized void unlisten (String channel) {
         query(String.format("unlisten %s", SQL.quoteChannel(channel)));
     }
 
+    @SuppressWarnings("unused")
     public synchronized void notify (String channel, String message) {
         ArrayList<Object> params = new ArrayList<>(2);
         params.add(channel);
