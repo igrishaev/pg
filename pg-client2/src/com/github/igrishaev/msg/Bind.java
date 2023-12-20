@@ -1,6 +1,7 @@
 package com.github.igrishaev.msg;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 import com.github.igrishaev.enums.Format;
 import com.github.igrishaev.enums.OID;
@@ -15,7 +16,7 @@ public record Bind (
         Format columnFormat
 ) implements IMessage {
 
-    public ByteBuffer encode(String encoding) {
+    public ByteBuffer encode(final Charset charset) {
         Payload payload = new Payload()
                 .addCString(portal)
                 .addCString(statement)

@@ -5,13 +5,14 @@ import com.github.igrishaev.PGError;
 import com.github.igrishaev.Payload;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 public record Parse (String statement,
                      String query,
                      OID[] OIDs)
         implements IMessage {
 
-    public ByteBuffer encode(String encoding) {
+    public ByteBuffer encode(final Charset charset) {
 
         int OIDCount = OIDs.length;
 
@@ -25,8 +26,8 @@ public record Parse (String statement,
         Payload payload = new Payload();
 
         payload
-            .addCString(statement, encoding)
-            .addCString(query, encoding)
+            .addCString(statement, charset)
+            .addCString(query, charset)
             .addUnsignedShort(OIDCount);
 
         for (OID oid: OIDs) {

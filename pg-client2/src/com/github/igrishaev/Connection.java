@@ -138,10 +138,6 @@ public class Connection implements Closeable {
         }
     }
 
-    private String getClientEncoding() {
-        return params.getOrDefault("client_encoding", Const.UTF8);
-    }
-
     public Integer getPort () {
         return config.port();
     }
@@ -221,7 +217,7 @@ public class Connection implements Closeable {
 
     private void sendMessage (IMessage msg) {
         System.out.println(msg);
-        ByteBuffer buf = msg.encode(getClientEncoding());
+        ByteBuffer buf = msg.encode(codecParams.clientCharset);
         // System.out.println(Arrays.toString(buf.array()));
         try {
             outStream.write(buf.array());
@@ -413,25 +409,20 @@ public class Connection implements Closeable {
         Format columnFormat = (executeParams.binaryDecode() || config.binaryDecode()) ? Format.BIN : Format.TXT;
 
         byte[][] bytes = new byte[size][];
-        String encoding = getClientEncoding();
         String statement = stmt.parse().statement();
         for (int i = 0; i < size; i++) {
             Object param = params.get(i);
             OID oid = OIDs[i];
             switch (paramsFormat) {
-                case BIN:
+                case BIN -> {
                     ByteBuffer buf = EncoderBin.encode(param, oid, codecParams);
                     bytes[i] = buf.array();
-                    break;
-                case TXT:
+                }
+                case TXT -> {
                     String value = EncoderTxt.encode(param, oid, codecParams);
-                    try {
-                        bytes[i] = value.getBytes(encoding);
-                    } catch (UnsupportedEncodingException e) {
-                        throw new PGError(e, "could not encode a string, encoding: %s", encoding);
-                    }
-                    break;
-                default:
+                    bytes[i] = value.getBytes(codecParams.clientCharset);
+                }
+                default ->
                     throw new PGError("unknown format: %s", paramsFormat);
             }
         }

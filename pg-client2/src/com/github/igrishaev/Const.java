@@ -10,7 +10,6 @@ public class Const {
     public static final String PG_HOST = "127.0.0.1";
     public static final int IN_STREAM_BUF_SIZE = 0xFFFF;
     public static final int OUT_STREAM_BUF_SIZE = 0xFFFF;
-    public static final String UTF8 = "UTF-8";
     public static final long EXE_MAX_ROWS = 0xFFFFFFFFL;
     public static final int JSON_ENC_BUF_SIZE = 256;
     public static final String APP_NAME = "pg2";

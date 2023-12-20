@@ -1,10 +1,11 @@
 package com.github.igrishaev.msg;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 public record CopyData (ByteBuffer buf) implements IMessage {
 
-    public ByteBuffer encode(final String encoding) {
+    public ByteBuffer encode(final Charset charset) {
         buf.rewind();
         final int size = buf.limit();
         final ByteBuffer result = ByteBuffer.allocate(1 + 4 + size);

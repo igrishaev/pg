@@ -2,8 +2,9 @@ package com.github.igrishaev;
 
 import com.github.igrishaev.util.BBTool;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 
@@ -60,21 +61,15 @@ public class Payload {
     }
 
     public Payload addCString(String s) {
-        return addCString(s, "UTF-8");
+        return addCString(s, StandardCharsets.UTF_8);
     }
 
-    public Payload addCString(String s, String encoding) {
-
-        try {
-            byte[] bytes = s.getBytes(encoding);
-            size = size + bytes.length + 1;
-            items.add(bytes);
-            items.add((byte)0);
-            return this;
-        }
-        catch (UnsupportedEncodingException e) {
-            throw new PGError(e, "cannot get bytes for a C-string");
-        }
+    public Payload addCString(final String s, final Charset charset) {
+        byte[] bytes = s.getBytes(charset);
+        size = size + bytes.length + 1;
+        items.add(bytes);
+        items.add((byte)0);
+        return this;
     }
 
     public ByteBuffer toByteBuffer() {
@@ -96,26 +91,13 @@ public class Payload {
 
         for(Object item: items) {
             switch (item) {
-                case Integer i:
-                    buf.putInt(i);
-                    break;
-                case Short s:
-                    buf.putShort(s);
-                    break;
-                case ByteBuffer bb:
-                    buf.put(bb);
-                    break;
-                case Byte b:
-                    buf.put(b);
-                    break;
-                case Long l:
-                    buf.putLong(l);
-                    break;
-                case byte[] bs:
-                    buf.put(bs);
-                    break;
-                default:
-                    throw new PGError("unsupported item: %s", item);
+                case Integer i -> buf.putInt(i);
+                case Short s -> buf.putShort(s);
+                case ByteBuffer bb -> buf.put(bb);
+                case Byte b -> buf.put(b);
+                case Long l -> buf.putLong(l);
+                case byte[] bs -> buf.put(bs);
+                default -> throw new PGError("unsupported item: %s", item);
             }
         }
         return buf;
