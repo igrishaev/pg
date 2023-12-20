@@ -259,7 +259,7 @@ public class Connection implements Closeable {
     }
 
     private void sendCopyDone () {
-        sendMessage(new CopyDone());
+        sendBytes(CopyDone.PAYLOAD);
     }
 
     private void sendCopyFail (String errorMessage) {
@@ -275,15 +275,15 @@ public class Connection implements Closeable {
     }
 
     private void sendSync () {
-        sendMessage(new Sync());
+        sendBytes(Sync.PAYLOAD);
     }
 
     private void sendFlush () {
-        sendBytes(Flush.content);
+        sendBytes(Flush.PAYLOAD);
     }
 
     private void sendTerminate () {
-        sendMessage(new Terminate());
+        sendBytes(Terminate.PAYLOAD);
     }
 
     @SuppressWarnings("unused")
@@ -326,18 +326,17 @@ public class Connection implements Closeable {
             case 'K' -> BackendKeyData.fromByteBuffer(bbBody);
             case '1' -> ParseComplete.INSTANCE;
             case '2' -> BindComplete.INSTANCE;
-            // TODO: INSTANCE singletons
-            case '3' -> new CloseComplete();
+            case '3' -> CloseComplete.INSTANCE;
             case 't' -> ParameterDescription.fromByteBuffer(bbBody);
             case 'H' -> CopyOutResponse.fromByteBuffer(bbBody);
             case 'd' -> CopyData.fromByteBuffer(bbBody);
-            case 'c' -> new CopyDone();
-            case 'I' -> new EmptyQueryResponse();
-            case 'n' -> new NoData();
+            case 'c' -> CopyDone.INSTANCE;
+            case 'I' -> EmptyQueryResponse.INSTANCE;
+            case 'n' -> NoData.INSTANCE;
             case 'v' -> NegotiateProtocolVersion.fromByteBuffer(bbBody);
             case 'A' -> NotificationResponse.fromByteBuffer(bbBody);
             case 'N' -> NoticeResponse.fromByteBuffer(bbBody);
-            case 's' -> new PortalSuspended();
+            case 's' -> PortalSuspended.INSTANCE;
             case 'G' -> CopyInResponse.fromByteBuffer(bbBody);
             default -> throw new PGError("Unknown message: %s", tag);
         };
@@ -392,7 +391,6 @@ public class Connection implements Closeable {
         Parse parse = new Parse(statement, sql, OIDs);
         sendMessage(parse);
         sendDescribeStatement(statement);
-        // TODO: precalculate payload
         sendSync();
         sendFlush();
         Accum acc = interact(Phase.PREPARE);
