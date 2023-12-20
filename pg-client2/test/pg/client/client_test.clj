@@ -11,13 +11,13 @@
    java.time.OffsetTime
    java.time.OffsetDateTime
    java.util.concurrent.ExecutionException
-   com.github.igrishaev.enums.OID
    com.github.igrishaev.PGError)
   (:require
    [clojure.data.csv :as csv]
    [clojure.java.io :as io]
    [clojure.string :as str]
    [pg.client :as pg]
+   [pg.oid :as oid]
    [clojure.test :refer [deftest is use-fixtures testing]]))
 
 
@@ -1018,7 +1018,7 @@ drop table %1$s;
           (pg/execute conn
                       "select $1 as obj"
                       {:params [{:foo 123}]
-                       :oids [OID/JSONB]
+                       :oids [oid/jsonb]
                        :first? true})]
       (is (= {:obj {:foo 123}} res)))))
 
@@ -2106,7 +2106,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
                            "copy foo (id, name, active, note) from STDIN WITH (FORMAT BINARY)"
                            rows
                            {:copy-bin? true
-                            :oids [OID/INT2 OID/DEFAULT OID/BOOL]})
+                            :oids [oid/int2 oid/default oid/bool]})
 
           res-query
           (pg/query conn "select * from foo")]
@@ -2165,7 +2165,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
                            "copy foo (id, name, active, note) from STDIN WITH (FORMAT CSV)"
                            maps
                            [:id :name :active :note]
-                           {:oids [OID/INT2]
+                           {:oids [oid/int2]
                             :copy-csv? true})
 
           res-query
@@ -2198,7 +2198,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
                            ;; TODO: oid as a map {idx ->oid}
                            ;; TODO: oid as a map {field->oid}
                            [:id :name :active :note]
-                           {:oids [OID/INT2]
+                           {:oids [oid/int2]
                             :copy-bin? true})
 
           res-query
@@ -2226,7 +2226,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
                          "copy foo (id, name, active, note) from STDIN WITH (FORMAT BINARY)"
                          maps
                          [:id :name :active :note]
-                         {:oids [OID/INT2]
+                         {:oids [oid/int2]
                           :copy-bin? true})
         (is false)
         (catch PGError e
@@ -2253,7 +2253,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
           (pg/copy-in-rows conn
                            "copy foo (id, name, active, note) from STDIN WITH (FORMAT CSV)"
                            nil
-                           {:oids [OID/INT2]
+                           {:oids [oid/int2]
                             :copy-csv? true})
 
           res-query
@@ -2282,7 +2282,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
                            "copy foo (id, name, active, note) from STDIN WITH (FORMAT BINARY)"
                            maps
                            [:id :name :active :note]
-                           {:oids [OID/INT2]
+                           {:oids [oid/int2]
                             :copy-format pg/COPY_FORMAT_BIN})
 
           res-query
@@ -2307,7 +2307,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
                            "copy foo (id, name, active, note) from STDIN WITH (FORMAT BINARY)"
                            []
                            #_nil [:id :name :active :note]
-                           { ;; :oids [OID/INT2]
+                           { ;; :oids [oid/int2]
                             :copy-bin? true})
 
           res-query
