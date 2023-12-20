@@ -7,6 +7,7 @@
 - connection pool
 
 adopt enc/dec tests
+adopt json tests
 
 bytea
 fix enc datetime
