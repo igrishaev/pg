@@ -123,21 +123,16 @@ public class Connection implements Closeable {
     private void setParam (String param, String value) {
         params.put(param, value);
         switch (param) {
-            case "client_encoding":
-                codecParams.clientEncoding = value;
-                break;
-            case "server_encoding":
-                codecParams.serverEncoding = value;
-                break;
-            case "DateStyle":
-                codecParams.dateStyle = value;
-                break;
-            case "TimeZone":
-                codecParams.timeZone = value;
-                break;
-            case "integer_datetimes":
-                codecParams.integerDatetime = value.equals("on");
-                break;
+            case "client_encoding" ->
+                    codecParams.clientEncoding = value;
+            case "server_encoding" ->
+                    codecParams.serverEncoding = value;
+            case "DateStyle" ->
+                    codecParams.dateStyle = value;
+            case "TimeZone" ->
+                    codecParams.timeZone = value;
+            case "integer_datetimes" ->
+                    codecParams.integerDatetime = value.equals("on");
         }
     }
 
@@ -516,78 +511,51 @@ public class Connection implements Closeable {
     }
 
     private void handleMessage(Object msg, Accum acc) {
-
         // System.out.println(msg);
-
         switch (msg) {
-            case NotificationResponse x:
+            case NotificationResponse x ->
                 handleNotificationResponse(x);
-                break;
-            case NoData ignored:
-                break;
-            case EmptyQueryResponse ignored:
-                break;
-            case CloseComplete ignored:
-                break;
-            case BindComplete ignored:
-                break;
-            case AuthenticationOk ignored:
-                break;
-            case AuthenticationCleartextPassword ignored:
+            case NoData ignored -> {}
+            case EmptyQueryResponse ignored -> {}
+            case CloseComplete ignored -> {}
+            case BindComplete ignored -> {}
+            case AuthenticationOk ignored -> {}
+            case AuthenticationCleartextPassword ignored ->
                 handleAuthenticationCleartextPassword();
-                break;
-            case NoticeResponse x:
+            case NoticeResponse x ->
                 handleNoticeResponse(x);
-                break;
-            case ParameterStatus x:
+            case ParameterStatus x ->
                 handleParameterStatus(x);
-                break;
-            case RowDescription x:
+            case RowDescription x ->
                 handleRowDescription(x, acc);
-                break;
-            case DataRow x:
+            case DataRow x ->
                 handleDataRow(x, acc);
-                break;
-            case ReadyForQuery x:
+            case ReadyForQuery x ->
                 handleReadyForQuery(x);
-                break;
-            case PortalSuspended x:
+            case PortalSuspended x ->
                 handlePortalSuspended(x, acc);
-                break;
-            case AuthenticationMD5Password x:
+            case AuthenticationMD5Password x ->
                 handleAuthenticationMD5Password(x);
-                break;
-            case NegotiateProtocolVersion x:
+            case NegotiateProtocolVersion x ->
                 handleNegotiateProtocolVersion(x);
-                break;
-            case CommandComplete x:
+            case CommandComplete x ->
                 handleCommandComplete(x, acc);
-                break;
-            case ErrorResponse x:
+            case ErrorResponse x ->
                 handleErrorResponse(x, acc);
-                break;
-            case BackendKeyData x:
+            case BackendKeyData x ->
                 handleBackendKeyData(x);
-                break;
-            case ParameterDescription x:
+            case ParameterDescription x ->
                 handleParameterDescription(x, acc);
-                break;
-            case ParseComplete x:
+            case ParseComplete x ->
                 handleParseComplete(x, acc);
-                break;
-            case CopyOutResponse x:
+            case CopyOutResponse x ->
                 handleCopyOutResponse(x, acc);
-                break;
-            case CopyData x:
+            case CopyData x ->
                 handleCopyData(x, acc);
-                break;
-            case CopyInResponse ignored:
+            case CopyInResponse ignored ->
                 handleCopyInResponse(acc);
-                break;
-            case CopyDone ignored:
-                break;
-
-            default: throw new PGError("Cannot handle this message: %s", msg);
+            case CopyDone ignored -> {}
+            default -> throw new PGError("Cannot handle this message: %s", msg);
         }
     }
 
@@ -802,16 +770,11 @@ public class Connection implements Closeable {
                 continue;
             }
             RowDescription.Column col = cols[i];
-            switch (col.format()) {
-                case TXT:
-                    values[i] = DecoderTxt.decode(buf, col.typeOid(), codecParams);
-                    break;
-                case BIN:
-                    values[i] = DecoderBin.decode(buf, col.typeOid(), codecParams);
-                    break;
-                default:
-                    throw new PGError("unknown format: %s", col.format());
-            }
+            Object value = switch (col.format()) {
+                case TXT -> DecoderTxt.decode(buf, col.typeOid(), codecParams);
+                case BIN -> DecoderBin.decode(buf, col.typeOid(), codecParams);
+            };
+            values[i] = value;
         }
         acc.setCurrentValues(values);
     }
