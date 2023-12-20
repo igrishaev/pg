@@ -94,7 +94,7 @@
       (.indexBy index-by)
 
       run
-      (.run index-by)
+      (.run run)
 
       matrix?
       (.asMatrix)
@@ -296,7 +296,7 @@
 
   (^PreparedStatement
    [^Connection conn ^String sql]
-   (.prepare conn sql))
+   (.prepare conn sql ExecuteParams/INSTANCE))
 
   (^PreparedStatement
    [^Connection conn ^String sql ^List oids]
@@ -306,7 +306,7 @@
 (defn execute-statement
 
   ([^Connection conn ^PreparedStatement stmt]
-   (.executeStatement conn stmt (ExecuteParams/standard)))
+   (.executeStatement conn stmt ExecuteParams/INSTANCE))
 
   ([^Connection conn ^PreparedStatement stmt ^Map opt]
    (.executeStatement conn stmt (->execute-params opt))))
@@ -315,7 +315,7 @@
 (defn execute
 
   ([^Connection conn ^String sql]
-   (.execute conn sql (ExecuteParams/standard)))
+   (.execute conn sql ExecuteParams/INSTANCE))
 
   ([^Connection conn ^String sql ^Map opt]
    (.execute conn sql (->execute-params opt))))
@@ -355,7 +355,7 @@
 (defn query
 
   ([^Connection conn ^String sql]
-   (.query conn sql (ExecuteParams/standard)))
+   (.query conn sql ExecuteParams/INSTANCE))
 
   ([^Connection conn ^String sql ^Map opt]
    (.query conn sql (->execute-params opt))))

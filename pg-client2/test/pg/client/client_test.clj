@@ -1255,6 +1255,28 @@ drop table %1$s;
                  result)))))))
 
 
+(deftest test-execute-recover-from-exception
+  (pg/with-connection [conn *CONFIG*]
+
+    (let [query
+          "with foo as (values (1, 2), (3, 4), (5, 6)) select * from foo"]
+
+      (pg/with-statement [stmt conn query]
+
+        (try
+          (pg/execute-statement conn stmt
+                                {:run (fn [_]
+                                        (/ 0 0))})
+          (is false)
+          (catch Throwable e
+            (is (= "Unhandled exception: Divide by zero" (-> e ex-message)))
+            (is (= "Divide by zero" (-> e ex-cause ex-message)))))
+
+        (testing "conn is usable"
+          (is (= :I (pg/status conn)))
+          (is (= [{:one 1}] (pg/query conn "select 1 as one"))))))))
+
+
 (deftest test-execute-row-limit-int32-unsigned
   (pg/with-connection [conn *CONFIG*]
 
@@ -1344,7 +1366,6 @@ drop table %1$s;
              res)))))
 
 
-;; TODO: fix
 (deftest test-acc-as-run
 
   (pg/with-connection [conn *CONFIG*]
@@ -1366,6 +1387,29 @@ drop table %1$s;
 
       (is (= [{:a 1 :b 2} {:a 3 :b 4} {:a 5 :b 6}]
              @capture!)))))
+
+
+(deftest test-query-recover-from-exception
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (let [query
+          "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
+
+          func
+          (fn [row]
+            (/ 0 0))]
+
+      (try
+        (pg/execute conn query {:run func})
+        (is false)
+        (catch PGError e
+          (is (= "Unhandled exception: Divide by zero" (-> e ex-message)))
+          (is (= "Divide by zero" (-> e ex-cause ex-message)))))
+
+      (testing "still can use the coll"
+        (is (= :I (pg/status conn)))
+        (is (= [{:one 1}] (pg/query conn "select 1 as one")))))))
 
 
 (deftest test-acc-as-fold
@@ -1439,6 +1483,26 @@ drop table %1$s;
                       "select $1::int8 = $1::int4 as eq"
                       {:params [(int 123) 123]})]
       (is (= [{:eq true}] res)))))
+
+
+;; TODO: prepare
+;; TODO: execute String
+;; TODO: execute PrStmt
+
+(deftest test-execute-weird-param
+  (pg/with-connection [conn *CONFIG*]
+    (let [stmt
+          (pg/prepare-statement conn "select $1::int8 = $1::int4 as eq")]
+
+      (try
+        (pg/execute-statement conn stmt {:params [(new Object)]})
+        (is false)
+        (catch PGError e
+          (is (-> e ex-message (str/starts-with? "cannot text-encode a value")))))
+
+      (let [res
+            (pg/execute-statement conn stmt {:params [1]})]
+        (is (= [{:eq true}] res))))))
 
 
 ;; TODO: DataRow[valueCount=0, values=[Ljava.nio.ByteBuffer;@16903ccc]

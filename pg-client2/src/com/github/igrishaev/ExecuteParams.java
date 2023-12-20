@@ -37,6 +37,8 @@ public record ExecuteParams (
         return new Builder();
     }
 
+    public static ExecuteParams INSTANCE = standard();
+
     public static ExecuteParams standard () {
         return new Builder().build();
     }

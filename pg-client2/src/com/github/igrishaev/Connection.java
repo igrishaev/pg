@@ -354,7 +354,7 @@ public class Connection implements Closeable {
     }
 
     public synchronized Object query(String sql) {
-        return query(sql, ExecuteParams.standard());
+        return query(sql, ExecuteParams.INSTANCE);
     }
 
     public synchronized Object query(String sql, ExecuteParams executeParams) {
@@ -444,8 +444,8 @@ public class Connection implements Closeable {
         sendMessage(msg);
     }
 
-    public synchronized Object executeStatement (PreparedStatement stmt,
-                                                 ExecuteParams executeParams) {
+    public synchronized Object executeStatement (final PreparedStatement stmt,
+                                                 final ExecuteParams executeParams) {
         String portal = generatePortal();
         sendBind(portal, stmt, executeParams);
         sendDescribePortal(portal);
@@ -456,11 +456,11 @@ public class Connection implements Closeable {
         return interact(Phase.EXECUTE, executeParams).getResult();
     }
 
-    public synchronized Object execute (String sql) {
-        return execute(sql, ExecuteParams.standard());
+    public synchronized Object execute (final String sql) {
+        return execute(sql, ExecuteParams.INSTANCE);
     }
 
-    public synchronized Object execute (String sql, List<Object> params) {
+    public synchronized Object execute (final String sql, final List<Object> params) {
         return execute(sql, ExecuteParams.builder().params(params).build());
     }
 
@@ -507,7 +507,7 @@ public class Connection implements Closeable {
     }
 
     private Accum interact(Phase phase) {
-        return interact(phase, ExecuteParams.standard());
+        return interact(phase, ExecuteParams.INSTANCE);
     }
 
     private void handleMessage(Object msg, Accum acc) {
@@ -649,8 +649,6 @@ public class Connection implements Closeable {
         else {
             acc.setException(e);
             sendCopyFail(Const.COPY_FAIL_EXCEPTION_MSG);
-            sendSync();
-            sendFlush();
         }
     }
 
@@ -723,8 +721,6 @@ public class Connection implements Closeable {
         } catch (Throwable e) {
             acc.setException(e);
             cancelRequest(this);
-            sendSync();
-            sendFlush();
         }
     }
 
@@ -790,8 +786,6 @@ public class Connection implements Closeable {
         catch (Throwable e) {
             acc.setException(e);
             cancelRequest(this);
-            sendSync();
-            sendFlush();
         }
     }
 
