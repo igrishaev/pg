@@ -145,7 +145,7 @@
 
   (let [x1 (bigdec "1.1")
         buf (encode x1 oid/float8)]
-    (is (bytes/== (byte-array [63, -16, 0, 0, 0, 0, 0, 0]) buf))))
+    (is (bytes/== (byte-array [63 -15 -103 -103 -103 -103 -103 -102]) buf))))
 
 
 (deftest test-datetime

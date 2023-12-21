@@ -139,7 +139,7 @@
 (expand [BigDecimal oid/float8]
   [^BigDecimal value _ opt]
   (-> value
-      (.longValue)
+      (.doubleValue)
       (Double/doubleToLongBits)
       (bytes/int64->bytes)))
 
