@@ -1,4 +1,4 @@
-(ns pg.decode.bin-test
+(ns pg.decode-bin-test
   (:import
    java.nio.ByteBuffer
    com.github.igrishaev.codec.DecoderBin

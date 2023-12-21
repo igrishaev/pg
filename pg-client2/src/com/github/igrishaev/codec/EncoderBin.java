@@ -1,17 +1,21 @@
 package com.github.igrishaev.codec;
 
 import java.io.ByteArrayOutputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.time.temporal.Temporal;
 import java.util.UUID;
 import java.util.Date;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.math.BigInteger;
+import clojure.lang.BigInt;
 
 import clojure.lang.IPersistentCollection;
 import clojure.lang.Symbol;
 import com.github.igrishaev.Const;
 import com.github.igrishaev.PGError;
 import com.github.igrishaev.enums.OID;
+import com.github.igrishaev.util.BBTool;
 import com.github.igrishaev.util.JSON;
 
 public class EncoderBin {
@@ -66,59 +70,36 @@ public class EncoderBin {
             };
 
             case Short s -> switch (oid) {
-                case INT2, DEFAULT -> {
-                    ByteBuffer buf = ByteBuffer.allocate(2);
-                    buf.putShort(s);
-                    yield buf;
-                }
-                case INT4 -> {
-                    ByteBuffer buf = ByteBuffer.allocate(4);
-                    buf.putInt(s);
-                    yield buf;
-                }
-                case INT8 -> {
-                    ByteBuffer buf = ByteBuffer.allocate(8);
-                    buf.putLong(s);
-                    yield buf;
-                }
+                case INT2, DEFAULT -> BBTool.ofShort(s);
+                case INT4 -> BBTool.ofInt(s);
+                case INT8 -> BBTool.ofLong(s);
+                case FLOAT4 -> BBTool.ofFloat(s);
+                case FLOAT8 -> BBTool.ofDouble(s);
                 default -> binEncodingError(x, oid);
             };
 
             case Integer i -> switch (oid) {
-                case INT2 -> {
-                    ByteBuffer buf = ByteBuffer.allocate(2);
-                    buf.putShort(i.shortValue());
-                    yield buf;
-                }
-                case INT4, DEFAULT -> {
-                    ByteBuffer buf = ByteBuffer.allocate(4);
-                    buf.putInt(i);
-                    yield buf;
-                }
-                case INT8 -> {
-                    ByteBuffer buf = ByteBuffer.allocate(8);
-                    buf.putLong(i);
-                    yield buf;
-                }
+                case INT2 -> BBTool.ofShort(i.shortValue());
+                case INT4, DEFAULT -> BBTool.ofInt(i);
+                case INT8 -> BBTool.ofLong(i);
+                case FLOAT4 -> BBTool.ofFloat(i);
+                case FLOAT8 -> BBTool.ofDouble(i);
                 default -> binEncodingError(x, oid);
             };
 
             case Long l -> switch (oid) {
-                case INT2 -> {
-                    ByteBuffer buf = ByteBuffer.allocate(2);
-                    buf.putShort(l.shortValue());
-                    yield buf;
-                }
-                case INT4 -> {
-                    ByteBuffer buf = ByteBuffer.allocate(4);
-                    buf.putInt(l.intValue());
-                    yield buf;
-                }
-                case INT8, DEFAULT -> {
-                    ByteBuffer buf = ByteBuffer.allocate(8);
-                    buf.putLong(l);
-                    yield buf;
-                }
+                case INT2 -> BBTool.ofShort(l.shortValue());
+                case INT4 -> BBTool.ofInt(l.intValue());
+                case INT8, DEFAULT -> BBTool.ofLong(l);
+                case FLOAT4 -> BBTool.ofFloat(l);
+                case FLOAT8 -> BBTool.ofDouble(l);
+                default -> binEncodingError(x, oid);
+            };
+
+            case Byte b -> switch (oid) {
+                case INT2, DEFAULT -> BBTool.ofShort(b);
+                case INT4 -> BBTool.ofInt(b);
+                case INT8 -> BBTool.ofLong(b);
                 default -> binEncodingError(x, oid);
             };
 
@@ -146,16 +127,8 @@ public class EncoderBin {
             };
 
             case Float f -> switch (oid) {
-                case FLOAT4, DEFAULT -> {
-                    ByteBuffer buf = ByteBuffer.allocate(4);
-                    buf.putFloat(f);
-                    yield buf;
-                }
-                case FLOAT8 -> {
-                    ByteBuffer buf = ByteBuffer.allocate(8);
-                    buf.putDouble(f);
-                    yield buf;
-                }
+                case FLOAT4, DEFAULT -> BBTool.ofFloat(f);
+                case FLOAT8 -> BBTool.ofDouble(f);
                 default -> binEncodingError(x, oid);
             };
 
@@ -164,21 +137,15 @@ public class EncoderBin {
                     float f = d.floatValue();
 
                     if (Float.isInfinite(f)) {
-                        throw new PGError("double->float coercion let to an infinite value: %s", d);
+                        throw new PGError("double->float coercion led to an infinite value: %s", d);
                     }
                     if (Float.isNaN(f)) {
-                        throw new PGError("double->float coercion let to an NAN value: %s", d);
+                        throw new PGError("double->float coercion led to a NAN value: %s", d);
                     }
 
-                    ByteBuffer buf = ByteBuffer.allocate(4);
-                    buf.putFloat(f);
-                    yield buf;
+                    yield BBTool.ofFloat(f);
                 }
-                case FLOAT8, DEFAULT -> {
-                    ByteBuffer buf = ByteBuffer.allocate(8);
-                    buf.putDouble(d);
-                    yield buf;
-                }
+                case FLOAT8, DEFAULT -> BBTool.ofDouble(d);
                 default -> binEncodingError(x, oid);
             };
 
@@ -217,10 +184,38 @@ public class EncoderBin {
                 case DATE -> DateTimeBin.encodeDATE(t);
                 case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP(t);
                 case TIMESTAMPTZ -> DateTimeBin.encodeTIMESTAMPTZ(t);
-                default -> binEncodingError(t, oid);
+                default -> binEncodingError(x, oid);
             };
 
-            // TODO: BigDecimal, BigInteger, BigInt
+            case BigDecimal bd -> switch (oid) {
+                case NUMERIC, DEFAULT -> Numeric.encodeBin(bd);
+                case INT2 -> BBTool.ofShort(bd.shortValueExact());
+                case INT4 -> BBTool.ofInt(bd.intValueExact());
+                case INT8 -> BBTool.ofLong(bd.longValueExact());
+                case FLOAT4 -> BBTool.ofFloat(bd.floatValue());
+                case FLOAT8 -> BBTool.ofDouble(bd.doubleValue());
+                default -> binEncodingError(x, oid);
+            };
+
+            case BigInteger bi -> switch (oid) {
+                case NUMERIC, DEFAULT -> Numeric.encodeBin(new BigDecimal(bi));
+                case INT2 -> BBTool.ofShort(bi.shortValueExact());
+                case INT4 -> BBTool.ofInt(bi.intValueExact());
+                case INT8 -> BBTool.ofLong(bi.longValueExact());
+                case FLOAT4 -> BBTool.ofFloat(bi.floatValue());
+                case FLOAT8 -> BBTool.ofDouble(bi.doubleValue());
+                default -> binEncodingError(x, oid);
+            };
+
+            case BigInt bi -> switch (oid) {
+                case NUMERIC, DEFAULT -> Numeric.encodeBin(bi.toBigDecimal());
+                case INT2 -> BBTool.ofShort(bi.shortValue());
+                case INT4 -> BBTool.ofInt(bi.intValue());
+                case INT8 -> BBTool.ofLong(bi.longValue());
+                case FLOAT4 -> BBTool.ofFloat(bi.floatValue());
+                case FLOAT8 -> BBTool.ofDouble(bi.doubleValue());
+                default -> binEncodingError(x, oid);
+            };
 
             default -> binEncodingError(x, oid);
         };

@@ -1,4 +1,4 @@
-(ns pg.decode.txt-test
+(ns pg.decode-txt-test
   (:import
    com.github.igrishaev.PGError
    com.github.igrishaev.codec.DecoderTxt

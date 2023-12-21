@@ -5,6 +5,36 @@ import java.nio.charset.Charset;
 
 public class BBTool {
 
+    public static ByteBuffer ofShort (final short value) {
+        final ByteBuffer buf = ByteBuffer.allocate(2);
+        buf.putShort(value);
+        return buf;
+    }
+
+    public static ByteBuffer ofInt (final int value) {
+        final ByteBuffer buf = ByteBuffer.allocate(4);
+        buf.putInt(value);
+        return buf;
+    }
+
+    public static ByteBuffer ofLong (final long value) {
+        final ByteBuffer buf = ByteBuffer.allocate(8);
+        buf.putLong(value);
+        return buf;
+    }
+
+    public static ByteBuffer ofFloat (final float value) {
+        final ByteBuffer buf = ByteBuffer.allocate(4);
+        buf.putFloat(value);
+        return buf;
+    }
+
+    public static ByteBuffer ofDouble (final double value) {
+        final ByteBuffer buf = ByteBuffer.allocate(8);
+        buf.putDouble(value);
+        return buf;
+    }
+
     public static String getCString (final ByteBuffer buf, final Charset charset) {
         final int pos = buf.position();
         int len = 0;
