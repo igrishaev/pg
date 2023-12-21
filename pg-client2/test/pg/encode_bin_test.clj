@@ -1,7 +1,7 @@
 (ns pg.encode-bin-test
   (:import
-   com.github.igrishaev.enums.OID
    java.nio.ByteBuffer
+   com.github.igrishaev.enums.OID
    com.github.igrishaev.codec.EncoderBin
    com.github.igrishaev.codec.DecoderBin
    java.util.Date
