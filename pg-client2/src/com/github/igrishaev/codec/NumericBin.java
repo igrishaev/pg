@@ -4,13 +4,13 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.ByteBuffer;
 
-public class Numeric {
+public class NumericBin {
 
     private final static int NUMERIC_POS = 0x0000;
     private final static int NUMERIC_NEG = 0x4000;
     private final static int NUMERIC_NAN = 0xC000;
 
-    public static ByteBuffer encodeBin (final BigDecimal value) {
+    public static ByteBuffer encode(final BigDecimal value) {
         final int scale = value.scale();
         final String[] parts = value.toPlainString().split("\\.");
         final String lead = parts[0];
@@ -48,7 +48,7 @@ public class Numeric {
         return bb;
     }
 
-    public static BigDecimal decodeBin (ByteBuffer bb) {
+    public static BigDecimal decode(ByteBuffer bb) {
         final short digitsNum = bb.getShort();
 
         if (digitsNum == 0) {
@@ -76,10 +76,10 @@ public class Numeric {
     }
 
     public static void main (String[] args) {
-        ByteBuffer bb = encodeBin(new BigDecimal("1"));
+        ByteBuffer bb = encode(new BigDecimal("1"));
         bb.rewind();
         // System.out.println(Arrays.toString(encodeBin(new BigDecimal("1")).array()));
-        System.out.println(decodeBin(bb));
+        System.out.println(decode(bb));
     }
 
 }

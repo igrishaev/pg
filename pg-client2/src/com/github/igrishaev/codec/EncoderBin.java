@@ -6,7 +6,6 @@ import java.time.temporal.Temporal;
 import java.util.UUID;
 import java.util.Date;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.math.BigInteger;
 import clojure.lang.BigInt;
 
@@ -188,7 +187,7 @@ public class EncoderBin {
             };
 
             case BigDecimal bd -> switch (oid) {
-                case NUMERIC, DEFAULT -> Numeric.encodeBin(bd);
+                case NUMERIC, DEFAULT -> NumericBin.encode(bd);
                 case INT2 -> BBTool.ofShort(bd.shortValueExact());
                 case INT4 -> BBTool.ofInt(bd.intValueExact());
                 case INT8 -> BBTool.ofLong(bd.longValueExact());
@@ -198,7 +197,7 @@ public class EncoderBin {
             };
 
             case BigInteger bi -> switch (oid) {
-                case NUMERIC, DEFAULT -> Numeric.encodeBin(new BigDecimal(bi));
+                case NUMERIC, DEFAULT -> NumericBin.encode(new BigDecimal(bi));
                 case INT2 -> BBTool.ofShort(bi.shortValueExact());
                 case INT4 -> BBTool.ofInt(bi.intValueExact());
                 case INT8 -> BBTool.ofLong(bi.longValueExact());
@@ -208,7 +207,7 @@ public class EncoderBin {
             };
 
             case BigInt bi -> switch (oid) {
-                case NUMERIC, DEFAULT -> Numeric.encodeBin(bi.toBigDecimal());
+                case NUMERIC, DEFAULT -> NumericBin.encode(bi.toBigDecimal());
                 case INT2 -> BBTool.ofShort(bi.shortValue());
                 case INT4 -> BBTool.ofInt(bi.intValue());
                 case INT8 -> BBTool.ofLong(bi.longValue());

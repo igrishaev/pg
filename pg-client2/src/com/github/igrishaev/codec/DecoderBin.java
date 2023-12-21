@@ -47,7 +47,7 @@ public class DecoderBin {
             case DATE -> DateTimeBin.decodeDATE(buf);
             case TIMESTAMP -> DateTimeBin.decodeTIMESTAMP(buf);
             case TIMESTAMPTZ -> DateTimeBin.decodeTIMESTAMPTZ(buf);
-            case NUMERIC -> Numeric.decodeBin(buf);
+            case NUMERIC -> NumericBin.decode(buf);
             default -> BBTool.getRestBytes(buf);
         };
     }
