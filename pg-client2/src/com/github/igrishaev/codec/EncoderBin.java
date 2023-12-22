@@ -32,7 +32,10 @@ public class EncoderBin {
     }
 
     private static ByteBuffer binEncodingError(Object x, OID oid) {
-        throw new PGError("cannot binary-encode a value: %s, OID: %s", x, oid);
+        throw new PGError(
+                "cannot binary-encode a value: %s, OID: %s, type: %s",
+                x, oid, x.getClass().getCanonicalName()
+        );
     }
 
     private static byte[] getBytes (String string, CodecParams codecParams) {
@@ -169,7 +172,7 @@ public class EncoderBin {
             };
 
             case Date d -> switch (oid) {
-                case DATE -> DateTimeBin.encodeDATE(d.toInstant());
+                case DATE -> DateTimeBin.encodeDATE(LocalDate.ofInstant(d.toInstant(), ZoneOffset.UTC));
                 case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP(d.toInstant());
                 case TIMESTAMPTZ, DEFAULT -> DateTimeBin.encodeTIMESTAMPTZ(d.toInstant());
                 default -> binEncodingError(x, oid);
@@ -200,22 +203,27 @@ public class EncoderBin {
 
             case LocalDateTime ldt -> switch (oid) {
                 case DATE -> DateTimeBin.encodeDATE(ldt.toLocalDate());
-                case TIMESTAMP, DEFAULT -> DateTimeBin.encodeTIMESTAMP(ldt);
-                case TIMESTAMPTZ -> DateTimeBin.encodeTIMESTAMPTZ(
-                        OffsetDateTime.of(ldt, ZoneOffset.UTC)
-                );
+                case TIMESTAMP, DEFAULT -> DateTimeBin.encodeTIMESTAMP(ldt.toInstant(ZoneOffset.UTC));
+                case TIMESTAMPTZ -> DateTimeBin.encodeTIMESTAMPTZ(ldt.toInstant(ZoneOffset.UTC));
+                default -> binEncodingError(x, oid);
+            };
+
+            case ZonedDateTime zdt -> switch (oid) {
+                case DATE -> DateTimeBin.encodeDATE(zdt.toLocalDate());
+                case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP(zdt);
+                case TIMESTAMPTZ, DEFAULT -> DateTimeBin.encodeTIMESTAMPTZ(zdt);
                 default -> binEncodingError(x, oid);
             };
 
             case OffsetDateTime odt -> switch (oid) {
                 case DATE -> DateTimeBin.encodeDATE(odt.toLocalDate());
-                case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP(odt.toLocalDateTime());
+                case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP(odt);
                 case TIMESTAMPTZ, DEFAULT -> DateTimeBin.encodeTIMESTAMPTZ(odt);
                 default -> binEncodingError(x, oid);
             };
 
             case Instant i -> switch (oid) {
-                case DATE -> DateTimeBin.encodeDATE(i);
+                case DATE -> DateTimeBin.encodeDATE(LocalDate.ofInstant(i, ZoneOffset.UTC));
                 case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP(i);
                 case TIMESTAMPTZ, DEFAULT -> DateTimeBin.encodeTIMESTAMPTZ(i);
                 default -> binEncodingError(x, oid);
