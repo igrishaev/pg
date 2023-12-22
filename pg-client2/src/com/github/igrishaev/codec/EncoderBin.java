@@ -46,6 +46,8 @@ public class EncoderBin {
 
         return switch (x) {
 
+            case null -> throw new PGError("cannot binary-encode a null value");
+
             case Symbol s -> switch (oid) {
                 case TEXT, VARCHAR, DEFAULT -> {
                     byte[] bytes = getBytes(s.toString(), codecParams);

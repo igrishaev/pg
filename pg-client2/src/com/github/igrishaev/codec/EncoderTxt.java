@@ -33,11 +33,15 @@ public class EncoderTxt {
     }
 
     private static String txtEncodingError(Object x, OID oid) {
-        throw new PGError("cannot text-encode a value: %s, OID: %s", x, oid);
+        throw new PGError(
+                "cannot text-encode a value: %s, OID: %s, type: %s",
+                x, oid, x.getClass().getCanonicalName());
     }
 
     public static String encode(Object x, OID oid, CodecParams codecParams) {
         return switch (x) {
+
+            case null -> throw new PGError("cannot text-encode a null value");
 
             case Symbol s -> switch (oid) {
                 case TEXT, VARCHAR, DEFAULT -> s.toString();

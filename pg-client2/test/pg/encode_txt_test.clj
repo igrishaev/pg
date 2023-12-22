@@ -1,5 +1,6 @@
 (ns pg.encode-txt-test
   (:import
+   com.github.igrishaev.PGError
    java.math.BigDecimal
    java.math.BigInteger
    java.time.Instant
@@ -38,12 +39,11 @@
 
   (is (= "f" (pg/encode-txt false)))
 
-  #_
   (try
-    (= "f" (pg/encode-txt nil))
+    (pg/encode-txt nil)
     (is false)
-    (catch Exception e
-      (is (= "Cannot text-encode a value"
+    (catch PGError e
+      (is (= "cannot text-encode a null value"
              (ex-message e)))))
 
   (let [uuid (random-uuid)]
@@ -53,7 +53,6 @@
 
   (is (= "1.0E+54" (pg/encode-txt (bigdec 999999999999999999999999999999999999999999999999999999.999999))))
 
-  #_
   (is (= "?" (pg/encode-txt \?)))
 
   (let [res (pg/encode-txt (new BigDecimal 999.999))]

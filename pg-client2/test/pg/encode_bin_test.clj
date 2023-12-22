@@ -1,5 +1,6 @@
 (ns pg.encode-bin-test
   (:import
+   com.github.igrishaev.PGError
    java.nio.ByteBuffer
    java.util.Date
    java.time.Instant
@@ -18,6 +19,15 @@
    [pg.oid :as oid]
    [pg.bb :refer [bb==]]
    [clojure.test :refer [deftest is testing]]))
+
+
+(deftest test-null
+  (try
+    (pg/encode-bin nil)
+    (is false)
+    (catch PGError e
+      (is (= "cannot binary-encode a null value"
+             (ex-message e))))))
 
 
 (deftest test-numbers
