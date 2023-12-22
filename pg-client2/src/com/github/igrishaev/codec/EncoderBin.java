@@ -2,7 +2,7 @@ package com.github.igrishaev.codec;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
-import java.time.temporal.Temporal;
+import java.time.*;
 import java.util.UUID;
 import java.util.Date;
 import java.math.BigDecimal;
@@ -169,20 +169,55 @@ public class EncoderBin {
             };
 
             case Date d -> switch (oid) {
-                case DATE -> DateTimeBin.encodeDATE(d);
-                case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP(d);
-                case TIMESTAMPTZ, DEFAULT -> DateTimeBin.encodeTIMESTAMPTZ(d);
-                default -> binEncodingError(d, oid);
+                case DATE -> DateTimeBin.encodeDATE(d.toInstant());
+                case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP(d.toInstant());
+                case TIMESTAMPTZ, DEFAULT -> DateTimeBin.encodeTIMESTAMPTZ(d.toInstant());
+                default -> binEncodingError(x, oid);
             };
 
-            // TODO: split on types
-            // TODO: DEFAULT
-            case Temporal t -> switch (oid) {
-                case TIME -> DateTimeBin.encodeTIME(t);
-                case TIMETZ -> DateTimeBin.encodeTIMETZ(t);
-                case DATE -> DateTimeBin.encodeDATE(t);
-                case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP(t);
-                case TIMESTAMPTZ -> DateTimeBin.encodeTIMESTAMPTZ(t);
+            case OffsetTime ot -> switch (oid) {
+                case TIME -> DateTimeBin.encodeTIME(ot.toLocalTime());
+                case TIMETZ, DEFAULT -> DateTimeBin.encodeTIMETZ(ot);
+                default -> binEncodingError(x, oid);
+            };
+
+            case LocalTime lt -> switch (oid) {
+                case TIME, DEFAULT -> DateTimeBin.encodeTIME(lt);
+                case TIMETZ -> DateTimeBin.encodeTIMETZ(lt.atOffset(ZoneOffset.UTC));
+                default -> binEncodingError(x, oid);
+            };
+
+            case LocalDate ld -> switch (oid) {
+                case DATE, DEFAULT -> DateTimeBin.encodeDATE(ld);
+                case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP(
+                        ld.atStartOfDay(ZoneOffset.UTC).toInstant()
+                );
+                case TIMESTAMPTZ -> DateTimeBin.encodeTIMESTAMPTZ(
+                        ld.atStartOfDay(ZoneOffset.UTC).toInstant()
+                );
+                default -> binEncodingError(x, oid);
+            };
+
+            case LocalDateTime ldt -> switch (oid) {
+                case DATE -> DateTimeBin.encodeDATE(ldt.toLocalDate());
+                case TIMESTAMP, DEFAULT -> DateTimeBin.encodeTIMESTAMP(ldt);
+                case TIMESTAMPTZ -> DateTimeBin.encodeTIMESTAMPTZ(
+                        OffsetDateTime.of(ldt, ZoneOffset.UTC)
+                );
+                default -> binEncodingError(x, oid);
+            };
+
+            case OffsetDateTime odt -> switch (oid) {
+                case DATE -> DateTimeBin.encodeDATE(odt.toLocalDate());
+                case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP(odt.toLocalDateTime());
+                case TIMESTAMPTZ, DEFAULT -> DateTimeBin.encodeTIMESTAMPTZ(odt);
+                default -> binEncodingError(x, oid);
+            };
+
+            case Instant i -> switch (oid) {
+                case DATE -> DateTimeBin.encodeDATE(i);
+                case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP(i);
+                case TIMESTAMPTZ, DEFAULT -> DateTimeBin.encodeTIMESTAMPTZ(i);
                 default -> binEncodingError(x, oid);
             };
 

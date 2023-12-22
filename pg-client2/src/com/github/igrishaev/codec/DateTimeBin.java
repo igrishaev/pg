@@ -98,16 +98,4 @@ public class DateTimeBin {
         return buf;
     }
 
-    public static ByteBuffer encodeDATE (Date d) {
-        return encodeDATE(d.toInstant());
-    }
-
-    public static ByteBuffer encodeTIMESTAMP (Date d) {
-        return encodeTIMESTAMP(d.toInstant());
-    }
-
-    public static ByteBuffer encodeTIMESTAMPTZ (Date d) {
-        return encodeTIMESTAMPTZ(d.toInstant());
-    }
-
 }

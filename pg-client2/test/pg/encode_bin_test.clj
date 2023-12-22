@@ -151,8 +151,6 @@
     (is (bb== (byte-array [63 -15 -103 -103 -103 -103 -103 -102]) buf))))
 
 
-;; TODO: fix it
-#_
 (deftest test-datetime
 
   ;; OffsetTime
@@ -205,6 +203,7 @@
     (is (= (.atZoneSameInstant val1 ZoneOffset/UTC)
            (.atZoneSameInstant val2 ZoneOffset/UTC))))
 
+  #_
   (let [val1 (OffsetDateTime/parse "2023-07-27T12:44:20.611698+03:00")
         buf (pg/encode-bin val1 oid/timestamp)
         val2 (pg/decode-bin buf oid/timestamp)]
@@ -217,16 +216,19 @@
 
   ;; ZonedDateTime
 
+  #_
   (let [val1 (ZonedDateTime/parse "2023-07-27T01:56:35.028508+03:00[Europe/Moscow]")
         buf (pg/encode-bin val1 oid/timestamptz)
         val2 (pg/decode-bin buf oid/timestamptz)]
     (is (= (OffsetDateTime/parse "2023-07-26T22:56:35.028508Z") val2)))
 
+  #_
   (let [val1 (ZonedDateTime/parse "2023-07-27T01:56:35.028508+03:00[Europe/Moscow]")
         buf (pg/encode-bin val1 oid/timestamp)
         val2 (pg/decode-bin buf oid/timestamp)]
     (is (= (LocalDateTime/parse "2023-07-26T22:56:35.028508") val2)))
 
+  #_
   (let [val1 (ZonedDateTime/parse "2023-07-27T01:56:35.028508+03:00[Europe/Moscow]")
         buf (pg/encode-bin val1 oid/date)
         val2 (pg/decode-bin buf oid/date)]
@@ -244,6 +246,7 @@
         val2 (pg/decode-bin buf oid/timestamp)]
     (is (= (LocalDateTime/parse "2023-07-27T01:25:55.297834") val2)))
 
+  #_
   (let [val1 (Instant/parse "2023-07-27T01:25:55.297834Z")
         buf (pg/encode-bin val1 oid/date)
         val2 (pg/decode-bin buf oid/date)]
@@ -251,11 +254,13 @@
 
   ;; LocalDateTime
 
+  #_
   (let [val1 (LocalDateTime/parse "2023-07-27T01:31:21.025913")
         buf (pg/encode-bin val1 oid/timestamptz)
         val2 (pg/decode-bin buf oid/timestamptz)]
     (is (= (OffsetDateTime/parse "2023-07-27T01:31:21.025913Z") val2)))
 
+  #_
   (let [val1 (LocalDateTime/parse "2023-07-27T01:31:21.025913")
         buf (pg/encode-bin val1 oid/timestamp)
         val2 (pg/decode-bin buf oid/timestamp)]
@@ -268,6 +273,7 @@
 
   ;; Date
 
+  #_
   (let [val1 (-> "2023-07-25T01:00:00.123456Z"
                  (Instant/parse)
                  (.toEpochMilli)
@@ -276,6 +282,7 @@
         val2 (pg/decode-bin buf oid/date)]
     (is (= (LocalDate/parse "2023-07-25") val2)))
 
+  #_
   (let [val1 (-> "2023-07-25T01:00:00.123456Z"
                  (Instant/parse)
                  (.toEpochMilli)
@@ -284,6 +291,7 @@
         val2 (pg/decode-bin buf oid/timestamp)]
     (is (= (LocalDateTime/parse "2023-07-25T01:00:00.123") val2)))
 
+  #_
   (let [val1 (-> "2023-07-25T01:00:00.123456Z"
                  (Instant/parse)
                  (.toEpochMilli)
@@ -293,6 +301,7 @@
     (is (= (OffsetDateTime/parse "2023-07-25T01:00:00.123Z") val2))))
 
 
+;; TODO: implement arrays
 #_
 (deftest test-arrays
 
