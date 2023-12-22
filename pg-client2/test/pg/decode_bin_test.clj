@@ -16,6 +16,11 @@
    [clojure.test :refer [deftest is testing]]))
 
 
+(deftest test-bytea
+  (let [res (pg/decode-bin (->bb (byte-array [104 101 108 108 111])) oid/bytea)]
+    (is (= [104 101 108 108 111] (-> res vec)))))
+
+
 (deftest test-uuid
 
   (let [buf

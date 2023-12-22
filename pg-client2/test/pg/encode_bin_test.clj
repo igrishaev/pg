@@ -21,6 +21,10 @@
    [clojure.test :refer [deftest is testing]]))
 
 
+(deftest test-bytea
+  (let [res (pg/encode-bin (.getBytes "hello" "UTF-8"))]
+    (is (= [104 101 108 108 111] (-> res .array vec)))))
+
 (deftest test-null
   (try
     (pg/encode-bin nil)

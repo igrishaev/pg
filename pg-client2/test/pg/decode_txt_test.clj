@@ -14,6 +14,10 @@
    [clojure.test :refer [deftest is testing]]))
 
 
+(deftest test-bytea
+  (let [res (pg/decode-txt "\\x68656c6c6f" oid/bytea)]
+    (is (= [104 101 108 108 111] (vec res)))))
+
 (deftest test-numbers
 
   (let [res (pg/decode-txt "1" oid/int2)]

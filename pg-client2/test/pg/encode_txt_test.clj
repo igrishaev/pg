@@ -18,10 +18,9 @@
    [pg.oid :as oid]))
 
 
-;; TODO: fix
 (deftest test-bytea
   (let [res (pg/encode-txt (.getBytes "hello" "UTF-8"))]
-    (is (= 1 res))))
+    (is (= "\\x68656c6c6f" res))))
 
 
 (deftest test-encode-basic
