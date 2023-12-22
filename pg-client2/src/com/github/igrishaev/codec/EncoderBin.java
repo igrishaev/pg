@@ -52,7 +52,7 @@ public class EncoderBin {
             };
 
             case String s -> switch (oid) {
-                case TEXT, VARCHAR, NAME, DEFAULT -> {
+                case TEXT, VARCHAR, NAME, JSON, JSONB, DEFAULT -> {
                     byte[] bytes = getBytes(s, codecParams);
                     yield ByteBuffer.wrap(bytes);
                 }

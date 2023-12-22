@@ -8,15 +8,21 @@
    com.github.igrishaev.ExecuteParams
    com.github.igrishaev.ExecuteParams$Builder
    com.github.igrishaev.PreparedStatement
+   com.github.igrishaev.codec.DecoderBin
+   com.github.igrishaev.codec.DecoderTxt
+   com.github.igrishaev.codec.EncoderBin
+   com.github.igrishaev.codec.EncoderTxt
+   com.github.igrishaev.enums.CopyFormat
+   com.github.igrishaev.enums.OID
    com.github.igrishaev.enums.TXStatus
    com.github.igrishaev.enums.TxLevel
-   com.github.igrishaev.enums.CopyFormat
    com.github.igrishaev.reducer.IReducer
    com.github.igrishaev.util.JSON
    com.github.igrishaev.util.JSON$Wrapper
    java.io.InputStream
    java.io.OutputStream
    java.io.Writer
+   java.nio.ByteBuffer
    java.util.List
    java.util.Map
    java.util.UUID))
@@ -546,3 +552,32 @@
 
 (defn json-write-stream [value ^OutputStream out ]
   (JSON/writeValue out value))
+
+
+;;
+;; Encode/decode
+;;
+
+(defn decode-bin [^ByteBuffer buf ^OID oid]
+  (.rewind buf)
+  (DecoderBin/decode buf oid))
+
+
+(defn decode-txt [^String obj ^OID oid]
+  (DecoderTxt/decode obj oid))
+
+
+(defn encode-bin
+  (^ByteBuffer [obj]
+   (EncoderBin/encode obj))
+
+  (^ByteBuffer [obj ^OID oid]
+   (EncoderBin/encode obj oid)))
+
+
+(defn encode-txt
+  (^String [obj]
+   (EncoderTxt/encode obj))
+
+  (^String [obj ^OID oid]
+   (EncoderTxt/encode obj oid)))

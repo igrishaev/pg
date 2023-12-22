@@ -45,7 +45,7 @@ public class EncoderTxt {
             };
 
             case String s -> switch (oid) {
-                case TEXT, VARCHAR, NAME, DEFAULT -> s;
+                case TEXT, VARCHAR, NAME, JSON, JSONB, DEFAULT -> s;
                 default -> txtEncodingError(x, oid);
             };
 
