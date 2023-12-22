@@ -1,12 +1,12 @@
-- reducers
-  - unify the keys
-
 - Auth: SASL
 - set socket options
 - SSL support
 - connection pool
 
 bin copy in: array of BB
+
+Prepared statement toString/print-method
+rename the package
 
 - execute common fn name
 - prepare name

@@ -7,6 +7,9 @@ import com.github.igrishaev.enums.Phase;
 import com.github.igrishaev.msg.*;
 import com.github.igrishaev.reducer.IReducer;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Accum {
 
@@ -73,6 +76,25 @@ public class Accum {
     private Node current;
     private Throwable exception;
 
+    public static String[] unifyKeys (final String[] oldKeys) {
+        final Map<String, Integer> map = new HashMap<>();
+        final String[] newKeys = new String[oldKeys.length];
+        for (int i = 0; i < oldKeys.length; i++) {
+            final String oldKey = oldKeys[i];
+            final int idx = map.getOrDefault(oldKey, 0);
+            if (idx == 0) {
+                newKeys[i] = oldKey;
+                map.put(oldKey, 1);
+            }
+            else {
+                final String newKey = oldKey + "_" + String.valueOf(idx);
+                newKeys[i] = newKey;
+                map.put(oldKey, idx + 1);
+            }
+        }
+        return newKeys;
+    }
+
     public Accum(Phase phase, ExecuteParams executeParams) {
         this.phase = phase;
         this.executeParams = executeParams;
@@ -117,7 +139,7 @@ public class Accum {
         current.acc = executeParams.reducer().initiate();
         current.rowDescription = msg;
         IFn fnKeyTransform = executeParams.fnKeyTransform();
-        String[] names = msg.getColumnNames();
+        String[] names = unifyKeys(msg.getColumnNames());
         Object[] keys = new Object[names.length];
         for (short i = 0; i < keys.length; i ++) {
             keys[i] = fnKeyTransform.invoke(names[i]);
@@ -170,5 +192,10 @@ public class Accum {
                 throw new PGError("ErrorResponse: %s", errorResponse.fields());
             }
         }
+    }
+
+    public static void main (String[] args) {
+        final String[] keys = new String[] {"aaa", "bbb", "bbb", "ccc", "bbb"};
+        System.out.println(Arrays.toString(unifyKeys(keys)));
     }
 }
