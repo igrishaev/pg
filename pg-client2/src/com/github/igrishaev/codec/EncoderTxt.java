@@ -6,12 +6,11 @@ import com.github.igrishaev.Const;
 import com.github.igrishaev.PGError;
 import com.github.igrishaev.enums.OID;
 
-import java.time.LocalTime;
-import java.time.OffsetTime;
-import java.time.temporal.Temporal;
+import java.nio.charset.StandardCharsets;
+import java.time.*;
 import java.util.Date;
 import java.io.StringWriter;
-import java.time.Instant;
+import java.util.HexFormat;
 import java.util.UUID;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -19,6 +18,8 @@ import clojure.lang.BigInt;
 import com.github.igrishaev.util.JSON;
 
 public class EncoderTxt {
+
+    private static final HexFormat hex = HexFormat.of();
 
     public static String encode(Object x) {
         return encode(x, OID.DEFAULT, CodecParams.standard());
@@ -48,6 +49,11 @@ public class EncoderTxt {
                 default -> txtEncodingError(x, oid);
             };
 
+            case Character c -> switch (oid) {
+                case TEXT, VARCHAR, DEFAULT -> c.toString();
+                default -> txtEncodingError(x, oid);
+            };
+
             case String s -> switch (oid) {
                 case TEXT, VARCHAR, NAME, JSON, JSONB, DEFAULT -> s;
                 default -> txtEncodingError(x, oid);
@@ -55,21 +61,31 @@ public class EncoderTxt {
 
             case Short s -> switch (oid) {
                 case INT2, DEFAULT -> String.valueOf(s);
-                case INT4 -> String.valueOf(s.intValue());
+                case INT4, OID -> String.valueOf(s.intValue());
                 case INT8 -> String.valueOf(s.longValue());
+                default -> txtEncodingError(x, oid);
+            };
+
+            case byte[] ba -> switch (oid) {
+                case BYTEA, DEFAULT -> {
+                    final int len = 2 + 2 * ba.length;
+                    final StringBuilder sb = new StringBuilder(len);
+                    sb.append("\\x");
+                    yield hex.formatHex(sb, ba).toString();
+                }
                 default -> txtEncodingError(x, oid);
             };
 
             case Integer i -> switch (oid) {
                 case INT2 -> String.valueOf(i.shortValue());
-                case INT4, DEFAULT -> String.valueOf(i);
+                case INT4, OID, DEFAULT -> String.valueOf(i);
                 case INT8 -> String.valueOf(i.longValue());
                 default -> txtEncodingError(x, oid);
             };
 
             case Long l -> switch (oid) {
                 case INT2 -> String.valueOf(l.shortValue());
-                case INT4 -> String.valueOf(l.intValue());
+                case INT4, OID -> String.valueOf(l.intValue());
                 case INT8, DEFAULT -> String.valueOf(l);
                 default -> txtEncodingError(x, oid);
             };
@@ -133,25 +149,69 @@ public class EncoderTxt {
                 default -> txtEncodingError(c, oid);
             };
 
-            // TODO: split on types
-            // TODO: defaults
-            case Temporal t -> switch (oid) {
-                case TIMESTAMPTZ -> DateTimeTxt.encodeTIMESTAMPTZ(t);
-                case TIMESTAMP -> DateTimeTxt.encodeTIMESTAMP(t);
-                case DATE -> DateTimeTxt.encodeDATE(t);
-                case TIMETZ -> DateTimeTxt.encodeTIMETZ(t);
-                case TIME -> DateTimeTxt.encodeTIME(t);
-                default -> txtEncodingError(t, oid);
+            case Date d -> switch (oid) {
+                case DATE -> DateTimeTxt.encodeDATE(LocalDate.ofInstant(d.toInstant(), ZoneOffset.UTC));
+                case TIMESTAMP -> DateTimeTxt.encodeTIMESTAMP(d.toInstant());
+                case TIMESTAMPTZ, DEFAULT -> DateTimeTxt.encodeTIMESTAMPTZ(d.toInstant());
+                default -> txtEncodingError(x, oid);
             };
 
-            case Date d -> switch (oid) {
-                case TIMESTAMPTZ, DEFAULT -> DateTimeTxt.encodeTIMESTAMPTZ(d);
-                case TIMESTAMP -> DateTimeTxt.encodeTIMESTAMP(d);
-                case DATE -> DateTimeTxt.encodeDATE(d);
-                default -> txtEncodingError(d, oid);
+            case OffsetTime ot -> switch (oid) {
+                case TIME -> DateTimeTxt.encodeTIME(ot.toLocalTime());
+                case TIMETZ, DEFAULT -> DateTimeTxt.encodeTIMETZ(ot);
+                default -> txtEncodingError(x, oid);
+            };
+
+            case LocalTime lt -> switch (oid) {
+                case TIME, DEFAULT -> DateTimeTxt.encodeTIME(lt);
+                case TIMETZ -> DateTimeTxt.encodeTIMETZ(lt.atOffset(ZoneOffset.UTC));
+                default -> txtEncodingError(x, oid);
+            };
+
+            case LocalDate ld -> switch (oid) {
+                case DATE, DEFAULT -> DateTimeTxt.encodeDATE(ld);
+                case TIMESTAMP -> DateTimeTxt.encodeTIMESTAMP(
+                        ld.atStartOfDay(ZoneOffset.UTC).toInstant()
+                );
+                case TIMESTAMPTZ -> DateTimeTxt.encodeTIMESTAMPTZ(
+                        ld.atStartOfDay(ZoneOffset.UTC).toInstant()
+                );
+                default -> txtEncodingError(x, oid);
+            };
+
+            case LocalDateTime ldt -> switch (oid) {
+                case DATE -> DateTimeTxt.encodeDATE(ldt.toLocalDate());
+                case TIMESTAMP, DEFAULT -> DateTimeTxt.encodeTIMESTAMP(ldt.toInstant(ZoneOffset.UTC));
+                case TIMESTAMPTZ -> DateTimeTxt.encodeTIMESTAMPTZ(ldt.toInstant(ZoneOffset.UTC));
+                default -> txtEncodingError(x, oid);
+            };
+
+            case ZonedDateTime zdt -> switch (oid) {
+                case DATE -> DateTimeTxt.encodeDATE(zdt.toLocalDate());
+                case TIMESTAMP -> DateTimeTxt.encodeTIMESTAMP(zdt);
+                case TIMESTAMPTZ, DEFAULT -> DateTimeTxt.encodeTIMESTAMPTZ(zdt);
+                default -> txtEncodingError(x, oid);
+            };
+
+            case OffsetDateTime odt -> switch (oid) {
+                case DATE -> DateTimeTxt.encodeDATE(odt.toLocalDate());
+                case TIMESTAMP -> DateTimeTxt.encodeTIMESTAMP(odt);
+                case TIMESTAMPTZ, DEFAULT -> DateTimeTxt.encodeTIMESTAMPTZ(odt);
+                default -> txtEncodingError(x, oid);
+            };
+
+            case Instant i -> switch (oid) {
+                case DATE -> DateTimeTxt.encodeDATE(LocalDate.ofInstant(i, ZoneOffset.UTC));
+                case TIMESTAMP -> DateTimeTxt.encodeTIMESTAMP(i);
+                case TIMESTAMPTZ, DEFAULT -> DateTimeTxt.encodeTIMESTAMPTZ(i);
+                default -> txtEncodingError(x, oid);
             };
 
             default -> txtEncodingError(x, oid);
         };
+    }
+
+    public static void main (String[] args) {
+        System.out.println(encode("hello".getBytes(StandardCharsets.UTF_8)));
     }
 }

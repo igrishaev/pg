@@ -5,7 +5,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.time.temporal.Temporal;
-import java.util.Date;
 
 public class DateTimeTxt {
 
@@ -91,19 +90,6 @@ public class DateTimeTxt {
     //
     // Encoding
     //
-
-    // Date
-    public static String encodeTIMESTAMPTZ (Date date) {
-        return encodeTIMESTAMPTZ(date.toInstant());
-    }
-
-    public static String encodeTIMESTAMP (Date date) {
-        return encodeTIMESTAMP(date.toInstant());
-    }
-
-    public static String encodeDATE (Date date) {
-        return encodeDATE(date.toInstant());
-    }
 
     // Temporal
     public static String encodeTIMESTAMPTZ (Temporal t) {

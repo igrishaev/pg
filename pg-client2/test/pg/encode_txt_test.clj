@@ -19,6 +19,9 @@
 
 
 ;; TODO: fix
+(deftest test-bytea
+  (let [res (pg/encode-txt (.getBytes "hello" "UTF-8"))]
+    (is (= 1 res))))
 
 
 (deftest test-encode-basic
@@ -80,7 +83,7 @@
 
   (testing "OffsetDateTime default"
     (let [val (OffsetDateTime/parse "2023-07-25T01:00:00.123456+03")
-          res (pg/encode-txt val nil)]
+          res (pg/encode-txt val)]
       (is (= "2023-07-24 22:00:00.123456+00" res))))
 
   (testing "OffsetDateTime timestamptz"
@@ -96,11 +99,11 @@
   (testing "OffsetDateTime date"
     (let [val (OffsetDateTime/parse "2023-07-25T01:00:00.123456+03")
           res (pg/encode-txt val oid/date)]
-      (is (= "2023-07-24" res))))
+      (is (= "2023-07-25" res))))
 
   (testing "LocalDateTime default"
     (let [val (LocalDateTime/parse "2023-07-25T01:00:00.123456")
-          res (pg/encode-txt val nil)]
+          res (pg/encode-txt val)]
       (is (= "2023-07-25 01:00:00.123456" res))))
 
   (testing "LocalDateTime timestamp"
@@ -120,7 +123,7 @@
 
   (testing "ZonedDateTime default"
     (let [val (ZonedDateTime/parse "2023-07-25T01:00:00.123456+03")
-          res (pg/encode-txt val nil)]
+          res (pg/encode-txt val)]
       (is (= "2023-07-24 22:00:00.123456+00" res))))
 
   (testing "ZonedDateTime timestsamptz"
@@ -136,11 +139,11 @@
   (testing "ZonedDateTime date"
     (let [val (ZonedDateTime/parse "2023-07-25T01:00:00.123456+03")
           res (pg/encode-txt val oid/date)]
-      (is (= "2023-07-24" res))))
+      (is (= "2023-07-25" res))))
 
   (testing "LocalTime default"
     (let [val (LocalTime/parse "01:00:00.123456")
-          res (pg/encode-txt val nil)]
+          res (pg/encode-txt val)]
       (is (= "01:00:00.123456" res))))
 
   (testing "LocalTime time"
@@ -155,7 +158,7 @@
 
   (testing "OffsetTime default"
     (let [val (OffsetTime/parse "01:00:00.123456+03:00")
-          res (pg/encode-txt val nil)]
+          res (pg/encode-txt val)]
       (is (= "01:00:00.123456+03" res))))
 
   (testing "OffsetTime timetz"
@@ -166,11 +169,11 @@
   (testing "OffsetTime time"
     (let [val (OffsetTime/parse "01:00:00.123456+03:00")
           res (pg/encode-txt val oid/time)]
-      (is (= "22:00:00.123456" res))))
+      (is (= "01:00:00.123456" res))))
 
   (testing "LocalDate default"
     (let [val (LocalDate/parse "2022-01-01")
-          res (pg/encode-txt val nil)]
+          res (pg/encode-txt val)]
       (is (= "2022-01-01" res))))
 
   (testing "LocalDate date"
@@ -190,7 +193,7 @@
 
   (testing "Instant default"
     (let [val (Instant/parse "2023-07-25T01:00:00.123456Z")
-          res (pg/encode-txt val nil)]
+          res (pg/encode-txt val)]
       (is (= "2023-07-25 01:00:00.123456+00" res))))
 
   (testing "Instant timestamptz"
@@ -213,7 +216,7 @@
                   (Instant/parse)
                   (.toEpochMilli)
                   (Date.))
-          res (pg/encode-txt val nil)]
+          res (pg/encode-txt val)]
       (is (= "2023-07-25 01:00:00.123000+00" res))))
 
   (testing "Date timestamptz"

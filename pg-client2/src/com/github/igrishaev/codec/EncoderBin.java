@@ -56,6 +56,11 @@ public class EncoderBin {
                 default -> binEncodingError(x, oid);
             };
 
+            case byte[] ba -> switch (oid) {
+                case BYTEA, DEFAULT -> ByteBuffer.wrap(ba);
+                default -> binEncodingError(x, oid);
+            };
+
             case String s -> switch (oid) {
                 case TEXT, VARCHAR, NAME, JSON, JSONB, DEFAULT -> {
                     byte[] bytes = getBytes(s, codecParams);
@@ -75,7 +80,7 @@ public class EncoderBin {
 
             case Short s -> switch (oid) {
                 case INT2, DEFAULT -> BBTool.ofShort(s);
-                case INT4 -> BBTool.ofInt(s);
+                case INT4, OID -> BBTool.ofInt(s);
                 case INT8 -> BBTool.ofLong(s);
                 case FLOAT4 -> BBTool.ofFloat(s);
                 case FLOAT8 -> BBTool.ofDouble(s);
@@ -84,7 +89,7 @@ public class EncoderBin {
 
             case Integer i -> switch (oid) {
                 case INT2 -> BBTool.ofShort(i.shortValue());
-                case INT4, DEFAULT -> BBTool.ofInt(i);
+                case INT4, OID, DEFAULT -> BBTool.ofInt(i);
                 case INT8 -> BBTool.ofLong(i);
                 case FLOAT4 -> BBTool.ofFloat(i);
                 case FLOAT8 -> BBTool.ofDouble(i);
@@ -93,7 +98,7 @@ public class EncoderBin {
 
             case Long l -> switch (oid) {
                 case INT2 -> BBTool.ofShort(l.shortValue());
-                case INT4 -> BBTool.ofInt(l.intValue());
+                case INT4, OID -> BBTool.ofInt(l.intValue());
                 case INT8, DEFAULT -> BBTool.ofLong(l);
                 case FLOAT4 -> BBTool.ofFloat(l);
                 case FLOAT8 -> BBTool.ofDouble(l);

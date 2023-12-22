@@ -6,11 +6,7 @@
 - SSL support
 - connection pool
 
-adopt enc/dec tests
-adopt json tests
-
-bytea
-fix enc datetime
+bytea: enc/dec bin/txt tests
 
 bin copy in: array of BB
 
