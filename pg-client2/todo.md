@@ -4,6 +4,8 @@
 
 bin copy in: array of BB
 
+- fix all the tests
+
 Prepared statement toString/print-method
 rename the package
 
