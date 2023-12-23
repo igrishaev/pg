@@ -5,17 +5,17 @@ import com.github.igrishaev.util.BBTool;
 import java.nio.ByteBuffer;
 
 public record DataRow (short valueCount, ByteBuffer[] values) {
-    public static DataRow fromByteBuffer(ByteBuffer buf) {
+    public static DataRow fromByteBuffer(final ByteBuffer buf) {
 
-        short size = buf.getShort();
-        ByteBuffer[] values = new ByteBuffer[size];
+        final short size = buf.getShort();
+        final ByteBuffer[] values = new ByteBuffer[size];
         for (short i = 0; i < size; i++) {
-            int len = buf.getInt();
+            final int len = buf.getInt();
             if (len == -1) {
                 values[i] = null;
             }
             else {
-                ByteBuffer bufValue = buf.slice();
+                final ByteBuffer bufValue = buf.slice();
                 bufValue.limit(len);
                 BBTool.skip(buf, len);
                 values[i] = bufValue;

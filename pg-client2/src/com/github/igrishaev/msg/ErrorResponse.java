@@ -7,7 +7,7 @@ import java.util.Map;
 public record ErrorResponse (Map<String, String> fields) {
 
     public static ErrorResponse fromByteBuffer(final ByteBuffer buf, final Charset charset) {
-        Map<String, String> fields = FieldParser.parseFields(buf, charset);
+        final Map<String, String> fields = FieldParser.parseFields(buf, charset);
         return new ErrorResponse(fields);
     }
 }

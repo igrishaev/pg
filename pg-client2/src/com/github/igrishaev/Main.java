@@ -1,15 +1,7 @@
 package com.github.igrishaev;
 
-import clojure.lang.Keyword;
-import clojure.lang.PersistentHashMap;
-
 import java.io.ByteArrayInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public class Main {
 
@@ -25,7 +17,7 @@ public class Main {
 //                .binaryDecode(true)
 //                .build();
 
-        Config config = Config.builder("test", "test")
+        ConnConfig config = ConnConfig.builder("test", "test")
                 .port(10160)
                 .host("127.0.0.1")
                 .password("test")

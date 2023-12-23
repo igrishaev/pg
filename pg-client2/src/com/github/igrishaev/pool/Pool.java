@@ -1,6 +1,6 @@
 package com.github.igrishaev.pool;
 
-import com.github.igrishaev.Config;
+import com.github.igrishaev.ConnConfig;
 import com.github.igrishaev.Connection;
 import com.github.igrishaev.PGError;
 
@@ -12,20 +12,20 @@ import java.util.Map;
 import java.util.HashMap;
 
 public record Pool (
-        Config pgConfig,
+        ConnConfig connConfig,
         PoolConfig poolConfig,
         Map<UUID, Connection> connsUsed,
         Deque<Connection> connsFree
 
 ) implements Closeable {
 
-    public static Pool of(final Config pGconfig) {
-        return Pool.of(pGconfig, PoolConfig.standard());
+    public static Pool of(final ConnConfig connConfig) {
+        return Pool.of(connConfig, PoolConfig.standard());
     }
 
-    public static Pool of(final Config pgConfig, final PoolConfig poolConfig) {
+    public static Pool of(final ConnConfig connConfig, final PoolConfig poolConfig) {
         final Pool pool = new Pool(
-                pgConfig,
+                connConfig,
                 poolConfig,
                 new HashMap<>(poolConfig.maxSize()),
                 new ArrayDeque<>(poolConfig.maxSize())
@@ -36,7 +36,7 @@ public record Pool (
 
     private void initiate () {
         for (int i = 0; i < poolConfig().minSize(); i++) {
-            final Connection conn = new Connection(pgConfig);
+            final Connection conn = new Connection(connConfig);
             connsFree.add(conn);
         }
     }
@@ -62,7 +62,7 @@ public record Pool (
             final Connection conn = connsFree.poll();
             if (conn == null) {
                 if (connsUsed.size() < poolConfig().maxSize()) {
-                    final Connection connNew = new Connection(pgConfig);
+                    final Connection connNew = new Connection(connConfig);
                     addUsed(connNew);
                     return connNew;
                 }
@@ -139,4 +139,12 @@ public record Pool (
         return connsFree.size();
     }
 
+    public synchronized String toString () {
+        return String.format(
+                "<PG pool, min: %s, max: %s, lifetime: %s>",
+                poolConfig.minSize(),
+                poolConfig.maxSize(),
+                poolConfig.maxLifetime()
+        );
+    }
 }

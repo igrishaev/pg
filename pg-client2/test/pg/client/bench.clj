@@ -1,7 +1,7 @@
 (ns pg.client.bench
   (:import
    com.github.igrishaev.Connection
-   com.github.igrishaev.Config$Builder
+   com.github.igrishaev.ConnConfig$Builder
    org.postgresql.util.PGobject
    java.sql.PreparedStatement)
   (:use criterium.core)

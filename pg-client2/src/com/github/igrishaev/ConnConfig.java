@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Collections;
 import java.util.Objects;
 
-public record Config (
+public record ConnConfig(
         String user,
         String database,
         String password,
@@ -31,7 +31,7 @@ public record Config (
         return new Builder(user, database);
     }
 
-    public static Config standard (final String user, final String database) {
+    public static ConnConfig standard (final String user, final String database) {
         return builder(user, database).build();
     }
 
@@ -140,8 +140,8 @@ public record Config (
             return this;
         }
 
-        public Config build() {
-            return new Config(
+        public ConnConfig build() {
+            return new ConnConfig(
                     this.user,
                     this.database,
                     this.password,

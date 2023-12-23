@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Connection implements Closeable {
 
-    private final Config config;
+    private final ConnConfig config;
     private final UUID id;
     private final long createdAt;
     private final AtomicInteger aInt;
@@ -43,14 +43,14 @@ public class Connection implements Closeable {
     private final CodecParams codecParams;
 
     public Connection(String host, int port, String user, String password, String database) {
-        this(Config.builder(user, database)
+        this(ConnConfig.builder(user, database)
                 .host(host)
                 .port(port)
                 .password(password)
                 .build());
     }
 
-    public Connection(Config config, boolean sendStartup) {
+    public Connection(ConnConfig config, boolean sendStartup) {
         this.config = config;
         this.params = new HashMap<>();
         this.codecParams = CodecParams.standard();
@@ -63,7 +63,7 @@ public class Connection implements Closeable {
         }
     }
 
-    public Connection(Config config) {
+    public Connection(ConnConfig config) {
         this(config, true);
     }
 

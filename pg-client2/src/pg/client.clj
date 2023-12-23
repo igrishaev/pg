@@ -3,7 +3,7 @@
    [clojure.string :as str])
   (:import
    clojure.lang.Keyword
-   com.github.igrishaev.Config$Builder
+   com.github.igrishaev.ConnConfig$Builder
    com.github.igrishaev.Connection
    com.github.igrishaev.ExecuteParams
    com.github.igrishaev.ExecuteParams$Builder
@@ -164,7 +164,7 @@
 
 
 
-(defn ->config ^Config$Builder [params]
+(defn ->config ^ConnConfig$Builder [params]
 
   (let [{:keys [user
                 database
@@ -183,7 +183,7 @@
                 use-ssl?]}
         params]
 
-    (cond-> (new Config$Builder user database)
+    (cond-> (new ConnConfig$Builder user database)
 
       password
       (.password password)
