@@ -28,8 +28,8 @@ public class DecoderBin {
             case INT8 -> buf.getLong();
             case CHAR -> (char) buf.get();
             case UUID -> {
-                long hiBits = buf.getLong();
-                long loBits = buf.getLong();
+                final long hiBits = buf.getLong();
+                final long loBits = buf.getLong();
                 yield new UUID(hiBits, loBits);
             }
             case FLOAT4 -> buf.getFloat();

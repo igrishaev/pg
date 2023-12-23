@@ -9,7 +9,7 @@ public enum TxLevel {
 
     private final String code;
 
-    TxLevel(String code) {
+    TxLevel(final String code) {
         this.code = code;
     }
 
@@ -17,7 +17,7 @@ public enum TxLevel {
         return this.code;
     }
 
-    public static TxLevel ofCode (String code) {
+    public static TxLevel ofCode (final String code) {
         return TxLevel.valueOf(code);
     }
 }

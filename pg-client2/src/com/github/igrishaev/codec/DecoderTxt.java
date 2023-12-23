@@ -45,7 +45,7 @@ public class DecoderTxt {
         };
     }
 
-    public static void main (String[] args) {
+    public static void main (final String[] args) {
         final String string = "\\xDEADBEEF";
         System.out.println(Arrays.toString(HexFormat.of().parseHex(string, 2, string.length())));
     }

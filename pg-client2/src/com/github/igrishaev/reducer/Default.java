@@ -14,7 +14,7 @@ public class Default extends MapMixin implements IReducer {
         return core$conj_BANG_.invokeStatic(acc, row);
     }
 
-    public Object finalize(Object acc) {
+    public Object finalize(final Object acc) {
         return core$persistent_BANG_.invokeStatic(acc);
     }
 }

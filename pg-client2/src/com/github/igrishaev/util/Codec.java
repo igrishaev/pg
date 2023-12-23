@@ -13,7 +13,6 @@ import java.util.Base64;
 
 public class Codec {
 
-
     public static MessageDigest getDigest (final String algorithm) {
         try {
             return MessageDigest.getInstance(algorithm);
@@ -30,15 +29,14 @@ public class Codec {
         }
     }
 
-
-    public static byte[] MD5 (byte[] input) {
-        MessageDigest md5 = getDigest("MD5");
+    public static byte[] MD5encode(byte[] input) {
+        final MessageDigest md5 = getDigest("MD5");
         md5.update(input);
         return md5.digest();
     }
 
     public static byte[] Sha256 (final byte[] input) {
-        MessageDigest sha = getDigest("SHA-256");
+        final MessageDigest sha = getDigest("SHA-256");
         sha.update(input);
         return sha.digest();
     }

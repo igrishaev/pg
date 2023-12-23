@@ -5,7 +5,7 @@ public enum SourceType {
 
     private final char code;
 
-    SourceType(char code) {
+    SourceType(final char code) {
         this.code = code;
     }
 

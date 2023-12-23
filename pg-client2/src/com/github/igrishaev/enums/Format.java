@@ -7,7 +7,7 @@ public enum Format {
 
     private final short code;
 
-    Format(short code) {
+    Format(final short code) {
         this.code = code;
     }
 

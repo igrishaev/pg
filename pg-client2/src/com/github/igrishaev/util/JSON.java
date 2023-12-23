@@ -34,10 +34,10 @@ public class JSON {
         return new Wrapper(value);
     }
 
-    static ObjectMapper mapper = new ObjectMapper();
+    static final ObjectMapper mapper = new ObjectMapper();
 
     static {
-        SimpleModule module = new SimpleModule("pg");
+        final SimpleModule module = new SimpleModule("pg");
         module.addDeserializer(List.class, new PersistentVectorDeserializer());
         module.addDeserializer(Map.class, new PersistentHashMapDeserializer());
         module.addSerializer(Keyword.class, new KeywordSerializer(false));
@@ -46,19 +46,18 @@ public class JSON {
         module.addSerializer(Ratio.class, new RatioSerializer());
         module.addSerializer(Symbol.class, new SymbolSerializer());
         module.addKeyDeserializer(Object.class, new KeywordKeyDeserializer());
-
         mapper.registerModule(module);
     }
 
-    static Object decodeError(Throwable e) {
+    static Object decodeError(final Throwable e) {
         throw new PGError(e, "JSON decode error");
     }
 
-    static void encodeError(Throwable e, Object value) {
+    static void encodeError(final Throwable e, final Object value) {
         throw new PGError(e, "JSON encode error, value: %s", value);
     }
 
-    public static Object readValue (String input) {
+    public static Object readValue (final String input) {
         try {
             return mapper.readValue(input, Object.class);
         } catch (JsonProcessingException e) {
@@ -66,8 +65,8 @@ public class JSON {
         }
     }
 
-    public static Object readValueBinary (ByteBuffer buf) {
-        byte b = buf.get();
+    public static Object readValueBinary (final ByteBuffer buf) {
+        final byte b = buf.get();
         if (b == 1) {
             buf.limit(buf.limit() - 1);
         }
@@ -77,9 +76,9 @@ public class JSON {
         return readValue(buf);
     }
 
-    public static Object readValue (ByteBuffer buf) {
-        int offset = buf.arrayOffset() + buf.position();
-        int len = buf.limit();
+    public static Object readValue (final ByteBuffer buf) {
+        final int offset = buf.arrayOffset() + buf.position();
+        final int len = buf.limit();
         try {
             return mapper.readValue(buf.array(), offset, len, Object.class);
         } catch (IOException e) {
@@ -87,7 +86,7 @@ public class JSON {
         }
     }
 
-    public static void writeValue (OutputStream outputStream, Object value) {
+    public static void writeValue (final OutputStream outputStream, final Object value) {
         try {
             mapper.writeValue(outputStream, value);
         } catch (IOException e) {
@@ -95,7 +94,7 @@ public class JSON {
         }
     }
 
-    public static void writeValue (Writer writer, Object value) {
+    public static void writeValue (final Writer writer, final Object value) {
         try {
             mapper.writeValue(writer, value);
         } catch (IOException e) {
@@ -103,11 +102,11 @@ public class JSON {
         }
     }
 
-    public static void main (String[] args) {
-        ByteBuffer buf = ByteBuffer.wrap("[1, 2, 3]".getBytes());
+    public static void main (final String[] args) {
+        final ByteBuffer buf = ByteBuffer.wrap("[1, 2, 3]".getBytes());
         System.out.println(readValue(buf));
 
-        PersistentVector vector = PersistentVector.create(
+        final PersistentVector vector = PersistentVector.create(
                 1,
                 Keyword.intern("foo", "bar"),
                 Keyword.intern("no-namespace"),
@@ -122,7 +121,7 @@ public class JSON {
         );
 
         // System.out.println(vector);
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
         writeValue(out, vector);
         System.out.println(out.toString(StandardCharsets.UTF_8));
         System.out.println(readValue(out.toString(StandardCharsets.UTF_8)));

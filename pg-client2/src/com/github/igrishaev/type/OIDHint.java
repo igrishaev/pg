@@ -1,10 +1,13 @@
 package com.github.igrishaev.type;
 
+import clojure.lang.BigInt;
 import clojure.lang.IPersistentCollection;
 import clojure.lang.Symbol;
 import com.github.igrishaev.enums.OID;
 import com.github.igrishaev.util.JSON;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.time.*;
 import java.util.UUID;
@@ -35,6 +38,9 @@ public class OIDHint {
             case LocalDateTime ignored -> OID.TIMESTAMPTZ;
             case OffsetDateTime ignored -> OID.TIMESTAMPTZ;
             case Instant ignored -> OID.TIMESTAMPTZ;
+            case BigDecimal ignored -> OID.NUMERIC;
+            case BigInteger ignored -> OID.NUMERIC;
+            case BigInt ignored -> OID.NUMERIC;
             default -> OID.DEFAULT;
         };
     }

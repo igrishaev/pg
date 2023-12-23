@@ -14,7 +14,7 @@ public class Dummy implements IReducer {
         return acc;
     }
 
-    public Object finalize(Object acc) {
+    public Object finalize(final Object acc) {
         return acc;
     }
 }

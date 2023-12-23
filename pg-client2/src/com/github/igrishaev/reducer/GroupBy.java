@@ -21,12 +21,12 @@ public class GroupBy extends MapMixin implements IReducer {
     }
 
     public Object append (final Object acc, final Object row) {
-        Object key = f.invoke(row);
+        final Object key = f.invoke(row);
         if (RT.contains(acc, key) == Boolean.FALSE) {
             return RT.assoc(acc, key, PersistentVector.EMPTY.cons(row));
         }
         else {
-            PersistentVector vec = (PersistentVector) RT.get(acc, key);
+            final PersistentVector vec = (PersistentVector) RT.get(acc, key);
             return RT.assoc(acc, key, vec.cons(row));
         }
     }

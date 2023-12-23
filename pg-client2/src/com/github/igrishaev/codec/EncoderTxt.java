@@ -21,25 +21,25 @@ public class EncoderTxt {
 
     private static final HexFormat hex = HexFormat.of();
 
-    public static String encode(Object x) {
+    public static String encode(final Object x) {
         return encode(x, OID.DEFAULT, CodecParams.standard());
     }
 
-    public static String encode(Object x, OID oid) {
+    public static String encode(final Object x, final OID oid) {
         return encode(x, oid, CodecParams.standard());
     }
 
-    public static String encode(Object x, CodecParams codecParams) {
+    public static String encode(final Object x, final CodecParams codecParams) {
         return encode(x, OID.DEFAULT, codecParams);
     }
 
-    private static String txtEncodingError(Object x, OID oid) {
+    private static String txtEncodingError(final Object x, final OID oid) {
         throw new PGError(
                 "cannot text-encode a value: %s, OID: %s, type: %s",
                 x, oid, x.getClass().getCanonicalName());
     }
 
-    public static String encode(Object x, OID oid, CodecParams codecParams) {
+    public static String encode(final Object x, final OID oid, final CodecParams codecParams) {
         return switch (x) {
 
             case null -> throw new PGError("cannot text-encode a null value");
@@ -131,7 +131,7 @@ public class EncoderTxt {
                 case JSON, JSONB, DEFAULT -> {
                     // TODO: maybe return bytes?
                     // TODO: guess the initial size?
-                    StringWriter writer = new StringWriter(Const.JSON_ENC_BUF_SIZE);
+                    final StringWriter writer = new StringWriter(Const.JSON_ENC_BUF_SIZE);
                     JSON.writeValue(writer, w.value());
                     yield writer.toString();
                 }
@@ -142,7 +142,7 @@ public class EncoderTxt {
                 // TODO: maybe return bytes?
                 // TODO: guess the initial size?
                 case JSON, JSONB, DEFAULT -> {
-                    StringWriter writer = new StringWriter(Const.JSON_ENC_BUF_SIZE);
+                    final StringWriter writer = new StringWriter(Const.JSON_ENC_BUF_SIZE);
                     JSON.writeValue(writer, c);
                     yield writer.toString();
                 }
@@ -211,7 +211,7 @@ public class EncoderTxt {
         };
     }
 
-    public static void main (String[] args) {
+    public static void main (final String[] args) {
         System.out.println(encode("hello".getBytes(StandardCharsets.UTF_8)));
     }
 }

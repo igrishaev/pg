@@ -41,14 +41,14 @@ public class NumericBin {
         bb.putShort((short) sign);
         bb.putShort((short) scale);
 
-        for (Short sh: shorts) {
+        for (final Short sh: shorts) {
             bb.putShort(sh);
         }
 
         return bb;
     }
 
-    public static BigDecimal decode(ByteBuffer bb) {
+    public static BigDecimal decode(final ByteBuffer bb) {
         final short digitsNum = bb.getShort();
 
         if (digitsNum == 0) {
@@ -75,8 +75,8 @@ public class NumericBin {
                 .setScale(scale, RoundingMode.DOWN);
     }
 
-    public static void main (String[] args) {
-        ByteBuffer bb = encode(new BigDecimal("1"));
+    public static void main (final String[] args) {
+        final ByteBuffer bb = encode(new BigDecimal("1"));
         bb.rewind();
         // System.out.println(Arrays.toString(encodeBin(new BigDecimal("1")).array()));
         System.out.println(decode(bb));

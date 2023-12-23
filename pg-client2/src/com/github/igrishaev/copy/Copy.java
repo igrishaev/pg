@@ -43,7 +43,7 @@ public class Copy {
             (byte) -1
     };
 
-    public static String quoteCSV (String line) {
+    public static String quoteCSV (final String line) {
         return line.replace("\"", "\"\"");
     }
 
@@ -58,14 +58,14 @@ public class Copy {
         final int OIDLen = OIDs.size();
         short i = 0;
         while (iterator.hasNext()) {
-            OID oid = i < OIDLen ? OIDs.get(i) : OID.DEFAULT;
+            final OID oid = i < OIDLen ? OIDs.get(i) : OID.DEFAULT;
             i++;
-            Object item = iterator.next();
+            final Object item = iterator.next();
             if (item == null) {
                 sb.append(executeParams.CSVNull());
             }
             else {
-                String encoded = EncoderTxt.encode(item, oid, codecParams);
+                final String encoded = EncoderTxt.encode(item, oid, codecParams);
                 sb.append(executeParams.CSVQuote());
                 sb.append(quoteCSV(encoded));
                 sb.append(executeParams.CSVQuote());
@@ -100,17 +100,17 @@ public class Copy {
                 bufs[i] = null;
             }
             else {
-                OID oid = i < OIDLen ? OIDs.get(i) : OID.DEFAULT;
-                ByteBuffer buf = EncoderBin.encode(item, oid, codecParams);
+                final OID oid = i < OIDLen ? OIDs.get(i) : OID.DEFAULT;
+                final ByteBuffer buf = EncoderBin.encode(item, oid, codecParams);
                 totalSize += 4 + buf.array().length;
                 bufs[i] = buf;
             }
         }
 
-        ByteBuffer result = ByteBuffer.allocate(totalSize);
+        final ByteBuffer result = ByteBuffer.allocate(totalSize);
         result.putShort(count);
 
-        for (ByteBuffer buf: bufs) {
+        for (final ByteBuffer buf: bufs) {
             if (buf == null) {
                 result.putInt(-1);
             }
@@ -122,20 +122,20 @@ public class Copy {
         return result;
     }
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         System.out.println(encodeRowCSV(
                 List.of(1, 2, 3),
                 ExecuteParams.standard(),
                 CodecParams.standard())
         );
 
-        List<Object> row = new ArrayList<>();
+        final List<Object> row = new ArrayList<>();
         row.add(1);
         row.add("Ivan");
         row.add(true);
         row.add(null);
 
-        List<OID> OIDs = List.of(OID.INT2, OID.DEFAULT, OID.BOOL);
+        final List<OID> OIDs = List.of(OID.INT2, OID.DEFAULT, OID.BOOL);
 
         System.out.println(
                 Arrays.toString(
@@ -148,7 +148,7 @@ public class Copy {
 
         System.out.println(Arrays.toString(Copy.COPY_BIN_HEADER));
 
-        ByteBuffer bb = ByteBuffer.allocate(2);
+        final ByteBuffer bb = ByteBuffer.allocate(2);
         bb.putShort((short)-1);
         System.out.println(Arrays.toString(bb.array()));
     }

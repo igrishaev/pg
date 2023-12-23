@@ -212,11 +212,11 @@ public enum OID {
         }
     }
 
-    OID(int code) {
+    OID(final int code) {
         this.code = code;
     }
 
-    public static OID ofInt (int code) {
+    public static OID ofInt (final int code) {
         final OID result = intToItem.get(code);
         if (result == null) {
             throw new PGError("unknown OID, code: %s", code);

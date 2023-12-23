@@ -67,23 +67,23 @@ public class DateTimeTxt {
     //
     // Decoding
     //
-    public static OffsetDateTime decodeTIMESTAMPTZ (String input) {
+    public static OffsetDateTime decodeTIMESTAMPTZ (final String input) {
         return OffsetDateTime.parse(input, frmt_decode_timestamptz);
     }
 
-    public static LocalDateTime decodeTIMESTAMP (String input) {
+    public static LocalDateTime decodeTIMESTAMP (final String input) {
         return LocalDateTime.parse(input, frmt_decode_timestamp);
     }
 
-    public static LocalDate decodeDATE (String input) {
+    public static LocalDate decodeDATE (final String input) {
         return LocalDate.parse(input, frmt_decode_date);
     }
 
-    public static OffsetTime decodeTIMETZ (String input) {
+    public static OffsetTime decodeTIMETZ (final String input) {
         return OffsetTime.parse(input, frmt_decode_timetz);
     }
 
-    public static LocalTime decodeTIME (String input) {
+    public static LocalTime decodeTIME (final String input) {
         return LocalTime.parse(input, frmt_decode_time);
     }
 
@@ -92,23 +92,23 @@ public class DateTimeTxt {
     //
 
     // Temporal
-    public static String encodeTIMESTAMPTZ (Temporal t) {
+    public static String encodeTIMESTAMPTZ (final Temporal t) {
         return frmt_encode_timestamptz.format(t);
     }
 
-    public static String encodeTIMESTAMP (Temporal t) {
+    public static String encodeTIMESTAMP (final Temporal t) {
         return frmt_encode_timestamp.format(t);
     }
 
-    public static String encodeDATE (Temporal t) {
+    public static String encodeDATE (final Temporal t) {
         return frmt_encode_date.format(t);
     }
 
-    public static String encodeTIMETZ (Temporal t) {
+    public static String encodeTIMETZ (final Temporal t) {
         return frmt_encode_timetz.format(t);
     }
 
-    public static String encodeTIME (Temporal t) {
+    public static String encodeTIME (final Temporal t) {
         return frmt_encode_time.format(t);
     }
 
