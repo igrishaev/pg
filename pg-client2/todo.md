@@ -6,6 +6,11 @@ bin copy in: array of BB
 
 - fix all the tests
 
+- HexTool
+- pool component?
+- lein java compiler options
+- todo: common test fixture
+
 Prepared statement toString/print-method
 rename the package
 

@@ -164,7 +164,7 @@
 
 
 
-(defn ->config ^ConnConfig$Builder [params]
+(defn ->conn-config ^ConnConfig$Builder [params]
 
   (let [{:keys [user
                 database
@@ -231,7 +231,7 @@
 (defn connect
 
   (^Connection [config]
-   (new Connection (->config config)))
+   (new Connection (->conn-config config)))
 
   (^Connection [^String host ^Integer port ^String user ^String password ^String database]
    (new Connection host port user password database)))
