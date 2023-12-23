@@ -8,7 +8,8 @@ import java.util.UUID;
 
 import com.github.igrishaev.PGError;
 import com.github.igrishaev.util.ByteTool;
-import com.github.igrishaev.util.Codec;
+import com.github.igrishaev.util.HashTool;
+import com.github.igrishaev.util.NormTool;
 
 public class ScramSha256 {
 
@@ -22,7 +23,7 @@ public class ScramSha256 {
         byte[] msg = ByteTool.concat(message, new byte[] {0, 0, 0, 1});
 
         for (int i = 0; i < iterations; i++) {
-            uNext = Codec.HmacSha256(secret, msg);
+            uNext = HashTool.HmacSha256(secret, msg);
             msg = uNext;
             u = ByteTool.xor(u, uNext);
         }
@@ -31,7 +32,7 @@ public class ScramSha256 {
     }
 
     public static byte[] H (byte[] input) {
-        return Codec.Sha256(input);
+        return HashTool.Sha256(input);
     }
 
     public static Map<String, String> parseMessage(final String message) {
@@ -91,7 +92,7 @@ public class ScramSha256 {
     public static Step2 step2_serverFirstMessage (final String serverFirstMessage) {
         final Map<String, String> keyval = parseMessage(serverFirstMessage);
         final String saltEncoded = getField(keyval, "s");
-        final byte[] salt = Codec.base64decode(saltEncoded.getBytes(StandardCharsets.UTF_8));
+        final byte[] salt = HashTool.base64decode(saltEncoded.getBytes(StandardCharsets.UTF_8));
         final String nonce = getField(keyval, "r");
         final int iterationCount = Integer.parseInt(getField(keyval, "i"));
         return new Step2(
@@ -108,22 +109,22 @@ public class ScramSha256 {
     ) {}
 
     public static Step3 step3_clientFinalMessage (final Step1 step1, final Step2 step2) {
-        final String channelBinding = Codec.base64encode(step1.gs2header);
+        final String channelBinding = HashTool.base64encode(step1.gs2header);
         final String nonce = step2.nonce;
         final String clientFinalMessageWithoutProof = "c=" + channelBinding + ",r=" + nonce;
         final String AuthMessage =
                 step1.clientFirstMessageBare
                 + "," + step2.serverFirstMessage
                 + "," + clientFinalMessageWithoutProof;
-        final byte[] passwordNorm = Codec.normalizeNfc(step1.password).getBytes(StandardCharsets.UTF_8);
+        final byte[] passwordNorm = NormTool.normalizeNfc(step1.password).getBytes(StandardCharsets.UTF_8);
         final byte[] SaltedPassword = Hi(passwordNorm, step2.salt, step2.iterationCount);
-        final byte[] ClientKey = Codec.HmacSha256(SaltedPassword, "Client Key".getBytes(StandardCharsets.UTF_8));
+        final byte[] ClientKey = HashTool.HmacSha256(SaltedPassword, "Client Key".getBytes(StandardCharsets.UTF_8));
         final byte[] StoredKey = H(ClientKey);
-        final byte[] ClientSignature = Codec.HmacSha256(StoredKey, AuthMessage.getBytes(StandardCharsets.UTF_8));
+        final byte[] ClientSignature = HashTool.HmacSha256(StoredKey, AuthMessage.getBytes(StandardCharsets.UTF_8));
         final byte[] ClientProof = ByteTool.xor(ClientKey, ClientSignature);
-        final byte[] ServerKey = Codec.HmacSha256(SaltedPassword, "Server Key".getBytes(StandardCharsets.UTF_8));
-        final byte[] ServerSignature = Codec.HmacSha256(ServerKey, AuthMessage.getBytes(StandardCharsets.UTF_8));
-        final String proof = new String(Codec.base64encode(ClientProof), StandardCharsets.UTF_8);
+        final byte[] ServerKey = HashTool.HmacSha256(SaltedPassword, "Server Key".getBytes(StandardCharsets.UTF_8));
+        final byte[] ServerSignature = HashTool.HmacSha256(ServerKey, AuthMessage.getBytes(StandardCharsets.UTF_8));
+        final String proof = new String(HashTool.base64encode(ClientProof), StandardCharsets.UTF_8);
         final String clientFinalMessage = clientFinalMessageWithoutProof + ",p=" + proof;
         return new Step3(ServerSignature, clientFinalMessage);
 
@@ -137,7 +138,7 @@ public class ScramSha256 {
     public static Step4 step4_serverFinalMessage (final String serverFinalMessage) {
         final Map<String, String> keyval = parseMessage(serverFinalMessage);
         final String verifier = getField(keyval, "v");
-        final byte[] ServerSignature2 = Codec.base64decode(verifier.getBytes(StandardCharsets.UTF_8));
+        final byte[] ServerSignature2 = HashTool.base64decode(verifier.getBytes(StandardCharsets.UTF_8));
         return new Step4(ServerSignature2, serverFinalMessage);
     }
 

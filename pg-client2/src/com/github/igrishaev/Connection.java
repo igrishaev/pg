@@ -28,6 +28,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Connection implements Closeable {
 
+    private static final boolean isDebug =
+            System.getenv()
+                    .getOrDefault("PG_DEBUG", "")
+                    .equals("1");
+
     private final ConnConfig config;
     private final UUID id;
     private final long createdAt;
@@ -208,6 +213,10 @@ public class Connection implements Closeable {
     }
 
     private void sendBytes (final byte[] buf) {
+        if (isDebug) {
+            System.out.print(" <- ");
+            System.out.println(Arrays.toString(buf));
+        }
         IOTool.write(outStream, buf);
         IOTool.flush(outStream);
     }
@@ -218,9 +227,11 @@ public class Connection implements Closeable {
     }
 
     private void sendMessage (IMessage msg) {
-        System.out.println(msg);
+        if (isDebug) {
+            System.out.print(" <- ");
+            System.out.println(msg);
+        }
         ByteBuffer buf = msg.encode(codecParams.clientCharset);
-        // System.out.println(Arrays.toString(buf.array()));
         try {
             outStream.write(buf.array());
             outStream.flush();
@@ -300,15 +311,11 @@ public class Connection implements Closeable {
         byte[] bufHeader = readNBytes(5);
         ByteBuffer bbHeader = ByteBuffer.wrap(bufHeader);
 
-        // System.out.println(Arrays.toString(bufHeader));
-
         char tag = (char) bbHeader.get();
         int bodySize = bbHeader.getInt() - 4;
 
         byte[] bufBody = readNBytes(bodySize);
         ByteBuffer bbBody = ByteBuffer.wrap(bufBody);
-
-        // System.out.println(Arrays.toString(bufBody));
 
         return switch (tag) {
             case 'R' -> AuthenticationResponse.fromByteBuffer(bbBody).parseResponse(bbBody, codecParams.serverCharset);
@@ -491,7 +498,10 @@ public class Connection implements Closeable {
         Accum acc = new Accum(phase, executeParams);
         while (true) {
             final Object msg = readMessage();
-            System.out.println(msg);
+            if (isDebug) {
+                System.out.print(" -> ");
+                System.out.println(msg);
+            }
             handleMessage(msg, acc);
             if (isEnough(msg, phase)) {
                 break;
@@ -506,7 +516,6 @@ public class Connection implements Closeable {
     }
 
     private void handleMessage(Object msg, Accum acc) {
-        // System.out.println(msg);
         switch (msg) {
             case NotificationResponse x ->
                 handleNotificationResponse(x);

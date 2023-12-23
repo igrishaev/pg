@@ -8,10 +8,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.text.Normalizer;
 import java.util.Base64;
 
-public class Codec {
+public class HashTool {
 
     public static MessageDigest getDigest (final String algorithm) {
         try {
@@ -65,10 +64,5 @@ public class Codec {
         }
         return mac.doFinal(message);
     }
-
-    public static String normalizeNfc (final String input) {
-        return Normalizer.normalize(input, Normalizer.Form.NFC);
-    }
-
 
 }
