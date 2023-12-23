@@ -26,7 +26,7 @@ public class Main {
 //                .build();
 
         Config config = Config.builder("test", "test")
-                .port(10130)
+                .port(10160)
                 .host("127.0.0.1")
                 .password("test")
                 .binaryEncode(true)

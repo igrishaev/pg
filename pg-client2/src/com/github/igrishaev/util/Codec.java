@@ -1,0 +1,76 @@
+package com.github.igrishaev.util;
+
+import com.github.igrishaev.PGError;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.text.Normalizer;
+import java.util.Base64;
+
+public class Codec {
+
+
+    public static MessageDigest getDigest (final String algorithm) {
+        try {
+            return MessageDigest.getInstance(algorithm);
+        } catch (NoSuchAlgorithmException e) {
+            throw new PGError(e, "cannot find %s message digest", algorithm);
+        }
+    }
+
+    public static Mac getMac (final String algorithm) {
+        try {
+            return Mac.getInstance(algorithm);
+        } catch (NoSuchAlgorithmException e) {
+            throw new PGError(e, "cannot find %s Mac instance", algorithm);
+        }
+    }
+
+
+    public static byte[] MD5 (byte[] input) {
+        MessageDigest md5 = getDigest("MD5");
+        md5.update(input);
+        return md5.digest();
+    }
+
+    public static byte[] Sha256 (final byte[] input) {
+        MessageDigest sha = getDigest("SHA-256");
+        sha.update(input);
+        return sha.digest();
+    }
+
+    public static byte[] base64decode (final byte[] input) {
+        return Base64.getDecoder().decode(input);
+    }
+
+    public static byte[] base64encode (final byte[] input) {
+        return Base64.getEncoder().encode(input);
+    }
+
+    public static String base64encode (final String input) {
+        final byte[] bytesIn = input.getBytes(StandardCharsets.UTF_8);
+        final byte[] bytesOut = Base64.getEncoder().encode(bytesIn);
+        return new String(bytesOut, StandardCharsets.UTF_8);
+    }
+
+    public static byte[] HmacSha256 (final byte[] secret, final byte[] message) {
+        final Mac mac = getMac("HmacSHA256");
+        final SecretKeySpec sks = new SecretKeySpec(secret, "HmacSHA256");
+        try {
+            mac.init(sks);
+        } catch (InvalidKeyException e) {
+            throw new PGError(e, "cannot initiate MAC with a key");
+        }
+        return mac.doFinal(message);
+    }
+
+    public static String normalizeNfc (final String input) {
+        return Normalizer.normalize(input, Normalizer.Form.NFC);
+    }
+
+
+}

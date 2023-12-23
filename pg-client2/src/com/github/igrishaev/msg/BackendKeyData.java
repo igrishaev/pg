@@ -3,9 +3,9 @@ package com.github.igrishaev.msg;
 import java.nio.ByteBuffer;
 
 public record BackendKeyData (int pid, int secretKey) {
-    public static BackendKeyData fromByteBuffer(ByteBuffer buf) {
-        int pid = buf.getInt();
-        int key = buf.getInt();
+    public static BackendKeyData fromByteBuffer(final ByteBuffer buf) {
+        final int pid = buf.getInt();
+        final int key = buf.getInt();
         return new BackendKeyData(pid, key);
     }
 }

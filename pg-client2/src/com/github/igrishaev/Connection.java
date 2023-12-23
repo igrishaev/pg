@@ -3,6 +3,7 @@ package com.github.igrishaev;
 import clojure.lang.Agent;
 import clojure.lang.IFn;
 import com.github.igrishaev.auth.MD5;
+import com.github.igrishaev.auth.ScramSha256;
 import com.github.igrishaev.codec.DecoderBin;
 import com.github.igrishaev.codec.DecoderTxt;
 import com.github.igrishaev.codec.EncoderBin;
@@ -516,6 +517,9 @@ public class Connection implements Closeable {
             case AuthenticationOk ignored -> {}
             case AuthenticationCleartextPassword ignored ->
                 handleAuthenticationCleartextPassword();
+            case AuthenticationSASL x -> handleAuthenticationSASL(x, acc);
+            case AuthenticationSASLContinue x -> handleAuthenticationSASLContinue(x, acc);
+            case AuthenticationSASLFinal x -> handleAuthenticationSASLFinal(x, acc);
             case NoticeResponse x ->
                 handleNoticeResponse(x);
             case ParameterStatus x ->
@@ -551,6 +555,46 @@ public class Connection implements Closeable {
             case CopyDone ignored -> {}
             default -> throw new PGError("Cannot handle this message: %s", msg);
         }
+    }
+
+    private void handleAuthenticationSASL(final AuthenticationSASL msg, final Accum acc) {
+
+        acc.scramPipeline = ScramSha256.pipeline();
+
+        if (msg.isScramSha256()) {
+            final ScramSha256.Step1 step1 = ScramSha256.step1_clientFirstMessage(
+                    config.user(), config.password()
+            );
+            final SASLInitialResponse msgSASL = new SASLInitialResponse(
+                    SASL.SCRAM_SHA_256,
+                    step1.clientFirstMessage()
+            );
+            acc.scramPipeline.step1 = step1;
+            sendMessage(msgSASL);
+        }
+
+        if (msg.isScramSha256Plus()) {
+            throw new PGError("SASL SCRAM SHA 256 PLUS method is not implemented yet");
+        }
+    }
+
+    private void handleAuthenticationSASLContinue(final AuthenticationSASLContinue msg, final Accum acc) {
+        final ScramSha256.Step1 step1 = acc.scramPipeline.step1;
+        final String serverFirstMessage = msg.serverFirstMessage();
+        final ScramSha256.Step2 step2 = ScramSha256.step2_serverFirstMessage(serverFirstMessage);
+        final ScramSha256.Step3 step3 = ScramSha256.step3_clientFinalMessage(step1, step2);
+        acc.scramPipeline.step2 = step2;
+        acc.scramPipeline.step3 = step3;
+        final SASLResponse msgSASL = new SASLResponse(step3.clientFinalMessage());
+        sendMessage(msgSASL);
+    }
+
+    private void handleAuthenticationSASLFinal(final AuthenticationSASLFinal msg, final Accum acc) {
+        final String serverFinalMessage = msg.serverFinalMessage();
+        final ScramSha256.Step4 step4 = ScramSha256.step4_serverFinalMessage(serverFinalMessage);
+        acc.scramPipeline.step4 = step4;
+        final ScramSha256.Step3 step3 = acc.scramPipeline.step3;
+        ScramSha256.step5_verifyServerSignature(step3, step4);
     }
 
     private void handleCopyInResponseStream(Accum acc) {

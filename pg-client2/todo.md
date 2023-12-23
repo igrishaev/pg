@@ -1,4 +1,3 @@
-- Auth: SASL
 - set socket options
 - SSL support
 - connection pool

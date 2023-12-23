@@ -3,6 +3,7 @@ package com.github.igrishaev;
 import clojure.lang.IFn;
 import clojure.lang.Keyword;
 import clojure.lang.PersistentHashMap;
+import com.github.igrishaev.auth.ScramSha256;
 import com.github.igrishaev.enums.Phase;
 import com.github.igrishaev.msg.*;
 import com.github.igrishaev.reducer.IReducer;
@@ -75,6 +76,7 @@ public class Accum {
     private ErrorResponse errorResponse;
     private Node current;
     private Throwable exception;
+    public ScramSha256.Pipeline scramPipeline;
 
     public static String[] unifyKeys (final String[] oldKeys) {
         final Map<String, Integer> map = new HashMap<>();

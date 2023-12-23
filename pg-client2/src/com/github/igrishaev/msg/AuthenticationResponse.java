@@ -6,10 +6,12 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 public record AuthenticationResponse (int status) {
+
     public static AuthenticationResponse fromByteBuffer(final ByteBuffer buf) {
         final int status = buf.getInt();
         return new AuthenticationResponse(status);
     }
+
     public Object parseResponse (final ByteBuffer buf, Charset charset) {
         return switch (status) {
             case  0 -> AuthenticationOk.INSTANCE;

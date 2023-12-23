@@ -1,6 +1,6 @@
 package com.github.igrishaev.msg;
 
 public record AuthenticationOk() {
-    public static Integer status = 0;
-    public static AuthenticationOk INSTANCE = new AuthenticationOk();
+    public static final int status = 0;
+    public static final AuthenticationOk INSTANCE = new AuthenticationOk();
 }
