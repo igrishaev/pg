@@ -1286,7 +1286,6 @@ drop table %1$s;
           res
           (pg/execute conn query {:group-by :a})]
 
-      ;; TODO
       (is (= {1 [{:a 1 :b 2}]
               3 [{:a 3 :b 4}]
               5 [{:a 5 :b 6}]}
@@ -1401,7 +1400,6 @@ drop table %1$s;
       (is (= {:a 1 :b 2} res)))))
 
 
-;; TODO
 (deftest test-conn-params
   (pg/with-connection [conn *CONFIG*]
     (let [params (pg/get-parameters conn)]
@@ -1447,8 +1445,6 @@ drop table %1$s;
             (pg/execute-statement conn stmt {:params [1]})]
         (is (= [{:eq true}] res))))))
 
-
-;; TODO: DataRow[valueCount=0, values=[Ljava.nio.ByteBuffer;@16903ccc]
 
 ;; TODO: []
 (deftest test-empty-select
