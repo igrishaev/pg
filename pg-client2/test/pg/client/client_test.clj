@@ -1446,7 +1446,6 @@ drop table %1$s;
         (is (= [{:eq true}] res))))))
 
 
-;; TODO: []
 (deftest test-empty-select
   (pg/with-connection [conn *CONFIG*]
     (let [res (pg/execute conn "select")]
@@ -1459,14 +1458,12 @@ drop table %1$s;
       (is (= [{:num 42}] res)))))
 
 
-;; TODO: params: map or top-level param?
 (deftest test-decode-binary-simple
   (pg/with-connection [conn (assoc *CONFIG* :binary-decode? true)]
     (let [res (pg/execute conn "select $1::integer as num" {:params [42]})]
       (is (= [{:num 42}] res)))))
 
 
-;; TODO: it's not binary!
 (deftest test-decode-binary-unsupported
   (pg/with-connection [conn (assoc *CONFIG* :binary-decode? true)]
     (let [res (pg/execute conn "select '1 year 1 second'::interval as interval")]
@@ -1534,6 +1531,8 @@ drop table %1$s;
           (pg/execute conn "select $1 as uuid" {:params [uuid]})]
       (is (= [{:uuid uuid}] res)))))
 
+
+;; TODO: test execute with binary override
 
 (deftest test-time-bin-read
   (pg/with-connection [conn (assoc *CONFIG*
@@ -1710,7 +1709,6 @@ drop table %1$s;
       (is (= (str x1) (str x2))))))
 
 
-;; TODO
 (deftest test-read-write-numeric-bin
   (pg/with-connection [conn (assoc *CONFIG*
                                    :binary-encode? true
@@ -1857,8 +1855,6 @@ drop table %1$s;
       (is (= [{:one 1}] res)))))
 
 
-;; TODO: copy out IOException (cancel, reuse)
-
 (deftest test-copy-out-query
 
   (pg/with-connection [conn *CONFIG*]
@@ -1896,6 +1892,8 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
               {:copied 3}]
              res)))))
 
+
+;; TODO: copy in maps, OID map?
 
 (deftest test-copy-in-stream-csv
 
@@ -1959,6 +1957,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
 
 ;; test copy in maps empty keys error
 
+;; TODO
 (deftest test-copy-in-rows-exception-in-the-middle
 
   (pg/with-connection [conn *CONFIG*]
