@@ -4,6 +4,7 @@ import com.github.igrishaev.ConnConfig;
 import com.github.igrishaev.Connection;
 import com.github.igrishaev.PGError;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.io.Closeable;
 import java.util.Deque;
 import java.util.UUID;
@@ -15,7 +16,8 @@ public record Pool (
         ConnConfig connConfig,
         PoolConfig poolConfig,
         Map<UUID, Connection> connsUsed,
-        Deque<Connection> connsFree
+        Deque<Connection> connsFree,
+        AtomicBoolean closedFlag
 
 ) implements Closeable {
 
@@ -28,7 +30,8 @@ public record Pool (
                 connConfig,
                 poolConfig,
                 new HashMap<>(poolConfig.maxSize()),
-                new ArrayDeque<>(poolConfig.maxSize())
+                new ArrayDeque<>(poolConfig.maxSize()),
+                new AtomicBoolean(false)
         );
         pool.initiate();
         return pool;
@@ -58,6 +61,11 @@ public record Pool (
     }
 
     public synchronized Connection borrowConnection () {
+
+        if (isClosed()) {
+            throw new PGError("Cannot get a connection: the pool has been closed");
+        }
+
         while (true) {
             final Connection conn = connsFree.poll();
             if (conn == null) {
@@ -89,11 +97,16 @@ public record Pool (
 
     public synchronized void returnConnection (final Connection conn, final boolean forceClose) {
 
-        if (!isUsed(conn)) {
+        if (isClosed()) {
             throw new PGError("connection %s doesn't belong to the pool", conn.getId());
         }
 
         removeUsed(conn);
+
+        if (closedFlag.get()) {
+            conn.close();
+            return;
+        }
 
         if (conn.isClosed()) {
             return;
@@ -129,6 +142,11 @@ public record Pool (
         for (final Connection conn: connsUsed.values()) {
             conn.close();
         }
+        closedFlag.set(true);
+    }
+
+    public synchronized boolean isClosed() {
+        return closedFlag.get();
     }
 
     public synchronized int usedCount () {

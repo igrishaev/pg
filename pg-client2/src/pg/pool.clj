@@ -72,6 +72,15 @@
          (.returnConnection pool# ~bind)))))
 
 
+(defn stats [^Pool pool]
+  {:free (free-count pool)
+   :used (used-count pool)})
+
+
+(defn closed? ^Boolean [^Pool pool]
+  (.isClosed pool))
+
+
 (defmethod print-method Pool
   [^Pool pool ^Writer writer]
   (.write writer (.toString pool)))

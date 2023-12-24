@@ -1,24 +1,24 @@
 (ns pg.client.client-test
   (:import
-   java.io.OutputStream
+   com.github.igrishaev.PGError
    java.io.ByteArrayOutputStream
    java.io.InputStream
-   java.util.Date
+   java.io.OutputStream
    java.time.Instant
-   java.time.LocalTime
    java.time.LocalDate
    java.time.LocalDateTime
-   java.time.OffsetTime
+   java.time.LocalTime
    java.time.OffsetDateTime
-   java.util.concurrent.ExecutionException
-   com.github.igrishaev.PGError)
+   java.time.OffsetTime
+   java.util.Date
+   java.util.concurrent.ExecutionException)
   (:require
    [clojure.data.csv :as csv]
    [clojure.java.io :as io]
    [clojure.string :as str]
+   [clojure.test :refer [deftest is use-fixtures testing]]
    [pg.client :as pg]
-   [pg.oid :as oid]
-   [clojure.test :refer [deftest is use-fixtures testing]]))
+   [pg.oid :as oid]))
 
 
 (def ^:dynamic *CONFIG*
@@ -135,6 +135,7 @@
     (is (= [{:user/foo-bar 1}] result))))
 
 
+;; TODO
 (deftest test-client-exception-in-the-middle
 
   (pg/with-connection [conn *CONFIG*]

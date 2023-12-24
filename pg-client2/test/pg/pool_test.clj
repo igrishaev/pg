@@ -1,9 +1,11 @@
 (ns pg.pool-test
+  (:import
+   com.github.igrishaev.PGError)
   (:require
+   [clojure.test :refer [deftest is use-fixtures testing]]
    [pg.client :as pg]
-   [pg.pool :as pool]
-   [pg.oid :as oid]
-   [clojure.test :refer [deftest is use-fixtures testing]]))
+   [pg.pool :as pool]))
+
 
 (def ^:dynamic *CONFIG*
   {:host "127.0.0.1"
@@ -58,23 +60,21 @@
       @t1-start
       @t2-start
 
-      #_
-      (is (= {:min-size 2 :max-size 2 :free 0 :used 2}
-             (pool/stats pool)))
+      (is (= 0 (pool/free-count pool)))
+      (is (= 2 (pool/used-count pool)))
 
       (try
         (pool/with-connection [conn pool]
           (pg/execute conn "select 42"))
         (is false)
-        (catch Exception e
-          (is (= "pool is exhausted: 2 connections in use"
+        (catch PGError e
+          (is (= "The pool is exhausted: 2 connections are in use"
                  (ex-message e)))))
 
       @t1-stop
 
-      #_
-      (is (= {:min-size 2 :max-size 2 :free 1 :used 1}
-             (pool/stats pool)))
+      (is (= 1 (pool/free-count pool)))
+      (is (= 1 (pool/used-count pool)))
 
       (let [res
             (pool/with-connection [conn pool]
@@ -84,70 +84,34 @@
 
       @t2-stop
 
-      #_
-      (is (= {:min-size 2 :max-size 2 :free 2 :used 0}
-             (pool/stats pool))))))
+      (is (= 2 (pool/free-count pool)))
+      (is (= 0 (pool/used-count pool))))))
 
 
-#_
 (deftest test-pool-lifetime
   (pool/with-pool [pool *CONFIG* {:min-size 2
                                   :max-size 2
-                                  :ms-lifetime 300}]
+                                  :max-lifetime 300}]
 
-    (is (= {:min-size 2 :max-size 2 :free 2 :used 0}
+    (is (= {:free 2 :used 0}
            (pool/stats pool)))
 
     (Thread/sleep 500)
 
-    (is (= {:min-size 2 :max-size 2 :free 2 :used 0}
+    (is (= {:free 2 :used 0}
            (pool/stats pool)))
 
     (pool/with-connection [conn pool]
 
-      (is (= {:min-size 2 :max-size 2 :free 0 :used 1}
+      (is (= {:free 0 :used 1}
              (pool/stats pool)))
 
       (pg/execute conn "select 1 as one"))
 
-    (is (= {:min-size 2 :max-size 2 :free 1 :used 0}
+    (is (= {:free 1 :used 0}
            (pool/stats pool)))))
 
-#_
-(deftest test-pool-exception-terminated
-  (pool/with-pool [pool *CONFIG* {:min-size 1
-                                   :max-size 1}]
 
-    (let [id1
-          (promise)
-
-          id2
-          (promise)
-
-          id3
-          (promise)]
-
-      (pool/with-connection [conn pool]
-        (deliver id1 (pg/id conn)))
-
-      (pool/with-connection [conn pool]
-        (deliver id2 (pg/id conn)))
-
-      (is (= @id1 @id2))
-
-      (try
-        (pool/with-connection [conn pool]
-          (is (= @id2 (pg/id conn)))
-          (/ 0 0))
-        (catch Exception e
-          (is e)))
-
-      (pool/with-connection [conn pool]
-        (deliver id3 (pg/id conn)))
-
-      (is (not= @id1 @id3)))))
-
-#_
 (deftest test-pool-in-transaction-state
   (pool/with-pool [pool *CONFIG* {:min-size 1
                                    :max-size 1}]
@@ -181,7 +145,7 @@
 
       (is (= @id1 @id2 @id3 @id4)))))
 
-#_
+
 (deftest test-pool-in-error-state
   (pool/with-pool [pool *CONFIG* {:min-size 1
                                    :max-size 1}]
@@ -203,7 +167,7 @@
         (try
           (pg/execute conn "selekt 42")
           (is false)
-          (catch Exception e
+          (catch PGError e
             (is (pg/tx-error? conn))))
         (deliver id2 (pg/id conn)))
 
@@ -214,77 +178,14 @@
       (is (= @id1 @id2))
       (is (not= @id2 @id3)))))
 
-#_
-(deftest test-pool-component
 
-  (let [c
-        (pool/component *CONFIG*)
-
-        _
-        (is (not (pool/closed? c)))
-
-        stats1
-        (pool/stats c)
-
-        c-started
-        (component/start c)
-
-        _
-        (is (not (pool/closed? c-started)))
-
-        stats2
-        (pool/stats c-started)]
-
-    (is (= {:min-size 2 :max-size 8 :free 0 :used 0}
-           stats1))
-
-    (is (= {:min-size 2 :max-size 8 :free 2 :used 0}
-           stats2))
-
-    (pool/with-connection [conn c-started]
-      (let [res (pg/execute conn "select 1 as one")]
-        (is (= [{:one 1}] res))))
-
-    (let [c-stopped
-          (component/stop c-started)
-
-          stats3
-          (pool/stats c-stopped)]
-
-      (is (pool/closed? c-stopped))
-
-      (is (= {:min-size 2 :max-size 8 :free 0 :used 0}
-             stats3)))))
-
-#_
-(deftest test-pool-component-redundant-start
-
-  (let [c-started
-        (-> (pool/component *CONFIG*)
-            (component/start)
-            (component/start)
-            (component/start))]
-
-    (pool/with-connection [conn c-started]
-      (let [res (pg/execute conn "select 1 as one")]
-        (is (= [{:one 1}] res))))
-
-    (let [c-stopped
-          (-> c-started
-              (component/stop)
-              (component/stop)
-              (component/stop))]
-
-      (is (pool/closed? c-stopped)))))
-
-#_
 (deftest test-pool-with-open
-  (with-open [pool (pool/make-pool *CONFIG*)]
+  (with-open [pool (pool/pool *CONFIG*)]
     (pool/with-connection [conn pool]
       (let [res (pg/execute conn "select 1 as one")]
         (is (= [{:one 1}] res))))))
 
-#_
+
 (deftest test-pool-conn-terminated
 
   (let [id1
@@ -305,13 +206,13 @@
         pool-config
         {:min-size 0 :max-size 1}]
 
-    (with-open [pool (pool/make-pool *CONFIG* pool-config)]
+    (with-open [pool (pool/pool *CONFIG* pool-config)]
 
       (pool/with-connection [conn pool]
         (deliver id1 (pg/id conn)))
 
       (pool/with-connection [conn pool]
-        (pg/terminate conn)
+        (pg/close conn)
         (deliver id2 (pg/id conn)))
 
       (pool/with-connection [conn pool]
@@ -326,21 +227,25 @@
       (is (not= @id2 @id3))
       (is (= @id3 @id4)))))
 
-#_
+
 (deftest test-pool-termination
 
   (pool/with-pool [pool *CONFIG*]
-    (pool/terminate pool)
+    (pool/close pool)
 
     (try
       (pool/with-connection [conn pool]
         42)
       (is false)
-      (catch Exception e
-        (is (= "the pool has been closed" (ex-message e)))))
+      (catch PGError e
+        (is (= "Cannot get a connection: the pool has been closed"
+               (ex-message e)))))))
 
-    (pool/initiate pool)
 
-    (pool/with-connection [conn pool]
-      (let [res (pg/execute conn "select 1 as one")]
-        (is (= [{:one 1}] res))))))
+(deftest test-pool-string-repr
+  (pool/with-pool [pool *CONFIG*]
+    (let [result
+          "<PG pool, min: 2, max: 8, lifetime: 3600000>"]
+      (is (= result (str pool)))
+      (is (= result (with-out-str
+                      (print pool)))))))
