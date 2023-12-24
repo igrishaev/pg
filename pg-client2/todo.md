@@ -11,6 +11,8 @@ bin copy in: array of BB
 - lein java compiler options
 - common test fixture
 - fix client tests
+- test json wrapper (with null)
+- test wrong OID hint
 
 Prepared statement toString/print-method
 rename the package

@@ -94,3 +94,20 @@
               (component/stop))]
 
       (is (pool/closed? c-stopped)))))
+
+
+      (catch Exception e
+        (is (= "ErrorResponse" (ex-message e)))
+        (is (= {:error
+                {:msg :ErrorResponse
+                 :errors
+                 {:severity "ERROR"
+                  :verbosity "ERROR"
+                  :code "42601"
+                  :message "syntax error at or near \"selekt\""
+                  :position "1"
+                  :function "scanner_yyerror"}}}
+               (-> e
+                   (ex-data)
+                   (update-in [:error :errors]
+                              dissoc :file :line)))))

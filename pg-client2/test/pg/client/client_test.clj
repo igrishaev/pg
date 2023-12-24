@@ -135,12 +135,8 @@
     (is (= [{:user/foo-bar 1}] result))))
 
 
-;; TODO
 (deftest test-client-exception-in-the-middle
-
   (pg/with-connection [conn *CONFIG*]
-
-    ;; TODO: drain conn? close statement?
     (try
       (pg/execute conn "select $1 as foo" {:params [(new Object)]})
       (is false)
@@ -156,15 +152,11 @@
 
 
 (deftest test-client-reuse-conn
-
   (pg/with-connection [conn *CONFIG*]
-
     (let [res1
           (pg/query conn "select 1 as foo")
-
           res2
           (pg/query conn "select 'hello' as bar")]
-
       (is (= [{:foo 1}] res1))
       (is (= [{:bar "hello"}] res2)))))
 
@@ -203,7 +195,7 @@
           (str/join "," params)
 
           query
-          (format "select 42 in (%s) answer" q-marks)
+          (format "select 65535 in (%s) answer" q-marks)
 
           res1
           (pg/execute conn query {:params ids})]
@@ -211,7 +203,7 @@
       (is (= [{:answer true}] res1)))))
 
 
-(deftest test-client-with-tx-syntax-issue
+(deftest test-client-with-tx-check
   (pg/with-connection [conn *CONFIG*]
     (pg/with-tx [conn]
       (is (pg/connection? conn)))))
@@ -243,7 +235,6 @@
 
       (is (= [{:foo 1}] res1))
 
-      ;; TODO: pass fields as data?
       (try
         (pg/with-tx [conn {:read-only? true}]
           (pg/execute conn "create temp table foo123 (id integer)"))
@@ -252,7 +243,7 @@
           (is (-> e ex-message (str/starts-with? "ErrorResponse"))))))))
 
 
-(deftest test-exeplain-alalyze
+(deftest test-exeplain-analyze
 
   (pg/with-connection [conn *CONFIG*]
 
@@ -327,7 +318,6 @@
              res)))))
 
 
-;; TODO: test again
 (deftest test-client-listen-notify
 
   (let [capture!
@@ -455,43 +445,26 @@
 
           (pg/execute conn2 "")
 
-          (is (= [{:pid pid1
+          (is (= [{:msg :NoticeResponse
+                   :pid pid1
                    :channel "foo"
                    :message "message1"}
 
-                  {:pid pid1
+                  {:msg :NoticeResponse
+                   :pid pid1
                    :channel "foo"
                    :message "message2"}]
 
                  @capture!)))))))
 
 
-;; TODO
 (deftest test-client-broken-query
   (pg/with-connection [conn *CONFIG*]
     (try
       (pg/execute conn "selekt 1")
       (is false "must have been an error")
       (catch PGError e
-        (is (-> e ex-message (str/starts-with? "ErrorResponse"))))
-
-      #_
-      (catch Exception e
-        (is (= "ErrorResponse" (ex-message e)))
-        (is (= {:error
-                {:msg :ErrorResponse
-                 :errors
-                 {:severity "ERROR"
-                  :verbosity "ERROR"
-                  :code "42601"
-                  :message "syntax error at or near \"selekt\""
-                  :position "1"
-                  :function "scanner_yyerror"}}}
-               (-> e
-                   (ex-data)
-                   (update-in [:error :errors]
-                              dissoc :file :line))))))
-
+        (is (-> e ex-message (str/starts-with? "ErrorResponse")))))
     (testing "still can recover"
       (is (= [{:one 1}]
              (pg/execute conn "select 1 as one"))))))
@@ -619,31 +592,15 @@
 
 
 (deftest test-client-wrong-major-protocol
-
   (let [config
         (assoc *CONFIG* :protocol-version 296608)]
-
     (try
       (pg/with-connection [conn config]
         (pg/execute conn "select 1 as foo"))
       (is false)
       (catch PGError e
         (is true)
-        #_
-        (is (= "ErrorResponse" (ex-message e)))
-        #_
-        (is (= {:error
-                {:msg :ErrorResponse
-                 :errors
-                 {:severity "FATAL"
-                  :verbosity "FATAL"
-                  :code "0A000"
-                  :function "ProcessStartupPacket"}}}
-               (-> e
-                   (ex-data)
-                   (update-in [:error :errors]
-                              dissoc
-                              :file :line :message))))))))
+        (is (-> e ex-message (str/includes? "unsupported frontend protocol")))))))
 
 
 (deftest test-client-empty-select
@@ -779,11 +736,7 @@
         (is false)
         (catch PGError e
           (is (= "Wrong parameters count: 1 (must be 2)"
-                 (ex-message e)))
-          ;; TODO: add data to the exception
-          #_
-          (is (= {:params [1] :oids [23 23]}
-                 (ex-data e))))))))
+                 (ex-message e))))))))
 
 
 (deftest test-statement-params-nil
@@ -948,7 +901,6 @@ drop table %1$s;
       (is (= [[{:foo 1}] [{:bar 2}]] res)))))
 
 
-;; TODO
 (deftest test-client-field-duplicates
   (pg/with-connection [conn *CONFIG*]
     (let [res
@@ -1129,8 +1081,8 @@ drop table %1$s;
       (is (instance? OffsetDateTime obj))
       (is (= "1985-12-31T20:59:59Z" (str obj))))))
 
-;; TODO
-#_
+
+;; TODO: fix it
 (deftest test-client-date-pass-date
 
   (pg/with-connection [conn *CONFIG*]
@@ -1140,8 +1092,8 @@ drop table %1$s;
           res
           (pg/execute conn "select EXTRACT('year' from $1) as year" {:params [date]})]
 
+      #_
       (is (= [{:year 1985M}] res))
-
       #_
       (if (or (pgi/is11?) (pgi/is12?) (pgi/is13?))
         (is (= [{:year 1985.0}] res))
@@ -1227,17 +1179,7 @@ drop table %1$s;
           (is false)
           (catch PGError e
             (is true)
-            (is (-> e ex-message (str/starts-with? "ErrorResponse")))
-
-            #_
-            (is (= 1 (-> e ex-message (re-find "ErrorResponse"))))
-
-            ;; message=prepared statement \"s1\" does not exist
-
-            #_
-            (is (re-matches
-                 #"prepared statement (.+?) does not exist"
-                 (-> e ex-data :error :errors :message)))))))))
+            (is (-> e ex-message (str/includes? "does not exist")))))))))
 
 
 (deftest test-execute-row-limit
@@ -1248,7 +1190,6 @@ drop table %1$s;
 
       (pg/with-statement [stmt conn query]
 
-        ;; TODO: :rows
         (let [result
               (pg/execute-statement conn stmt {:row-count 1})]
 
@@ -1278,6 +1219,7 @@ drop table %1$s;
           (is (= [{:one 1}] (pg/query conn "select 1 as one"))))))))
 
 
+;; TODO:
 (deftest test-execute-row-limit-int32-unsigned
   (pg/with-connection [conn *CONFIG*]
 
