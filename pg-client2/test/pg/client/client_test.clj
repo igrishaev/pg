@@ -726,7 +726,7 @@
 (deftest test-prepare-result
   (pg/with-connection [conn *CONFIG*]
     (let [res
-          (pg/prepare-statement conn "select $1::integer as foo")]
+          (pg/prepare conn "select $1::integer as foo")]
       (is (pg/prepared-statement? res)))))
 
 
@@ -1162,7 +1162,7 @@ drop table %1$s;
   (pg/with-connection [conn *CONFIG*]
 
     (let [stmt
-          (pg/prepare-statement conn "select 1 as foo")]
+          (pg/prepare conn "select 1 as foo")]
 
       (is (pg/prepared-statement? stmt))
 
@@ -1429,7 +1429,7 @@ drop table %1$s;
 (deftest test-execute-weird-param
   (pg/with-connection [conn *CONFIG*]
     (let [stmt
-          (pg/prepare-statement conn "select $1::int8 = $1::int4 as eq")]
+          (pg/prepare conn "select $1::int8 = $1::int4 as eq")]
 
       (try
         (pg/execute-statement conn stmt {:params [(new Object)]})
@@ -1440,6 +1440,16 @@ drop table %1$s;
       (let [res
             (pg/execute-statement conn stmt {:params [1]})]
         (is (= [{:eq true}] res))))))
+
+
+(deftest test-statement-repr
+  (let [repr
+        "<Prepared statement, name: s1, param(s): 1, OIDs: [INT4], SQL: select $1::int4 as foo>"]
+    (pg/with-connection [conn *CONFIG*]
+      (pg/with-statement [stmt conn "select $1::int4 as foo"]
+        (is (= repr (str stmt)))
+        (is (= repr (with-out-str
+                      (print stmt))))))))
 
 
 (deftest test-empty-select

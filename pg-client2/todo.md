@@ -1,26 +1,15 @@
 - set socket options
 - SSL support
-- connection pool
-
-bin copy in: array of BB
-
-- fix all the tests
-
-- pool component?
-- lein java compiler options
+- bin copy in: array of BB
 - common test fixture
-- fix client tests
+- complete client tests
 - test json wrapper (with null)
 - test wrong OID hint
-
-Prepared statement toString/print-method
-rename the package
-
-- execute common fn name
-- prepare name
-
+- rename the package
 - arrays
   - decode txt
   - decode bin
   - encode txt
   - encode bin
+- pool component
+- lein java compiler options

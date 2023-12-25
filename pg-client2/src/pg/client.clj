@@ -302,7 +302,20 @@
   (.isSSL conn))
 
 
-(defn prepare-statement
+;;
+;; Prepared statement
+;;
+
+(defn prepared-statement? [x]
+  (instance? PreparedStatement x))
+
+
+(defmethod print-method PreparedStatement
+  [^PreparedStatement conn ^Writer writer]
+  (.write writer (.toString conn)))
+
+
+(defn prepare
 
   (^PreparedStatement
    [^Connection conn ^String sql]
@@ -340,8 +353,8 @@
 
            ~bind
            ~(if oids
-              `(prepare-statement ~CONN ~sql ~oids)
-              `(prepare-statement ~CONN ~sql))]
+              `(prepare ~CONN ~sql ~oids)
+              `(prepare ~CONN ~sql))]
 
        (try
          ~@body
@@ -532,10 +545,6 @@
   "
   [^Connection conn ^String channel ^String message]
   (.notify conn channel message))
-
-
-(defn prepared-statement? [x]
-  (instance? PreparedStatement x))
 
 
 ;;
