@@ -5,4 +5,5 @@ import com.github.igrishaev.msg.Parse;
 
 public record PreparedStatement(
         Parse parse,
-        ParameterDescription parameterDescription) {}
+        ParameterDescription parameterDescription
+) {}

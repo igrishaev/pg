@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class FieldParser {
 
-    public static String parseTag (char tag) {
+    public static String parseTag (final char tag) {
         return switch (tag) {
             case 'S' -> "severity";
             case 'V' -> "verbosity";
@@ -38,15 +38,15 @@ public class FieldParser {
             final ByteBuffer buf,
             final Charset charset
     ) {
-        HashMap<String, String> fields = new HashMap<>();
+        final HashMap<String, String> fields = new HashMap<>();
         while (true) {
-            byte tag = buf.get();
+            final byte tag = buf.get();
             if (tag == 0) {
                 break;
             }
             else {
-                String field = parseTag((char)tag);
-                String message = BBTool.getCString(buf, charset);
+                final String field = parseTag((char)tag);
+                final String message = BBTool.getCString(buf, charset);
                 fields.put(field, message);
             };
         };

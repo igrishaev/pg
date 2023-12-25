@@ -2,6 +2,8 @@ package com.github.igrishaev.reducer;
 
 public class First extends MapMixin implements IReducer {
 
+    public static IReducer INSTANCE = new First();
+
     public Object initiate () {
         return new Object[1];
     }

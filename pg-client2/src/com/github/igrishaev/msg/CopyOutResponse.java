@@ -8,10 +8,10 @@ public record CopyOutResponse (
         short columnCount,
         Format[] columnFormats
 ) {
-    public static CopyOutResponse fromByteBuffer(ByteBuffer buf) {
-        Format format = Format.ofShort(buf.get());
-        short columnCount = buf.getShort();
-        Format[] columnFormats = new Format[columnCount];
+    public static CopyOutResponse fromByteBuffer(final ByteBuffer buf) {
+        final Format format = Format.ofShort(buf.get());
+        final short columnCount = buf.getShort();
+        final Format[] columnFormats = new Format[columnCount];
         for (short i = 0; i < columnCount; i++) {
             columnFormats[i] = Format.ofShort(buf.getShort());
         }

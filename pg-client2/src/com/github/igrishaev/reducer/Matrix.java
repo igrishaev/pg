@@ -6,6 +6,8 @@ import clojure.lang.PersistentVector;
 
 public class Matrix extends MapMixin implements IReducer {
 
+    public static IReducer INSTANCE = new Matrix();
+
     public Object compose(final Object[] keys, final Object[] vals) {
         return PersistentVector.create(vals);
     }

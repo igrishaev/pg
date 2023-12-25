@@ -17,7 +17,7 @@ public record Bind (
 ) implements IMessage {
 
     public ByteBuffer encode(final Charset charset) {
-        Payload payload = new Payload()
+        final Payload payload = new Payload()
                 .addCString(portal)
                 .addCString(statement)
                 .addShort((short)1)

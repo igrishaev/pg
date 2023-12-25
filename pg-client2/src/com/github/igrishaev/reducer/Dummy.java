@@ -2,6 +2,8 @@ package com.github.igrishaev.reducer;
 
 public class Dummy implements IReducer {
 
+    public static IReducer INSTANCE = new Dummy();
+
     public Object compose(final Object[] keys, final Object[] vals) {
         return null;
     }

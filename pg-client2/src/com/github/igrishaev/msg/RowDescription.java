@@ -35,7 +35,7 @@ public record RowDescription (
         final short size = buf.getShort();
         final Column[] columns = new Column[size];
         for (short i = 0; i < size; i++) {
-            Column col = new Column(i,
+            final Column col = new Column(i,
                     BBTool.getCString(buf, charset),
                     buf.getInt(),
                     buf.getShort(),

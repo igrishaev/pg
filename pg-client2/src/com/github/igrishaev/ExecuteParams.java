@@ -16,7 +16,7 @@ public record ExecuteParams (
         List<Object> params,
         List<OID> OIDs,
         IReducer reducer,
-        int rowCount,
+        long rowCount,
         IFn fnKeyTransform,
         OutputStream outputStream,
         InputStream inputStream,
@@ -47,8 +47,8 @@ public record ExecuteParams (
 
         private List<Object> params = Collections.emptyList();
         private List<OID> OIDs = Collections.emptyList();
-        private IReducer reducer = new Default();
-        private int rowCount = 0;
+        private IReducer reducer = Default.INSTANCE;
+        private long rowCount = 0;
         private IFn fnKeyTransform = new core$keyword();
         private OutputStream outputStream = OutputStream.nullOutputStream();
         private InputStream inputStream = InputStream.nullInputStream();
@@ -125,13 +125,18 @@ public record ExecuteParams (
             return this;
         }
 
+        public Builder asJava () {
+            this.reducer = Java.INSTANCE;
+            return this;
+        }
+
         public Builder run (final IFn fnRun) {
             this.reducer = new Run(fnRun);
             return this;
         }
 
         public Builder first () {
-            this.reducer = new First();
+            this.reducer = First.INSTANCE;
             return this;
         }
 
@@ -141,7 +146,7 @@ public record ExecuteParams (
         }
 
         public Builder asMatrix () {
-            this.reducer = new Matrix();
+            this.reducer = Matrix.INSTANCE;
             return this;
         }
 
@@ -150,7 +155,7 @@ public record ExecuteParams (
             return this;
         }
 
-        public Builder rowCount (final int rowCount) {
+        public Builder rowCount (final long rowCount) {
             this.rowCount = rowCount;
             return this;
         }

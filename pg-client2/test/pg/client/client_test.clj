@@ -1219,7 +1219,6 @@ drop table %1$s;
           (is (= [{:one 1}] (pg/query conn "select 1 as one"))))))))
 
 
-;; TODO:
 (deftest test-execute-row-limit-int32-unsigned
   (pg/with-connection [conn *CONFIG*]
 
@@ -1973,8 +1972,13 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
                          rows)
         (is false)
         (catch PGError e
-          (is (= 1 (-> e ex-message)))
-          (is (= 1 (-> e ex-cause ex-message))))))
+          (is (-> e
+                  ex-message
+                  (str/starts-with? "Unhandled exception: cannot text-encode a value")))
+          (is (-> e
+                  ex-cause
+                  ex-message
+                  (str/starts-with? "cannot text-encode a value"))))))
 
     (testing "conn is ok"
       (is (= :I (pg/status conn)))
@@ -2011,22 +2015,21 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
              res-query)))))
 
 
-;; TODO: ?
-;; (deftest test-copy-in-rows-ok-csv-wrong-oids
+(deftest test-copy-in-rows-ok-csv-wrong-oids
 
-;;   (pg/with-connection [conn *CONFIG*]
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (pg/query conn "create temp table foo (id int2)")
+    (pg/query conn "create temp table foo (id int2)")
 
-;;     (try
-;;       (pg/copy-in-rows conn
-;;                        "copy foo (id) from STDIN WITH (FORMAT CSV)"
-;;                        [[1] [2] [3]]
-;;                        {:oids [oid/uuid]})
-;;       (is false)
-;;       (catch Exception e
-;;         (is (= "Cannot text-encode a value"
-;;                (ex-message e)))))))
+    (try
+      (pg/copy-in-rows conn
+                       "copy foo (id) from STDIN WITH (FORMAT CSV)"
+                       [[1] [2] [3]]
+                       {:oids [oid/uuid]})
+      (is false)
+      (catch PGError e
+        (is (= "Unhandled exception: cannot text-encode a value: 1, OID: UUID, type: java.lang.Long"
+               (ex-message e)))))))
 
 
 (deftest test-copy-in-rows-ok-bin
@@ -2067,23 +2070,20 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
               (.getBytes)
               io/input-stream)]
 
-      ;; TODO: copy-in: copy-params
-      ;; better exception handling
       (try
         (pg/copy-in conn
                     "copy foo (id, name, active) from STDIN WITH (FORMAT CSV)"
                     in-stream
                     {:copy-buf-size 1})
         (is false)
-        (catch Exception e
-          (is e)))
+        (catch PGError e
+          (is true)
+          (is (-> e ex-message (str/includes? "missing data for column")))))
 
       (let [res-query
             (pg/query conn "select 1 as one")]
         (is (= [{:one 1}] res-query))))))
 
-
-;; TODO: check exception in the middle
 
 (deftest test-copy-in-maps-ok-csv
 
@@ -2133,8 +2133,6 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
           (pg/copy-in-maps conn
                            "copy foo (id, name, active, note) from STDIN WITH (FORMAT BINARY)"
                            maps
-                           ;; TODO: oid as a map {idx ->oid}
-                           ;; TODO: oid as a map {field->oid}
                            [:id :name :active :note]
                            {:oids [oid/int2]
                             :copy-bin? true})
@@ -2233,7 +2231,6 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
              res-query)))))
 
 
-;; TODO: fix this!!!
 (deftest test-copy-in-maps-empty-bin
 
   (pg/with-connection [conn *CONFIG*]
@@ -2244,14 +2241,14 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
           (pg/copy-in-maps conn
                            "copy foo (id, name, active, note) from STDIN WITH (FORMAT BINARY)"
                            []
-                           #_nil [:id :name :active :note]
-                           { ;; :oids [oid/int2]
+                           [:id :name :active :note]
+                           {:oids [oid/int2]
                             :copy-bin? true})
 
           res-query
           (pg/query conn "select * from foo")]
 
-      (is (= 0 res-copy))
+      (is (= {:copied 0} res-copy))
       (is (= [] res-query)))))
 
 

@@ -9,9 +9,9 @@ public record ParameterDescription (
         OID[] OIDs
 ) {
 
-    public static ParameterDescription fromByteBuffer(ByteBuffer buf) {
-        int count = Short.toUnsignedInt(buf.getShort());
-        OID[] OIDs = new OID[count];
+    public static ParameterDescription fromByteBuffer(final ByteBuffer buf) {
+        final int count = Short.toUnsignedInt(buf.getShort());
+        final OID[] OIDs = new OID[count];
         for (int i = 0; i < count; i++) {
             OIDs[i] = OID.ofInt(buf.getInt());
         }

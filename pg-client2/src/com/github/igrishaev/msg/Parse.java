@@ -14,7 +14,7 @@ public record Parse (String statement,
 
     public ByteBuffer encode(final Charset charset) {
 
-        int OIDCount = OIDs.length;
+        final int OIDCount = OIDs.length;
 
         if (OIDCount > 0xFFFF) {
             throw new PGError(
@@ -23,7 +23,7 @@ public record Parse (String statement,
             );
         }
 
-        Payload payload = new Payload();
+        final Payload payload = new Payload();
 
         payload
             .addCString(statement, charset)

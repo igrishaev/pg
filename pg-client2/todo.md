@@ -6,7 +6,6 @@ bin copy in: array of BB
 
 - fix all the tests
 
-- HexTool
 - pool component?
 - lein java compiler options
 - common test fixture

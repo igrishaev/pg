@@ -10,16 +10,14 @@ import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.util.Date;
 import java.io.StringWriter;
-import java.util.HexFormat;
 import java.util.UUID;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import clojure.lang.BigInt;
+import com.github.igrishaev.util.HexTool;
 import com.github.igrishaev.util.JSON;
 
 public class EncoderTxt {
-
-    private static final HexFormat hex = HexFormat.of();
 
     public static String encode(final Object x) {
         return encode(x, OID.DEFAULT, CodecParams.standard());
@@ -67,12 +65,7 @@ public class EncoderTxt {
             };
 
             case byte[] ba -> switch (oid) {
-                case BYTEA, DEFAULT -> {
-                    final int len = 2 + 2 * ba.length;
-                    final StringBuilder sb = new StringBuilder(len);
-                    sb.append("\\x");
-                    yield hex.formatHex(sb, ba).toString();
-                }
+                case BYTEA, DEFAULT -> HexTool.formatHex(ba, "\\x");
                 default -> txtEncodingError(x, oid);
             };
 
