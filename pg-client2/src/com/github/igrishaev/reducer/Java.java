@@ -18,11 +18,11 @@ public class Java implements IReducer {
     }
 
     public Object initiate() {
-        return new ArrayList<Map<String, Object>>();
+        return new ArrayList<>();
     }
 
     public Object append(final Object acc, final Object row) {
-        final List<Object> _acc = (List<Object>) acc;
+        @SuppressWarnings("unchecked") final List<Object> _acc = (List<Object>) acc;
         _acc.add(row);
         return _acc;
     }

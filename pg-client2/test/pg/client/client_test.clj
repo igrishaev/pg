@@ -10,6 +10,8 @@
    java.time.LocalTime
    java.time.OffsetDateTime
    java.time.OffsetTime
+   java.util.ArrayList
+   java.util.HashMap
    java.util.Date
    java.util.concurrent.ExecutionException)
   (:require
@@ -1082,7 +1084,6 @@ drop table %1$s;
       (is (= "1985-12-31T20:59:59Z" (str obj))))))
 
 
-;; TODO: fix it
 (deftest test-client-date-pass-date
 
   (pg/with-connection [conn *CONFIG*]
@@ -1092,12 +1093,8 @@ drop table %1$s;
           res
           (pg/execute conn "select EXTRACT('year' from $1) as year" {:params [date]})]
 
-      #_
-      (is (= [{:year 1985M}] res))
-      #_
-      (if (or (pgi/is11?) (pgi/is12?) (pgi/is13?))
-        (is (= [{:year 1985.0}] res))
-        (is (= [{:year 1985M}] res))))))
+      (is (= (update-in res [0 :year] int)
+             [{:year 1985}])))))
 
 
 (deftest test-client-read-time
@@ -1236,26 +1233,26 @@ drop table %1$s;
                  result)))))))
 
 
-;; TODO
-;; (deftest test-acc-as-java
+(deftest test-acc-as-java
 
-;;   (pg/with-connection [conn *CONFIG*]
+  (pg/with-connection [conn *CONFIG*]
 
-;;     (let [query
-;;           "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
+    (let [query
+          "with foo (a, b) as (values (1, 2), (3, 4), (5, 6)) select * from foo"
 
-;;           res
-;;           (pg/execute conn query nil {:as as/java})]
+          res
+          (pg/execute conn query {:java? true
+                                  :fn-key identity})]
 
-;;       (is (= [{:b 2 :a 1}
-;;               {:b 4 :a 3}
-;;               {:b 6 :a 5}]
-;;              res))
+      (is (= [{"b" 2 "a" 1}
+              {"b" 4 "a" 3}
+              {"b" 6 "a" 5}]
+             res))
 
-;;       (is (instance? ArrayList res))
-;;       (is (every? (fn [x]
-;;                     (instance? HashMap x))
-;;                   res)))))
+      (is (instance? ArrayList res))
+      (is (every? (fn [x]
+                    (instance? HashMap x))
+                  res)))))
 
 
 (deftest test-acc-as-index-by
@@ -1488,12 +1485,27 @@ drop table %1$s;
       (is (= [{:text "hello"}] res)))))
 
 
-;; TODO
-(deftest test-decode-binary-bpchar
+(deftest test-decode-text-and-binary-bpchar
   (pg/with-connection [conn (assoc *CONFIG*
                                    :binary-encode? true
                                    :binary-decode? true)]
-    (let [res (pg/execute conn "select $1::char as char" {:params ["ё"]})]
+
+    (let [res (pg/execute conn "select 'ёё'::char as char")]
+      (is (= [{:char \ё}] res)))
+
+
+    (let [res (pg/execute conn "select $1::char as char" {:params [\ё]})]
+      (is (= [{:char \ё}] res))))
+
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? false
+                                   :binary-decode? false)]
+
+    (let [res (pg/execute conn "select 'ёё'::char as char")]
+      (is (= [{:char \ё}] res)))
+
+
+    (let [res (pg/execute conn "select $1::char as char" {:params [\ё]})]
       (is (= [{:char \ё}] res)))))
 
 
@@ -1954,9 +1966,8 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
         (is (= [{:one 1}] (pg/query conn "select 1 as one")))))))
 
 
-;; test copy in maps empty keys error
+;; TODO: empty keys?
 
-;; TODO
 (deftest test-copy-in-rows-exception-in-the-middle
 
   (pg/with-connection [conn *CONFIG*]

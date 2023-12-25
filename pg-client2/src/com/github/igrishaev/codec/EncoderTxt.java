@@ -48,7 +48,7 @@ public class EncoderTxt {
             };
 
             case Character c -> switch (oid) {
-                case TEXT, VARCHAR, DEFAULT -> c.toString();
+                case TEXT, VARCHAR, CHAR, DEFAULT -> c.toString();
                 default -> txtEncodingError(x, oid);
             };
 

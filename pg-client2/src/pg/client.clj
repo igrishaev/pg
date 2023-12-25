@@ -49,6 +49,7 @@
                 group-by
                 index-by
                 matrix?
+                java?
                 kebab?
                 fold
                 run ;; TODO: each?
@@ -104,6 +105,9 @@
 
       matrix?
       (.asMatrix)
+
+      java?
+      (.asJava)
 
       kebab?
       (.fnKeyTransform ->kebab)

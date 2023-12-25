@@ -26,7 +26,7 @@ public class DecoderBin {
             case INT2 -> buf.getShort();
             case INT4, OID -> buf.getInt();
             case INT8 -> buf.getLong();
-            case CHAR -> (char) buf.get();
+            case CHAR, BPCHAR -> BBTool.getRestString(buf, codecParams.serverCharset).charAt(0);
             case UUID -> {
                 final long hiBits = buf.getLong();
                 final long loBits = buf.getLong();

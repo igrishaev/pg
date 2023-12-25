@@ -70,9 +70,9 @@ public class EncoderBin {
             };
 
             case Character c -> switch (oid) {
-                case TEXT, VARCHAR, DEFAULT -> {
+                case TEXT, VARCHAR, CHAR, DEFAULT -> {
                     ByteBuffer buf = ByteBuffer.allocate(2);
-                    buf.putChar(c);
+                    buf.put(c.toString().getBytes(codecParams.clientCharset));
                     yield buf;
                 }
                 default -> binEncodingError(x, oid);

@@ -23,7 +23,7 @@ public class DecoderTxt {
             case INT4, OID -> Integer.parseInt(string);
             case INT8 -> Long.parseLong(string);
             case BYTEA -> HexTool.parseHex(string, 2, string.length());
-            case CHAR -> string.charAt(0);
+            case CHAR, BPCHAR -> string.charAt(0);
             case UUID -> UUID.fromString(string);
             case FLOAT4 -> Float.parseFloat(string);
             case FLOAT8 -> Double.parseDouble(string);

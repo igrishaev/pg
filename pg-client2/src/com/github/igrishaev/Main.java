@@ -33,14 +33,14 @@ public class Main {
 
         // System.out.println(conn.execute("select '1 year 1 second'::interval as interval"));
 
-        System.out.println(conn.execute("create temp table foo (a int, b int, c int)"));
-        InputStream in = new ByteArrayInputStream("1,2,3".getBytes());
-        conn.copy(
-                "copy foo (a, b, c) from STDIN WITH (FORMAT CSV)",
-                ExecuteParams.builder().inputStream(in).build()
-        );
-
-        System.out.println(conn.query("SELECT '\\xDEADBEEF'::bytea"));
+//        System.out.println(conn.execute("create temp table foo (a int, b int, c int)"));
+//        InputStream in = new ByteArrayInputStream("1,2,3".getBytes());
+//        conn.copy(
+//                "copy foo (a, b, c) from STDIN WITH (FORMAT CSV)",
+//                ExecuteParams.builder().inputStream(in).build()
+//        );
+//
+//        System.out.println(conn.query("SELECT '\\xDEADBEEF'::bytea"));
 
         // SELECT E'\\xDEADBEEF';
 
@@ -70,8 +70,14 @@ public class Main {
 //        conn.closeStatement(ps);
 //        System.out.println(res2);
 
-        // Object res3 = conn.execute("select $1::int8 as int8", params, Collections.emptyList());
-        // System.out.println(res3);
+//          Object res3 = conn.execute("select 'ёёёё'::char as char");
+//          System.out.println(res3);
+
+        Object res4 = conn.execute(
+                "select $1::char as char",
+                ExecuteParams.builder().params('ё').build()
+        );
+        System.out.println(res4);
 
         // conn.execute("create table abc (id integer, title text)");
 //        Object resIns = conn.execute(
