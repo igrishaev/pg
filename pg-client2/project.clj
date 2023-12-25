@@ -12,9 +12,9 @@
 
   :java-source-paths ["src"]
 
-  :java-cmd "/Users/wzhivga/work/jdk-21.jdk/Contents/Home/bin/java"
-  ;; :java-cmd "/Users/ivan/work/jdk-21.jdk/Contents/Home/bin/java"
-  ;; :javac-options ["--enable-preview" "--release" "20"]
+  :java-cmd "/Users/wzhivga/work/jdk-17.0.1.jdk/Contents/Home/bin/java"
+  :jvm-opts ["--enable-preview"]
+  :javac-options ["--enable-preview" "--release" "17"]
 
   :parent-project
   {:path "../project.clj"

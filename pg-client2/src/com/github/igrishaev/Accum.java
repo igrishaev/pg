@@ -164,7 +164,7 @@ public class Accum {
         }
         return switch (results.size()) {
             case 0 -> null;
-            case 1 -> results.getFirst();
+            case 1 -> results.get(0);
             default -> results;
         };
     }
