@@ -39,36 +39,58 @@
 
 (defn ->execute-params ^ExecuteParams [^Map opt]
 
+  ;; TODO: refactor params?
   (let [{:keys [^List params
                 oids
+
+                ;; misc
                 row-count
-                reducer
+
+                ;; key
+                kebab?
                 fn-key
+
+                ;; streams
                 output-stream
                 input-stream
+
+                ;; reducers
+                reducer
                 group-by
                 index-by
                 matrix?
                 java?
-                kebab?
                 fold
-                run ;; TODO: each?
+                run
                 init
                 kv
                 first?
+
+                ;; format
                 binary-encode?
                 binary-decode?
+
+                ;; csv
                 csv-null
                 csv-sep
                 csv-end
                 copy-buf-size
                 ^CopyFormat copy-format
+
+                ;; copy
                 copy-csv?
                 copy-bin?
                 copy-tab?
                 copy-in-rows
                 copy-in-maps
-                copy-in-keys]}
+                copy-in-keys
+
+                ;; socket
+                so-keep-alive?
+                so-tcp-no-delay?
+                so-timeout
+                so-recv-buf-size
+                so-send-buf-size]}
         opt]
 
     (cond-> (ExecuteParams/builder)
@@ -163,9 +185,23 @@
       copy-in-keys
       (.copyMapKeys copy-in-keys)
 
+      (some? so-keep-alive?)
+      (.SOKeepAlive so-keep-alive?)
+
+      (some? so-tcp-no-delay?)
+      (.SOTCPnoDelay so-tcp-no-delay?)
+
+      so-timeout
+      (.SOTimeout so-timeout)
+
+      so-recv-buf-size
+      (.SOReceiveBufSize so-recv-buf-size)
+
+      so-send-buf-size
+      (.SOSendBufSize so-send-buf-size)
+
       :finally
       (.build))))
-
 
 
 (defn ->conn-config ^ConnConfig$Builder [params]

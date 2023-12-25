@@ -1,4 +1,3 @@
-- set socket options
 - SSL support
 - bin copy in: array of BB
 - common test fixture

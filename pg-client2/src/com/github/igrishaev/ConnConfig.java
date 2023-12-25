@@ -20,6 +20,9 @@ public record ConnConfig(
         boolean useSSL,
         boolean SOKeepAlive,
         boolean SOTCPnoDelay,
+        int SOTimeout,
+        int SOReceiveBufSize,
+        int SOSendBufSize,
         int inStreamBufSize,
         int outStreamBufSize,
         IFn fnNotification,
@@ -48,6 +51,9 @@ public record ConnConfig(
         private boolean useSSL = false;
         private boolean SOKeepAlive = true;
         private boolean SOTCPnoDelay = true;
+        private int SOTimeout = 15 * 1000;
+        int SOReceiveBufSize = 25188;
+        int SOSendBufSize = 65536;
         private int inStreamBufSize = Const.IN_STREAM_BUF_SIZE;
         private int outStreamBufSize = Const.OUT_STREAM_BUF_SIZE;
         private IFn fnNotification = new core$println();
@@ -130,6 +136,21 @@ public record ConnConfig(
             return this;
         }
 
+        public Builder SOTimeout(final int SOTimeout) {
+            this.SOTimeout = SOTimeout;
+            return this;
+        }
+
+        public Builder SOReceiveBufSize(final int SOReceiveBufSize) {
+            this.SOReceiveBufSize = SOReceiveBufSize;
+            return this;
+        }
+
+        public Builder SOSendBufSize(final int SOSendBufSize) {
+            this.SOSendBufSize = SOSendBufSize;
+            return this;
+        }
+
         public Builder inStreamBufSize(final int inStreamBufSize) {
             this.inStreamBufSize = inStreamBufSize;
             return this;
@@ -156,6 +177,9 @@ public record ConnConfig(
                     this.SOTCPnoDelay,
                     this.inStreamBufSize,
                     this.outStreamBufSize,
+                    this.SOTimeout,
+                    this.SOReceiveBufSize,
+                    this.SOSendBufSize,
                     this.fnNotification,
                     this.fnProtocolVersion,
                     this.fnNotice

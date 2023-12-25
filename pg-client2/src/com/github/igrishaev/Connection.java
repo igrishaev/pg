@@ -79,6 +79,19 @@ public class Connection implements Closeable {
         }
     }
 
+    private void setSocketOptions () {
+        try {
+            socket.setTcpNoDelay(config.SOTCPnoDelay());
+            socket.setSoTimeout(config.SOTimeout());
+            socket.setKeepAlive(config.SOKeepAlive());
+            socket.setReceiveBufferSize(config.SOReceiveBufSize());
+            socket.setSendBufferSize(config.SOSendBufSize());
+        }
+        catch (IOException e) {
+            throw new PGError(e, "couldn't set set socket options");
+        }
+    }
+
     private int nextInt() {
         return aInt.incrementAndGet();
     }
@@ -190,6 +203,8 @@ public class Connection implements Closeable {
         catch (IOException e) {
             throw new PGError(e, "Cannot connect to a socket");
         }
+
+        setSocketOptions();
 
         try {
             inStream = new BufferedInputStream(
