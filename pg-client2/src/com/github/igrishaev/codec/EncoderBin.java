@@ -9,8 +9,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import clojure.lang.BigInt;
 
-import clojure.lang.IPersistentCollection;
-import clojure.lang.Symbol;
 import com.github.igrishaev.Const;
 import com.github.igrishaev.PGError;
 import com.github.igrishaev.enums.OID;
@@ -44,225 +42,228 @@ public class EncoderBin {
 
     public static ByteBuffer encode (Object x, OID oid, CodecParams codecParams) {
 
-        return switch (x) {
+        if (x == null) {
+            throw new PGError("cannot binary-encode a null value");
+        }
 
-            case null -> throw new PGError("cannot binary-encode a null value");
+        return switch (x.getClass().getCanonicalName()) {
 
-            case Symbol s -> switch (oid) {
+            case "clojure.lang.Symbol" -> switch (oid) {
                 case TEXT, VARCHAR, DEFAULT -> {
-                    byte[] bytes = getBytes(s.toString(), codecParams);
+                    byte[] bytes = getBytes(x.toString(), codecParams);
                     yield ByteBuffer.wrap(bytes);
                 }
                 default -> binEncodingError(x, oid);
             };
 
-            case byte[] ba -> switch (oid) {
-                case BYTEA, DEFAULT -> ByteBuffer.wrap(ba);
+            case "byte[]" -> switch (oid) {
+                case BYTEA, DEFAULT -> ByteBuffer.wrap((byte[])x);
                 default -> binEncodingError(x, oid);
             };
 
-            case String s -> switch (oid) {
+            case "java.lang.String" -> switch (oid) {
                 case TEXT, VARCHAR, NAME, JSON, JSONB, DEFAULT -> {
-                    byte[] bytes = getBytes(s, codecParams);
+                    byte[] bytes = getBytes((String)x, codecParams);
                     yield ByteBuffer.wrap(bytes);
                 }
                 default -> binEncodingError(x, oid);
             };
 
-            case Character c -> switch (oid) {
+            case "java.lang.Character" -> switch (oid) {
                 case TEXT, VARCHAR, CHAR, DEFAULT -> {
                     ByteBuffer buf = ByteBuffer.allocate(2);
-                    buf.put(c.toString().getBytes(codecParams.clientCharset));
+                    buf.put(x.toString().getBytes(codecParams.clientCharset));
                     yield buf;
                 }
                 default -> binEncodingError(x, oid);
             };
 
-            case Short s -> switch (oid) {
-                case INT2, DEFAULT -> BBTool.ofShort(s);
-                case INT4, OID -> BBTool.ofInt(s);
-                case INT8 -> BBTool.ofLong(s);
-                case FLOAT4 -> BBTool.ofFloat(s);
-                case FLOAT8 -> BBTool.ofDouble(s);
+            case "java.lang.Short" -> switch (oid) {
+                case INT2, DEFAULT -> BBTool.ofShort((short)x);
+                case INT4, OID -> BBTool.ofInt((short)x);
+                case INT8 -> BBTool.ofLong((short)x);
+                case FLOAT4 -> BBTool.ofFloat((short)x);
+                case FLOAT8 -> BBTool.ofDouble((short)x);
                 default -> binEncodingError(x, oid);
             };
 
-            case Integer i -> switch (oid) {
-                case INT2 -> BBTool.ofShort(i.shortValue());
-                case INT4, OID, DEFAULT -> BBTool.ofInt(i);
-                case INT8 -> BBTool.ofLong(i);
-                case FLOAT4 -> BBTool.ofFloat(i);
-                case FLOAT8 -> BBTool.ofDouble(i);
+            case "java.lang.Integer" -> switch (oid) {
+                case INT2 -> BBTool.ofShort(((Integer)x).shortValue());
+                case INT4, OID, DEFAULT -> BBTool.ofInt((int)x);
+                case INT8 -> BBTool.ofLong((int)x);
+                case FLOAT4 -> BBTool.ofFloat((int)x);
+                case FLOAT8 -> BBTool.ofDouble((int)x);
                 default -> binEncodingError(x, oid);
             };
 
-            case Long l -> switch (oid) {
-                case INT2 -> BBTool.ofShort(l.shortValue());
-                case INT4, OID -> BBTool.ofInt(l.intValue());
-                case INT8, DEFAULT -> BBTool.ofLong(l);
-                case FLOAT4 -> BBTool.ofFloat(l);
-                case FLOAT8 -> BBTool.ofDouble(l);
+            case "java.lang.Long" -> switch (oid) {
+                case INT2 -> BBTool.ofShort(((Long)x).shortValue());
+                case INT4, OID -> BBTool.ofInt(((Long)x).intValue());
+                case INT8, DEFAULT -> BBTool.ofLong((long)x);
+                case FLOAT4 -> BBTool.ofFloat((long)x);
+                case FLOAT8 -> BBTool.ofDouble((long)x);
                 default -> binEncodingError(x, oid);
             };
 
-            case Byte b -> switch (oid) {
-                case INT2, DEFAULT -> BBTool.ofShort(b);
-                case INT4 -> BBTool.ofInt(b);
-                case INT8 -> BBTool.ofLong(b);
+            case "java.lang.Byte" -> switch (oid) {
+                case INT2, DEFAULT -> BBTool.ofShort((byte)x);
+                case INT4 -> BBTool.ofInt((byte)x);
+                case INT8 -> BBTool.ofLong((byte)x);
                 default -> binEncodingError(x, oid);
             };
 
-            case Boolean b -> switch (oid) {
+            case "java.lang.Boolean" -> switch (oid) {
                 case BOOL, DEFAULT -> {
                     ByteBuffer buf = ByteBuffer.allocate(1);
-                    buf.put(b ? (byte)1 : (byte)0);
+                    buf.put((boolean)x ? (byte)1 : (byte)0);
                     yield buf;
                 }
                 default -> binEncodingError(x, oid);
             };
 
-            case UUID u -> switch (oid) {
+            case "java.util.UUID" -> switch (oid) {
                 case UUID, DEFAULT -> {
                     ByteBuffer buf = ByteBuffer.allocate(16);
-                    buf.putLong(u.getMostSignificantBits());
-                    buf.putLong(u.getLeastSignificantBits());
+                    buf.putLong(((UUID)x).getMostSignificantBits());
+                    buf.putLong(((UUID)x).getLeastSignificantBits());
                     yield buf;
                 }
                 case TEXT, VARCHAR -> {
-                    byte[] bytes = getBytes(u.toString(), codecParams);
+                    byte[] bytes = getBytes(x.toString(), codecParams);
                     yield ByteBuffer.wrap(bytes);
                 }
                 default -> binEncodingError(x, oid);
             };
 
-            case Float f -> switch (oid) {
-                case FLOAT4, DEFAULT -> BBTool.ofFloat(f);
-                case FLOAT8 -> BBTool.ofDouble(f);
+            case "java.lang.Float" -> switch (oid) {
+                case FLOAT4, DEFAULT -> BBTool.ofFloat((float)x);
+                case FLOAT8 -> BBTool.ofDouble((float)x);
                 default -> binEncodingError(x, oid);
             };
 
-            case Double d -> switch (oid) {
+            case "java.lang.Double" -> switch (oid) {
                 case FLOAT4 -> {
-                    float f = d.floatValue();
+                    float f = (float)x;
 
                     if (Float.isInfinite(f)) {
-                        throw new PGError("double->float coercion led to an infinite value: %s", d);
+                        throw new PGError("double->float coercion led to an infinite value: %s", x);
                     }
                     if (Float.isNaN(f)) {
-                        throw new PGError("double->float coercion led to a NAN value: %s", d);
+                        throw new PGError("double->float coercion led to a NAN value: %s", x);
                     }
 
                     yield BBTool.ofFloat(f);
                 }
-                case FLOAT8, DEFAULT -> BBTool.ofDouble(d);
+                case FLOAT8, DEFAULT -> BBTool.ofDouble((double)x);
                 default -> binEncodingError(x, oid);
             };
 
-            case JSON.Wrapper w -> switch (oid) {
+            case "com.github.igrishaev.util.JSON.Wrapper" -> switch (oid) {
                 case JSON, JSONB, DEFAULT -> {
                     // TODO; guess the size?
                     ByteArrayOutputStream out = new ByteArrayOutputStream(Const.JSON_ENC_BUF_SIZE);
-                    JSON.writeValue(out, w.value());
+                    JSON.writeValue(out, ((JSON.Wrapper)x).value());
                     yield ByteBuffer.wrap(out.toByteArray());
                 }
-                default -> binEncodingError(w.value(), oid);
+                default -> binEncodingError(((JSON.Wrapper)x).value(), oid);
             };
 
-            case IPersistentCollection c -> switch (oid) {
+            case "clojure.lang.PersistentArrayMap",
+                    "clojure.lang.PersistentHashMap" -> switch (oid) {
                 case JSON, JSONB, DEFAULT -> {
                     // TODO; guess the size?
                     ByteArrayOutputStream out = new ByteArrayOutputStream(Const.JSON_ENC_BUF_SIZE);
-                    JSON.writeValue(out, c);
+                    JSON.writeValue(out, x);
                     yield ByteBuffer.wrap(out.toByteArray());
                 }
                 default -> binEncodingError(x, oid);
             };
 
-            case Date d -> switch (oid) {
-                case DATE -> DateTimeBin.encodeDATE(LocalDate.ofInstant(d.toInstant(), ZoneOffset.UTC));
-                case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP(d.toInstant());
-                case TIMESTAMPTZ, DEFAULT -> DateTimeBin.encodeTIMESTAMPTZ(d.toInstant());
+            case "java.util.Date" -> switch (oid) {
+                case DATE -> DateTimeBin.encodeDATE(LocalDate.ofInstant(((Date)x).toInstant(), ZoneOffset.UTC));
+                case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP(((Date)x).toInstant());
+                case TIMESTAMPTZ, DEFAULT -> DateTimeBin.encodeTIMESTAMPTZ(((Date)x).toInstant());
                 default -> binEncodingError(x, oid);
             };
 
-            case OffsetTime ot -> switch (oid) {
-                case TIME -> DateTimeBin.encodeTIME(ot.toLocalTime());
-                case TIMETZ, DEFAULT -> DateTimeBin.encodeTIMETZ(ot);
+            case "java.time.OffsetTime" -> switch (oid) {
+                case TIME -> DateTimeBin.encodeTIME(((OffsetTime)x).toLocalTime());
+                case TIMETZ, DEFAULT -> DateTimeBin.encodeTIMETZ((OffsetTime)x);
                 default -> binEncodingError(x, oid);
             };
 
-            case LocalTime lt -> switch (oid) {
-                case TIME, DEFAULT -> DateTimeBin.encodeTIME(lt);
-                case TIMETZ -> DateTimeBin.encodeTIMETZ(lt.atOffset(ZoneOffset.UTC));
+            case "java.time.LocalTime" -> switch (oid) {
+                case TIME, DEFAULT -> DateTimeBin.encodeTIME((LocalTime)x);
+                case TIMETZ -> DateTimeBin.encodeTIMETZ(((LocalTime)x).atOffset(ZoneOffset.UTC));
                 default -> binEncodingError(x, oid);
             };
 
-            case LocalDate ld -> switch (oid) {
-                case DATE, DEFAULT -> DateTimeBin.encodeDATE(ld);
+            case "java.time.LocalDate" -> switch (oid) {
+                case DATE, DEFAULT -> DateTimeBin.encodeDATE((LocalDate)x);
                 case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP(
-                        ld.atStartOfDay(ZoneOffset.UTC).toInstant()
+                        ((LocalDate)x).atStartOfDay(ZoneOffset.UTC).toInstant()
                 );
                 case TIMESTAMPTZ -> DateTimeBin.encodeTIMESTAMPTZ(
-                        ld.atStartOfDay(ZoneOffset.UTC).toInstant()
+                        ((LocalDate)x).atStartOfDay(ZoneOffset.UTC).toInstant()
                 );
                 default -> binEncodingError(x, oid);
             };
 
-            case LocalDateTime ldt -> switch (oid) {
-                case DATE -> DateTimeBin.encodeDATE(ldt.toLocalDate());
-                case TIMESTAMP, DEFAULT -> DateTimeBin.encodeTIMESTAMP(ldt.toInstant(ZoneOffset.UTC));
-                case TIMESTAMPTZ -> DateTimeBin.encodeTIMESTAMPTZ(ldt.toInstant(ZoneOffset.UTC));
+            case "java.time.LocalDateTime" -> switch (oid) {
+                case DATE -> DateTimeBin.encodeDATE(((LocalDateTime)x).toLocalDate());
+                case TIMESTAMP, DEFAULT -> DateTimeBin.encodeTIMESTAMP(((LocalDateTime)x).toInstant(ZoneOffset.UTC));
+                case TIMESTAMPTZ -> DateTimeBin.encodeTIMESTAMPTZ(((LocalDateTime)x).toInstant(ZoneOffset.UTC));
                 default -> binEncodingError(x, oid);
             };
 
-            case ZonedDateTime zdt -> switch (oid) {
-                case DATE -> DateTimeBin.encodeDATE(zdt.toLocalDate());
-                case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP(zdt);
-                case TIMESTAMPTZ, DEFAULT -> DateTimeBin.encodeTIMESTAMPTZ(zdt);
+            case "java.time.ZonedDateTime" -> switch (oid) {
+                case DATE -> DateTimeBin.encodeDATE(((ZonedDateTime)x).toLocalDate());
+                case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP((ZonedDateTime)x);
+                case TIMESTAMPTZ, DEFAULT -> DateTimeBin.encodeTIMESTAMPTZ((ZonedDateTime)x);
                 default -> binEncodingError(x, oid);
             };
 
-            case OffsetDateTime odt -> switch (oid) {
-                case DATE -> DateTimeBin.encodeDATE(odt.toLocalDate());
-                case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP(odt);
-                case TIMESTAMPTZ, DEFAULT -> DateTimeBin.encodeTIMESTAMPTZ(odt);
+            case "java.time.OffsetDateTime" -> switch (oid) {
+                case DATE -> DateTimeBin.encodeDATE(((OffsetDateTime)x).toLocalDate());
+                case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP((OffsetDateTime)x);
+                case TIMESTAMPTZ, DEFAULT -> DateTimeBin.encodeTIMESTAMPTZ((OffsetDateTime)x);
                 default -> binEncodingError(x, oid);
             };
 
-            case Instant i -> switch (oid) {
-                case DATE -> DateTimeBin.encodeDATE(LocalDate.ofInstant(i, ZoneOffset.UTC));
-                case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP(i);
-                case TIMESTAMPTZ, DEFAULT -> DateTimeBin.encodeTIMESTAMPTZ(i);
+            case "java.time.Instant" -> switch (oid) {
+                case DATE -> DateTimeBin.encodeDATE(LocalDate.ofInstant((Instant)x, ZoneOffset.UTC));
+                case TIMESTAMP -> DateTimeBin.encodeTIMESTAMP((Instant)x);
+                case TIMESTAMPTZ, DEFAULT -> DateTimeBin.encodeTIMESTAMPTZ((Instant)x);
                 default -> binEncodingError(x, oid);
             };
 
-            case BigDecimal bd -> switch (oid) {
-                case NUMERIC, DEFAULT -> NumericBin.encode(bd);
-                case INT2 -> BBTool.ofShort(bd.shortValueExact());
-                case INT4 -> BBTool.ofInt(bd.intValueExact());
-                case INT8 -> BBTool.ofLong(bd.longValueExact());
-                case FLOAT4 -> BBTool.ofFloat(bd.floatValue());
-                case FLOAT8 -> BBTool.ofDouble(bd.doubleValue());
+            case "java.math.BigDecimal" -> switch (oid) {
+                case NUMERIC, DEFAULT -> NumericBin.encode((BigDecimal)x);
+                case INT2 -> BBTool.ofShort(((BigDecimal)x).shortValueExact());
+                case INT4 -> BBTool.ofInt(((BigDecimal)x).intValueExact());
+                case INT8 -> BBTool.ofLong(((BigDecimal)x).longValueExact());
+                case FLOAT4 -> BBTool.ofFloat(((BigDecimal)x).floatValue());
+                case FLOAT8 -> BBTool.ofDouble(((BigDecimal)x).doubleValue());
                 default -> binEncodingError(x, oid);
             };
 
-            case BigInteger bi -> switch (oid) {
-                case NUMERIC, DEFAULT -> NumericBin.encode(new BigDecimal(bi));
-                case INT2 -> BBTool.ofShort(bi.shortValueExact());
-                case INT4 -> BBTool.ofInt(bi.intValueExact());
-                case INT8 -> BBTool.ofLong(bi.longValueExact());
-                case FLOAT4 -> BBTool.ofFloat(bi.floatValue());
-                case FLOAT8 -> BBTool.ofDouble(bi.doubleValue());
+            case "java.math.BigInteger" -> switch (oid) {
+                case NUMERIC, DEFAULT -> NumericBin.encode(new BigDecimal((BigInteger)x));
+                case INT2 -> BBTool.ofShort(((BigInteger)x).shortValueExact());
+                case INT4 -> BBTool.ofInt(((BigInteger)x).intValueExact());
+                case INT8 -> BBTool.ofLong(((BigInteger)x).longValueExact());
+                case FLOAT4 -> BBTool.ofFloat(((BigInteger)x).floatValue());
+                case FLOAT8 -> BBTool.ofDouble(((BigInteger)x).doubleValue());
                 default -> binEncodingError(x, oid);
             };
 
-            case BigInt bi -> switch (oid) {
-                case NUMERIC, DEFAULT -> NumericBin.encode(bi.toBigDecimal());
-                case INT2 -> BBTool.ofShort(bi.shortValue());
-                case INT4 -> BBTool.ofInt(bi.intValue());
-                case INT8 -> BBTool.ofLong(bi.longValue());
-                case FLOAT4 -> BBTool.ofFloat(bi.floatValue());
-                case FLOAT8 -> BBTool.ofDouble(bi.doubleValue());
+            case "clojure.lang.BigInt" -> switch (oid) {
+                case NUMERIC, DEFAULT -> NumericBin.encode(((BigInt)x).toBigDecimal());
+                case INT2 -> BBTool.ofShort(((BigInt)x).shortValue());
+                case INT4 -> BBTool.ofInt(((BigInt)x).intValue());
+                case INT8 -> BBTool.ofLong(((BigInt)x).longValue());
+                case FLOAT4 -> BBTool.ofFloat(((BigInt)x).floatValue());
+                case FLOAT8 -> BBTool.ofDouble(((BigInt)x).doubleValue());
                 default -> binEncodingError(x, oid);
             };
 
