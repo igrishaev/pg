@@ -3,6 +3,7 @@
 - complete client tests
 - test json wrapper (with null)
 - test wrong OID hint
+- test enum types
 - rename the package
 - arrays
   - decode txt
