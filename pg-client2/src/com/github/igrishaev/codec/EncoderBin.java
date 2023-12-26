@@ -165,7 +165,7 @@ public class EncoderBin {
                     JSON.writeValue(out, ((JSON.Wrapper)x).value());
                     yield ByteBuffer.wrap(out.toByteArray());
                 }
-                default -> binEncodingError(((JSON.Wrapper)x).value(), oid);
+                default -> binEncodingError(x, oid);
             };
 
             case "clojure.lang.PersistentArrayMap",

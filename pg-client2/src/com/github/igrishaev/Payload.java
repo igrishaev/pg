@@ -89,15 +89,15 @@ public class Payload {
 
         buf.putInt(size + 4);
 
-        for(Object item: items) {
-            switch (item) {
-                case Integer i -> buf.putInt(i);
-                case Short s -> buf.putShort(s);
-                case ByteBuffer bb -> buf.put(bb);
-                case Byte b -> buf.put(b);
-                case Long l -> buf.putLong(l);
-                case byte[] bs -> buf.put(bs);
-                default -> throw new PGError("unsupported item: %s", item);
+        for(Object x: items) {
+            switch (x.getClass().getName()) {
+                case "Integer" -> buf.putInt((int)x);
+                case "Short" -> buf.putShort((short)x);
+                case "ByteBuffer" -> buf.put((ByteBuffer)x);
+                case "Byte" -> buf.put((byte)x);
+                case "Long" -> buf.putLong((long)x);
+                case "byte[]" -> buf.put((byte[])x);
+                default -> throw new PGError("unsupported item: %s", x);
             }
         }
         return buf;

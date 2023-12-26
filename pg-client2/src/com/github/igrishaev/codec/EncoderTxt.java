@@ -39,165 +39,145 @@ public class EncoderTxt {
 
     public static String encode(final Object x, final OID oid, final CodecParams codecParams) {
 
-        return switch (x) {
+        if (x == null) {
+            throw new PGError("cannot text-encode a null value");
+        }
 
-            case null -> throw new PGError("cannot text-encode a null value");
+        return switch (x.getClass().getCanonicalName()) {
 
-            case Symbol s -> switch (oid) {
-                case TEXT, VARCHAR, DEFAULT -> s.toString();
+            case "clojure.lang.Symbol" -> switch (oid) {
+                case TEXT, VARCHAR, DEFAULT -> x.toString();
                 default -> txtEncodingError(x, oid);
             };
 
-            case Character c -> switch (oid) {
-                case TEXT, VARCHAR, CHAR, DEFAULT -> c.toString();
+            case "java.lang.Character" -> switch (oid) {
+                case TEXT, VARCHAR, CHAR, DEFAULT -> x.toString();
                 default -> txtEncodingError(x, oid);
             };
 
-            case String s -> switch (oid) {
-                case TEXT, VARCHAR, NAME, JSON, JSONB, DEFAULT -> s;
+            case "java.lang.String" -> switch (oid) {
+                case TEXT, VARCHAR, NAME, JSON, JSONB, DEFAULT -> (String)x;
                 default -> txtEncodingError(x, oid);
             };
 
-            case Short s -> switch (oid) {
-                case INT2, DEFAULT -> String.valueOf(s);
-                case INT4, OID -> String.valueOf(s.intValue());
-                case INT8 -> String.valueOf(s.longValue());
+            case "java.lang.Short",
+                    "java.lang.Integer",
+                    "java.lang.Long"-> switch (oid) {
+                case INT2, INT4, INT8, OID, NUMERIC, DEFAULT -> x.toString();
                 default -> txtEncodingError(x, oid);
             };
 
-            case byte[] ba -> switch (oid) {
-                case BYTEA, DEFAULT -> HexTool.formatHex(ba, "\\x");
+            case "byte[]" -> switch (oid) {
+                case BYTEA, DEFAULT -> HexTool.formatHex((byte[])x, "\\x");
                 default -> txtEncodingError(x, oid);
             };
 
-            case Integer i -> switch (oid) {
-                case INT2 -> String.valueOf(i.shortValue());
-                case INT4, OID, DEFAULT -> String.valueOf(i);
-                case INT8 -> String.valueOf(i.longValue());
+
+            case "java.lang.Float",
+                    "java.lang.Double"-> switch (oid) {
+                case FLOAT4, FLOAT8, DEFAULT -> x.toString();
                 default -> txtEncodingError(x, oid);
             };
 
-            case Long l -> switch (oid) {
-                case INT2 -> String.valueOf(l.shortValue());
-                case INT4, OID -> String.valueOf(l.intValue());
-                case INT8, DEFAULT -> String.valueOf(l);
+            case "java.util.UUID" -> switch (oid) {
+                case UUID, TEXT, VARCHAR, DEFAULT -> x.toString();
                 default -> txtEncodingError(x, oid);
             };
 
-            case Float f -> switch (oid) {
-                case FLOAT4, DEFAULT -> String.valueOf(f);
-                case FLOAT8 -> String.valueOf(f.doubleValue());
+            case "java.lang.Boolean" -> switch (oid) {
+                case BOOL, DEFAULT -> (boolean)x ? "t" : "f";
                 default -> txtEncodingError(x, oid);
             };
 
-            case Double d -> switch (oid) {
-                case FLOAT4 -> String.valueOf(d.floatValue());
-                case FLOAT8, DEFAULT -> String.valueOf(d);
+            case "java.math.BigDecimal" -> switch (oid) {
+                case NUMERIC, FLOAT4, FLOAT8, DEFAULT -> x.toString();
                 default -> txtEncodingError(x, oid);
             };
 
-            case UUID u -> switch (oid) {
-                case UUID, TEXT, VARCHAR, DEFAULT -> String.valueOf(u);
+            case "java.math.BigInteger",
+                    "clojure.lang.BigInt" -> switch (oid) {
+                case INT2, INT4, INT8, FLOAT4, FLOAT8, NUMERIC, DEFAULT -> x.toString();
                 default -> txtEncodingError(x, oid);
             };
 
-            case Boolean b -> switch (oid) {
-                case BOOL, DEFAULT -> b ? "t" : "f";
-                default -> txtEncodingError(x, oid);
-            };
-
-            case BigDecimal bd -> switch (oid) {
-                case NUMERIC, FLOAT4, FLOAT8, DEFAULT -> bd.toString();
-                default -> txtEncodingError(x, oid);
-            };
-
-            case BigInteger bi -> switch (oid) {
-                case INT2, INT4, INT8, DEFAULT -> bi.toString();
-                default -> txtEncodingError(x, oid);
-            };
-
-            case BigInt bi -> switch (oid) {
-                case INT2, INT4, INT8, DEFAULT -> bi.toString();
-                default -> txtEncodingError(x, oid);
-            };
-
-            case JSON.Wrapper w -> switch (oid) {
+            case "com.github.igrishaev.util.JSON.Wrapper" -> switch (oid) {
                 case JSON, JSONB, DEFAULT -> {
                     // TODO: maybe return bytes?
                     // TODO: guess the initial size?
                     final StringWriter writer = new StringWriter(Const.JSON_ENC_BUF_SIZE);
-                    JSON.writeValue(writer, w.value());
+                    JSON.writeValue(writer, ((JSON.Wrapper)x).value());
                     yield writer.toString();
                 }
-                default -> txtEncodingError(w.value(), oid);
+                default -> txtEncodingError(x, oid);
             };
 
-            case IPersistentCollection c -> switch (oid) {
+            case "clojure.lang.PersistentArrayMap",
+                    "clojure.lang.PersistentHashMap" -> switch (oid) {
                 // TODO: maybe return bytes?
                 // TODO: guess the initial size?
                 case JSON, JSONB, DEFAULT -> {
                     final StringWriter writer = new StringWriter(Const.JSON_ENC_BUF_SIZE);
-                    JSON.writeValue(writer, c);
+                    JSON.writeValue(writer, x);
                     yield writer.toString();
                 }
-                default -> txtEncodingError(c, oid);
-            };
-
-            case Date d -> switch (oid) {
-                case DATE -> DateTimeTxt.encodeDATE(LocalDate.ofInstant(d.toInstant(), ZoneOffset.UTC));
-                case TIMESTAMP -> DateTimeTxt.encodeTIMESTAMP(d.toInstant());
-                case TIMESTAMPTZ, DEFAULT -> DateTimeTxt.encodeTIMESTAMPTZ(d.toInstant());
                 default -> txtEncodingError(x, oid);
             };
 
-            case OffsetTime ot -> switch (oid) {
-                case TIME -> DateTimeTxt.encodeTIME(ot.toLocalTime());
-                case TIMETZ, DEFAULT -> DateTimeTxt.encodeTIMETZ(ot);
+            case "java.util.Date" -> switch (oid) {
+                case DATE -> DateTimeTxt.encodeDATE(LocalDate.ofInstant(((Date)x).toInstant(), ZoneOffset.UTC));
+                case TIMESTAMP -> DateTimeTxt.encodeTIMESTAMP(((Date)x).toInstant());
+                case TIMESTAMPTZ, DEFAULT -> DateTimeTxt.encodeTIMESTAMPTZ(((Date)x).toInstant());
                 default -> txtEncodingError(x, oid);
             };
 
-            case LocalTime lt -> switch (oid) {
-                case TIME, DEFAULT -> DateTimeTxt.encodeTIME(lt);
-                case TIMETZ -> DateTimeTxt.encodeTIMETZ(lt.atOffset(ZoneOffset.UTC));
+            case "java.time.OffsetTime" -> switch (oid) {
+                case TIME -> DateTimeTxt.encodeTIME(((OffsetTime)x).toLocalTime());
+                case TIMETZ, DEFAULT -> DateTimeTxt.encodeTIMETZ(((OffsetTime)x));
                 default -> txtEncodingError(x, oid);
             };
 
-            case LocalDate ld -> switch (oid) {
-                case DATE, DEFAULT -> DateTimeTxt.encodeDATE(ld);
+            case "java.time.LocalTime" -> switch (oid) {
+                case TIME, DEFAULT -> DateTimeTxt.encodeTIME(((LocalTime)x));
+                case TIMETZ -> DateTimeTxt.encodeTIMETZ(((LocalTime)x).atOffset(ZoneOffset.UTC));
+                default -> txtEncodingError(x, oid);
+            };
+
+            case "java.time.LocalDate" -> switch (oid) {
+                case DATE, DEFAULT -> DateTimeTxt.encodeDATE(((LocalDate)x));
                 case TIMESTAMP -> DateTimeTxt.encodeTIMESTAMP(
-                        ld.atStartOfDay(ZoneOffset.UTC).toInstant()
+                        ((LocalDate)x).atStartOfDay(ZoneOffset.UTC).toInstant()
                 );
                 case TIMESTAMPTZ -> DateTimeTxt.encodeTIMESTAMPTZ(
-                        ld.atStartOfDay(ZoneOffset.UTC).toInstant()
+                        ((LocalDate)x).atStartOfDay(ZoneOffset.UTC).toInstant()
                 );
                 default -> txtEncodingError(x, oid);
             };
 
-            case LocalDateTime ldt -> switch (oid) {
-                case DATE -> DateTimeTxt.encodeDATE(ldt.toLocalDate());
-                case TIMESTAMP, DEFAULT -> DateTimeTxt.encodeTIMESTAMP(ldt.toInstant(ZoneOffset.UTC));
-                case TIMESTAMPTZ -> DateTimeTxt.encodeTIMESTAMPTZ(ldt.toInstant(ZoneOffset.UTC));
+            case "java.time.LocalDateTime" -> switch (oid) {
+                case DATE -> DateTimeTxt.encodeDATE(((LocalDateTime)x).toLocalDate());
+                case TIMESTAMP, DEFAULT -> DateTimeTxt.encodeTIMESTAMP(((LocalDateTime)x).toInstant(ZoneOffset.UTC));
+                case TIMESTAMPTZ -> DateTimeTxt.encodeTIMESTAMPTZ(((LocalDateTime)x).toInstant(ZoneOffset.UTC));
                 default -> txtEncodingError(x, oid);
             };
 
-            case ZonedDateTime zdt -> switch (oid) {
-                case DATE -> DateTimeTxt.encodeDATE(zdt.toLocalDate());
-                case TIMESTAMP -> DateTimeTxt.encodeTIMESTAMP(zdt);
-                case TIMESTAMPTZ, DEFAULT -> DateTimeTxt.encodeTIMESTAMPTZ(zdt);
+            case "java.time.ZonedDateTime" -> switch (oid) {
+                case DATE -> DateTimeTxt.encodeDATE(((ZonedDateTime)x).toLocalDate());
+                case TIMESTAMP -> DateTimeTxt.encodeTIMESTAMP(((ZonedDateTime)x));
+                case TIMESTAMPTZ, DEFAULT -> DateTimeTxt.encodeTIMESTAMPTZ(((ZonedDateTime)x));
                 default -> txtEncodingError(x, oid);
             };
 
-            case OffsetDateTime odt -> switch (oid) {
-                case DATE -> DateTimeTxt.encodeDATE(odt.toLocalDate());
-                case TIMESTAMP -> DateTimeTxt.encodeTIMESTAMP(odt);
-                case TIMESTAMPTZ, DEFAULT -> DateTimeTxt.encodeTIMESTAMPTZ(odt);
+            case "java.time.OffsetDateTime" -> switch (oid) {
+                case DATE -> DateTimeTxt.encodeDATE(((OffsetDateTime)x).toLocalDate());
+                case TIMESTAMP -> DateTimeTxt.encodeTIMESTAMP(((OffsetDateTime)x));
+                case TIMESTAMPTZ, DEFAULT -> DateTimeTxt.encodeTIMESTAMPTZ(((OffsetDateTime)x));
                 default -> txtEncodingError(x, oid);
             };
 
-            case Instant i -> switch (oid) {
-                case DATE -> DateTimeTxt.encodeDATE(LocalDate.ofInstant(i, ZoneOffset.UTC));
-                case TIMESTAMP -> DateTimeTxt.encodeTIMESTAMP(i);
-                case TIMESTAMPTZ, DEFAULT -> DateTimeTxt.encodeTIMESTAMPTZ(i);
+            case "java.time.Instant" -> switch (oid) {
+                case DATE -> DateTimeTxt.encodeDATE(LocalDate.ofInstant((Instant)x, ZoneOffset.UTC));
+                case TIMESTAMP -> DateTimeTxt.encodeTIMESTAMP((Instant)x);
+                case TIMESTAMPTZ, DEFAULT -> DateTimeTxt.encodeTIMESTAMPTZ((Instant)x);
                 default -> txtEncodingError(x, oid);
             };
 

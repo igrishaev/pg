@@ -524,52 +524,50 @@ public class Connection implements Closeable {
     }
 
     private void handleMessage(Object msg, Accum acc) {
-        switch (msg) {
-            case NotificationResponse x ->
-                handleNotificationResponse(x);
-            case NoData ignored -> {}
-            case EmptyQueryResponse ignored -> {}
-            case CloseComplete ignored -> {}
-            case BindComplete ignored -> {}
-            case AuthenticationOk ignored -> {}
-            case AuthenticationCleartextPassword ignored ->
-                handleAuthenticationCleartextPassword();
-            case AuthenticationSASL x -> handleAuthenticationSASL(x, acc);
-            case AuthenticationSASLContinue x -> handleAuthenticationSASLContinue(x, acc);
-            case AuthenticationSASLFinal x -> handleAuthenticationSASLFinal(x, acc);
-            case NoticeResponse x ->
-                handleNoticeResponse(x);
-            case ParameterStatus x ->
-                handleParameterStatus(x);
-            case RowDescription x ->
-                handleRowDescription(x, acc);
-            case DataRow x ->
-                handleDataRow(x, acc);
-            case ReadyForQuery x ->
-                handleReadyForQuery(x);
-            case PortalSuspended x ->
-                handlePortalSuspended(x, acc);
-            case AuthenticationMD5Password x ->
-                handleAuthenticationMD5Password(x);
-            case NegotiateProtocolVersion x ->
-                handleNegotiateProtocolVersion(x);
-            case CommandComplete x ->
-                handleCommandComplete(x, acc);
-            case ErrorResponse x ->
-                handleErrorResponse(x, acc);
-            case BackendKeyData x ->
-                handleBackendKeyData(x);
-            case ParameterDescription x ->
-                handleParameterDescription(x, acc);
-            case ParseComplete x ->
-                handleParseComplete(x, acc);
-            case CopyOutResponse x ->
-                handleCopyOutResponse(x, acc);
-            case CopyData x ->
-                handleCopyData(x, acc);
-            case CopyInResponse ignored ->
-                handleCopyInResponse(acc);
-            case CopyDone ignored -> {}
+        switch (msg.getClass().getName()) {
+            case "NotificationResponse" ->
+                    handleNotificationResponse((NotificationResponse)msg);
+            case "NoData", "EmptyQueryResponse", "CloseComplete", "BindComplete", "AuthenticationOk", "CopyDone" -> {}
+            case "AuthenticationCleartextPassword" ->
+                    handleAuthenticationCleartextPassword();
+            case "AuthenticationSASL" ->
+                    handleAuthenticationSASL((AuthenticationSASL)msg, acc);
+            case "AuthenticationSASLContinue" ->
+                    handleAuthenticationSASLContinue((AuthenticationSASLContinue)msg, acc);
+            case "AuthenticationSASLFinal" ->
+                    handleAuthenticationSASLFinal((AuthenticationSASLFinal)msg, acc);
+            case "NoticeResponse" ->
+                    handleNoticeResponse((NoticeResponse)msg);
+            case "ParameterStatus" ->
+                    handleParameterStatus((ParameterStatus)msg);
+            case "RowDescription" ->
+                    handleRowDescription((RowDescription)msg, acc);
+            case "DataRow" ->
+                    handleDataRow((DataRow)msg, acc);
+            case "ReadyForQuery" ->
+                    handleReadyForQuery((ReadyForQuery)msg);
+            case "PortalSuspended" ->
+                    handlePortalSuspended((PortalSuspended)msg, acc);
+            case "AuthenticationMD5Password" ->
+                    handleAuthenticationMD5Password((AuthenticationMD5Password)msg);
+            case "NegotiateProtocolVersion" ->
+                    handleNegotiateProtocolVersion((NegotiateProtocolVersion)msg);
+            case "CommandComplete" ->
+                    handleCommandComplete((CommandComplete)msg, acc);
+            case "ErrorResponse" ->
+                handleErrorResponse((ErrorResponse)msg, acc);
+            case "BackendKeyData" ->
+                    handleBackendKeyData((BackendKeyData)msg);
+            case "ParameterDescription" ->
+                    handleParameterDescription((ParameterDescription)msg, acc);
+            case "ParseComplete" ->
+                    handleParseComplete((ParseComplete)msg, acc);
+            case "CopyOutResponse" ->
+                    handleCopyOutResponse((CopyOutResponse)msg, acc);
+            case "CopyData" ->
+                    handleCopyData((CopyData)msg, acc);
+            case "CopyInResponse" ->
+                    handleCopyInResponse(acc);
             default -> throw new PGError("Cannot handle this message: %s", msg);
         }
     }
@@ -865,9 +863,9 @@ public class Connection implements Closeable {
     }
 
     private static Boolean isEnough (Object msg, Phase phase) {
-        return switch (msg) {
-            case ReadyForQuery ignored -> true;
-            case ErrorResponse ignored -> phase == Phase.AUTH;
+        return switch (msg.getClass().getName()) {
+            case "ReadyForQuery" -> true;
+            case "ErrorResponse" -> phase == Phase.AUTH;
             default -> false;
         };
     }
