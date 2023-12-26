@@ -16,32 +16,36 @@ import java.util.Date;
 public class OIDHint {
 
     public static OID guessOID (Object x) {
-        return switch (x) {
-            case Short ignored -> OID.INT2;
-            case Integer ignored -> OID.INT4;
-            case Long ignored -> OID.INT8;
-            case Float ignored -> OID.FLOAT4;
-            case Double ignored -> OID.FLOAT8;
-            case Boolean ignored -> OID.BOOL;
-            case String ignored -> OID.TEXT;
-            case Character ignored -> OID.TEXT;
-            case IPersistentCollection ignored -> OID.JSON;
-            case Symbol ignored -> OID.TEXT;
-            case UUID ignored -> OID.UUID;
-            case JSON.Wrapper ignored -> OID.JSON;
-            case byte[] ignored -> OID.BYTEA;
-            case ByteBuffer ignored -> OID.BYTEA;
-            case Date ignored -> OID.TIMESTAMPTZ;
-            case LocalTime ignored -> OID.TIME;
-            case OffsetTime ignored -> OID.TIMETZ;
-            case LocalDate ignored -> OID.DATE;
-            case LocalDateTime ignored -> OID.TIMESTAMPTZ;
-            case OffsetDateTime ignored -> OID.TIMESTAMPTZ;
-            case Instant ignored -> OID.TIMESTAMPTZ;
-            case BigDecimal ignored -> OID.NUMERIC;
-            case BigInteger ignored -> OID.NUMERIC;
-            case BigInt ignored -> OID.NUMERIC;
-            case null, default -> OID.DEFAULT;
+        if (x == null) {
+            return OID.DEFAULT;
+        }
+        return switch (x.getClass().getCanonicalName()) {
+            case "java.lang.Short" -> OID.INT2;
+            case "java.lang.Integer" -> OID.INT4;
+            case "java.lang.Long" -> OID.INT8;
+            case "java.lang." -> OID.FLOAT4;
+            case "java.lang.Double" -> OID.FLOAT8;
+            case "java.lang.Boolean" -> OID.BOOL;
+            case "java.lang.String" -> OID.TEXT;
+            case "java.lang.Character" -> OID.TEXT;
+            case "clojure.lang.PersistentArrayMap",
+                    "clojure.lang.PersistentHashMap" -> OID.JSON;
+            case "clojure.lang.Symbol" -> OID.TEXT;
+            case "java.util.UUID" -> OID.UUID;
+            case "com.github.igrishaev.util.JSON.Wrapper" -> OID.JSON;
+            case "byte[]" -> OID.BYTEA;
+            case "java.nio.ByteBuffer" -> OID.BYTEA;
+            case "java.util.Date" -> OID.TIMESTAMPTZ;
+            case "java.time.LocalTime" -> OID.TIME;
+            case "java.time.OffsetTime" -> OID.TIMETZ;
+            case "java.time.LocalDate" -> OID.DATE;
+            case "java.time.LocalDateTime" -> OID.TIMESTAMPTZ;
+            case "java.time.OffsetDateTime" -> OID.TIMESTAMPTZ;
+            case "java.time.Instant" -> OID.TIMESTAMPTZ;
+            case "java.math.BigDecimal"  -> OID.NUMERIC;
+            case "java.math.BigInteger" -> OID.NUMERIC;
+            case "clojure.lang.BigInt" -> OID.NUMERIC;
+            default -> OID.DEFAULT;
         };
     }
 
