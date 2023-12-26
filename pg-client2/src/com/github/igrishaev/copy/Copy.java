@@ -83,11 +83,8 @@ public class Copy {
             final ExecuteParams executeParams,
             final CodecParams codecParams
     ) {
-
-        // TODO: maybe return a list/array of buffers?
         final short count = (short) row.size();
         final ByteBuffer[] bufs = new ByteBuffer[count];
-
         final List<OID> OIDs = executeParams.OIDs();
         final int OIDLen = OIDs.size();
 

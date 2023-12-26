@@ -1,5 +1,4 @@
 - SSL support
-- bin copy in: array of BB
 - common test fixture
 - complete client tests
 - test json wrapper (with null)
