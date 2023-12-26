@@ -163,18 +163,14 @@
       (is (= [{:bar "hello"}] res2)))))
 
 
-;; todo
-#_
 (deftest test-client-socket-opt
 
-  (pg/with-connection [conn (update *CONFIG* :socket assoc
-                                    :tcp-no-delay? false
-                                    :keep-alive? false
-                                    :reuse-addr? false
-                                    :rcv-buf 1234
-                                    :snd-buf 4567
-                                    :timeout 5000
-                                    :oob-inline? true)]
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :so-keep-alive? true
+                                   :so-tcp-no-delay? true
+                                   :so-timeout 999
+                                   :so-recv-buf-size 123
+                                   :so-send-buf-size 456)]
 
     (let [res1
           (pg/query conn "select 1 as foo")]
@@ -945,7 +941,35 @@ drop table %1$s;
       (is (= [{:obj {:foo 123}}] res)))))
 
 
-;; TODO: test json wrapper
+(deftest test-client-json-wrapper
+  (pg/with-connection [conn *CONFIG*]
+    (let [res
+          (pg/execute conn
+                      "select $1::json as obj"
+                      {:params [(pg/json-wrap 42)]
+                       :first? true})]
+      (is (= {:obj 42} res)))))
+
+
+(deftest test-client-json-wrapper-nil
+  (pg/with-connection [conn *CONFIG*]
+    (let [res
+          (pg/execute conn
+                      "select $1::json as obj"
+                      {:params [(pg/json-wrap nil)]
+                       :first? true})]
+      (is (= {:obj nil} res)))))
+
+
+(deftest test-client-json-write
+  (pg/with-connection [conn *CONFIG*]
+    (let [res
+          (pg/execute conn
+                      "select $1::json as obj"
+                      {:params [{:foo 123}]
+                       :first? true})]
+      (is (= {:obj {:foo 123}} res)))))
+
 
 (deftest test-client-json-write
   (pg/with-connection [conn *CONFIG*]
@@ -976,10 +1000,6 @@ drop table %1$s;
                        :oids [oid/jsonb]
                        :first? true})]
       (is (= {:obj {:foo 123}} res)))))
-
-
-;; TODO: wrong oid hint
-;; TODO: more oids than params
 
 
 (deftest test-client-jsonb-write
@@ -1422,9 +1442,23 @@ drop table %1$s;
       (is (= [{:eq true}] res)))))
 
 
-;; TODO: prepare
-;; TODO: execute String
-;; TODO: execute PrStmt
+(deftest test-pass-and-get-nil
+  (pg/with-connection [conn *CONFIG*]
+    (let [res
+          (pg/execute conn
+                      "select null as one, $1::int2 as two"
+                      {:params [nil]})]
+      (is (= [{:one nil, :two nil}] res))))
+
+  (pg/with-connection [conn (assoc *CONFIG*
+                                   :binary-encode? true
+                                   :binary-decode? true)]
+    (let [res
+          (pg/execute conn
+                      "select null as one, $1::int2 as two"
+                      {:params [nil]})]
+      (is (= [{:one nil, :two nil}] res)))))
+
 
 (deftest test-execute-weird-param
   (pg/with-connection [conn *CONFIG*]
@@ -1552,8 +1586,6 @@ drop table %1$s;
           (pg/execute conn "select $1 as uuid" {:params [uuid]})]
       (is (= [{:uuid uuid}] res)))))
 
-
-;; TODO: test execute with binary override
 
 (deftest test-time-bin-read
   (pg/with-connection [conn (assoc *CONFIG*
@@ -1914,8 +1946,6 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
              res)))))
 
 
-;; TODO: copy in maps, OID map?
-
 (deftest test-copy-in-stream-csv
 
   (pg/with-connection [conn *CONFIG*]
@@ -1976,8 +2006,6 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
         (is (= [{:one 1}] (pg/query conn "select 1 as one")))))))
 
 
-;; TODO: empty keys?
-
 (deftest test-copy-in-rows-exception-in-the-middle
 
   (pg/with-connection [conn *CONFIG*]
@@ -2032,6 +2060,32 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
       (is (= {:copied 2} res-copy))
 
       (is (= [{:id 1 :name "Ivan" :active true :note weird}
+              {:id 2 :name "Juan" :active false :note nil}]
+             res-query)))))
+
+
+(deftest test-copy-in-rows-null-values
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (pg/query conn "create temp table foo (id bigint, name text, active boolean, note text)")
+
+    (let [rows
+          [[1 "Ivan" true nil]
+           [2 "Juan" false nil]]
+
+          res-copy
+          (pg/copy-in-rows conn
+                           "copy foo (id, name, active, note) from STDIN WITH (FORMAT BINARY)"
+                           rows
+                           {:copy-bin? true})
+
+          res-query
+          (pg/query conn "select * from foo")]
+
+      (is (= {:copied 2} res-copy))
+
+      (is (= [{:id 1 :name "Ivan" :active true :note nil}
               {:id 2 :name "Juan" :active false :note nil}]
              res-query)))))
 
@@ -2124,7 +2178,7 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
                            "copy foo (id, name, active, note) from STDIN WITH (FORMAT CSV)"
                            maps
                            [:id :name :active :note]
-                           {:oids [oid/int2]
+                           {:oids [oid/int2 nil oid/bool nil nil nil nil]
                             :copy-csv? true})
 
           res-query
@@ -2135,6 +2189,37 @@ copy (select s.x as X from generate_series(1, 3) as s(x)) TO STDOUT WITH (FORMAT
       (is (= [{:id 1, :name "Ivan", :active true, :note "aaa"}
               {:id 2, :name "Juan", :active nil, :note nil}]
              res-query)))))
+
+
+(deftest test-copy-in-maps-wrong-oid
+
+  (pg/with-connection [conn *CONFIG*]
+
+    (pg/query conn "create temp table foo (id int2, name text, active boolean, note text)")
+
+    (let [weird
+          "foo'''b'ar\r\n\f\t\bsdf--NULL~!@#$%^&*()\"sdf\"\""
+
+          maps
+          [{:id 1 :name "Ivan" :active true :note "aaa"}
+           {:aaa false :id 2 :active nil :note nil :name "Juan" :extra "Kek" :lol 123}]
+
+          _
+          (try
+            (pg/copy-in-maps conn
+                             "copy foo (id, name, active, note) from STDIN WITH (FORMAT CSV)"
+                             maps
+                             [:id :name :active :note]
+                             {:oids [oid/json nil oid/bool nil nil nil nil]
+                              :copy-csv? true})
+            (is false)
+            (catch PGError e
+              (is true)))
+
+          res-query
+          (pg/query conn "select * from foo")]
+
+      (is (= [{:foo 42}] (pg/query conn "select 42 as foo"))))))
 
 
 (deftest test-copy-in-maps-ok-bin

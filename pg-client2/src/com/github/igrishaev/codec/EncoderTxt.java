@@ -38,6 +38,7 @@ public class EncoderTxt {
     }
 
     public static String encode(final Object x, final OID oid, final CodecParams codecParams) {
+
         return switch (x) {
 
             case null -> throw new PGError("cannot text-encode a null value");

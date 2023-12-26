@@ -30,7 +30,7 @@ public class JSON {
 
     public record Wrapper (Object value) {}
 
-    public static Wrapper wrap (Object value) {
+    public static Wrapper wrap (final Object value) {
         return new Wrapper(value);
     }
 
@@ -99,6 +99,15 @@ public class JSON {
             mapper.writeValue(writer, value);
         } catch (IOException e) {
             encodeError(e, value);
+        }
+    }
+
+    public static String writeValueToString (final Object value) {
+        try {
+            return mapper.writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            encodeError(e, value);
+            return "";
         }
     }
 

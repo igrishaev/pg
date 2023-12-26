@@ -90,8 +90,9 @@ public class Copy {
 
         int totalSize = 2;
 
-        for (short i = 0; i < count; i++) {
-            final Object item = row.get(i);
+        int i = -1;
+        for (final Object item: row) {
+            i++;
             if (item == null) {
                 totalSize += 4;
                 bufs[i] = null;

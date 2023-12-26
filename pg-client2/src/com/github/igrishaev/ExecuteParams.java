@@ -1,6 +1,7 @@
 package com.github.igrishaev;
 
 import clojure.lang.IFn;
+import clojure.lang.PersistentVector;
 import com.github.igrishaev.enums.CopyFormat;
 import com.github.igrishaev.enums.OID;
 import com.github.igrishaev.reducer.*;
@@ -106,7 +107,8 @@ public record ExecuteParams (
         }
 
         public Builder OIDs (final List<OID> OIDs) {
-            this.OIDs = Objects.requireNonNull(OIDs);
+            Objects.requireNonNull(OIDs, "OIDs cannot be null");
+            this.OIDs = OIDs.stream().map(oid -> oid == null ? OID.DEFAULT : oid).toList();
             return this;
         }
 
@@ -245,6 +247,4 @@ public record ExecuteParams (
         System.out.println(id.invoke(42));
         System.out.println(new ExecuteParams.Builder().rowCount(3).build());
     }
-
-
 }

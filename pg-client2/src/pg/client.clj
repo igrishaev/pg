@@ -83,14 +83,7 @@
                 copy-tab?
                 copy-in-rows
                 copy-in-maps
-                copy-in-keys
-
-                ;; socket
-                so-keep-alive?
-                so-tcp-no-delay?
-                so-timeout
-                so-recv-buf-size
-                so-send-buf-size]}
+                copy-in-keys]}
         opt]
 
     (cond-> (ExecuteParams/builder)
@@ -185,21 +178,6 @@
       copy-in-keys
       (.copyMapKeys copy-in-keys)
 
-      (some? so-keep-alive?)
-      (.SOKeepAlive so-keep-alive?)
-
-      (some? so-tcp-no-delay?)
-      (.SOTCPnoDelay so-tcp-no-delay?)
-
-      so-timeout
-      (.SOTimeout so-timeout)
-
-      so-recv-buf-size
-      (.SOReceiveBufSize so-recv-buf-size)
-
-      so-send-buf-size
-      (.SOSendBufSize so-send-buf-size)
-
       :finally
       (.build))))
 
@@ -220,7 +198,12 @@
                 fn-notification
                 fn-protocol-version
                 fn-notice
-                use-ssl?]}
+                use-ssl?
+                so-keep-alive?
+                so-tcp-no-delay?
+                so-timeout
+                so-recv-buf-size
+                so-send-buf-size]}
         params]
 
     (cond-> (new ConnConfig$Builder user database)
@@ -263,6 +246,21 @@
 
       fn-notice
       (.fnNotice fn-notice)
+
+      (some? so-keep-alive?)
+      (.SOKeepAlive so-keep-alive?)
+
+      (some? so-tcp-no-delay?)
+      (.SOTCPnoDelay so-tcp-no-delay?)
+
+      so-timeout
+      (.SOTimeout so-timeout)
+
+      so-recv-buf-size
+      (.SOReceiveBufSize so-recv-buf-size)
+
+      so-send-buf-size
+      (.SOSendBufSize so-send-buf-size)
 
       :finally
       (.build))))
@@ -599,8 +597,12 @@
   (JSON/writeValue writer value))
 
 
-(defn json-write-stream [value ^OutputStream out ]
+(defn json-write-stream [value ^OutputStream out]
   (JSON/writeValue out value))
+
+
+(defn json-write-string ^String [value]
+  (JSON/writeValueToString value))
 
 
 ;;

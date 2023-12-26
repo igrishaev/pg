@@ -400,27 +400,33 @@ public class Connection implements Closeable {
         return new PreparedStatement(parse, paramDesc);
     }
 
-    private void sendBind (String portal,
-                           PreparedStatement stmt,
-                           ExecuteParams executeParams
+    private void sendBind (final String portal,
+                           final PreparedStatement stmt,
+                           final ExecuteParams executeParams
     ) {
-        List<Object> params = executeParams.params();
-        OID[] OIDs = stmt.parameterDescription().OIDs();
-        int size = params.size();
+        final List<Object> params = executeParams.params();
+        final OID[] OIDs = stmt.parameterDescription().OIDs();
+        final int size = params.size();
 
         if (size != OIDs.length) {
-            throw new PGError("Wrong parameters count: %s (must be %s)",
+            throw new PGError(
+                    "Wrong parameters count: %s (must be %s)",
                     size, OIDs.length
             );
         }
 
-        Format paramsFormat = (executeParams.binaryEncode() || config.binaryEncode()) ? Format.BIN : Format.TXT;
-        Format columnFormat = (executeParams.binaryDecode() || config.binaryDecode()) ? Format.BIN : Format.TXT;
+        final Format paramsFormat = (executeParams.binaryEncode() || config.binaryEncode()) ? Format.BIN : Format.TXT;
+        final Format columnFormat = (executeParams.binaryDecode() || config.binaryDecode()) ? Format.BIN : Format.TXT;
 
-        byte[][] bytes = new byte[size][];
+        final byte[][] bytes = new byte[size][];
         String statement = stmt.parse().statement();
-        for (int i = 0; i < size; i++) {
-            Object param = params.get(i);
+        int i = -1;
+        for (final Object param: params) {
+            i++;
+            if (param == null) {
+                bytes[i] = null;
+                continue;
+            }
             OID oid = OIDs[i];
             switch (paramsFormat) {
                 case BIN -> {

@@ -41,7 +41,7 @@ public class OIDHint {
             case BigDecimal ignored -> OID.NUMERIC;
             case BigInteger ignored -> OID.NUMERIC;
             case BigInt ignored -> OID.NUMERIC;
-            default -> OID.DEFAULT;
+            case null, default -> OID.DEFAULT;
         };
     }
 

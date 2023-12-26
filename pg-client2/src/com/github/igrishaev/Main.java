@@ -23,6 +23,7 @@ public class Main {
                 .password("test")
                 .binaryEncode(true)
                 .binaryDecode(true)
+                .SOKeepAlive(true)
                 .build();
 
         // Connection conn = new Connection("127.0.0.1", 15432, user, user, user);
