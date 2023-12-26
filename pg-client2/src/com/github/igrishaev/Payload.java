@@ -18,54 +18,54 @@ public class Payload {
         items = new ArrayList<>();
     }
 
-    public Payload addInteger(Integer i) {
+    public Payload addInteger(final Integer i) {
         size += 4;
         items.add(i);
         return this;
     }
 
-    public Payload addShort(Short s) {
+    public Payload addShort(final Short s) {
         size += 2;
         items.add(s);
         return this;
     }
 
-    public Payload addByte(Byte b) {
+    public Payload addByte(final Byte b) {
         size += 1;
         items.add(b);
         return this;
     }
 
-    public Payload addBytes(byte[] buf) {
+    public Payload addBytes(final byte[] buf) {
         size += buf.length;
         items.add(buf);
         return this;
     }
 
-    public Payload addUnsignedShort (Integer i) {
+    public Payload addUnsignedShort (final Integer i) {
         size += 2;
-        ByteBuffer buf = ByteBuffer.allocate(4);
+        final ByteBuffer buf = ByteBuffer.allocate(4);
         buf.putInt(i);
         BBTool.skip(buf, -2);
         items.add(buf);
         return this;
     }
 
-    public Payload addUnsignedInteger (Long l) {
+    public Payload addUnsignedInteger (final Long l) {
         size += 4;
-        ByteBuffer buf = ByteBuffer.allocate(8);
+        final ByteBuffer buf = ByteBuffer.allocate(8);
         buf.putLong(l);
         BBTool.skip(buf, -4);
         items.add(buf);
         return this;
     }
 
-    public Payload addCString(String s) {
+    public Payload addCString(final String s) {
         return addCString(s, StandardCharsets.UTF_8);
     }
 
     public Payload addCString(final String s, final Charset charset) {
-        byte[] bytes = s.getBytes(charset);
+        final byte[] bytes = s.getBytes(charset);
         size = size + bytes.length + 1;
         items.add(bytes);
         items.add((byte)0);

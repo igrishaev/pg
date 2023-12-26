@@ -5,6 +5,7 @@ import com.github.igrishaev.PGError;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.Socket;
 
 public class IOTool {
 
@@ -61,6 +62,44 @@ public class IOTool {
                     e,
                     "cannot write a byte array into an output stream, offset: %s, len: %s",
                     offset, len
+            );
+        }
+    }
+
+    public static InputStream getInputStream(final Socket socket) {
+        try {
+            return socket.getInputStream();
+        }
+        catch (IOException e) {
+            throw new PGError(
+                    e,
+                    "cannot get an input stream from a socket"
+            );
+        }
+    }
+
+    public static OutputStream getOutputStream(final Socket socket) {
+        try {
+            return socket.getOutputStream();
+        }
+        catch (IOException e) {
+            throw new PGError(
+                    e,
+                    "cannot get an output stream from a socket"
+            );
+        }
+    }
+
+    public static Socket socket (final String host, final int port) {
+        try {
+            return new Socket(host, port);
+        }
+        catch (IOException e) {
+            throw new PGError(
+                    e,
+                    "cannot open a socket, host: %s, port: %s",
+                    host,
+                    port
             );
         }
     }

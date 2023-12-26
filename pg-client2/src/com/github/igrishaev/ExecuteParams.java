@@ -85,7 +85,7 @@ public record ExecuteParams (
             return this;
         }
 
-        public Builder params (Object... params) {
+        public Builder params (final Object... params) {
             this.params = Arrays.asList(params);
             return this;
         }
@@ -241,7 +241,7 @@ public record ExecuteParams (
     }
 
     public static void main(String[] args) {
-        IFn id = new core$identity();
+        final IFn id = new core$identity();
         System.out.println(id.invoke(42));
         System.out.println(new ExecuteParams.Builder().rowCount(3).build());
     }

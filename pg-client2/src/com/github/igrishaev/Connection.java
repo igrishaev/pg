@@ -47,7 +47,12 @@ public class Connection implements Closeable {
     private final Map<String, String> params;
     private final CodecParams codecParams;
 
-    public Connection(String host, int port, String user, String password, String database) {
+    public Connection(final String host,
+                      final int port,
+                      final String user,
+                      final String password,
+                      final String database
+    ) {
         this(ConnConfig.builder(user, database)
                 .host(host)
                 .port(port)
@@ -55,7 +60,7 @@ public class Connection implements Closeable {
                 .build());
     }
 
-    public Connection(ConnConfig config, boolean sendStartup) {
+    public Connection(final ConnConfig config, final boolean sendStartup) {
         this.config = config;
         this.params = new HashMap<>();
         this.codecParams = CodecParams.standard();
@@ -68,7 +73,7 @@ public class Connection implements Closeable {
         }
     }
 
-    public Connection(ConnConfig config) {
+    public Connection(final ConnConfig config) {
         this(config, true);
     }
 
@@ -133,7 +138,7 @@ public class Connection implements Closeable {
     }
 
     @SuppressWarnings("unused")
-    public synchronized String getParam (String param) {
+    public synchronized String getParam (final String param) {
         return params.get(param);
     }
 
@@ -142,7 +147,7 @@ public class Connection implements Closeable {
         return Collections.unmodifiableMap(params);
     }
 
-    private void setParam (String param, String value) {
+    private void setParam (final String param, final String value) {
         params.put(param, value);
         switch (param) {
             case "client_encoding" ->
@@ -193,38 +198,18 @@ public class Connection implements Closeable {
     }
 
     private synchronized void connect () {
-
         final int port = getPort();
         final String host = getHost();
-
-        try {
-            socket = new Socket(host, port);
-        }
-        catch (IOException e) {
-            throw new PGError(e, "Cannot connect to a socket");
-        }
-
+        socket = IOTool.socket(host, port);
         setSocketOptions();
-
-        try {
-            inStream = new BufferedInputStream(
-                    socket.getInputStream(),
-                    config.inStreamBufSize()
-            );
-        }
-        catch (IOException e) {
-            throw new PGError(e, "Cannot get an input stream");
-        }
-
-        try {
-            outStream = new BufferedOutputStream(
-                    socket.getOutputStream(),
-                    config.outStreamBufSize()
-            );
-        }
-        catch (IOException e) {
-            throw new PGError(e, "Cannot get an output stream");
-        }
+        inStream = new BufferedInputStream(
+                IOTool.getInputStream(socket),
+                config.inStreamBufSize()
+        );
+        outStream = new BufferedOutputStream(
+                IOTool.getOutputStream(socket),
+                config.outStreamBufSize()
+        );
     }
 
     private void sendBytes (final byte[] buf) {
@@ -461,8 +446,10 @@ public class Connection implements Closeable {
         sendMessage(msg);
     }
 
-    public synchronized Object executeStatement (final PreparedStatement stmt,
-                                                 final ExecuteParams executeParams) {
+    public synchronized Object executeStatement (
+            final PreparedStatement stmt,
+            final ExecuteParams executeParams
+    ) {
         String portal = generatePortal();
         sendBind(portal, stmt, executeParams);
         sendDescribePortal(portal);

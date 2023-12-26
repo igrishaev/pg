@@ -2,16 +2,16 @@ package com.github.igrishaev;
 
 
 public class PGError extends Error {
-    public PGError (String message) {
+    public PGError (final String message) {
         super(message);
     }
-    public PGError (String template, Object... args) {
+    public PGError (final String template, final Object... args) {
         super(String.format(template, args));
     }
-    public PGError (Throwable e, String message) {
+    public PGError (final Throwable e, final String message) {
         super(message, e);
     }
-    public PGError (Throwable e, String template, Object... args) {
+    public PGError (final Throwable e, final String template, final Object... args) {
         super(String.format(template, args), e);
     }
 }

@@ -111,7 +111,7 @@ public record ConnConfig(
             this.pgParams.put(param, value);
             return this;
         }
-        public Builder port(int port) {
+        public Builder port(final int port) {
             this.port = port;
             return this;
         }

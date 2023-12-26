@@ -29,16 +29,16 @@ public class Accum {
              return commandComplete != null || portalSuspended != null;
          }
 
-         public Object toResult(ExecuteParams executeParams) {
+         public Object toResult(final ExecuteParams executeParams) {
 
              if (rowDescription != null) {
                  return executeParams.reducer().finalize(acc);
              }
 
-             String command = commandComplete.command();
+             final String command = commandComplete.command();
 
-             String[] parts = command.split(" +");
-             String lead = parts[0];
+             final String[] parts = command.split(" +");
+             final String lead = parts[0];
 
              return switch (lead) {
                  case "INSERT" -> PersistentHashMap.create(
@@ -97,22 +97,22 @@ public class Accum {
         return newKeys;
     }
 
-    public Accum(Phase phase, ExecuteParams executeParams) {
+    public Accum(final Phase phase, final ExecuteParams executeParams) {
         this.phase = phase;
         this.executeParams = executeParams;
         nodes = new ArrayList<>(2);
         addNode();
     }
 
-    public void setException(Throwable e) {
+    public void setException(final Throwable e) {
         this.exception = e;
     }
 
-    public void addErrorResponse (ErrorResponse msg) {
+    public void addErrorResponse (final ErrorResponse msg) {
         errorResponse = msg;
     }
 
-    public void handleParameterDescription(ParameterDescription msg) {
+    public void handleParameterDescription(final ParameterDescription msg) {
         current.parameterDescription = msg;
     }
 
@@ -121,7 +121,7 @@ public class Accum {
         addNode();
     }
 
-    public void handleCopyOutResponse (CopyOutResponse msg) {
+    public void handleCopyOutResponse (final CopyOutResponse msg) {
         current.copyOutResponse = msg;
     }
 
@@ -133,23 +133,23 @@ public class Accum {
         return current.parameterDescription;
     }
 
-    public void handleParseComplete(ParseComplete msg) {
+    public void handleParseComplete(final ParseComplete msg) {
         current.parseComplete = msg;
     }
 
-    public void handleRowDescription(RowDescription msg) {
+    public void handleRowDescription(final RowDescription msg) {
         current.acc = executeParams.reducer().initiate();
         current.rowDescription = msg;
-        IFn fnKeyTransform = executeParams.fnKeyTransform();
-        String[] names = unifyKeys(msg.getColumnNames());
-        Object[] keys = new Object[names.length];
+        final IFn fnKeyTransform = executeParams.fnKeyTransform();
+        final String[] names = unifyKeys(msg.getColumnNames());
+        final Object[] keys = new Object[names.length];
         for (short i = 0; i < keys.length; i ++) {
             keys[i] = fnKeyTransform.invoke(names[i]);
         }
         current.keys = keys;
     }
 
-    public void handleCommandComplete (CommandComplete msg) {
+    public void handleCommandComplete (final CommandComplete msg) {
         current.commandComplete = msg;
         addNode();
     }
@@ -169,9 +169,9 @@ public class Accum {
         };
     }
 
-    public void setCurrentValues (Object[] values) {
-        IReducer reducer = executeParams.reducer();
-        Object row = reducer.compose(current.keys, values);
+    public void setCurrentValues (final Object[] values) {
+        final IReducer reducer = executeParams.reducer();
+        final Object row = reducer.compose(current.keys, values);
         current.acc = reducer.append(current.acc, row);
     }
 
@@ -196,7 +196,7 @@ public class Accum {
         }
     }
 
-    public static void main (String[] args) {
+    public static void main (final String[] args) {
         final String[] keys = new String[] {"aaa", "bbb", "bbb", "ccc", "bbb"};
         System.out.println(Arrays.toString(unifyKeys(keys)));
     }
