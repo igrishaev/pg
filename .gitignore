@@ -21,3 +21,5 @@ node_modules
 package-lock.json
 package.json
 pg_type.dat
+
+.idea
