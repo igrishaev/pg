@@ -282,6 +282,23 @@
           (is (= [] res2)))))))
 
 
+;; TODO
+(deftest test-client-enum-type
+  (let [table
+        (gen-table)
+
+        type-name
+        (gen-table)]
+
+    (pg/with-connection [conn *CONFIG*]
+      (pg/execute conn (format "create type %s as enum ('foo', 'bar', 'kek')" type-name))
+      (pg/execute conn (format "create table %s (id integer, foo %s)" table type-name))
+      (pg/execute conn (format "insert into %s values (1, 'foo'), (2, 'bar')" table))
+      (let [res1
+            (pg/execute conn (format "select * from %s" table))]
+        (is (= res1 1))))))
+
+
 (deftest test-client-with-transaction-rollback
 
   (let [table

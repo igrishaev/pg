@@ -217,13 +217,11 @@ public enum OID {
     }
 
     public static OID ofInt (final int code) {
-        final OID result = intToItem.get(code);
-        if (result == null) {
-            throw new PGError("unknown OID, code: %s", code);
-        }
-        else {
-            return result;
-        }
+        return intToItem.getOrDefault(code, DEFAULT);
+    }
+
+    public static OID ofInt (final int code, final OID notFound) {
+        return intToItem.getOrDefault(code, notFound);
     }
 
     public int toInt() {

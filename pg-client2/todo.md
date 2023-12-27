@@ -1,9 +1,8 @@
 - SSL support
 - common test fixture
-- complete client tests
-- test json wrapper (with null)
-- test wrong OID hint
-- test enum types
+
+- fix test for enums
+
 - rename the package
 - arrays
   - decode txt

@@ -39,7 +39,7 @@ public record RowDescription (
                     BBTool.getCString(buf, charset),
                     buf.getInt(),
                     buf.getShort(),
-                    OID.ofInt(buf.getInt()),
+                    OID.ofInt(buf.getInt(), OID.TEXT),
                     buf.getShort(),
                     buf.getInt(),
                     Format.ofShort(buf.getShort()));
