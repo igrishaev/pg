@@ -209,8 +209,18 @@ public class Connection implements Closeable {
             "TLSv1"
     };
 
+    private SSLContext getSSLContext () throws NoSuchAlgorithmException {
+        final SSLContext configContext = config.sslContext();
+        if (configContext == null) {
+            return SSLContext.getDefault();
+        }
+        else {
+            return configContext;
+        }
+    }
+
     private void upgradeToSSL () throws NoSuchAlgorithmException, IOException {
-        final SSLContext sslContext = SSLContext.getDefault();
+        final SSLContext sslContext = getSSLContext();
         final SSLSocket sslSocket = (SSLSocket) sslContext.getSocketFactory().createSocket(
                 socket,
                 config.host(),

@@ -2,6 +2,8 @@ package com.github.igrishaev;
 
 import clojure.lang.IFn;
 import clojure.core$println;
+
+import javax.net.ssl.SSLContext;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collections;
@@ -27,7 +29,8 @@ public record ConnConfig(
         int outStreamBufSize,
         IFn fnNotification,
         IFn fnProtocolVersion,
-        IFn fnNotice
+        IFn fnNotice,
+        SSLContext sslContext
 ) {
 
     public static Builder builder (final String user, final String database) {
@@ -59,12 +62,18 @@ public record ConnConfig(
         private IFn fnNotification = new core$println();
         private IFn fnProtocolVersion = new core$println();
         private IFn fnNotice = new core$println();
+        private SSLContext sslContext = null;
 
         public Builder(final String user, final String database) {
             this.user = Objects.requireNonNull(user);
             this.database = Objects.requireNonNull(database);
             this.pgParams.put("client_encoding", Const.CLIENT_ENCODING);
             this.pgParams.put("application_name", Const.APP_NAME);
+        }
+
+        public Builder sslContext(final SSLContext sslContext) {
+            this.sslContext = sslContext;
+            return this;
         }
 
         public Builder protocolVersion(final int protocolVersion) {
@@ -182,7 +191,8 @@ public record ConnConfig(
                     this.SOSendBufSize,
                     this.fnNotification,
                     this.fnProtocolVersion,
-                    this.fnNotice
+                    this.fnNotice,
+                    this.sslContext
             );
         }
     }
