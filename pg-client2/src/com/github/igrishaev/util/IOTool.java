@@ -33,6 +33,16 @@ public class IOTool {
         }
     }
 
+    public static int read (
+            final InputStream inputStream
+    ) {
+        try {
+            return inputStream.read();
+        } catch (IOException e) {
+            throw new PGError(e, "cannot read from the input stream");
+        }
+    }
+
     public static void write(final OutputStream outputStream, final byte[] buf) {
         try {
             outputStream.write(buf);

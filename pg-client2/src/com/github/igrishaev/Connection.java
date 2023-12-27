@@ -46,6 +46,7 @@ public class Connection implements Closeable {
     private BufferedOutputStream outStream;
     private final Map<String, String> params;
     private final CodecParams codecParams;
+    private boolean isSSL = false;
 
     public Connection(final String host,
                       final int port,
@@ -125,7 +126,7 @@ public class Connection implements Closeable {
 
     @SuppressWarnings("unused")
     public synchronized boolean isSSL () {
-        return config.useSSL();
+        return isSSL;
     }
 
     private void closeSocket () {
@@ -195,6 +196,34 @@ public class Connection implements Closeable {
     public void authenticate () {
         sendStartupMessage();
         interact(Phase.AUTH);
+    }
+
+    private boolean readSSLResponse () {
+        final char c = (char) IOTool.read(inStream);
+        return switch (c) {
+            case 'N' -> false;
+            case 'S' -> true;
+            default -> throw new PGError("aaa");
+        };
+    }
+
+    private void upgradeToSSL () {
+
+    }
+
+    private void preSSLStage () {
+        if (config.useSSL()) {
+            final SSLRequest msg = new SSLRequest(Const.SSL_CODE);
+            sendMessage(msg);
+            final boolean ssl = readSSLResponse();
+            if (ssl) {
+                upgradeToSSL();
+            }
+            else {
+                close();
+                throw new PGError("aaa");
+            }
+        }
     }
 
     private synchronized void connect () {

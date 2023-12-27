@@ -1,8 +1,6 @@
 - SSL support
 - common test fixture
 
-- fix test for enums
-
 - rename the package
 - arrays
   - decode txt

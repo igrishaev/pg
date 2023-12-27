@@ -1,7 +1,5 @@
 package com.github.igrishaev.msg;
 
-import com.github.igrishaev.msg.IMessage;
-
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
