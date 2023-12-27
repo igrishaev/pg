@@ -6,6 +6,7 @@
    java.sql.PreparedStatement)
   (:use criterium.core)
   (:require
+   [pg.client :as pg]
    [next.jdbc.prepare :as prepare]
    [jsonista.core :as json]
    [next.jdbc :as jdbc]
@@ -76,6 +77,56 @@
       (.build)))
 
 
+
+
+(comment
+
+  ;; jdbc
+  (with-open [conn (jdbc/get-connection
+                    {:dbtype "postgres"
+                     :port 15432
+                     :dbname USER
+                     :user USER
+                     :password USER})]
+
+    (with-progress-reporting
+      (quick-bench
+          (do
+            (jdbc/execute! conn
+                           ["select '[1, 2, 3]'::jsonb from generate_series(1,50000)"]
+                           #_["select * from generate_series(1,50000)"]
+                           {:as rs/as-unqualified-maps})
+            nil)
+        :verbose)))
+
+  ;; pg
+  (pg/with-connection [conn {:host "127.0.0.1"
+                             :port 15432
+                             :user USER
+                             :password USER
+                             :database USER
+                             :binary-encode? true
+                             :binary-decode? true}]
+
+    (with-progress-reporting
+      (quick-bench
+          (do
+            (pg/execute conn "select '[1, 2, 3]'::jsonb from generate_series(1,50000)")
+            #_
+            (pg/execute conn "select * from generate_series(1,50000)")
+            #_
+            (pg/query conn "select * from generate_series(1,50000)")
+            nil)
+        :verbose)))
+
+  )
+
+
+
+
+
+
+
 (comment
 
   (time
@@ -106,7 +157,7 @@
 
           (jdbc/execute! conn
                          ["select * from generate_series(1,50000)"]
-                         {:as jdbc.rs/as-unqualified-maps})
+                         {:as rs/as-unqualified-maps})
 
           :verbose)))
 
@@ -132,9 +183,9 @@
   (time
    (do
 
-     (.query -c "select '[1, 2, 3]'::jsonb from generate_series(1,5000000)")
+     #_(.query -c "select '[1, 2, 3]'::jsonb from generate_series(1,5000000)")
 
-     #_(.query -c "select * from generate_series(1,5000000)")
+     (.query -c "select * from generate_series(1,50000)")
      nil))
 
   (with-progress-reporting
