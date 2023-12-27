@@ -17,6 +17,8 @@ import com.github.igrishaev.util.BBTool;
 import com.github.igrishaev.util.IOTool;
 import com.github.igrishaev.util.SQL;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -42,8 +44,8 @@ public class Connection implements Closeable {
     private int secretKey;
     private TXStatus txStatus;
     private Socket socket;
-    private BufferedInputStream inStream;
-    private BufferedOutputStream outStream;
+    private InputStream inStream;
+    private OutputStream outStream;
     private final Map<String, String> params;
     private final CodecParams codecParams;
     private boolean isSSL = false;
@@ -207,7 +209,37 @@ public class Connection implements Closeable {
         };
     }
 
+    private static final String[] SSLProtocols = new String[] {
+            "TLSv1.2",
+            "TLSv1.1",
+            "TLSv1"
+    };
+
     private void upgradeToSSL () {
+        final SSLContext sslContext = SSLContext.getDefault();
+        final SSLSocket sslSocket = sslContext.getSocketFactory().createSocket(
+                socket,
+                config.host(),
+                config.port(),
+                true
+        );
+
+        // TODO: wrap exceptions
+
+        // TODO: wrap buffered stream?
+        final InputStream sslInStream = IOTool.getInputStream(sslSocket);
+        final OutputStream sslOutStream = IOTool.getOutputStream(sslSocket);
+
+        sslSocket.setUseClientMode(true);
+        sslSocket.setEnabledProtocols(SSLProtocols);
+        sslSocket.startHandshake();
+
+        // TODO: set socket params?
+
+        socket = sslSocket;
+        inStream = sslInStream;
+        outStream = sslOutStream;
+        isSSL = true;
 
     }
 
