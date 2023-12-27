@@ -249,10 +249,7 @@ public class Connection implements Closeable {
                 }
                 catch (Throwable e) {
                     close();
-                    throw new PGError(
-                            e,
-                            "could not upgrade the connection to SSL due to an exception"
-                    );
+                    throw new PGError(e, "could not upgrade to SSL due to an exception");
                 }
             }
             else {
