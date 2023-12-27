@@ -11,10 +11,9 @@
    [metosin/jsonista]]
 
   :java-source-paths ["src"]
-
-  :java-cmd "/Users/wzhivga/work/jdk-17.0.1.jdk/Contents/Home/bin/java"
-  :jvm-opts ["--enable-preview"]
-  :javac-options ["--enable-preview" "--release" "17"]
+  :javac-options ["-Xlint:unchecked"
+                  "-Xlint:preview"
+                  "--release" "16"]
 
   :parent-project
   {:path "../project.clj"

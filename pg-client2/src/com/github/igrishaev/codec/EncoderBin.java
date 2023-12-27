@@ -169,7 +169,8 @@ public class EncoderBin {
             };
 
             case "clojure.lang.PersistentArrayMap",
-                    "clojure.lang.PersistentHashMap" -> switch (oid) {
+                    "clojure.lang.PersistentHashMap",
+                    "clojure.lang.PersistentVector" -> switch (oid) {
                 case JSON, JSONB, DEFAULT -> {
                     // TODO; guess the size?
                     ByteArrayOutputStream out = new ByteArrayOutputStream(Const.JSON_ENC_BUF_SIZE);

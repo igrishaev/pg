@@ -524,7 +524,7 @@ public class Connection implements Closeable {
     }
 
     private void handleMessage(Object msg, Accum acc) {
-        switch (msg.getClass().getName()) {
+        switch (msg.getClass().getSimpleName()) {
             case "NotificationResponse" ->
                     handleNotificationResponse((NotificationResponse)msg);
             case "NoData", "EmptyQueryResponse", "CloseComplete", "BindComplete", "AuthenticationOk", "CopyDone" -> {}
@@ -863,7 +863,7 @@ public class Connection implements Closeable {
     }
 
     private static Boolean isEnough (Object msg, Phase phase) {
-        return switch (msg.getClass().getName()) {
+        return switch (msg.getClass().getSimpleName()) {
             case "ReadyForQuery" -> true;
             case "ErrorResponse" -> phase == Phase.AUTH;
             default -> false;

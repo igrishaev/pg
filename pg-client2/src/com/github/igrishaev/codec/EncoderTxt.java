@@ -112,7 +112,8 @@ public class EncoderTxt {
             };
 
             case "clojure.lang.PersistentArrayMap",
-                    "clojure.lang.PersistentHashMap" -> switch (oid) {
+                    "clojure.lang.PersistentHashMap",
+                    "clojure.lang.PersistentVector" -> switch (oid) {
                 // TODO: maybe return bytes?
                 // TODO: guess the initial size?
                 case JSON, JSONB, DEFAULT -> {

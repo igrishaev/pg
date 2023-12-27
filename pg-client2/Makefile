@@ -8,4 +8,8 @@ test:
 cleanup:
 	rm -rf target
 
+build: cleanup
+	lein uberjar
+	lein install
+
 .PHONY: test
