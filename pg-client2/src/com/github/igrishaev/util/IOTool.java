@@ -59,6 +59,15 @@ public class IOTool {
         }
     }
 
+    public static void close (final Socket socket) {
+        try {
+            socket.close();
+        }
+        catch (IOException e) {
+            throw new PGError(e, "could not close the socket");
+        }
+    }
+
     public static void write (
             final OutputStream outputStream,
             final byte[] buf,

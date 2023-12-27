@@ -1,3 +1,5 @@
+(def MIN_JAVA_VERSION "16")
+
 (defproject com.github.igrishaev/pg-client2 "0.1.11-SNAPSHOT"
 
   :description
@@ -10,10 +12,15 @@
   [[org.clojure/clojure]
    [metosin/jsonista]]
 
+  :pom-addition
+  [:properties
+   ["maven.compiler.source" ~MIN_JAVA_VERSION]
+   ["maven.compiler.target" ~MIN_JAVA_VERSION]]
+
   :java-source-paths ["src"]
   :javac-options ["-Xlint:unchecked"
                   "-Xlint:preview"
-                  "--release" "16"]
+                  "--release" ~MIN_JAVA_VERSION]
 
   :parent-project
   {:path "../project.clj"

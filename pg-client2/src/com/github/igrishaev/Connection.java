@@ -22,6 +22,7 @@ import javax.net.ssl.SSLSocket;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
 import java.time.ZoneId;
 import java.util.*;
 import java.net.Socket;
@@ -71,6 +72,8 @@ public class Connection implements Closeable {
         this.createdAt = System.currentTimeMillis();
         this.aInt = new AtomicInteger();
         connect();
+        setSocketOptions();
+        preSSLStage();
         if (sendStartup) {
             authenticate();
         }
@@ -83,7 +86,7 @@ public class Connection implements Closeable {
     public void close () {
         if (!isClosed()) {
             sendTerminate();
-            closeSocket();
+            IOTool.close(socket);
         }
     }
 
@@ -129,15 +132,6 @@ public class Connection implements Closeable {
     @SuppressWarnings("unused")
     public synchronized boolean isSSL () {
         return isSSL;
-    }
-
-    private void closeSocket () {
-        try {
-            socket.close();
-        }
-        catch (IOException e) {
-            throw new PGError(e, "could not close the socket");
-        }
     }
 
     @SuppressWarnings("unused")
@@ -205,7 +199,7 @@ public class Connection implements Closeable {
         return switch (c) {
             case 'N' -> false;
             case 'S' -> true;
-            default -> throw new PGError("aaa");
+            default -> throw new PGError("wrong SSL response: %s", c);
         };
     }
 
@@ -215,32 +209,33 @@ public class Connection implements Closeable {
             "TLSv1"
     };
 
-    private void upgradeToSSL () {
+    private void upgradeToSSL () throws NoSuchAlgorithmException, IOException {
         final SSLContext sslContext = SSLContext.getDefault();
-        final SSLSocket sslSocket = sslContext.getSocketFactory().createSocket(
+        final SSLSocket sslSocket = (SSLSocket) sslContext.getSocketFactory().createSocket(
                 socket,
                 config.host(),
                 config.port(),
                 true
         );
 
-        // TODO: wrap exceptions
+        final InputStream sslInStream = new BufferedInputStream(
+                IOTool.getInputStream(sslSocket),
+                config.inStreamBufSize()
+        );
 
-        // TODO: wrap buffered stream?
-        final InputStream sslInStream = IOTool.getInputStream(sslSocket);
-        final OutputStream sslOutStream = IOTool.getOutputStream(sslSocket);
+        final OutputStream sslOutStream = new BufferedOutputStream(
+                IOTool.getOutputStream(sslSocket),
+                config.outStreamBufSize()
+        );
 
         sslSocket.setUseClientMode(true);
         sslSocket.setEnabledProtocols(SSLProtocols);
         sslSocket.startHandshake();
 
-        // TODO: set socket params?
-
         socket = sslSocket;
         inStream = sslInStream;
         outStream = sslOutStream;
         isSSL = true;
-
     }
 
     private void preSSLStage () {
@@ -249,11 +244,20 @@ public class Connection implements Closeable {
             sendMessage(msg);
             final boolean ssl = readSSLResponse();
             if (ssl) {
-                upgradeToSSL();
+                try {
+                    upgradeToSSL();
+                }
+                catch (Throwable e) {
+                    close();
+                    throw new PGError(
+                            e,
+                            "could not upgrade the connection to SSL due to an exception"
+                    );
+                }
             }
             else {
                 close();
-                throw new PGError("aaa");
+                throw new PGError("the server is configured to not use SSL");
             }
         }
     }
@@ -262,7 +266,6 @@ public class Connection implements Closeable {
         final int port = getPort();
         final String host = getHost();
         socket = IOTool.socket(host, port);
-        setSocketOptions();
         inStream = new BufferedInputStream(
                 IOTool.getInputStream(socket),
                 config.inStreamBufSize()
