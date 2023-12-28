@@ -7,6 +7,8 @@
 
 - common test fixture
 
+- with query timeout
+
 - rename the package
 - arrays
   - decode txt
