@@ -17,6 +17,8 @@
 - pool component
 - lein java compiler options
 
+- default handles use logger?
+
 - decide on buffered output stream
 
 - input-stream available?
