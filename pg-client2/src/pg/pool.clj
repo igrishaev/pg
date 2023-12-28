@@ -35,11 +35,12 @@
 (defn pool
 
   (^Pool [^Map conn-config]
-   (Pool/of (pg/->conn-config conn-config)))
+   (new Pool (pg/->conn-config conn-config)))
 
   (^Pool [^Map conn-config ^Map pool-config]
-   (Pool/of (pg/->conn-config conn-config)
-            (->pool-config pool-config))))
+   (new Pool
+        (pg/->conn-config conn-config)
+        (->pool-config pool-config))))
 
 
 (defn close [^Pool pool]

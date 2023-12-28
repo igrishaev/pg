@@ -50,6 +50,8 @@ public class Connection implements Closeable {
     private final Map<String, String> params;
     private final CodecParams codecParams;
     private boolean isSSL = false;
+    private final static System.Logger.Level level = System.Logger.Level.INFO;
+    private final System.Logger logger = System.getLogger(Connection.class.getCanonicalName());
 
     public Connection(final String host,
                       final int port,
@@ -285,8 +287,7 @@ public class Connection implements Closeable {
 
     private void sendBytes (final byte[] buf) {
         if (isDebug) {
-            System.out.print(" <- ");
-            System.out.println(Arrays.toString(buf));
+            logger.log(level," <- {0}", Arrays.toString(buf));
         }
         IOTool.write(outStream, buf);
         IOTool.flush(outStream);
@@ -299,8 +300,7 @@ public class Connection implements Closeable {
 
     private void sendMessage (IMessage msg) {
         if (isDebug) {
-            System.out.print(" <- ");
-            System.out.println(msg);
+            logger.log(level, " <- {0}", msg);
         }
         ByteBuffer buf = msg.encode(codecParams.clientCharset);
         try {
@@ -578,8 +578,7 @@ public class Connection implements Closeable {
         while (true) {
             final Object msg = readMessage();
             if (isDebug) {
-                System.out.print(" -> ");
-                System.out.println(msg);
+                logger.log(level, " -> {0}", msg);
             }
             handleMessage(msg, acc);
             if (isEnough(msg, phase)) {

@@ -68,7 +68,7 @@
           (pg/execute conn "select 42"))
         (is false)
         (catch PGError e
-          (is (= "The pool is exhausted: 2 connections are in use"
+          (is (= "The pool is exhausted: 2 out of 2 connections are in use"
                  (ex-message e)))))
 
       @t1-stop
