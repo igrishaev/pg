@@ -285,7 +285,6 @@
           (is (= [] res2)))))))
 
 
-;; TODO: fix enums
 (deftest test-client-enum-type
   (let [table
         (gen-table)
@@ -294,15 +293,9 @@
         (gen-type)]
 
     (pg/with-connection [conn (assoc *CONFIG*
-
-                                     ;; :binary-encode? true
-                                     ;; :binary-decode? true
-
-                                     :binary-encode? false
-                                     :binary-decode? false
-
-                                     )]
-      (pg/execute conn (format "create type %s as enum ('foo', 'bar', 'kek')" type-name))
+                                     :binary-encode? true
+                                     :binary-decode? true)]
+      (pg/execute conn (format "create type %s as enum ('foo', 'bar', 'kek', 'lol')" type-name))
       (pg/execute conn (format "create table %s (id integer, foo %s)" table type-name))
       (pg/execute conn (format "insert into %s values (1, 'foo'), (2, 'bar')" table))
       (let [res1
@@ -313,18 +306,19 @@
       (pg/execute conn
                   (format "insert into %s (id, foo) values ($1, $2)" table)
                   {:params [3 "kek"]
-                   :oids [oid/int2 oid/text]
-                   })
+                   :oids [oid/int8 oid/default]})
+
+      (pg/execute conn
+                  (format "insert into %s (id, foo) values ($1, $2)" table)
+                  {:params [4 (pg/->enum :lol)]})
 
       (let [res1
             (pg/execute conn (format "select * from %s" table))]
         (is (= [{:foo "foo" :id 1}
                 {:foo "bar" :id 2}
-                {:foo "kek" :id 3}]
-               res1)))
-
-
-      )))
+                {:foo "kek" :id 3}
+                {:foo "lol" :id 4}]
+               res1))))))
 
 
 (deftest test-client-with-transaction-rollback

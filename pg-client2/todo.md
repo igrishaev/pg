@@ -1,12 +1,10 @@
 
 - check if cancelling is needed
-- decide on enum types
 
 - SSL support
   - ssl custom context
 
 - common test fixture
-
 - with query timeout
 
 - rename the package

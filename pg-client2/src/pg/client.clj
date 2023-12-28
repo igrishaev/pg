@@ -17,8 +17,9 @@
    com.github.igrishaev.enums.TXStatus
    com.github.igrishaev.enums.TxLevel
    com.github.igrishaev.reducer.IReducer
-   com.github.igrishaev.util.JSON
-   com.github.igrishaev.util.JSON$Wrapper
+   com.github.igrishaev.type.JSON
+   com.github.igrishaev.type.JSON$Wrapper
+   com.github.igrishaev.type.PGEnum
    java.io.InputStream
    java.io.OutputStream
    java.io.Writer
@@ -632,3 +633,11 @@
 
   (^String [obj ^OID oid]
    (EncoderTxt/encode obj oid)))
+
+
+;;
+;; Enum
+;;
+
+(defn ->enum ^PGEnum [x]
+  (PGEnum/of x))

@@ -20,7 +20,7 @@ public class OIDHint {
                     "clojure.lang.Symbol" -> OID.TEXT;
             case "clojure.lang.PersistentArrayMap",
                     "clojure.lang.PersistentHashMap",
-                    "com.github.igrishaev.util.JSON.Wrapper" -> OID.JSON;
+                    "com.github.igrishaev.type.JSON.Wrapper" -> OID.JSON;
             case "java.util.UUID" -> OID.UUID;
             case "byte[]", "java.nio.ByteBuffer" -> OID.BYTEA;
             case "java.util.Date",

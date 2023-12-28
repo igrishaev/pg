@@ -1,4 +1,4 @@
-package com.github.igrishaev.util;
+package com.github.igrishaev.type;
 
 import clojure.lang.Keyword;
 import clojure.lang.PersistentVector;
@@ -30,6 +30,7 @@ public class JSON {
 
     public record Wrapper (Object value) {}
 
+    @SuppressWarnings("unused")
     public static Wrapper wrap (final Object value) {
         return new Wrapper(value);
     }
@@ -102,6 +103,7 @@ public class JSON {
         }
     }
 
+    @SuppressWarnings("unused")
     public static String writeValueToString (final Object value) {
         try {
             return mapper.writeValueAsString(value);

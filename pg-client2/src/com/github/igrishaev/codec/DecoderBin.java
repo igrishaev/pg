@@ -7,7 +7,7 @@ import java.util.UUID;
 import com.github.igrishaev.PGError;
 import com.github.igrishaev.enums.OID;
 import com.github.igrishaev.util.BBTool;
-import com.github.igrishaev.util.JSON;
+import com.github.igrishaev.type.JSON;
 
 
 public class DecoderBin {

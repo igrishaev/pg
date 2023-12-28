@@ -3,7 +3,7 @@ package com.github.igrishaev.codec;
 import com.github.igrishaev.PGError;
 import com.github.igrishaev.enums.OID;
 import com.github.igrishaev.util.HexTool;
-import com.github.igrishaev.util.JSON;
+import com.github.igrishaev.type.JSON;
 
 import java.util.Arrays;
 

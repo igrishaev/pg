@@ -9,11 +9,12 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import clojure.lang.BigInt;
 
+import com.github.igrishaev.type.PGEnum;
 import com.github.igrishaev.Const;
 import com.github.igrishaev.PGError;
 import com.github.igrishaev.enums.OID;
 import com.github.igrishaev.util.BBTool;
-import com.github.igrishaev.util.JSON;
+import com.github.igrishaev.type.JSON;
 
 public class EncoderBin {
 
@@ -64,6 +65,14 @@ public class EncoderBin {
             case "java.lang.String" -> switch (oid) {
                 case TEXT, VARCHAR, NAME, JSON, JSONB, DEFAULT -> {
                     byte[] bytes = getBytes((String)x, codecParams);
+                    yield ByteBuffer.wrap(bytes);
+                }
+                default -> binEncodingError(x, oid);
+            };
+
+            case "com.github.igrishaev.type.PGEnum" -> switch (oid) {
+                case DEFAULT, TEXT, VARCHAR -> {
+                    byte[] bytes = getBytes(((PGEnum)x).x(), codecParams);
                     yield ByteBuffer.wrap(bytes);
                 }
                 default -> binEncodingError(x, oid);
@@ -158,7 +167,7 @@ public class EncoderBin {
                 default -> binEncodingError(x, oid);
             };
 
-            case "com.github.igrishaev.util.JSON.Wrapper" -> switch (oid) {
+            case "com.github.igrishaev.type.JSON.Wrapper" -> switch (oid) {
                 case JSON, JSONB, DEFAULT -> {
                     // TODO; guess the size?
                     ByteArrayOutputStream out = new ByteArrayOutputStream(Const.JSON_ENC_BUF_SIZE);

@@ -1,7 +1,5 @@
 package com.github.igrishaev.codec;
 
-import clojure.lang.Symbol;
-import clojure.lang.IPersistentCollection;
 import com.github.igrishaev.Const;
 import com.github.igrishaev.PGError;
 import com.github.igrishaev.enums.OID;
@@ -10,12 +8,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.util.Date;
 import java.io.StringWriter;
-import java.util.UUID;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import clojure.lang.BigInt;
+
+import com.github.igrishaev.type.PGEnum;
 import com.github.igrishaev.util.HexTool;
-import com.github.igrishaev.util.JSON;
+import com.github.igrishaev.type.JSON;
 
 public class EncoderTxt {
 
@@ -60,6 +56,11 @@ public class EncoderTxt {
                 default -> txtEncodingError(x, oid);
             };
 
+            case "com.github.igrishaev.type.PGEnum" -> switch (oid) {
+                case DEFAULT, TEXT, VARCHAR -> ((PGEnum)x).x();
+                default -> txtEncodingError(x, oid);
+            };
+
             case "java.lang.Short",
                     "java.lang.Integer",
                     "java.lang.Long"-> switch (oid) {
@@ -100,7 +101,7 @@ public class EncoderTxt {
                 default -> txtEncodingError(x, oid);
             };
 
-            case "com.github.igrishaev.util.JSON.Wrapper" -> switch (oid) {
+            case "com.github.igrishaev.type.JSON.Wrapper" -> switch (oid) {
                 case JSON, JSONB, DEFAULT -> {
                     // TODO: maybe return bytes?
                     // TODO: guess the initial size?
