@@ -108,6 +108,10 @@ public class Accum {
         this.exception = e;
     }
 
+    public boolean hasException () {
+        return exception != null;
+    }
+
     public void addErrorResponse (final ErrorResponse msg) {
         errorResponse = msg;
     }

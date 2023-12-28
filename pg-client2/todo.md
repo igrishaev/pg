@@ -17,8 +17,9 @@
 - pool component
 - lein java compiler options
 
+- move readNBytes to IOTool
 - default handles use logger?
-
+- static terminate, flush, sync, etc with prebuilt buffers; remoce sendBytes
 - decide on buffered output stream
 
 - input-stream available?

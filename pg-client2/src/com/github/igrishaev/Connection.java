@@ -298,11 +298,11 @@ public class Connection implements Closeable {
         IOTool.flush(outStream);
     }
 
-    private void sendMessage (IMessage msg) {
+    private void sendMessage (final IMessage msg) {
         if (isDebug) {
             logger.log(level, " <- {0}", msg);
         }
-        ByteBuffer buf = msg.encode(codecParams.clientCharset);
+        final ByteBuffer buf = msg.encode(codecParams.clientCharset);
         try {
             outStream.write(buf.array());
             outStream.flush();
@@ -321,7 +321,7 @@ public class Connection implements Closeable {
     }
 
     private void sendStartupMessage () {
-        StartupMessage msg =
+        final StartupMessage msg =
             new StartupMessage(
                     config.protocolVersion(),
                     config.user(),
@@ -339,15 +339,15 @@ public class Connection implements Closeable {
         sendBytes(CopyDone.PAYLOAD);
     }
 
-    private void sendCopyFail (String errorMessage) {
+    private void sendCopyFail (final String errorMessage) {
         sendMessage(new CopyFail(errorMessage));
     }
 
-    private void sendQuery (String query) {
+    private void sendQuery (final String query) {
         sendMessage(new Query(query));
     }
 
-    private void sendPassword (String password) {
+    private void sendPassword (final String password) {
         sendMessage(new PasswordMessage(password));
     }
 
@@ -368,24 +368,22 @@ public class Connection implements Closeable {
         sendMessage(new SSLRequest(Const.SSL_CODE));
     }
 
-    private byte[] readNBytes (int len) {
-        try {
-            return inStream.readNBytes(len);
+    private Object readMessage (final boolean skipMode) {
+
+        final byte[] bufHeader = IOTool.readNBytes(inStream, 5);
+        final ByteBuffer bbHeader = ByteBuffer.wrap(bufHeader);
+
+        final char tag = (char) bbHeader.get();
+        final int bodySize = bbHeader.getInt() - 4;
+
+        if (skipMode) {
+            if (tag == 'D' || tag == 'd') {
+                IOTool.skip(inStream, bodySize);
+                return SkippedMessage.INSTANCE;
+            }
         }
-        catch (IOException e) {
-            throw new PGError("Could not read %s byte(s)", len);
-        }
-    }
 
-    private Object readMessage () {
-
-        byte[] bufHeader = readNBytes(5);
-        ByteBuffer bbHeader = ByteBuffer.wrap(bufHeader);
-
-        char tag = (char) bbHeader.get();
-        int bodySize = bbHeader.getInt() - 4;
-
-        byte[] bufBody = readNBytes(bodySize);
+        byte[] bufBody = IOTool.readNBytes(inStream, bodySize);
         ByteBuffer bbBody = ByteBuffer.wrap(bufBody);
 
         return switch (tag) {
@@ -416,40 +414,40 @@ public class Connection implements Closeable {
 
     }
 
-    private void sendDescribeStatement (String statement) {
-        Describe msg = new Describe(SourceType.STATEMENT, statement);
+    private void sendDescribeStatement (final String statement) {
+        final Describe msg = new Describe(SourceType.STATEMENT, statement);
         sendMessage(msg);
     }
 
-    private void sendDescribePortal (String portal) {
-        Describe msg = new Describe(SourceType.PORTAL, portal);
+    private void sendDescribePortal (final String portal) {
+        final Describe msg = new Describe(SourceType.PORTAL, portal);
         sendMessage(msg);
     }
 
-    private void sendExecute (String portal, long rowCount) {
-        Execute msg = new Execute(portal, rowCount);
+    private void sendExecute (final String portal, final long rowCount) {
+        final Execute msg = new Execute(portal, rowCount);
         sendMessage(msg);
     }
 
-    public synchronized Object query(String sql) {
+    public synchronized Object query(final String sql) {
         return query(sql, ExecuteParams.INSTANCE);
     }
 
-    public synchronized Object query(String sql, ExecuteParams executeParams) {
+    public synchronized Object query(final String sql, final ExecuteParams executeParams) {
         sendQuery(sql);
         return interact(Phase.QUERY, executeParams).getResult();
     }
 
-    public synchronized PreparedStatement prepare (String sql, ExecuteParams executeParams) {
-        String statement = generateStatement();
+    public synchronized PreparedStatement prepare (final String sql, final ExecuteParams executeParams) {
+        final String statement = generateStatement();
 
-        List<OID> OIDsProvided = executeParams.OIDs();
-        int OIDsProvidedCount = OIDsProvided.size();
+        final List<OID> OIDsProvided = executeParams.OIDs();
+        final int OIDsProvidedCount = OIDsProvided.size();
 
-        List<Object> params = executeParams.params();
-        int paramCount = params.size();
+        final List<Object> params = executeParams.params();
+        final int paramCount = params.size();
 
-        OID[] OIDs = new OID[paramCount];
+        final OID[] OIDs = new OID[paramCount];
 
         for (int i = 0; i < paramCount; i++) {
             if (i < OIDsProvidedCount) {
@@ -461,13 +459,13 @@ public class Connection implements Closeable {
             }
         }
 
-        Parse parse = new Parse(statement, sql, OIDs);
+        final Parse parse = new Parse(statement, sql, OIDs);
         sendMessage(parse);
         sendDescribeStatement(statement);
         sendSync();
         sendFlush();
-        Accum acc = interact(Phase.PREPARE);
-        ParameterDescription paramDesc = acc.getParameterDescription();
+        final Accum acc = interact(Phase.PREPARE);
+        final ParameterDescription paramDesc = acc.getParameterDescription();
         return new PreparedStatement(parse, paramDesc);
     }
 
@@ -512,7 +510,7 @@ public class Connection implements Closeable {
                     throw new PGError("unknown format: %s", paramsFormat);
             }
         }
-        Bind msg = new Bind(
+        final Bind msg = new Bind(
                 portal,
                 statement,
                 bytes,
@@ -527,7 +525,7 @@ public class Connection implements Closeable {
             final PreparedStatement stmt,
             final ExecuteParams executeParams
     ) {
-        String portal = generatePortal();
+        final String portal = generatePortal();
         sendBind(portal, stmt, executeParams);
         sendDescribePortal(portal);
         sendExecute(portal, executeParams.rowCount());
@@ -545,38 +543,38 @@ public class Connection implements Closeable {
         return execute(sql, ExecuteParams.builder().params(params).build());
     }
 
-    public synchronized Object execute (String sql, ExecuteParams executeParams) {
-        PreparedStatement stmt = prepare(sql, executeParams);
-        Object res = executeStatement(stmt, executeParams);
+    public synchronized Object execute (final String sql, final ExecuteParams executeParams) {
+        final PreparedStatement stmt = prepare(sql, executeParams);
+        final Object res = executeStatement(stmt, executeParams);
         closeStatement(stmt);
         return res;
     }
 
-    private void sendCloseStatement (String statement) {
-        Close msg = new Close(SourceType.STATEMENT, statement);
+    private void sendCloseStatement (final String statement) {
+        final Close msg = new Close(SourceType.STATEMENT, statement);
         sendMessage(msg);
     }
 
-    private void sendClosePortal (String portal) {
-        Close msg = new Close(SourceType.PORTAL, portal);
+    private void sendClosePortal (final String portal) {
+        final Close msg = new Close(SourceType.PORTAL, portal);
         sendMessage(msg);
     }
 
-    public synchronized void closeStatement (PreparedStatement statement) {
+    public synchronized void closeStatement (final PreparedStatement statement) {
         closeStatement(statement.parse().statement());
     }
 
-    public synchronized void closeStatement (String statement) {
+    public synchronized void closeStatement (final String statement) {
         sendCloseStatement(statement);
         sendSync();
         sendFlush();
         interact(Phase.CLOSE);
     }
 
-    private Accum interact(Phase phase, ExecuteParams executeParams) {
-        Accum acc = new Accum(phase, executeParams);
+    private Accum interact(final Phase phase, final ExecuteParams executeParams) {
+        final Accum acc = new Accum(phase, executeParams);
         while (true) {
-            final Object msg = readMessage();
+            final Object msg = readMessage(acc.hasException());
             if (isDebug) {
                 logger.log(level, " -> {0}", msg);
             }
@@ -589,56 +587,85 @@ public class Connection implements Closeable {
         return acc;
     }
 
-    private Accum interact(Phase phase) {
+    private Accum interact(final Phase phase) {
         return interact(phase, ExecuteParams.INSTANCE);
     }
 
-    private void handleMessage(Object msg, Accum acc) {
+    private void handleMessage(final Object msg, final Accum acc) {
         switch (msg.getClass().getSimpleName()) {
-            case "NotificationResponse" ->
+            case
+                    "NotificationResponse" ->
                     handleNotificationResponse((NotificationResponse)msg);
-            case "NoData", "EmptyQueryResponse", "CloseComplete", "BindComplete", "AuthenticationOk", "CopyDone" -> {}
-            case "AuthenticationCleartextPassword" ->
+            case
+                    "NoData",
+                    "EmptyQueryResponse",
+                    "CloseComplete",
+                    "BindComplete",
+                    "AuthenticationOk",
+                    "CopyDone",
+                    "SkippedMessage"-> {}
+            case
+                    "AuthenticationCleartextPassword" ->
                     handleAuthenticationCleartextPassword();
-            case "AuthenticationSASL" ->
+            case
+                    "AuthenticationSASL" ->
                     handleAuthenticationSASL((AuthenticationSASL)msg, acc);
-            case "AuthenticationSASLContinue" ->
+            case
+                    "AuthenticationSASLContinue" ->
                     handleAuthenticationSASLContinue((AuthenticationSASLContinue)msg, acc);
-            case "AuthenticationSASLFinal" ->
+            case
+                    "AuthenticationSASLFinal" ->
                     handleAuthenticationSASLFinal((AuthenticationSASLFinal)msg, acc);
-            case "NoticeResponse" ->
+            case
+                    "NoticeResponse" ->
                     handleNoticeResponse((NoticeResponse)msg);
-            case "ParameterStatus" ->
+            case
+                    "ParameterStatus" ->
                     handleParameterStatus((ParameterStatus)msg);
-            case "RowDescription" ->
+            case
+                    "RowDescription" ->
                     handleRowDescription((RowDescription)msg, acc);
-            case "DataRow" ->
+            case
+                    "DataRow" ->
                     handleDataRow((DataRow)msg, acc);
-            case "ReadyForQuery" ->
+            case
+                    "ReadyForQuery" ->
                     handleReadyForQuery((ReadyForQuery)msg);
-            case "PortalSuspended" ->
+            case
+                    "PortalSuspended" ->
                     handlePortalSuspended((PortalSuspended)msg, acc);
-            case "AuthenticationMD5Password" ->
+            case
+                    "AuthenticationMD5Password" ->
                     handleAuthenticationMD5Password((AuthenticationMD5Password)msg);
-            case "NegotiateProtocolVersion" ->
+            case
+                    "NegotiateProtocolVersion" ->
                     handleNegotiateProtocolVersion((NegotiateProtocolVersion)msg);
-            case "CommandComplete" ->
+            case
+                    "CommandComplete" ->
                     handleCommandComplete((CommandComplete)msg, acc);
-            case "ErrorResponse" ->
-                handleErrorResponse((ErrorResponse)msg, acc);
-            case "BackendKeyData" ->
+            case
+                    "ErrorResponse" ->
+                    handleErrorResponse((ErrorResponse)msg, acc);
+            case
+                    "BackendKeyData" ->
                     handleBackendKeyData((BackendKeyData)msg);
-            case "ParameterDescription" ->
+            case
+                    "ParameterDescription" ->
                     handleParameterDescription((ParameterDescription)msg, acc);
-            case "ParseComplete" ->
+            case
+                    "ParseComplete" ->
                     handleParseComplete((ParseComplete)msg, acc);
-            case "CopyOutResponse" ->
+            case
+                    "CopyOutResponse" ->
                     handleCopyOutResponse((CopyOutResponse)msg, acc);
-            case "CopyData" ->
+            case
+                    "CopyData" ->
                     handleCopyData((CopyData)msg, acc);
-            case "CopyInResponse" ->
+            case
+                    "CopyInResponse" ->
                     handleCopyInResponse(acc);
-            default -> throw new PGError("Cannot handle this message: %s", msg);
+            default ->
+                    throw new PGError("Cannot handle this message: %s", msg);
         }
     }
 
@@ -705,7 +732,7 @@ public class Connection implements Closeable {
                 break;
             }
 
-            ByteBuffer bb = ByteBuffer.wrap(buf);
+            final ByteBuffer bb = ByteBuffer.wrap(buf);
             bb.put((byte)'d');
             bb.putInt(4 + read);
             sendBytes(buf, 0, 5 + read);
@@ -720,7 +747,7 @@ public class Connection implements Closeable {
         }
     }
 
-    private void handleCopyInResponseData (Accum acc, Iterator<List<Object>> iterator) {
+    private void handleCopyInResponseData (final Accum acc, final Iterator<List<Object>> iterator) {
         final ExecuteParams executeParams = acc.executeParams;
         final CopyFormat format = executeParams.copyFormat();
         Throwable e = null;
@@ -775,17 +802,17 @@ public class Connection implements Closeable {
         }
     }
 
-    private void handleCopyInResponseRows (Accum acc) {
-        Iterator<List<Object>> iterator = acc.executeParams.copyInRows()
+    private void handleCopyInResponseRows (final Accum acc) {
+        final Iterator<List<Object>> iterator = acc.executeParams.copyInRows()
                 .stream()
                 .filter(Objects::nonNull)
                 .iterator();
         handleCopyInResponseData(acc, iterator);
     }
 
-    private void handleCopyInResponseMaps(Accum acc) {
-        List<Object> keys = acc.executeParams.copyMapKeys();
-        Iterator<List<Object>> iterator = acc.executeParams.copyInMaps()
+    private void handleCopyInResponseMaps(final Accum acc) {
+        final List<Object> keys = acc.executeParams.copyMapKeys();
+        final Iterator<List<Object>> iterator = acc.executeParams.copyInMaps()
                 .stream()
                 .filter(Objects::nonNull)
                 .map(map -> mapToRow(map, keys))
@@ -805,51 +832,58 @@ public class Connection implements Closeable {
         }
     }
 
-    private void handlePortalSuspended(PortalSuspended msg, Accum acc) {
+    private void handlePortalSuspended(final PortalSuspended msg, final Accum acc) {
         acc.handlePortalSuspended(msg);
     }
 
-    private static void futureCall(IFn f, Object arg) {
+    private static void futureCall(final IFn f, final Object arg) {
         Agent.soloExecutor.submit(() -> {
             f.invoke(arg);
         });
     }
 
-    private void handleNotificationResponse(NotificationResponse msg) {
+    private void handleNotificationResponse(final NotificationResponse msg) {
         futureCall(config.fnNotification(), msg.toClojure());
     }
 
-    private void handleNoticeResponse(NoticeResponse msg) {
+    private void handleNoticeResponse(final NoticeResponse msg) {
         futureCall(config.fnNotice(), msg.toClojure());
     }
 
-    private void handleNegotiateProtocolVersion(NegotiateProtocolVersion msg) {
+    private void handleNegotiateProtocolVersion(final NegotiateProtocolVersion msg) {
         futureCall(config.fnProtocolVersion(), msg.toClojure());
     }
 
-    private void handleAuthenticationMD5Password(AuthenticationMD5Password msg) {
-        final String hashed = MD5.hashPassword(config.user(), config.password(), msg.salt());
+    private void handleAuthenticationMD5Password(final AuthenticationMD5Password msg) {
+        final String hashed = MD5.hashPassword(
+                config.user(),
+                config.password(),
+                msg.salt()
+        );
         sendPassword(hashed);
     }
 
-    private void handleCopyOutResponse(CopyOutResponse msg, Accum acc) {
+    private void handleCopyOutResponse(final CopyOutResponse msg, final Accum acc) {
         acc.handleCopyOutResponse(msg);
     }
 
-    private void handleCopyData(CopyData msg, Accum acc) {
-        OutputStream outputStream = acc.executeParams.outputStream();
-        final byte[] bytes = msg.buf().array();
+    private void handleCopyData(final CopyData msg, final Accum acc) {
         try {
-            outputStream.write(bytes);
+            handleCopyDataUnsafe(msg, acc);
         } catch (Throwable e) {
             acc.setException(e);
-            cancelRequest(this);
         }
+    }
+
+    private void handleCopyDataUnsafe(final CopyData msg, final Accum acc) throws IOException {
+        final OutputStream outputStream = acc.executeParams.outputStream();
+        final byte[] bytes = msg.buf().array();
+        outputStream.write(bytes);
     }
 
     public synchronized Object copy (final String sql, final ExecuteParams executeParams) {
         sendQuery(sql);
-        Accum acc = interact(Phase.COPY, executeParams);
+        final Accum acc = interact(Phase.COPY, executeParams);
         return acc.getResult();
     }
 
@@ -861,11 +895,11 @@ public class Connection implements Closeable {
         return row;
     }
 
-    private void handleParseComplete(ParseComplete msg, Accum acc) {
+    private void handleParseComplete(final ParseComplete msg, final Accum acc) {
         acc.handleParseComplete(msg);
     }
 
-    private void handleParameterDescription (ParameterDescription msg, Accum acc) {
+    private void handleParameterDescription (final ParameterDescription msg, final Accum acc) {
         acc.handleParameterDescription(msg);
     }
 
@@ -873,11 +907,11 @@ public class Connection implements Closeable {
         sendPassword(config.password());
     }
 
-    private void handleParameterStatus(ParameterStatus msg) {
+    private void handleParameterStatus(final ParameterStatus msg) {
         setParam(msg.param(), msg.value());
     }
 
-    private static void handleRowDescription(RowDescription msg, Accum acc) {
+    private static void handleRowDescription(final RowDescription msg, final Accum acc) {
         acc.handleRowDescription(msg);
     }
 
@@ -911,28 +945,27 @@ public class Connection implements Closeable {
         }
         catch (Throwable e) {
             acc.setException(e);
-            cancelRequest(this);
         }
     }
 
-    private void handleReadyForQuery(ReadyForQuery msg) {
+    private void handleReadyForQuery(final ReadyForQuery msg) {
         txStatus = msg.txStatus();
     }
 
-    private static void handleCommandComplete(CommandComplete msg, Accum acc) {
+    private static void handleCommandComplete(final CommandComplete msg, final Accum acc) {
         acc.handleCommandComplete(msg);
     }
 
-    private static void handleErrorResponse(ErrorResponse msg, Accum acc) {
+    private static void handleErrorResponse(final ErrorResponse msg, final Accum acc) {
         acc.addErrorResponse(msg);
     }
 
-    private void handleBackendKeyData(BackendKeyData msg) {
+    private void handleBackendKeyData(final BackendKeyData msg) {
         pid = msg.pid();
         secretKey = msg.secretKey();
     }
 
-    private static Boolean isEnough (Object msg, Phase phase) {
+    private static Boolean isEnough (final Object msg, final Phase phase) {
         return switch (msg.getClass().getSimpleName()) {
             case "ReadyForQuery" -> true;
             case "ErrorResponse" -> phase == Phase.AUTH;
@@ -941,13 +974,13 @@ public class Connection implements Closeable {
     }
 
     @SuppressWarnings("unused")
-    public static Connection clone (Connection conn) {
+    public static Connection clone (final Connection conn) {
         return new Connection(conn.config);
     }
 
-    public static void cancelRequest(Connection conn) {
-        CancelRequest msg = new CancelRequest(Const.CANCEL_CODE, conn.pid, conn.secretKey);
-        Connection temp = new Connection(conn.config, false);
+    public static void cancelRequest(final Connection conn) {
+        final CancelRequest msg = new CancelRequest(Const.CANCEL_CODE, conn.pid, conn.secretKey);
+        final Connection temp = new Connection(conn.config, false);
         temp.sendMessage(msg);
         temp.close();
     }
@@ -986,7 +1019,7 @@ public class Connection implements Closeable {
     }
 
     @SuppressWarnings("unused")
-    public void setTxLevel (TxLevel level) {
+    public void setTxLevel (final TxLevel level) {
         sendQuery(SQL.SQLSetTxLevel(level));
         interact(Phase.QUERY);
     }
@@ -998,18 +1031,18 @@ public class Connection implements Closeable {
     }
 
     @SuppressWarnings("unused")
-    public synchronized void listen (String channel) {
+    public synchronized void listen (final String channel) {
         query(String.format("listen %s", SQL.quoteChannel(channel)));
     }
 
     @SuppressWarnings("unused")
-    public synchronized void unlisten (String channel) {
+    public synchronized void unlisten (final String channel) {
         query(String.format("unlisten %s", SQL.quoteChannel(channel)));
     }
 
     @SuppressWarnings("unused")
-    public synchronized void notify (String channel, String message) {
-        ArrayList<Object> params = new ArrayList<>(2);
+    public synchronized void notify (final String channel, final String message) {
+        final ArrayList<Object> params = new ArrayList<>(2);
         params.add(channel);
         params.add(message);
         execute("select pg_notify($1, $2)", params);

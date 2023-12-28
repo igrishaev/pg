@@ -9,6 +9,24 @@ import java.net.Socket;
 
 public class IOTool {
 
+    public static void skip (final InputStream inputStream, final int len) {
+        try {
+            inputStream.readNBytes(len);
+        }
+        catch (IOException e) {
+            throw new PGError("Could not skip %s byte(s)", len);
+        }
+    }
+
+    public static byte[] readNBytes (final InputStream inputStream, final int len) {
+        try {
+            return inputStream.readNBytes(len);
+        }
+        catch (IOException e) {
+            throw new PGError("Could not read %s byte(s)", len);
+        }
+    }
+
     public static int read (
             final InputStream inputStream,
             final byte[] buf
