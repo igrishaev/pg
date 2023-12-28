@@ -1,3 +1,7 @@
+
+- check if cancelling is needed
+- decide on enum types
+
 - SSL support
   - ssl custom context
 
@@ -14,7 +18,6 @@
 - lein java compiler options
 
 - decide on buffered output stream
-- test enum write txt/bin
 
 - input-stream available?
 

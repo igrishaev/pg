@@ -111,3 +111,6 @@
                    (ex-data)
                    (update-in [:error :errors]
                               dissoc :file :line)))))
+
+
+com.github.igrishaev.PGError: ErrorResponse: {severity=ERROR, code=57014, file=postgres.c, line=3224, function=ProcessInterrupts, message=canceling statement due to user request, verbosity=ERROR}
