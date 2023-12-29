@@ -83,11 +83,11 @@ public class Main {
 //        conn.query("create type type_foo as enum ('foo', 'bar', 'kek')");
 //        conn.query("create table aaa (id integer, foo type_foo)");
 //        conn.query("insert into aaa values (1, 'foo'), (2, 'bar')");
-//        System.out.println(conn.execute(
-//                "select * from aaa",
-//                ExecuteParams.builder().binaryDecode(true).build()
-//                )
-//        );
+        System.out.println(conn.execute(
+                "select * from aaa",
+                ExecuteParams.builder().binaryDecode(true).build()
+                )
+        );
 
         // conn.execute("create table abc (id integer, title text)");
 //        Object resIns = conn.execute(

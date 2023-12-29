@@ -15,6 +15,7 @@
    java.util.Date
    java.util.concurrent.ExecutionException)
   (:require
+   [less.awful.ssl :as ssl]
    [clojure.data.csv :as csv]
    [clojure.java.io :as io]
    [clojure.string :as str]
@@ -23,12 +24,26 @@
    [pg.oid :as oid]))
 
 
+;; TODO: SSL tests
+
+#_
+(def ssl-context
+  (ssl/ssl-context "../certs/client.key"
+                   "../certs/client.crt"
+                   "../certs/root.crt"))
+
+
 (def ^:dynamic *CONFIG*
   {:host "127.0.0.1"
-   :port 10130
+   ;; :port 10130
+   :port 15432
    :user "test"
    :password "test"
-   :database "test"})
+   :database "test"
+
+   ;; :use-ssl? true
+   ;; :ssl-context ssl-context
+   })
 
 
 (defn gen-table []

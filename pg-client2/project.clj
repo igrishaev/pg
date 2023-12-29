@@ -39,4 +39,5 @@
     [[com.github.seancorfield/next.jdbc]
      [org.postgresql/postgresql]
      [org.clojure/data.csv]
+     [less-awful-ssl]
      [criterium]]}})

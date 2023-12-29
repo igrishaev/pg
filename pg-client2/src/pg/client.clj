@@ -200,6 +200,7 @@
                 fn-protocol-version
                 fn-notice
                 use-ssl?
+                ssl-context
                 so-keep-alive?
                 so-tcp-no-delay?
                 so-timeout
@@ -238,6 +239,9 @@
 
       (some? use-ssl?)
       (.useSSL use-ssl?)
+
+      ssl-context
+      (.sslContext ssl-context)
 
       fn-notification
       (.fnNotification fn-notification)

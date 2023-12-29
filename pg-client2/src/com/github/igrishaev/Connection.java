@@ -261,7 +261,11 @@ public class Connection implements Closeable {
                 }
                 catch (Throwable e) {
                     close();
-                    throw new PGError(e, "could not upgrade to SSL due to an exception");
+                    throw new PGError(
+                            e,
+                            "could not upgrade to SSL due to an exception: %s",
+                            e.getMessage()
+                    );
                 }
             }
             else {
@@ -978,6 +982,7 @@ public class Connection implements Closeable {
         return new Connection(conn.config);
     }
 
+    @SuppressWarnings("unused")
     public static void cancelRequest(final Connection conn) {
         final CancelRequest msg = new CancelRequest(Const.CANCEL_CODE, conn.pid, conn.secretKey);
         final Connection temp = new Connection(conn.config, false);
