@@ -101,7 +101,7 @@ public class Connection implements Closeable {
             socket.setSendBufferSize(config.SOSendBufSize());
         }
         catch (IOException e) {
-            throw new PGError(e, "couldn't set set socket options");
+            throw new PGError(e, "couldn't set socket options");
         }
     }
 
