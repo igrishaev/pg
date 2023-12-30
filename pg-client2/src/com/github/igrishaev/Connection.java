@@ -340,7 +340,7 @@ public class Connection implements Closeable {
     }
 
     private void sendCopyDone () {
-        sendBytes(CopyDone.PAYLOAD);
+        sendMessage(CopyDone.INSTANCE);
     }
 
     private void sendCopyFail (final String errorMessage) {
@@ -356,15 +356,15 @@ public class Connection implements Closeable {
     }
 
     private void sendSync () {
-        sendBytes(Sync.PAYLOAD);
+        sendMessage(Sync.INSTANCE);
     }
 
     private void sendFlush () {
-        sendBytes(Flush.PAYLOAD);
+        sendMessage(Flush.INSTANCE);
     }
 
     private void sendTerminate () {
-        sendBytes(Terminate.PAYLOAD);
+        sendMessage(Terminate.INSTANCE);
     }
 
     @SuppressWarnings("unused")
