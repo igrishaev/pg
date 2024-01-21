@@ -1,3 +1,10 @@
+
+[pg2]: https://github.com/igrishaev/pg2
+
+**Attention: this repository has been deprecated in favour of [PG2
+project][pg2], which is a successor of PG(one). Should you have been using
+PG(one) by any chance, please migrate to [PG2][pg2]!**
+
 # PG: a Postgres Driver in Pure Clojure
 
 The latest version is **0.1.11**.
